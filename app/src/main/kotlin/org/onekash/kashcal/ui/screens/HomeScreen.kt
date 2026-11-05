@@ -2091,7 +2091,7 @@ private fun SearchResultCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .alpha(if (isPast) 0.5f else 1f)
+            .alpha(declinedCardAlpha(isPast, displayEvent.isDeclinedByMe, displayEvent.isCancelled))
             .then(if (searchStateLabel != null) Modifier.semantics { stateDescription = searchStateLabel } else Modifier)
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = fillColor.copy(alpha = fillAlpha)),

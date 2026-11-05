@@ -123,16 +123,19 @@ class UtcSeriesZoneRepair @Inject constructor(
     }
 
     /**
-     * Cancels [row]'s reminders and arms them on its regenerated occurrences, as a sync does for
-     * a changed series. A failure is logged; the daily reminder scan re-arms what is missing.
+     * Reconciles [row]'s reminders with its regenerated occurrences and arms the missing ones, as
+     * a sync does for a changed series. A failure is logged; the daily reminder scan re-arms what
+     * is missing.
      */
     private suspend fun rearmReminders(row: Event) {
         try {
-            reminderScheduler.cancelRemindersForEvent(row.id)
+            reminderScheduler.reconcileRemindersForEvent(row)
             if (row.reminders.isNullOrEmpty()) return
             val calendar = eventReader.getCalendarById(row.calendarId) ?: return
             val occurrences = eventReader.getOccurrencesForEventInScheduleWindow(
-                row.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS
+                row.id,
+                ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS,
+                ReminderScheduler.STARTED_LOOKBACK_MS
             )
             reminderScheduler.scheduleRemindersForEvent(row, occurrences, calendar.color)
         } catch (e: CancellationException) {

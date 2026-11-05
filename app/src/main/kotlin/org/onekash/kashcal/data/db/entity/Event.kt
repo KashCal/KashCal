@@ -201,8 +201,20 @@ data class Event(
     val alarmCount: Int = 0,
 
     /**
-     * Unknown iCal properties such as X- extensions, as a JSON object, written back on push.
-     * The CalDAV pull and ICS subscriptions also keep their own `X-KASHCAL-` markers here.
+     * Unknown iCal properties such as X- extensions, as a JSON object. An upload or export
+     * built from [rawIcal] writes the copy's own lines instead; this map is the source when
+     * there is no copy to patch, for the outbox invitation body, and for a changed occurrence
+     * the copy doesn't hold. The CalDAV pull and ICS subscriptions also keep their own
+     * `X-KASHCAL-` markers here.
+     *
+     * [org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper.toEntity] leaves out a value
+     * longer than
+     * [org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper.MAX_EXTRA_PROPERTY_VALUE_CHARS]
+     * (an inline attachment, an HTML description), because the row holds [rawIcal] too and
+     * Android can't read a row back once it passes its 2 MB cursor window; rows mapped before
+     * the limit, and maps copied from them, keep theirs. A row with a stored copy still uploads
+     * such a value from that copy; a row without one (an ICS subscription, an import whose copy
+     * couldn't be used) and the map-built bodies above lose it.
      */
     @ColumnInfo(name = "extra_properties")
     val extraProperties: Map<String, String>? = null,

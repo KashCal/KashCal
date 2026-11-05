@@ -281,6 +281,8 @@
     <string name="settings_widget_theme_follow_app_desc">Match the app\'s light or dark appearance</string>
     <string name="settings_app_icon">App Icon</string>
     <string name="app_icon_default">Default</string>
+    <!-- Picker row for the icon showing the app's mascot. Kash is its name. -->
+    <string name="app_icon_kash" translatable="false">Kash</string>
     <string name="app_icon_supporter">Supporter</string>
     <string name="app_icon_supporter_calendar">Supporter, labeled Calendar</string>
     <string name="app_icon_todays_date">Today\'s date</string>

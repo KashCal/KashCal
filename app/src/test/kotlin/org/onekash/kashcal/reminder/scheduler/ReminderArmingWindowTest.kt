@@ -77,7 +77,7 @@ class ReminderArmingWindowTest {
     private suspend fun saveReminders(eventId: Long) {
         val event = fixture.eventReader.getEventById(eventId)!!
         val occurrences = fixture.eventReader.getOccurrencesForEventInScheduleWindow(
-            eventId, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS
+            eventId, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS, ReminderScheduler.STARTED_LOOKBACK_MS
         )
         scheduler.scheduleRemindersForEvent(event, occurrences, calendarColor = -1)
     }

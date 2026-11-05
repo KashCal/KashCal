@@ -35,7 +35,7 @@ class ReminderAlarmFixture(private val context: Context) {
 
     val eventReader = EventReader(database)
 
-    /** Only used to clear notifications, a side effect; tests verify it is left alone. */
+    /** Only used to clear notifications, a side effect; tests verify which ones it clears. */
     val channels = mockk<ReminderNotificationChannels>(relaxed = true)
 
     val scheduler = ReminderScheduler(
@@ -134,7 +134,13 @@ class ReminderAlarmFixture(private val context: Context) {
         return saved
     }
 
-    suspend fun insertOccurrence(event: Event, startTs: Long) {
+    /** Adds an occurrence of [event]; [exceptionEventId] links it to a changed occurrence. */
+    suspend fun insertOccurrence(
+        event: Event,
+        startTs: Long,
+        exceptionEventId: Long? = null,
+        isCancelled: Boolean = false
+    ) {
         database.occurrencesDao().insert(
             Occurrence(
                 eventId = event.id,
@@ -142,7 +148,9 @@ class ReminderAlarmFixture(private val context: Context) {
                 startTs = startTs,
                 endTs = startTs + HOUR,
                 startDay = 20260101,
-                endDay = 20260101
+                endDay = 20260101,
+                isCancelled = isCancelled,
+                exceptionEventId = exceptionEventId
             )
         )
     }

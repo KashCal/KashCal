@@ -837,8 +837,9 @@ class CalDavSyncWorker @AssistedInject constructor(
      *
      * - NEW: schedules every occurrence in the schedule window. A new event with no reminders and
      *   no alarms gets the user's default reminder unless it is off, except on initial sync.
-     * - MODIFIED: cancels the existing reminders and reschedules. AlarmManager triggers are
-     *   absolute times, so they must be recalculated when event times change.
+     * - MODIFIED: keeps the reminders the edit left valid, drops the rest
+     *   ([ReminderScheduler.reconcileRemindersForEvent]), then schedules the missing ones.
+     *   AlarmManager triggers are absolute times, so a changed time must not keep its old alarm.
      * - DELETED: skipped; reminders are cleaned up with the event.
      *
      * A failure for one event is logged and skipped; it never fails the sync.
@@ -866,10 +867,10 @@ class CalDavSyncWorker @AssistedInject constructor(
                     continue
                 }
 
-                // Cancel before the empty-reminders check, so an edit that removed every
-                // reminder still clears the old alarms.
+                // Reconcile before the empty-reminders check, so an edit that removed every
+                // reminder still drops its rows and alarms; a snooze stays.
                 if (change.type == ChangeType.MODIFIED) {
-                    reminderScheduler.cancelRemindersForEvent(event.id)
+                    reminderScheduler.reconcileRemindersForEvent(event)
                 }
 
                 if (change.type == ChangeType.NEW && !change.isFromInitialSync) {
@@ -912,7 +913,9 @@ class CalDavSyncWorker @AssistedInject constructor(
                     listOfNotNull(eventReader.getOccurrenceByExceptionEventId(event.id))
                 } else {
                     eventReader.getOccurrencesForEventInScheduleWindow(
-                        event.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS
+                        event.id,
+                        ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS,
+                        ReminderScheduler.STARTED_LOOKBACK_MS
                     )
                 }
 

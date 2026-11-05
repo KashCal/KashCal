@@ -122,6 +122,14 @@ class DayIconsTest {
             }
     }
 
+    @Test
+    fun `the Kash icon has its own themed silhouette`() {
+        assertEquals(
+            R.mipmap.ic_launcher_kash_monochrome,
+            layerDrawables(R.mipmap.ic_launcher_kash)["monochrome"],
+        )
+    }
+
     /**
      * Asserts [themed] is day [day]'s foreground numeral (same digits, font, size and x position)
      * moved down by [THEMED_NUMERAL_DROP], so each themed glyph shows its own day.

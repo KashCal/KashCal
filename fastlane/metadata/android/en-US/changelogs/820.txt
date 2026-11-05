@@ -1,0 +1,4 @@
+• Sync: large attachments sync, and one bad event no longer stops a calendar
+• Reminders: survive edits, and today's all-day reminder is always set (#425)
+• Readability: past events fade less (#426)
+• App icon: new Kash icon

@@ -45,12 +45,17 @@ class AppIconPresetTest {
             org.onekash.kashcal.R.mipmap.ic_launcher_supporter_foreground,
             AppIconPreset.SUPPORTER.previewForegroundFor(sampleDays[0]),
         )
+        assertEquals(
+            org.onekash.kashcal.R.mipmap.ic_launcher_kash_foreground,
+            AppIconPreset.KASH.previewForegroundFor(sampleDays[0]),
+        )
     }
 
     @Test
     fun `static presets resolve to their own fixed alias on any date`() {
         val expected = mapOf(
             AppIconPreset.DEFAULT to ".MainActivityDefault",
+            AppIconPreset.KASH to ".MainActivityKash",
             AppIconPreset.SUPPORTER to ".MainActivitySupporter",
             AppIconPreset.SUPPORTER_CALENDAR to ".MainActivitySupporterCalendar",
         )
@@ -70,9 +75,9 @@ class AppIconPresetTest {
     }
 
     @Test
-    fun `the alias list holds the three static aliases and one per day, all distinct`() {
-        assertEquals(34, LauncherAliases.ALL.size)
-        assertEquals(34, LauncherAliases.ALL.toSet().size)
+    fun `the alias list holds the four static aliases and one per day, all distinct`() {
+        assertEquals(35, LauncherAliases.ALL.size)
+        assertEquals(35, LauncherAliases.ALL.toSet().size)
         assertTrue(LauncherAliases.ALL.containsAll((1..31).map { ".MainActivityDay$it" }))
         assertTrue(LauncherAliases.ALL.contains(".MainActivityDefault"))
     }

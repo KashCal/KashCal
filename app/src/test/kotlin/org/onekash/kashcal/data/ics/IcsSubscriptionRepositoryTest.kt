@@ -404,6 +404,7 @@ class IcsSubscriptionRepositoryTest {
         repository.setSubscriptionEnabled(1L, false)
 
         coVerify(exactly = 0) { reminderScheduler.cancelRemindersForEvent(any()) }
+        coVerify(exactly = 0) { reminderScheduler.reconcileRemindersForEvent(any()) }
         coVerify { icsSubscriptionsDao.setEnabled(1L, false) }
     }
 
@@ -417,6 +418,7 @@ class IcsSubscriptionRepositoryTest {
         // Enabling cancels nothing; the refresh reschedules reminders when the feed returns a
         // body.
         coVerify(exactly = 0) { reminderScheduler.cancelRemindersForEvent(any()) }
+        coVerify(exactly = 0) { reminderScheduler.reconcileRemindersForEvent(any()) }
         coVerify { icsSubscriptionsDao.setEnabled(1L, true) }
     }
 

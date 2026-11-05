@@ -306,6 +306,35 @@ class ScheduledRemindersDaoTest {
     }
 
     @Test
+    fun `getAllForEvent returns the event's rows in every status`() = runTest {
+        val ids = ReminderStatus.entries.map { remindersDao.insert(createReminder(status = it)) }
+
+        assertEquals(ids.toSet(), remindersDao.getAllForEvent(testEventId).map { it.id }.toSet())
+    }
+
+    @Test
+    fun `updateDisplayForEvent rewrites the display copy of the event's rows only`() = runTest {
+        val otherEventId = database.eventsDao().insert(
+            Event(
+                uid = "other-uid", calendarId = testCalendarId, title = "Other",
+                startTs = 0L, endTs = 1L, dtstamp = 0L
+            )
+        )
+        val id = remindersDao.insert(createReminder(status = ReminderStatus.FIRED))
+        val otherId = remindersDao.insert(createReminder(eventId = otherEventId))
+
+        remindersDao.updateDisplayForEvent(testEventId, "Renamed", "Room 2", isAllDay = true, calendarColor = 7)
+
+        val row = remindersDao.getById(id)!!
+        assertEquals("Renamed", row.eventTitle)
+        assertEquals("Room 2", row.eventLocation)
+        assertTrue(row.isAllDay)
+        assertEquals(7, row.calendarColor)
+        assertEquals(ReminderStatus.FIRED, row.status)
+        assertEquals("Test Event", remindersDao.getById(otherId)!!.eventTitle)
+    }
+
+    @Test
     fun `deleteForEvent removes all reminders for event`() = runTest {
         remindersDao.insert(createReminder())
         remindersDao.insert(createReminder())

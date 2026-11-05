@@ -961,6 +961,66 @@ class ICalEventMapperTest {
         )
     }
 
+    private fun icsWithLines(uid: String, vararg extraLines: String): String =
+        (listOf(
+            "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Test//Test//EN", "BEGIN:VEVENT",
+            "UID:$uid", "DTSTAMP:20251220T100000Z", "DTSTART:20251225T100000Z",
+            "DTEND:20251225T110000Z", "SUMMARY:Large values",
+        ) + extraLines + listOf("END:VEVENT", "END:VCALENDAR")).joinToString("\r\n") + "\r\n"
+
+    @Test
+    fun `unknown property values over 25000 chars stay out of extraProperties`() {
+        val ics = icsWithLines(
+            "large-001@kashcal.test",
+            "X-LONG-NOTE:" + "a".repeat(25_001),
+            "X-SHORT-NOTE:short value",
+        )
+        val events = parser.parseAllEvents(ics).getOrNull()!!
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
+
+        assertEquals(mapOf("X-SHORT-NOTE" to "short value"), entity.extraProperties)
+    }
+
+    @Test
+    fun `an unknown property value of exactly 25000 chars is kept in extraProperties`() {
+        val value = "b".repeat(25_000)
+        val ics = icsWithLines("large-002@kashcal.test", "X-EDGE-NOTE:$value")
+        val events = parser.parseAllEvents(ics).getOrNull()!!
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
+
+        assertEquals(value, entity.extraProperties?.get("X-EDGE-NOTE"))
+    }
+
+    @Test
+    fun `a large inline ATTACH stays in rawIcal and out of extraProperties`() {
+        val ics = icsWithLines(
+            "large-003@kashcal.test",
+            "ATTACH;FMTTYPE=application/pdf;ENCODING=BASE64;VALUE=BINARY:" + "QUJD".repeat(7_500),
+        )
+        val events = parser.parseAllEvents(ics).getOrNull()!!
+        assertTrue(
+            "the parser collects ATTACH as an unknown property",
+            events.first().rawProperties.keys.any { it.startsWith("ATTACH") }
+        )
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
+
+        assertNull("every unknown value was omitted, so the map is null", entity.extraProperties)
+        assertEquals("the stored copy is kept as passed in", ics, entity.rawIcal)
+    }
+
+    @Test
+    fun `without a stored copy a large unknown value is still left out of extraProperties`() {
+        val ics = icsWithLines(
+            "large-004@kashcal.test",
+            "X-ALT-DESC;FMTTYPE=text/html:" + "<p>x</p>".repeat(4_000),
+            "X-SHORT-NOTE:kept",
+        )
+        val events = parser.parseAllEvents(ics).getOrNull()!!
+        val entity = ICalEventMapper.toEntity(events.first(), null, 1L, null, null).event
+
+        assertEquals(mapOf("X-SHORT-NOTE" to "kept"), entity.extraProperties)
+    }
+
     // ========== RFC 5545/7986 Extended Properties Tests ==========
 
     @Test

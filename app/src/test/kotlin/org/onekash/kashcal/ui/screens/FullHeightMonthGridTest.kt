@@ -47,6 +47,7 @@ import org.junit.runner.RunWith
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.planner.PlannerTestEvents
 import org.onekash.kashcal.domain.planner.PlannerTestEvents.at
+import org.onekash.kashcal.ui.components.DEEMPHASIZED_ALPHA
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
@@ -420,7 +421,13 @@ class FullHeightMonthGridTest {
         val past = chipEdgeColor("Past")
         val coming = chipEdgeColor("Coming")
         assertTrue("coming chip is full red: $coming", coming.red > 0.9f && coming.green < 0.1f)
-        assertTrue("past chip is half red on the surface: $past", past.red > 0.9f && past.green in 0.35f..0.65f)
+        // Red at DEEMPHASIZED_ALPHA over the white surface: green and blue are
+        // 1 - DEEMPHASIZED_ALPHA.
+        val wantGreen = 1 - DEEMPHASIZED_ALPHA
+        assertTrue(
+            "past chip is red at DEEMPHASIZED_ALPHA on the surface: $past",
+            past.red > 0.9f && past.green in (wantGreen - 0.05f)..(wantGreen + 0.05f),
+        )
     }
 
     // -------- Nothing outside its week row --------

@@ -42,6 +42,9 @@ object ICalEventMapper {
      */
     const val UTC_SERIES_ZONE = "UTC"
 
+    /** Longest unknown property value [toEntity] copies into [Event.extraProperties]. */
+    const val MAX_EXTRA_PROPERTY_VALUE_CHARS = 25_000
+
     /**
      * Returns the zone [Event.timezone] stores for [icalEvent]: [UTC_SERIES_ZONE] for a timed
      * series (an RRULE) whose DTSTART is a UTC time, else DTSTART's own zone (null for a UTC or
@@ -59,7 +62,7 @@ object ICalEventMapper {
 
     /**
      * Maps [icalEvent] to a synced Room event plus its ATTENDEE rows; see [MappedEntity] for
-     * the attendee `eventId` rule.
+     * the attendee `eventId` rule, and [Event.extraProperties] for which unknown values it keeps.
      *
      * @param rawIcal the stored copy kept for round trips ([Event.rawIcal]): the server's resource
      *   on the pull, the file's text for its UID on a file import.
@@ -169,7 +172,9 @@ object ICalEventMapper {
             originalSyncId = null,
             reminders = reminders,
             alarmCount = alarmCount,
-            extraProperties = icalEvent.rawProperties.takeIf { it.isNotEmpty() },
+            extraProperties = icalEvent.rawProperties
+                .filterValues { it.length <= MAX_EXTRA_PROPERTY_VALUE_CHARS }
+                .takeIf { it.isNotEmpty() },
             rawIcal = rawIcal,
             // RFC 5545/7986 extended properties
             priority = icalEvent.priority,

@@ -178,9 +178,9 @@ class PickerSheetSelectableSemanticsTest {
                 )
             }
         }
-        // radioCount = 4 (the four icon rows) asserts the "Support KashCal" footer (a Role.Button
+        // radioCount = 5 (the five icon rows) asserts the "Support KashCal" footer (a Role.Button
         // action row) and the info note aren't radios.
-        assertRadioGroupSemantics(selectedLabel = "Default", unselectedLabel = "Supporter", radioCount = 4)
+        assertRadioGroupSemantics(selectedLabel = "Default", unselectedLabel = "Supporter", radioCount = 5)
         composeTestRule.onNodeWithText("Support KashCal")
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
         composeTestRule.onNodeWithText("Supporter").performClick()
@@ -202,9 +202,29 @@ class PickerSheetSelectableSemanticsTest {
                 )
             }
         }
-        assertRadioGroupSemantics(selectedLabel = "Today's date", unselectedLabel = "Default", radioCount = 4)
+        assertRadioGroupSemantics(selectedLabel = "Today's date", unselectedLabel = "Default", radioCount = 5)
         composeTestRule.onNodeWithText("Today's date").performClick()
         assertEquals(AppIconPreset.TODAYS_DATE, picked)
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Test
+    fun `the Kash icon is a radio row that reports its preset`() {
+        var picked: AppIconPreset? = null
+        composeTestRule.setContent {
+            MaterialTheme {
+                AppIconSheet(
+                    sheetState = rememberModalBottomSheetState(),
+                    currentPreset = AppIconPreset.KASH,
+                    onPresetSelect = { picked = it },
+                    onSupportClick = {},
+                    onDismiss = {},
+                )
+            }
+        }
+        assertRadioGroupSemantics(selectedLabel = "Kash", unselectedLabel = "Default", radioCount = 5)
+        composeTestRule.onNodeWithText("Default").performClick()
+        assertEquals(AppIconPreset.DEFAULT, picked)
     }
 
     // ==================== Sync frequency ====================

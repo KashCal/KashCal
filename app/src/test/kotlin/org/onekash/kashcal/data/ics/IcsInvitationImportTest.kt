@@ -477,7 +477,7 @@ class IcsInvitationImportTest {
         assertEquals(1, result.updated)
         val exception = rows(localId).single { it.originalEventId == masterId }
         assertEquals("CONFIRMED", exception.status)
-        coVerify { reminders.cancelRemindersForEvent(exception.id) }
+        coVerify { reminders.reconcileRemindersForEvent(match { it.id == exception.id }) }
         coVerify { reminders.scheduleRemindersForEvent(match { it.id == exception.id }, any(), any()) }
     }
 

@@ -771,19 +771,23 @@ class EventReader @Inject constructor(
     }
 
     /**
-     * Returns [eventId]'s non-cancelled occurrences starting between now and [windowDays] days
-     * ahead, for scheduling reminder alarms. Callers pass the reminder scheduler's occurrence
-     * look-ahead, and the scheduler arms only the reminders due soon.
+     * Returns [eventId]'s non-cancelled occurrences starting between [startedWithinMs] ago and
+     * [windowDays] days ahead, for scheduling reminder alarms. Callers pass the reminder
+     * scheduler's occurrence look-ahead and started look-back, and the scheduler arms only the
+     * reminders whose own time is due soon.
      */
     suspend fun getOccurrencesForEventInScheduleWindow(
         eventId: Long,
-        windowDays: Int
+        windowDays: Int,
+        startedWithinMs: Long
     ): List<Occurrence> {
         val now = System.currentTimeMillis()
         val windowEnd = now + (windowDays.toLong() * 24 * 60 * 60 * 1000)
 
         return occurrencesDao.getForEvent(eventId)
-            .filter { !it.isCancelled && it.startTs >= now && it.startTs <= windowEnd }
+            .filter {
+                !it.isCancelled && it.startTs >= now - startedWithinMs && it.startTs <= windowEnd
+            }
     }
 
     /**

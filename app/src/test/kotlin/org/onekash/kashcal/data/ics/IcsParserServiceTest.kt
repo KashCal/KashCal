@@ -47,6 +47,22 @@ class IcsParserServiceTest {
     }
 
     @Test
+    fun `a feed event keeps a large HTML description out of extraProperties`() {
+        val ics = listOf(
+            "BEGIN:VCALENDAR", "VERSION:2.0", "BEGIN:VEVENT", "UID:html@test.com",
+            "DTSTART:20231215T140000Z", "DTEND:20231215T150000Z", "SUMMARY:Newsletter",
+            "X-ALT-DESC;FMTTYPE=text/html:" + "<b>x</b>".repeat(4_000),
+            "X-FEED-TAG:kept",
+            "END:VEVENT", "END:VCALENDAR",
+        ).joinToString("\r\n")
+
+        val events = IcsParserService.parseIcsContent(ics, CALENDAR_ID, SUBSCRIPTION_ID)
+
+        assertEquals(1, events.size)
+        assertEquals(mapOf("X-FEED-TAG" to "kept"), events[0].extraProperties)
+    }
+
+    @Test
     fun `parses multiple events`() {
         val ics = """
             BEGIN:VCALENDAR

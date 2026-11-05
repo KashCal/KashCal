@@ -417,11 +417,13 @@ class PullStrategy @Inject constructor(
      *
      * Use one resolver per deletion loop: the canonical candidate map loads once, on the first
      * exact-match miss, and is reused. On servers that re-encode every href every lookup misses
-     * the exact match, and a reload per lookup would cost deletions x calendar size. The cache
-     * must not outlive the loop.
+     * the exact match, and a reload per lookup would cost deletions x calendar size. A failed
+     * load is kept too: every later miss in the loop fails with it, without reading again. The
+     * cache must not outlive the loop.
      */
     private fun caldavUrlResolver(calendarId: Long): suspend (String) -> Event? {
         var canonicalMap: Map<String, Event>? = null
+        var loadFailure: Exception? = null
         return resolve@{ url ->
             // caldav_url is not unique: a recurring master and its exceptions share one server
             // resource, and a row moved to another calendar keeps the source URL. The exact
@@ -432,18 +434,26 @@ class PullStrategy @Inject constructor(
                 ?.takeIf { it.calendarId == calendarId && it.originalEventId == null }
                 ?.let { return@resolve it }
             val target = CaldavUrlNormalizer.canonicalize(url) ?: return@resolve null
-            val map = canonicalMap ?: eventsDao.getEventsWithCaldavUrl(calendarId)
-                // A master and its exceptions canonicalize to the same key. toMap() is
-                // last-wins, so masters sort last: deleting a master cascades to its
-                // exceptions, while resolving to an exception would drop one occurrence and
-                // leave the master pointing at a resource the server no longer has.
-                .sortedBy { it.originalEventId == null }
-                .mapNotNull { e ->
-                    val u = e.caldavUrl ?: return@mapNotNull null
-                    (CaldavUrlNormalizer.canonicalize(u) ?: u) to e
-                }
-                .toMap()
-                .also { canonicalMap = it }
+            loadFailure?.let { throw it }
+            val map = canonicalMap ?: try {
+                eventsDao.getEventsWithCaldavUrl(calendarId)
+                    // A master and its exceptions canonicalize to the same key. toMap() is
+                    // last-wins, so masters sort last: deleting a master cascades to its
+                    // exceptions, while resolving to an exception would drop one occurrence and
+                    // leave the master pointing at a resource the server no longer has.
+                    .sortedBy { it.originalEventId == null }
+                    .mapNotNull { e ->
+                        val u = e.caldavUrl ?: return@mapNotNull null
+                        (CaldavUrlNormalizer.canonicalize(u) ?: u) to e
+                    }
+                    .toMap()
+                    .also { canonicalMap = it }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                loadFailure = e
+                throw e
+            }
             map[target]
         }
     }
@@ -498,7 +508,15 @@ class PullStrategy @Inject constructor(
         // deletion and its notification twice.
         for (href in syncReport.deleted.distinct()) {
             val url = quirks.buildEventUrl(href, calendar.caldavUrl)
-            val event = resolveLocalEvent(url)
+            // A failed lookup deletes nothing for this URL; see [recordProcessingFailure].
+            val event = try {
+                resolveLocalEvent(url)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                recordProcessingFailure(sessionBuilder, url, "deletion", e)
+                continue
+            }
             if (event != null) {
                 // Local-first: an event with pending local changes may have been edited or
                 // recreated offline, so it stays. A recently pushed event stays too: RFC 4791
@@ -538,12 +556,13 @@ class PullStrategy @Inject constructor(
                 Log.w(TAG, "Cleaned up $dedupedCount duplicate master events during incremental sync (no changes)")
             }
             sessionBuilder?.addDeleted(deleted)
+            val token = tokenAfterRecordedFailures(calendar, syncReport.syncToken, sessionBuilder)
             return PullResult.Success(
                 eventsAdded = 0,
                 eventsUpdated = 0,
                 eventsDeleted = deleted,
-                newSyncToken = syncReport.syncToken,
-                newCtag = null,
+                newSyncToken = token.value,
+                newCtag = if (token.held) calendar.ctag else null,
                 changes = deletedChanges
             )
         }
@@ -576,32 +595,58 @@ class PullStrategy @Inject constructor(
 
         val allChanges = deletedChanges + processResult.changes
 
-        // Hold or advance the sync-token. Missing events hold it first; parse errors hold it
-        // for up to MAX_PARSE_RETRIES syncs, then it advances and abandons them.
-        val parseErrorCount = sessionBuilder?.getSkippedParseError() ?: 0
+        // Missing events hold the token first; skipped events follow
+        // [tokenAfterRecordedFailures].
+        val token = if (hasMissingEvents) {
+            Log.w(TAG, "NOT advancing sync token due to ${missingHrefs.size} missing events")
+            sessionBuilder?.setTokenAdvanced(false)
+            SyncTokenDecision(calendar.syncToken, held = true)  // the next sync re-fetches them
+        } else {
+            tokenAfterRecordedFailures(calendar, syncReport.syncToken, sessionBuilder)
+        }
+
+        return PullResult.Success(
+            eventsAdded = processResult.added,
+            eventsUpdated = processResult.updated,
+            eventsDeleted = deleted,
+            newSyncToken = token.value,
+            newCtag = if (token.held) calendar.ctag else null,
+            changes = allChanges
+        )
+    }
+
+    /** The sync-token an incremental pull stores, and whether it is the calendar's own, held. */
+    private data class SyncTokenDecision(val value: String?, val held: Boolean)
+
+    /**
+     * Decides the sync-token an incremental pull stores: [serverToken], unless this pull skipped
+     * events (parse failures and [recordProcessingFailure]). Those hold [calendar]'s token for up
+     * to MAX_PARSE_RETRIES syncs, so the next pull is sent the same changes again, then it
+     * advances and abandons them. A held token keeps the old ctag too (both returns of
+     * [pullIncremental] pass [SyncTokenDecision.held] on), or the next ctag probe would skip the
+     * retry.
+     */
+    private suspend fun tokenAfterRecordedFailures(
+        calendar: Calendar,
+        serverToken: String?,
+        sessionBuilder: SyncSessionBuilder?,
+    ): SyncTokenDecision {
+        val skippedCount = sessionBuilder?.getSkippedParseError() ?: 0
         val currentRetryCount = dataStore.getParseFailureRetryCount(calendar.id)
-
-        val effectiveSyncToken = when {
-            hasMissingEvents -> {
-                Log.w(TAG, "NOT advancing sync token due to ${missingHrefs.size} missing events")
-                sessionBuilder?.setTokenAdvanced(false)
-                calendar.syncToken  // the next sync re-fetches them
-            }
-
-            // Parse-error retry (v16.7.0).
-            parseErrorCount > 0 && currentRetryCount < MAX_PARSE_RETRIES -> {
+        return when {
+            skippedCount > 0 && currentRetryCount < MAX_PARSE_RETRIES -> {
                 val newCount = dataStore.incrementParseFailureRetry(calendar.id)
-                Log.w(TAG, "NOT advancing sync token due to $parseErrorCount parse errors (retry $newCount/$MAX_PARSE_RETRIES)")
+                Log.w(TAG, "NOT advancing sync token due to $skippedCount skipped events (retry $newCount/$MAX_PARSE_RETRIES)")
                 sessionBuilder?.setTokenAdvanced(false)
-                calendar.syncToken
+                SyncTokenDecision(calendar.syncToken, held = true)
             }
 
-            parseErrorCount > 0 && currentRetryCount >= MAX_PARSE_RETRIES -> {
-                Log.w(TAG, "Advancing sync token despite $parseErrorCount parse errors (max retries reached)")
+            skippedCount > 0 -> {
+                Log.w(TAG, "Advancing sync token despite $skippedCount skipped events (max retries reached)")
                 dataStore.resetParseFailureRetry(calendar.id)
-                sessionBuilder?.setAbandonedParseErrors(parseErrorCount)
+                sessionBuilder?.setAbandonedParseErrors(skippedCount)
                 sessionBuilder?.setTokenAdvanced(true)
-                syncReport.syncToken  // abandons the unparseable events
+                SyncTokenDecision(serverToken, held = false)  // abandons the skipped events
             }
 
             else -> {
@@ -610,19 +655,9 @@ class PullStrategy @Inject constructor(
                     Log.d(TAG, "Reset parse failure retry count for calendar ${calendar.id}")
                 }
                 sessionBuilder?.setTokenAdvanced(true)
-                syncReport.syncToken
+                SyncTokenDecision(serverToken, held = false)
             }
         }
-
-        return PullResult.Success(
-            eventsAdded = processResult.added,
-            eventsUpdated = processResult.updated,
-            eventsDeleted = deleted,
-            newSyncToken = effectiveSyncToken,
-            // A held token keeps the old ctag too, so the next ctag probe doesn't skip the retry.
-            newCtag = if (effectiveSyncToken == calendar.syncToken) calendar.ctag else null,
-            changes = allChanges
-        )
     }
 
     /**
@@ -878,7 +913,15 @@ class PullStrategy @Inject constructor(
         val deletedChanges = mutableListOf<SyncChange>()
         val resolveLocalEvent = caldavUrlResolver(calendar.id)
         for (url in deletedUrls) {
-            val event = resolveLocalEvent(url)
+            // A failed lookup deletes nothing for this URL; see [recordProcessingFailure].
+            val event = try {
+                resolveLocalEvent(url)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                recordProcessingFailure(sessionBuilder, url, "deletion", e)
+                continue
+            }
             if (event != null) {
                 // Same keep rule as the delta's deletions in pullIncremental.
                 if (event.hasPendingChanges() || event.id in recentlyPushedEventIds) {
@@ -981,15 +1024,20 @@ class PullStrategy @Inject constructor(
 
     /**
      * Records a per-event processing failure with the same accounting as a malformed-ICS parse
-     * failure. The master pass, the synthetic-master insert and the exception pass all call it,
-     * so the isolation policy can't drift between them.
+     * failure, so a failure in one of the calls below fails only that event, not the calendar's
+     * pull. The series and changed-occurrence lookups and writes, the synthetic-master insert and
+     * each server-reported deletion all call it, so the isolation policy can't drift between
+     * them. Reads of a whole calendar (the deletion URL map, [pullFull]'s stale check) are not
+     * isolated: one unreadable row fails them. A failed deletion deletes nothing; the local row
+     * stays until a later pull removes it, if any does.
      *
      * Recovery depends on the pull path. [pullIncremental] reads getSkippedParseError() and
-     * holds the sync-token for up to MAX_PARSE_RETRIES syncs before abandoning, so a transient
-     * failure is re-fetched. [pullFull] and [pullWithEtagComparison] don't read the count and
-     * advance the token and ctag regardless, so a skipped event is re-fetched only when the
-     * server next changes it or on a forced full sync. Either way only the one event is lost;
-     * the rest of the batch lands.
+     * holds the sync-token for up to MAX_PARSE_RETRIES syncs before abandoning
+     * ([tokenAfterRecordedFailures]), so a transient failure is sent again. [pullFull] and
+     * [pullWithEtagComparison] don't read the count and advance the token and ctag regardless,
+     * so a skipped event is re-fetched only when the server next changes it or on a forced full
+     * sync; a skipped deletion there is found again only by a later etag comparison or full pull.
+     * Either way the rest of the batch lands.
      */
     private fun recordProcessingFailure(
         sessionBuilder: SyncSessionBuilder?,
@@ -1030,7 +1078,8 @@ class PullStrategy @Inject constructor(
         // First pass: parse every resource and split masters from exceptions.
         val masterEvents = mutableListOf<ParsedEventWithMeta>()
         val exceptionEvents = mutableListOf<ParsedEventWithMeta>()
-        // UIDs whose series the master pass held for a pending attendee-side cancel.
+        // UIDs whose changed occurrences the exception pass skips: the master pass held the
+        // series for a pending attendee-side cancel, or couldn't read its local row.
         val heldUids = mutableSetOf<String>()
 
         for (serverEvent in serverEvents) {
@@ -1124,8 +1173,17 @@ class PullStrategy @Inject constructor(
             // caldavUrl fallback is a global query, and a row moved to another calendar keeps
             // its old URL, so only a hit in this calendar counts; adopting another calendar's
             // row would overwrite live data and drag it back here.
-            val existingEvent = eventsDao.getMasterByUidAndCalendar(meta.parsed.uid, calendar.id)
-                ?: eventsDao.getByCaldavUrl(meta.caldavUrl)?.takeIf { it.calendarId == calendar.id }
+            val existingEvent = try {
+                eventsDao.getMasterByUidAndCalendar(meta.parsed.uid, calendar.id)
+                    ?: eventsDao.getByCaldavUrl(meta.caldavUrl)?.takeIf { it.calendarId == calendar.id }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                recordProcessingFailure(sessionBuilder, meta.caldavUrl, "event", e)
+                // Its changed occurrences would otherwise find no series and get a placeholder.
+                heldUids += meta.parsed.uid
+                continue
+            }
 
             // Local-first: PushStrategy sends pending local changes first; the server wins only
             // after they are synced, or the local edit would be lost.
@@ -1354,8 +1412,14 @@ class PullStrategy @Inject constructor(
             // master saved in an earlier sync. It also returns a synthetic placeholder
             // (rrule null, `original_event_id IS NULL`), so exceptions keep linking to one row
             // until the real master replaces it.
-            var masterEvent = uidToMasterEvent[meta.parsed.uid]
-                ?: eventsDao.getMasterByUidAndCalendar(meta.parsed.uid, calendar.id)
+            var masterEvent = uidToMasterEvent[meta.parsed.uid] ?: try {
+                eventsDao.getMasterByUidAndCalendar(meta.parsed.uid, calendar.id)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                recordProcessingFailure(sessionBuilder, meta.caldavUrl, "exception", e)
+                continue
+            }
 
             if (masterEvent == null) {
                 // Orphan exception: no master in this batch or in Room, and no synthetic from an
@@ -1413,12 +1477,19 @@ class PullStrategy @Inject constructor(
 
             // UID + instance time (RFC 5545) are server-stable, so the lookup survives a change
             // of master row id.
-            val existingException = originalInstanceTime?.let {
-                eventsDao.getExceptionByUidAndInstanceTime(
-                    uid = meta.parsed.uid,
-                    calendarId = calendar.id,
-                    originalInstanceTime = it
-                )
+            val existingException = try {
+                originalInstanceTime?.let {
+                    eventsDao.getExceptionByUidAndInstanceTime(
+                        uid = meta.parsed.uid,
+                        calendarId = calendar.id,
+                        originalInstanceTime = it
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                recordProcessingFailure(sessionBuilder, meta.caldavUrl, "exception", e)
+                continue
             }
 
             if (existingException != null && existingException.hasPendingChanges()) {
@@ -1682,7 +1753,19 @@ class PullStrategy @Inject constructor(
                 ?.mapNotNull { it.trim().toLongOrNull() }
                 ?.toSet()
                 .orEmpty()
-            val localExceptions = eventsDao.getExceptionsForMaster(master.id)
+            // A read failure skips this series' prune and deletes nothing; the next pull that
+            // saves the series tries again.
+            val localExceptions = try {
+                eventsDao.getExceptionsForMaster(master.id)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Prune skipped for uid=$uid: ${e.message}", e)
+                sessionBuilder?.addWarning(
+                    "Could not check changed occurrences at ${filenameOf(master.caldavUrl.orEmpty())}: ${e.message}"
+                )
+                continue
+            }
             for (ex in localExceptions) {
                 val instance = ex.originalInstanceTime ?: continue
                 if (instance in present) continue

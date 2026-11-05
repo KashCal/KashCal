@@ -668,8 +668,9 @@ class IcsSubscriptionRepository @Inject constructor(
      *
      * An exception gets its one linked occurrence. Failures are logged and don't fail the sync.
      *
-     * @param isModified cancels the event's existing reminders first, so a time change doesn't
-     *   leave the old alarms.
+     * @param isModified reconciles the event's existing reminders first
+     *   ([ReminderScheduler.reconcileRemindersForEvent]), so a time change doesn't leave the old
+     *   alarms and an unchanged reminder keeps its row.
      */
     private suspend fun scheduleRemindersForEvent(
         event: Event,
@@ -680,14 +681,16 @@ class IcsSubscriptionRepository @Inject constructor(
 
         try {
             if (isModified) {
-                reminderScheduler.cancelRemindersForEvent(event.id)
+                reminderScheduler.reconcileRemindersForEvent(event)
             }
 
             val occurrences = if (event.originalEventId != null) {
                 listOfNotNull(eventReader.getOccurrenceByExceptionEventId(event.id))
             } else {
                 eventReader.getOccurrencesForEventInScheduleWindow(
-                    event.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS
+                    event.id,
+                    ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS,
+                    ReminderScheduler.STARTED_LOOKBACK_MS
                 )
             }
 

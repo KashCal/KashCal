@@ -216,4 +216,27 @@ class PushStrategyStoredCopyTest {
 
         assertEquals("e1", database.eventsDao().getById(seriesId)!!.etag)
     }
+
+    @Test
+    fun `a large inline attachment survives an edit and upload`() = runTest {
+        // About 1.2 MB of base64: stored twice in one row it passes Android's 2 MB cursor window.
+        val attachValue = "QUJD".repeat(300_000)
+        val big = listOf(
+            "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Other Client//EN",
+            "BEGIN:VEVENT", "UID:$uid", "DTSTAMP:20261101T100000Z",
+            "DTSTART:20261201T100000Z", "DTEND:20261201T110000Z", "SUMMARY:Contract review",
+            "ATTACH;FMTTYPE=application/pdf;ENCODING=BASE64;VALUE=BINARY:$attachValue",
+            "END:VEVENT", "END:VCALENDAR", "",
+        ).joinToString("\r\n")
+        seedPulled(big)
+
+        val stored = database.eventsDao().getById(seriesId)!!
+        eventWriter.updateEvent(stored.copy(title = "Contract review (edited)"), isLocal = false)
+        push()
+
+        val onServer = unfold(dav.body(path))
+        assertTrue("the edit reached the server", "SUMMARY:Contract review (edited)" in onServer)
+        val attachLine = onServer.lines().single { it.startsWith("ATTACH") }
+        assertEquals("the attachment goes back unchanged", attachValue, attachLine.substringAfter(':').trimEnd())
+    }
 }

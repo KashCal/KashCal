@@ -9,6 +9,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.domain.model.DisplayEvent
+import org.onekash.kashcal.ui.components.DEEMPHASIZED_ALPHA
 import java.time.ZoneOffset
 
 class MonthFullSpanLayoutTest {
@@ -946,17 +947,25 @@ class MonthFullSpanLayoutTest {
     @Test
     fun `an event fades when past, declined or cancelled and more outside the month`() {
         assertEquals(1f, monthEventAlpha(isOutDate = false, isPast = false, isDeclined = false, isCancelled = false))
-        assertEquals(0.5f, monthEventAlpha(isOutDate = false, isPast = true, isDeclined = false, isCancelled = false))
-        assertEquals(0.5f, monthEventAlpha(isOutDate = false, isPast = false, isDeclined = true, isCancelled = false))
-        assertEquals(0.5f, monthEventAlpha(isOutDate = false, isPast = false, isDeclined = false, isCancelled = true))
+        assertEquals(DEEMPHASIZED_ALPHA, monthEventAlpha(isOutDate = false, isPast = true, isDeclined = false, isCancelled = false))
+        assertEquals(DEEMPHASIZED_ALPHA, monthEventAlpha(isOutDate = false, isPast = false, isDeclined = true, isCancelled = false))
+        assertEquals(DEEMPHASIZED_ALPHA, monthEventAlpha(isOutDate = false, isPast = false, isDeclined = false, isCancelled = true))
         assertEquals(0.4f, monthEventAlpha(isOutDate = true, isPast = false, isDeclined = false, isCancelled = false))
         assertEquals(0.4f, monthEventAlpha(isOutDate = true, isPast = true, isDeclined = true, isCancelled = false))
     }
 
     @Test
+    fun `an out-of-month event stays fainter than a dimmed in-month event`() {
+        assertTrue(
+            monthEventAlpha(isOutDate = true, isPast = false, isDeclined = false, isCancelled = false) <
+                monthEventAlpha(isOutDate = false, isPast = true, isDeclined = false, isCancelled = false),
+        )
+    }
+
+    @Test
     fun `a past date number fades unless it is the selected day`() {
         assertEquals(1f, monthDateNumberAlpha(isPastDay = false, isSelected = false))
-        assertEquals(0.6f, monthDateNumberAlpha(isPastDay = true, isSelected = false))
+        assertEquals(DEEMPHASIZED_ALPHA, monthDateNumberAlpha(isPastDay = true, isSelected = false))
         assertEquals(1f, monthDateNumberAlpha(isPastDay = true, isSelected = true))
     }
 }

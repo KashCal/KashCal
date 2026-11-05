@@ -8,11 +8,18 @@ import org.junit.Test
 /**
  * Tests [declinedCardAlpha] and [declinedTitleDecoration].
  *
- * Declined and cancelled events render at 50% alpha with strikethrough on the
- * title. Past events also render at 50%. When several apply, alpha caps at 0.5f
- * (not multiplied to 0.25f) so the event stays legible.
+ * Declined and cancelled events render at [DEEMPHASIZED_ALPHA] with strikethrough on
+ * the title. Past events also render at [DEEMPHASIZED_ALPHA]. When several apply, the
+ * alpha stays at [DEEMPHASIZED_ALPHA] (not multiplied) so the event stays legible.
  */
 class DeclinedVisualsTest {
+
+    @Test
+    fun `dimmed alpha is 0_65 so dimmed text passes WCAG AA in light and dark`() {
+        // #426: 0.5 gave onSurface text 3.3:1 (light) and 4.4:1 (dark) on the M3
+        // default surfaces, below AA's 4.5:1. 0.65 gives 5.2:1 and 6.6:1.
+        assertEquals(0.65f, DEEMPHASIZED_ALPHA)
+    }
 
     @Test
     fun `not declined and not past returns full alpha and null decoration`() {
@@ -21,32 +28,32 @@ class DeclinedVisualsTest {
     }
 
     @Test
-    fun `past only returns half alpha and null decoration`() {
-        assertEquals(0.5f, declinedCardAlpha(isPast = true, isDeclined = false))
+    fun `past only returns dimmed alpha and null decoration`() {
+        assertEquals(DEEMPHASIZED_ALPHA, declinedCardAlpha(isPast = true, isDeclined = false))
         assertNull(declinedTitleDecoration(isDeclined = false))
     }
 
     @Test
-    fun `declined only returns half alpha and LineThrough`() {
-        assertEquals(0.5f, declinedCardAlpha(isPast = false, isDeclined = true))
+    fun `declined only returns dimmed alpha and LineThrough`() {
+        assertEquals(DEEMPHASIZED_ALPHA, declinedCardAlpha(isPast = false, isDeclined = true))
         assertEquals(TextDecoration.LineThrough, declinedTitleDecoration(isDeclined = true))
     }
 
     @Test
-    fun `both flags cap at half alpha not quarter`() {
-        assertEquals(0.5f, declinedCardAlpha(isPast = true, isDeclined = true))
+    fun `both flags stay at dimmed alpha not compounded`() {
+        assertEquals(DEEMPHASIZED_ALPHA, declinedCardAlpha(isPast = true, isDeclined = true))
         assertEquals(TextDecoration.LineThrough, declinedTitleDecoration(isDeclined = true))
     }
 
     @Test
-    fun `cancelled only returns half alpha and LineThrough`() {
-        assertEquals(0.5f, declinedCardAlpha(isPast = false, isDeclined = false, isCancelled = true))
+    fun `cancelled only returns dimmed alpha and LineThrough`() {
+        assertEquals(DEEMPHASIZED_ALPHA, declinedCardAlpha(isPast = false, isDeclined = false, isCancelled = true))
         assertEquals(TextDecoration.LineThrough, declinedTitleDecoration(isDeclined = false, isCancelled = true))
     }
 
     @Test
-    fun `all three flags cap at half alpha not lower`() {
-        assertEquals(0.5f, declinedCardAlpha(isPast = true, isDeclined = true, isCancelled = true))
+    fun `all three flags stay at dimmed alpha not lower`() {
+        assertEquals(DEEMPHASIZED_ALPHA, declinedCardAlpha(isPast = true, isDeclined = true, isCancelled = true))
         assertEquals(TextDecoration.LineThrough, declinedTitleDecoration(isDeclined = true, isCancelled = true))
     }
 

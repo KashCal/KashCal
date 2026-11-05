@@ -1,3 +1,11 @@
+## [2026.11.04]
+
+- Fixed calendars that stopped syncing over one event; events with large attachments or HTML descriptions, up to about 2 MB, now sync and keep their attachment after an edit, and one bad event or failed upload no longer blocks the rest
+- Fixed reminders lost after an event changed; snoozed and showing reminders keep working, and today's all-day reminder is set even when the event arrives after midnight UTC (#425)
+- Changed past, declined and cancelled events to fade less so their text stays readable, in search results too (#426)
+- Fixed an open search and the day sheet keeping the old time zone after a zone change (#422)
+- Added a `Kash` app icon, and the date icon is now labelled `Calendar`
+
 ## [2026.11.03]
 
 ### Time zones (#422)

@@ -23,6 +23,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.robolectric.RobolectricTestRunner
+import org.onekash.kashcal.ui.components.DEEMPHASIZED_ALPHA
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import java.time.DayOfWeek
@@ -123,13 +124,14 @@ class TimeGridPastFadeTest {
     private val blue = Color(0xFF2196F3)
 
     /**
-     * Checks a pixel inside [title]'s block, drawn over a red event, is the blue fill at half
-     * alpha over the surface: each channel the plain average of the two, as alpha compositing
-     * gives. Seen through to the red event, the green channel would be about 0.42, not 0.78.
+     * Checks a pixel inside [title]'s block, drawn over a red event, is the blue fill at
+     * [DEEMPHASIZED_ALPHA] over the surface: each channel blue·a + surface·(1−a), as alpha
+     * compositing gives. Seen through to the red event, the green channel would be far lower.
      */
     private fun assertOpaqueOverRed(title: String) {
         val pixel = fillPixel(title)
-        val want = listOf(blue.red to surface.red, blue.green to surface.green, blue.blue to surface.blue).map { (a, b) -> (a + b) / 2 }
+        val want = listOf(blue.red to surface.red, blue.green to surface.green, blue.blue to surface.blue)
+            .map { (a, b) -> a * DEEMPHASIZED_ALPHA + b * (1 - DEEMPHASIZED_ALPHA) }
         val got = listOf(pixel.red, pixel.green, pixel.blue)
         for (i in 0..2) assertEquals("channel $i of $pixel, want $want", want[i], got[i], 0.02f)
     }

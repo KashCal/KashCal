@@ -279,7 +279,9 @@ class EventCoordinator @Inject constructor(
                 listOfNotNull(eventReader.getOccurrenceByExceptionEventId(event.id))
             } else {
                 eventReader.getOccurrencesForEventInScheduleWindow(
-                    event.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS
+                    event.id,
+                    ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS,
+                    ReminderScheduler.STARTED_LOOKBACK_MS
                 )
             }
 
@@ -295,14 +297,15 @@ class EventCoordinator @Inject constructor(
     }
 
     /**
-     * Cancels and re-arms [event]'s reminders.
+     * Brings [event]'s reminders in line with its edit: keeps the ones still valid
+     * ([ReminderScheduler.reconcileRemindersForEvent]) and arms the missing ones.
      *
      * Catches failures so the write that called it still succeeds; the daily
      * `ReminderRefreshWorker` re-arms whatever is missing.
      */
     private suspend fun rescheduleRemindersForEvent(event: Event) {
         try {
-            reminderScheduler.cancelRemindersForEvent(event.id)
+            reminderScheduler.reconcileRemindersForEvent(event)
             scheduleRemindersForEvent(event)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to reschedule reminders for event ${event.id}, " +

@@ -897,7 +897,7 @@ class CalDavSyncWorkerTest {
         coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns syncResult
         coEvery { eventReader.getEventById(eventId) } returns testEvent
         coEvery { eventReader.getCalendarById(calendarId) } returns testCalendar
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(eventId, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS) } returns listOf(testOccurrence)
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(eventId, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS, ReminderScheduler.STARTED_LOOKBACK_MS) } returns listOf(testOccurrence)
 
         // When
         worker.doWork()
@@ -905,10 +905,11 @@ class CalDavSyncWorkerTest {
         // Then
         coVerify { reminderScheduler.scheduleRemindersForEvent(testEvent, listOf(testOccurrence), any()) }
         coVerify(exactly = 0) { reminderScheduler.cancelRemindersForEvent(any()) }
+        coVerify(exactly = 0) { reminderScheduler.reconcileRemindersForEvent(any()) }
     }
 
     @Test
-    fun `sync cancels and reschedules reminders for MODIFIED events`() = runTest {
+    fun `sync reconciles and reschedules reminders for MODIFIED events`() = runTest {
         // Given
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
@@ -932,13 +933,13 @@ class CalDavSyncWorkerTest {
         coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns syncResult
         coEvery { eventReader.getEventById(eventId) } returns testEvent
         coEvery { eventReader.getCalendarById(calendarId) } returns testCalendar
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(eventId, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS) } returns listOf(testOccurrence)
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(eventId, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS, ReminderScheduler.STARTED_LOOKBACK_MS) } returns listOf(testOccurrence)
 
         // When
         worker.doWork()
 
-        // Then - a MODIFIED event has its reminders cancelled and rescheduled
-        coVerify { reminderScheduler.cancelRemindersForEvent(eventId) }
+        // Then - a MODIFIED event has its reminders reconciled and rescheduled
+        coVerify { reminderScheduler.reconcileRemindersForEvent(match { it.id == eventId }) }
         coVerify { reminderScheduler.scheduleRemindersForEvent(testEvent, listOf(testOccurrence), any()) }
     }
 
@@ -1041,14 +1042,14 @@ class CalDavSyncWorkerTest {
 
         // Then - an exception uses getOccurrenceByExceptionEventId, not the schedule window
         coVerify { eventReader.getOccurrenceByExceptionEventId(eventId) }
-        coVerify(exactly = 0) { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) }
+        coVerify(exactly = 0) { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) }
         coVerify { reminderScheduler.scheduleRemindersForEvent(testEvent, listOf(testOccurrence), any()) }
     }
 
     @Test
-    fun `sync cancels reminders for MODIFIED events that now have no reminders`() = runTest {
+    fun `sync reconciles reminders for MODIFIED events that now have no reminders`() = runTest {
         // A MODIFIED event whose reminders were all removed still has AlarmManager alarms
-        // from before; they must be cancelled, or phantom notifications fire.
+        // from before; the reconcile must still run, or phantom notifications fire.
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
         val testAccount = createTestAccount()
@@ -1073,8 +1074,8 @@ class CalDavSyncWorkerTest {
         // When
         worker.doWork()
 
-        // Then - the old reminders are cancelled even though the new ones are null
-        coVerify { reminderScheduler.cancelRemindersForEvent(eventId) }
+        // Then - the old reminders are reconciled even though the new ones are null
+        coVerify { reminderScheduler.reconcileRemindersForEvent(match { it.id == eventId }) }
         // Nothing new is scheduled
         coVerify(exactly = 0) { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
     }
@@ -1557,7 +1558,7 @@ class CalDavSyncWorkerTest {
             SyncResult.Success(calendarsSynced = 1, eventsPulledAdded = 1, durationMs = 1, changes = listOf(raw))
         coEvery { eventReader.getEventById(eventId) } returns testEvent
         coEvery { eventReader.getCalendarById(1L) } returns createTestCalendar(1L)
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(eventId, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS) } returns listOf(testOccurrence)
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(eventId, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS, ReminderScheduler.STARTED_LOOKBACK_MS) } returns listOf(testOccurrence)
         coEvery { recentChangesRecorder.record(any(), any()) } throws IllegalStateException("db locked")
 
         val result = worker.doWork()

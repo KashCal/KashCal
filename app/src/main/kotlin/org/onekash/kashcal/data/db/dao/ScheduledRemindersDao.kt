@@ -11,9 +11,10 @@ import org.onekash.kashcal.data.db.entity.ScheduledReminder
  * Stores one row per scheduled reminder, unique on event, occurrence and offset.
  *
  * ReminderScheduler writes a row before arming its alarm and deletes it if the alarm is
- * refused, updates it on fire, snooze and dismiss, deletes rows when their event, occurrences
- * or account go away, and re-arms from them after boot, app update or a timezone change. A
- * pending row may have no alarm: only rows inside the scheduling window are armed.
+ * refused, updates it on fire, snooze and dismiss, keeps the rows an edit leaves valid and
+ * deletes the rest, deletes rows when their event, occurrences or account go away, and re-arms
+ * from them after boot, app update or a timezone change. A pending row may have no alarm: only
+ * rows inside the scheduling window are armed.
  */
 @Dao
 interface ScheduledRemindersDao {
@@ -41,16 +42,20 @@ interface ScheduledRemindersDao {
     @Query("SELECT * FROM scheduled_reminders WHERE id = :id")
     suspend fun getById(id: Long): ScheduledReminder?
 
-    /**
-     * Returns [eventId]'s PENDING and SNOOZED reminders, whose alarms the cancel paths clear
-     * before deleting the rows.
-     */
+    /** Returns [eventId]'s PENDING and SNOOZED reminders, the ones that may hold an alarm. */
     @Query("""
         SELECT * FROM scheduled_reminders
         WHERE event_id = :eventId
         AND status IN ('PENDING', 'SNOOZED')
     """)
     suspend fun getPendingForEvent(eventId: Long): List<ScheduledReminder>
+
+    /**
+     * Returns [eventId]'s reminders in every status, for the edit reconcile and for the cancel
+     * paths, which clear a fired reminder's notification as well as the alarms.
+     */
+    @Query("SELECT * FROM scheduled_reminders WHERE event_id = :eventId")
+    suspend fun getAllForEvent(eventId: Long): List<ScheduledReminder>
 
     /**
      * Returns every PENDING and SNOOZED reminder triggering after [afterTime], soonest first,
@@ -136,10 +141,38 @@ interface ScheduledRemindersDao {
 
     /**
      * Sets a reminder's trigger time, when an all-day reminder is recalculated for the current
-     * timezone.
+     * timezone or an edit keeps a pending reminder whose time moved.
      */
     @Query("UPDATE scheduled_reminders SET trigger_time = :triggerTime WHERE id = :id")
     suspend fun updateTriggerTime(id: Long, triggerTime: Long)
+
+    /**
+     * Rewrites the event copy on [eventId]'s rows in every status, after an edit kept them; a
+     * notification shows the row's copy, not the event's.
+     */
+    @Query("""
+        UPDATE scheduled_reminders
+        SET event_title = :title,
+            event_location = :location,
+            is_all_day = :isAllDay,
+            calendar_color = :calendarColor
+        WHERE event_id = :eventId
+    """)
+    suspend fun updateDisplayForEvent(
+        eventId: Long,
+        title: String,
+        location: String?,
+        isAllDay: Boolean,
+        calendarColor: Int
+    )
+
+    /**
+     * Sets a reminder's offset string, when an edit kept it under another spelling of the same
+     * offset (-PT24H and -P1D), so lookups by offset ([findExisting]) find it. Returns 0 and
+     * changes nothing if the occurrence already has a row with [reminderOffset].
+     */
+    @Query("UPDATE OR IGNORE scheduled_reminders SET reminder_offset = :reminderOffset WHERE id = :id")
+    suspend fun updateOffset(id: Long, reminderOffset: String): Int
 
     // ========== Delete Operations ==========
 
@@ -147,10 +180,7 @@ interface ScheduledRemindersDao {
     @Query("DELETE FROM scheduled_reminders WHERE id = :id")
     suspend fun deleteById(id: Long)
 
-    /**
-     * Deletes [eventId]'s reminders, for example when the event is deleted or declined, or
-     * before its reminders are rescheduled.
-     */
+    /** Deletes [eventId]'s reminders, for example when the event is deleted or declined. */
     @Query("DELETE FROM scheduled_reminders WHERE event_id = :eventId")
     suspend fun deleteForEvent(eventId: Long)
 

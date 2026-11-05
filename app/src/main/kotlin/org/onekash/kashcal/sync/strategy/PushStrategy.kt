@@ -31,6 +31,7 @@ import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 import org.onekash.kashcal.util.AddressNormalizer
+import java.io.IOException
 import javax.inject.Inject
 
 /**
@@ -101,7 +102,7 @@ class PushStrategy @Inject constructor(
 
         // Load every event and calendar once up front, not per operation.
         val eventIds = readyOperations.map { it.eventId }.distinct()
-        val eventsCache = eventsDao.getByIds(eventIds).associateBy { it.id }
+        val eventsCache = loadEvents(eventIds)
 
         val calendarIds = eventsCache.values.map { it.calendarId }.distinct()
         val calendarsCache = calendarRepository.getCalendarsByIds(calendarIds).associateBy { it.id }
@@ -233,7 +234,7 @@ class PushStrategy @Inject constructor(
 
         // Load every event once up front, not per operation.
         val eventIds = allReady.map { it.eventId }.distinct()
-        val eventsCache = eventsDao.getByIds(eventIds).associateBy { it.id }
+        val eventsCache = loadEvents(eventIds)
 
         // Which calendar an op belongs to. A move has already changed the event's calendarId,
         // so a move's DELETE belongs to its source.
@@ -368,7 +369,36 @@ class PushStrategy @Inject constructor(
     }
 
     /**
-     * Dispatches [operation] by type.
+     * Loads [eventIds]' rows in one query, or one at a time when that query fails, leaving out
+     * the rows that can't be read (a row past Android's 2 MB cursor window fails every query
+     * that reaches it). An operation whose row is left out loads it again itself and fails
+     * alone in [processOperation], or isn't picked for its calendar.
+     */
+    private suspend fun loadEvents(eventIds: List<Long>): Map<Long, Event> = try {
+        eventsDao.getByIds(eventIds).associateBy { it.id }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Log.e(TAG, "Batch load of ${eventIds.size} events failed, loading one at a time", e)
+        eventIds.mapNotNull { id ->
+            try {
+                eventsDao.getById(id)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Event $id can't be read: ${e.message}")
+                null
+            }
+        }.associateBy { it.id }
+    }
+
+    /**
+     * Dispatches [operation] by type. A throw fails only this operation: it becomes a retryable
+     * [SinglePushResult.Error], retried under the operation's budget like any other error.
+     * Cancellation and network errors ([IOException]) end the whole push. The stored error is a
+     * fixed text naming only the exception type, because a message holding "412" or "Conflict"
+     * would hand the operation to conflict resolution
+     * ([org.onekash.kashcal.data.db.dao.PendingOperationsDao.getConflictOperationsForCalendar]).
      *
      * @param eventsCache events loaded before the loop; a miss reads the database.
      * @param calendarsCache calendars loaded before the loop; a miss reads the database.
@@ -377,6 +407,23 @@ class PushStrategy @Inject constructor(
         operation: PendingOperation,
         eventsCache: Map<Long, Event> = emptyMap(),
         calendarsCache: Map<Long, Calendar> = emptyMap(),
+        clientToUse: CalDavClient,
+        sentReplies: MutableMap<String, SentReply>
+    ): SinglePushResult = try {
+        dispatch(operation, eventsCache, calendarsCache, clientToUse, sentReplies)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: IOException) {
+        throw e
+    } catch (e: Exception) {
+        Log.e(TAG, "Operation ${operation.id} (${operation.operation}) threw", e)
+        SinglePushResult.Error(-1, "Failed to process (${e.javaClass.simpleName})", true)
+    }
+
+    private suspend fun dispatch(
+        operation: PendingOperation,
+        eventsCache: Map<Long, Event>,
+        calendarsCache: Map<Long, Calendar>,
         clientToUse: CalDavClient,
         sentReplies: MutableMap<String, SentReply>
     ): SinglePushResult {

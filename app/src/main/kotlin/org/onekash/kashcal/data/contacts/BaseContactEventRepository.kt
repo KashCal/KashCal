@@ -333,7 +333,8 @@ abstract class BaseContactEventRepository(
      * Schedules [event]'s reminders over the reminder lookahead window. Failures are logged and
      * don't fail the sync.
      *
-     * @param isModified cancel the event's existing reminders first
+     * @param isModified reconcile the event's existing reminders first
+     *   ([ReminderScheduler.reconcileRemindersForEvent])
      */
     private suspend fun scheduleRemindersForEvent(
         event: Event,
@@ -341,16 +342,18 @@ abstract class BaseContactEventRepository(
         isModified: Boolean
     ) {
         try {
-            // Cancel before the empty-reminders return, or turning the reminder off would
+            // Reconcile before the empty-reminders return, or turning the reminder off would
             // leave the old AlarmManager alarm scheduled.
             if (isModified) {
-                reminderScheduler.cancelRemindersForEvent(event.id)
+                reminderScheduler.reconcileRemindersForEvent(event)
             }
 
             if (event.reminders.isNullOrEmpty()) return
 
             val occurrences = eventReader.getOccurrencesForEventInScheduleWindow(
-                event.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS
+                event.id,
+                ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS,
+                ReminderScheduler.STARTED_LOOKBACK_MS
             )
             if (occurrences.isEmpty()) return
 

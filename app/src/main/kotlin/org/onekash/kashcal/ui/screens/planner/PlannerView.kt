@@ -69,6 +69,7 @@ import org.onekash.kashcal.domain.planner.PlannerWeekState
 import org.onekash.kashcal.domain.planner.clampPlannerZoom
 import org.onekash.kashcal.domain.planner.differentThisWeek
 import org.onekash.kashcal.domain.planner.movedCue
+import org.onekash.kashcal.ui.components.DEEMPHASIZED_ALPHA
 import org.onekash.kashcal.ui.components.declinedCardAlpha
 import org.onekash.kashcal.ui.components.declinedTitleDecoration
 import org.onekash.kashcal.ui.components.eventStateDescription
@@ -342,7 +343,7 @@ private fun PlannerDayBox(
                     .clickable { onDayHeaderClick(date) }
                     .then(if (isToday) Modifier.semantics { stateDescription = todayLabel } else Modifier)
                     .padding(horizontal = 8.dp, vertical = 3.dp)
-                    .alpha(if (isPastDay) 0.6f else 1f),
+                    .alpha(if (isPastDay) DEEMPHASIZED_ALPHA else 1f),
             ) {
                 Text(
                     text = formats.dayLabel(date),

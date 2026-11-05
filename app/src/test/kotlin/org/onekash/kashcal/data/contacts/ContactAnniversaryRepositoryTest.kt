@@ -389,10 +389,10 @@ class ContactAnniversaryRepositoryTest {
     /**
      * Setting the anniversary reminder to None makes a sync set the existing event's `reminders` to
      * null. Its AlarmManager alarms must still be cancelled: the empty-reminders return in
-     * reminder scheduling must not skip the cancel.
+     * reminder scheduling must not skip the reconcile.
      */
     @Test
-    fun `syncEvents cancels reminders when an existing event's reminders become null`() = runTest {
+    fun `syncEvents reconciles reminders when an existing event's reminders become null`() = runTest {
         val lookupKey = "abc123"
         val month = 6
         val day = 15
@@ -438,7 +438,7 @@ class ContactAnniversaryRepositoryTest {
         assertTrue(result is ContactEventSyncResult.Success)
         assertEquals(1, (result as ContactEventSyncResult.Success).updated)
 
-        coVerify { reminderScheduler.cancelRemindersForEvent(100L) }
+        coVerify { reminderScheduler.reconcileRemindersForEvent(match { it.id == 100L }) }
     }
 
     /**

@@ -145,7 +145,7 @@ class AppIconUtilityTest {
         assertEquals(0, writer.singles.size)
         assertEquals(1, writer.batches.size)
         val batch = writer.batches.single()
-        assertEquals(34, batch.size)
+        assertEquals(LauncherAliases.ALL.size, batch.size)
         assertEquals(
             component(".MainActivityDay7") to PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
             batch.first(),
@@ -161,7 +161,7 @@ class AppIconUtilityTest {
         AppIconUtility(context, writer, sdkInt = 32).setAppIcon(AppIconPreset.SUPPORTER, oct7)
 
         assertEquals(0, writer.batches.size)
-        assertEquals(34, writer.singles.size)
+        assertEquals(LauncherAliases.ALL.size, writer.singles.size)
         assertEquals(
             component(".MainActivitySupporter") to PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
             writer.singles.first(),

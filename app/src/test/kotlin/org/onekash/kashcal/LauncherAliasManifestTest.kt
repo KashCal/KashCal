@@ -15,8 +15,9 @@ import org.robolectric.annotation.Config
 
 /**
  * Checks the launcher activity-aliases in the manifest: every alias the icon switch toggles
- * exists, only the default one is enabled at install, each keeps the app label and the
- * long-press shortcuts, and each day alias shows its own day icon.
+ * exists, only the default one is enabled at install, each carries the long-press shortcuts,
+ * the day aliases and the labeled supporter alias read "Calendar" while the rest keep the app
+ * label, and each day alias shows its own day icon.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
@@ -41,23 +42,25 @@ class LauncherAliasManifestTest {
     }
 
     @Test
-    fun `every alias carries the app shortcuts and keeps the app label`() {
+    fun `every alias carries the app shortcuts`() {
+        LauncherAliases.ALL.forEach { suffix ->
+            assertEquals(
+                "$suffix shortcuts",
+                R.xml.shortcuts,
+                info(suffix).metaData?.getInt("android.app.shortcuts"),
+            )
+        }
+    }
+
+    @Test
+    fun `day aliases and the labeled supporter alias read Calendar, the rest the app name`() {
         val appName = context.getString(R.string.app_name)
-        LauncherAliases.ALL
-            .filter { it != ".MainActivitySupporterCalendar" } // labeled "Calendar" by design
-            .forEach { suffix ->
-                val info = info(suffix)
-                assertEquals(
-                    "$suffix shortcuts",
-                    R.xml.shortcuts,
-                    info.metaData?.getInt("android.app.shortcuts"),
-                )
-                assertEquals("$suffix label", appName, info.loadLabel(pm).toString())
-            }
-        assertEquals(
-            R.xml.shortcuts,
-            info(".MainActivitySupporterCalendar").metaData?.getInt("android.app.shortcuts"),
-        )
+        val calendar = context.getString(R.string.app_icon_label_calendar)
+        val calendarLabeled = LauncherAliases.DAYS + ".MainActivitySupporterCalendar"
+        LauncherAliases.ALL.forEach { suffix ->
+            val expected = if (suffix in calendarLabeled) calendar else appName
+            assertEquals("$suffix label", expected, info(suffix).loadLabel(pm).toString())
+        }
     }
 
     @Test
@@ -65,6 +68,11 @@ class LauncherAliasManifestTest {
         (1..31).forEach { day ->
             assertEquals("day $day icon", DayIcons.mipmapFor(day), info(".MainActivityDay$day").icon)
         }
+    }
+
+    @Test
+    fun `the Kash alias shows the Kash icon`() {
+        assertEquals(R.mipmap.ic_launcher_kash, info(".MainActivityKash").icon)
     }
 
     @Test

@@ -2,6 +2,7 @@ package org.onekash.kashcal.ui.screens.monthfull
 
 import androidx.compose.ui.graphics.Color
 import org.onekash.kashcal.domain.model.DisplayEvent
+import org.onekash.kashcal.ui.components.DEEMPHASIZED_ALPHA
 import org.onekash.kashcal.ui.components.declinedCardAlpha
 import org.onekash.kashcal.ui.shared.contrastForegroundOn
 import org.onekash.kashcal.ui.shared.packSpansIntoLanes
@@ -243,12 +244,14 @@ fun monthFullDayDescription(datePrefix: String, countLabel: String?, titles: Lis
 fun monthEventAlpha(isOutDate: Boolean, isPast: Boolean, isDeclined: Boolean, isCancelled: Boolean): Float =
     if (isOutDate) OUT_OF_MONTH_EVENT_ALPHA else declinedCardAlpha(isPast, isDeclined, isCancelled)
 
-/** Returns a date number's alpha: 0.6 for a past day unless it is the selected one, else 1. */
+/**
+ * Returns a date number's alpha: [DEEMPHASIZED_ALPHA] for a past day unless it is the selected
+ * one, else 1.
+ */
 fun monthDateNumberAlpha(isPastDay: Boolean, isSelected: Boolean): Float =
-    if (isPastDay && !isSelected) PAST_DATE_NUMBER_ALPHA else 1f
+    if (isPastDay && !isSelected) DEEMPHASIZED_ALPHA else 1f
 
 private const val OUT_OF_MONTH_EVENT_ALPHA = 0.4f
-private const val PAST_DATE_NUMBER_ALPHA = 0.6f
 
 /** Ranks all-day busy 0, all-day free 1, timed 2; lower sorts first. */
 private fun eventOrderRank(event: DisplayEvent): Int = when {
