@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">Ορατές εβδομάδες ημερολογίου</string>
+    <string name="month_widget_weeks_auto">Αυτόματα (ολόκληρος ο μήνας)</string>
+    <string name="month_widget_weeks_description">Εβδομάδες σε όλα τα μηνιαία γραφικά στοιχεία. Η αυτόματη προβολή δείχνει όλο τον μήνα· οι συντομότερες προβολές διατηρούν ορατή την τρέχουσα εβδομάδα.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d εβδομάδα</item>
+        <item quantity="other">%1$d εβδομάδες</item>
+    </plurals>
+</resources>

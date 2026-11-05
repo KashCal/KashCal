@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">Widoczne tygodnie kalendarza</string>
+    <string name="month_widget_weeks_auto">Automatycznie (cały miesiąc)</string>
+    <string name="month_widget_weeks_description">Tygodnie we wszystkich widżetach miesięcznych. Automatycznie pokazuje cały miesiąc; krótsze widoki zachowują widoczność bieżącego tygodnia.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d tydzień</item>
+        <item quantity="few">%1$d tygodnie</item>
+        <item quantity="many">%1$d tygodni</item>
+        <item quantity="other">%1$d tygodnia</item>
+    </plurals>
+</resources>

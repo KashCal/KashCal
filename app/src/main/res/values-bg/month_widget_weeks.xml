@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">Видими календарни седмици</string>
+    <string name="month_widget_weeks_auto">Автоматично (целият месец)</string>
+    <string name="month_widget_weeks_description">Седмици във всички месечни приспособления. Автоматично показва целия месец; съкратеният изглед запазва текущата седмица видима.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d седмица</item>
+        <item quantity="other">%1$d седмици</item>
+    </plurals>
+</resources>

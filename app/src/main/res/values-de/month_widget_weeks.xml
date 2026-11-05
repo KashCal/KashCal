@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">Sichtbare Kalenderwochen</string>
+    <string name="month_widget_weeks_auto">Automatisch (ganzer Monat)</string>
+    <string name="month_widget_weeks_description">Anzahl der Wochen in allen Monatswidgets. Automatisch zeigt den ganzen Monat; bei weniger Wochen bleibt die aktuelle Woche sichtbar.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d Woche</item>
+        <item quantity="other">%1$d Wochen</item>
+    </plurals>
+</resources>

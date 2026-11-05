@@ -20,6 +20,7 @@ object ExportablePreferences {
 
     private val KIND_BY_KEY: Map<String, PrefKind> = mapOf(
         PreferencesKeys.FIRST_DAY_OF_WEEK.name to PrefKind.INT,
+        PreferencesKeys.MONTH_WIDGET_WEEKS.name to PrefKind.INT,
         PreferencesKeys.SHOW_WEEK_NUMBERS.name to PrefKind.BOOL,
         PreferencesKeys.AGENDA_WEEK_BAR_EXPANDED.name to PrefKind.BOOL,
         PreferencesKeys.DAY_WEEK_BAR_EXPANDED.name to PrefKind.BOOL,
@@ -67,6 +68,7 @@ object ExportablePreferences {
     val KEYS: List<Preferences.Key<*>> = listOf(
         // Calendar view
         PreferencesKeys.FIRST_DAY_OF_WEEK,
+        PreferencesKeys.MONTH_WIDGET_WEEKS,
         PreferencesKeys.SHOW_WEEK_NUMBERS,
         // Agenda week bar expanded/collapsed: a persistent display choice, so it's exported.
         PreferencesKeys.AGENDA_WEEK_BAR_EXPANDED,
@@ -125,8 +127,8 @@ object ExportablePreferences {
     ).also {
         // Bump this and the matching ExportablePreferencesTest assertion together
         // whenever a key is added to or removed from KEYS above.
-        require(it.size == 43) {
-            "KEYS size drifted; expected 43 allowed keys but got ${it.size}. Update ExportablePreferencesTest expectations too."
+        require(it.size == 44) {
+            "KEYS size drifted; expected 44 allowed keys but got ${it.size}. Update ExportablePreferencesTest expectations too."
         }
     }
 

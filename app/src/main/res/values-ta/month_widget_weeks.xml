@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">தெரியும் நாள்காட்டி வாரங்கள்</string>
+    <string name="month_widget_weeks_auto">தானியங்கி (முழு மாதம்)</string>
+    <string name="month_widget_weeks_description">அனைத்து மாத விட்ஜெட்களிலும் காட்டப்படும் வாரங்கள். தானியங்கி முழு மாதத்தைக் காட்டும்; குறுகிய காட்சிகளிலும் நடப்பு வாரம் தெரியும்.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d வாரம்</item>
+        <item quantity="other">%1$d வாரங்கள்</item>
+    </plurals>
+</resources>

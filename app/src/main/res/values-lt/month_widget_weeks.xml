@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">Matomos kalendoriaus savaitės</string>
+    <string name="month_widget_weeks_auto">Automatiškai (visas mėnuo)</string>
+    <string name="month_widget_weeks_description">Savaitės visuose mėnesio valdikliuose. Automatiškai rodomas visas mėnuo; sutrumpintame rodinyje dabartinė savaitė lieka matoma.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d savaitė</item>
+        <item quantity="few">%1$d savaitės</item>
+        <item quantity="many">%1$d savaitės</item>
+        <item quantity="other">%1$d savaičių</item>
+    </plurals>
+</resources>

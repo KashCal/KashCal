@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">Viditelné kalendářní týdny</string>
+    <string name="month_widget_weeks_auto">Automaticky (celý měsíc)</string>
+    <string name="month_widget_weeks_description">Týdny ve všech měsíčních widgetech. Automaticky zobrazí celý měsíc; zkrácené zobrazení ponechá aktuální týden viditelný.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d týden</item>
+        <item quantity="few">%1$d týdny</item>
+        <item quantity="many">%1$d týdne</item>
+        <item quantity="other">%1$d týdnů</item>
+    </plurals>
+</resources>

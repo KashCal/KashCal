@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.Resources
 import android.util.Log
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceId
@@ -42,6 +43,7 @@ import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import org.onekash.kashcal.MainActivity
 import org.onekash.kashcal.R
+import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.ui.model.MonthGrid
 import org.onekash.kashcal.ui.shared.contrastForegroundOn
 import org.onekash.kashcal.ui.util.DayPagerUtils
@@ -90,10 +92,13 @@ internal const val WEEK_NUMBER_GUTTER_WIDTH_DP = 18
 // ==================== Event-title rows (optional month day-cell style) ====================
 
 /**
- * Header height budgeted when sizing event-title rows, in dp. It is below the 48dp of the
- * nav-arrow and "+" touch targets so the grid doesn't under-fill.
+ * Header height budgeted when sizing event-title rows, matching the 48dp navigation
+ * and add-event touch targets so resizing cannot overestimate the remaining grid height.
  */
-internal const val MONTH_HEADER_HEIGHT_DP = 40
+internal const val MONTH_HEADER_HEIGHT_DP = 48
+
+/** Readable day number, today marker and dots in the compact fixed layout. */
+internal const val MONTH_MIN_WEEK_HEIGHT_DP = 28
 
 /**
  * Vertical space the day-of-week letter row occupies, in dp: [WidgetTypography.monthDayNumber]
@@ -124,20 +129,9 @@ internal const val TIMED_TITLE_ROW_HEIGHT_DP = 16
 internal const val EVENT_ROW_GAP_DP = 1
 
 /**
- * Hard cap on event slot rows per week in titles mode, and the number that keeps the widget inside
- * its view-ID budget. Glance translates each widget size from a fixed pool of 500 view IDs; a
- * composition that needs more throws during translation and the host shows "Can't show content".
- * Each element costs one ID, and each element with a tap action costs three, because Glance wraps
- * it in a box plus a ripple image (a background color costs nothing extra).
- *
- * A titles-mode slot row is therefore bounded at 12 IDs regardless of how many events a month has:
- * one row container, at most seven elements ([slotRowRuns] merges bars and blank runs), and at most
- * two tap actions (the row's first pill and first bar). Each week adds a fixed ~35 (week and
- * content containers, seven day tap targets, seven day numbers, the optional week-number gutter),
- * so a week costs about 35 + rows x 12, and six weeks at three rows plus the header come to about
- * 464. A "+n" heavy row costs at most 10, below the 12-ID pill/bar row. A fourth row would
- * overflow, which is why this stays at three: past the cap, extra widget height stretches the
- * weighted week rows instead of adding rows, so the cost never grows with size.
+ * Per-week baseline for a six-week widget. The whole widget has 18 title rows to share;
+ * fewer displayed weeks can use more rows each, keeping the same upper bound on Glance views.
+ * A slot row costs at most 12 IDs and a week roughly 35, plus the header, below the 500-ID pool.
  */
 internal const val MAX_EVENT_ROWS = 3
 
@@ -149,6 +143,10 @@ internal const val MAX_EVENT_ROWS = 3
  * month rolls from 5 to 6 weeks.
  */
 internal const val WORST_CASE_MONTH_WEEKS = 6
+
+/** At most 18 event rows across all weeks, also for one- and two-week widgets. */
+internal fun monthWidgetRowBudget(weekCount: Int): Int =
+    (MAX_EVENT_ROWS * WORST_CASE_MONTH_WEEKS) / weekCount.coerceIn(1, WORST_CASE_MONTH_WEEKS)
 
 /**
  * Event rows a day cell must fit, in the worst-case 6-week month, before the widget renders
@@ -193,15 +191,25 @@ internal const val TITLE_CHAR_WIDTH_DP = 6
 /**
  * Returns the weeks the widget renders. [MonthGrid.compute] always returns 6 rows (fixed for the
  * full-size view's paging), but a month spans 4 to 6; trailing rows that are all next-month
- * padding are dropped. Never drops a row containing a day of this month.
+ * padding are dropped in automatic mode (0). Fixed counts (1..6) select at most that many consecutive month rows,
+ * keeping today visible for the current month and starting at row 0 for other months.
  */
-internal fun visibleWeeks(grid: org.onekash.kashcal.ui.model.MonthGrid): List<List<org.onekash.kashcal.ui.model.MonthGrid.DayCell>> {
-    val weeks = grid.weeks
-    var last = weeks.size - 1
-    while (last > 0 && weeks[last].all { it.position == org.onekash.kashcal.ui.model.MonthGrid.DayPosition.OutDate }) {
-        last--
+internal fun visibleWeeks(
+    grid: MonthGrid,
+    weekCount: Int = 0,
+    today: LocalDate = LocalDate.now(),
+): List<List<MonthGrid.DayCell>> {
+    val weeks = grid.weeks.dropLastWhile { row ->
+        row.all { it.position == MonthGrid.DayPosition.OutDate }
     }
-    return weeks.subList(0, last + 1)
+    if (weekCount !in 1..6 || weekCount >= weeks.size) return weeks
+    val todayRow = if (grid.year == today.year && grid.month == today.monthValue - 1) {
+        weeks.indexOfFirst { row -> row.any {
+            it.position == MonthGrid.DayPosition.MonthDate && it.dayOfMonth == today.dayOfMonth
+        } }.coerceAtLeast(0)
+    } else 0
+    val start = todayRow.coerceAtMost(weeks.size - weekCount)
+    return weeks.subList(start, start + weekCount)
 }
 
 /**
@@ -232,6 +240,7 @@ internal fun formatMonthHeader(
  * @param monthOffset months from the current month (0 = current)
  * @param targetMonth0 0-indexed month of the displayed month
  * @param firstDayOfWeek java.util.Calendar constant for the first day of the week
+ * @param weekCount 0 for the whole month, or 1..6 fixed rows
  * @param showWeekNumbers whether to render the leading week-of-year gutter
  * @param forcedDark the widget's light/dark pin (null = follow system), for the static
  *   adjacent-month text color, which lives outside the Glance scheme and can't see a pinned face
@@ -248,10 +257,18 @@ fun MonthWidgetContent(
     firstDayOfWeek: Int,
     showWeekNumbers: Boolean = false,
     forcedDark: Boolean? = null,
-    today: LocalDate = LocalDate.now()
+    today: LocalDate = LocalDate.now(),
+    weekCount: Int = 0,
+    maxEventsPerDay: Int = 5,
+    showEventEmojis: Boolean = true,
 ) {
     val headerText = formatMonthHeader(targetYear, targetMonth0, currentYear = today.year)
     val todayDayCode = DayPagerUtils.localDateToDayCode(today)
+    val displayEvents = remember(monthEvents, showEventEmojis) {
+        monthEvents.mapValues { (_, events) -> events.map { event ->
+            event.copy(title = EmojiMatcher.formatWithEmoji(event.title, showEventEmojis))
+        } }
+    }
 
     Column(
         modifier = GlanceModifier
@@ -267,8 +284,8 @@ fun MonthWidgetContent(
 
         // Each week row takes equal vertical weight, so the rows fill the widget height evenly
         // however many weeks the month spans.
-        val weeks = visibleWeeks(monthGrid)
-        val gutterLabels = weekNumberGutterLabels(monthGrid, showWeekNumbers)
+        val weeks = visibleWeeks(monthGrid, weekCount, today)
+        val gutterLabels = if (showWeekNumbers) weeks.map { it.first().weekNumber.toString() } else emptyList()
 
         // Titles vs. dots follows the widget size (SizeMode.Exact), not a setting: titles appear
         // once a worst-case 6-week month fits TITLES_MIN_ROWS rows per cell at the current font
@@ -278,68 +295,94 @@ fun MonthWidgetContent(
         val widgetSize = LocalSize.current
         val fontScale = LocalContext.current.resources.configuration.fontScale
         val widgetHeightDp = widgetSize.height.value
-        val cellHeightDp = (widgetHeightDp - MONTH_HEADER_HEIGHT_DP - MONTH_DOW_ROW_HEIGHT_DP) / weeks.size
+        val cellHeightDp = monthWidgetGridHeightDp(widgetHeightDp, fontScale) / weeks.size
         val cellWidthDp = weekColumnWidthDp(widgetSize.width.value, showWeekNumbers)
-        val showTitles = widgetHeightDp >= minWidgetHeightForTitlesDp(TITLES_MIN_ROWS, fontScale)
+        val showTitles = widgetHeightDp >= minWidgetHeightForTitlesDp(TITLES_MIN_ROWS, fontScale, weekCount.takeIf { it in 1..6 } ?: WORST_CASE_MONTH_WEEKS)
         // Per-week day codes, computed once for both render branches.
         val weekDayCodesList = weeks.map { wk -> wk.map { MonthGrid.computeDayCodeForCell(it, targetYear, targetMonth0) } }
-        // Rows that fit by height, capped at MAX_EVENT_ROWS. The floor of 1 guards the rounding
+        // Rows that fit by height, sharing the total widget view budget across visible weeks. The floor of 1 guards the rounding
         // edge so titles mode never renders bare day numbers. No density check is needed: the
-        // titles layout's view-ID cost is bounded by construction ([MAX_EVENT_ROWS]).
-        val eventRowCount = if (showTitles) maxEventRows(cellHeightDp, fontScale).coerceAtLeast(1) else 0
+        // titles layout's view-ID cost is bounded by [monthWidgetRowBudget].
+        val eventRowCount = if (showTitles) maxEventRows(cellHeightDp, fontScale, weeks.size).coerceAtLeast(1) else 0
         val titleChars = maxTitleChars(cellWidthDp)
 
-        weeks.forEachIndexed { weekIndex, week ->
-            val weekDayCodes = weekDayCodesList[weekIndex]
-            // A week row is 7 strictly increasing day codes. If a grid/cell mismatch breaks
-            // that, fall back to dots instead of drawing bars on the wrong columns.
-            val dayCodesValid = weekDayCodes.size == 7 && weekDayCodes.zipWithNext().all { (a, b) -> b > a }
-            if (eventRowCount > 0 && dayCodesValid) {
-                val weekRender = computeMonthWidgetWeekRender(weekDayCodes, monthEvents, eventRowCount)
-                TitlesWeekRow(
-                    // Weighted like the dots rows, so a week without events still fills its
-                    // share. The slot content stays top-aligned in the stretched cell
-                    // ([TitlesWeekRow]), so spare height pads the bottom of each week.
-                    modifier = GlanceModifier.fillMaxWidth().defaultWeight(),
-                    week = week,
-                    weekDayCodes = weekDayCodes,
-                    weekRender = weekRender,
-                    todayDayCode = todayDayCode,
-                    monthEvents = monthEvents,
-                    cellWidthDp = cellWidthDp,
-                    maxTitleChars = titleChars,
-                    gutterLabel = if (showWeekNumbers) gutterLabels[weekIndex] else null,
-                    forcedDark = forcedDark
-                )
-            } else {
-                Row(
-                    modifier = GlanceModifier.fillMaxWidth().defaultWeight(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    if (showWeekNumbers) {
-                        WeekNumberGutterCell(gutterLabels[weekIndex])
-                    }
-                    week.forEachIndexed { col, cell ->
-                        val dayCode = weekDayCodes[col]
-                        val events = monthEvents[dayCode].orEmpty()
-                        val isToday = dayCode == todayDayCode
-                        val isPast = dayCode < todayDayCode
+        weeks.forEachIndexed { index, week ->
+            MonthWidgetWeekRow(
+                modifier = GlanceModifier.fillMaxWidth().defaultWeight(),
+                week = week, weekDayCodes = weekDayCodesList[index],
+                monthEvents = displayEvents, eventRowCount = eventRowCount,
+                cellWidthDp = cellWidthDp, titleChars = titleChars,
+                gutterLabel = gutterLabels.getOrNull(index),
+                todayDayCode = todayDayCode, forcedDark = forcedDark,
+                maxEventsPerDay = maxEventsPerDay
+            )
+        }
+    }
+}
 
-                        DayCell(
-                            modifier = GlanceModifier.defaultWeight(),
-                            cell = cell,
-                            dayCode = dayCode,
-                            events = events,
-                            isToday = isToday,
-                            isPast = isPast,
-                            forcedDark = forcedDark
-                        )
-                    }
-                }
+@Composable
+private fun MonthWidgetWeekRow(
+    modifier: GlanceModifier,
+    week: List<MonthGrid.DayCell>,
+    weekDayCodes: List<Int>,
+    monthEvents: Map<Int, List<WidgetDataRepository.WidgetEvent>>,
+    eventRowCount: Int,
+    cellWidthDp: Float,
+    titleChars: Int,
+    gutterLabel: String?,
+    todayDayCode: Int,
+    forcedDark: Boolean?,
+    maxEventsPerDay: Int,
+) {
+    // A week row is 7 strictly increasing day codes. If a grid/cell mismatch breaks
+    // that, fall back to dots instead of drawing bars on the wrong columns.
+    val dayCodesValid = weekDayCodes.size == 7 && weekDayCodes.zipWithNext().all { (a, b) -> b > a }
+    if (eventRowCount > 0 && dayCodesValid) {
+        val weekRender = computeMonthWidgetWeekRender(weekDayCodes, monthEvents, eventRowCount, maxEventsPerDay)
+        TitlesWeekRow(
+            // Weighted like the dots rows, so a week without events still fills its
+            // share. The slot content stays top-aligned in the stretched cell
+            // ([TitlesWeekRow]), so spare height pads the bottom of each week.
+            modifier = modifier,
+            week = week,
+            weekDayCodes = weekDayCodes,
+            weekRender = weekRender,
+            todayDayCode = todayDayCode,
+            monthEvents = monthEvents,
+            cellWidthDp = cellWidthDp,
+            maxTitleChars = titleChars,
+            gutterLabel = gutterLabel,
+            forcedDark = forcedDark
+        )
+    } else {
+        Row(
+            modifier = modifier,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (gutterLabel != null) {
+                WeekNumberGutterCell(gutterLabel)
+            }
+            week.forEachIndexed { col, cell ->
+                val dayCode = weekDayCodes[col]
+                val events = monthEvents[dayCode].orEmpty()
+                val isToday = dayCode == todayDayCode
+                val isPast = dayCode < todayDayCode
+
+                DayCell(
+                    modifier = GlanceModifier.defaultWeight(),
+                    cell = cell,
+                    dayCode = dayCode,
+                    events = events,
+                    isToday = isToday,
+                    isPast = isPast,
+                    forcedDark = forcedDark,
+                    maxEventsPerDay = maxEventsPerDay
+                )
             }
         }
     }
 }
+
 
 /**
  * Renders one week in titles mode: a day-number row, then the week's slot rows (bars for
@@ -407,12 +450,21 @@ private fun TitlesWeekRow(
                     }
                 }
                 // weekRender holds only the rows that fit the cell height ([maxEventRows]).
-                weekRender.slots.forEach { slotRow ->
-                    SlotRow(
-                        runs = slotRowRuns(slotRow),
-                        cellWidthDp = cellWidthDp,
-                        maxTitleChars = maxTitleChars
-                    )
+                // A Glance Column supports at most ten direct children. The day-number row
+                // uses one; group longer one-week layouts so rows after the ninth survive the
+                // actual RemoteViews translation as well as the composable tree.
+                if (weekRender.slots.size > 9) {
+                    weekRender.slots.chunked(9).forEach { group ->
+                        Column(modifier = GlanceModifier.fillMaxWidth()) {
+                            group.forEach { slotRow ->
+                                SlotRow(slotRowRuns(slotRow), cellWidthDp, maxTitleChars)
+                            }
+                        }
+                    }
+                } else {
+                    weekRender.slots.forEach { slotRow ->
+                        SlotRow(slotRowRuns(slotRow), cellWidthDp, maxTitleChars)
+                    }
                 }
             }
         }
@@ -851,13 +903,14 @@ private fun DayCell(
     events: List<WidgetDataRepository.WidgetEvent>,
     isToday: Boolean,
     isPast: Boolean,
-    forcedDark: Boolean? = null
+    forcedDark: Boolean? = null,
+    maxEventsPerDay: Int = Int.MAX_VALUE,
 ) {
     val isAdjacentMonth = cell.position != MonthGrid.DayPosition.MonthDate
     val resources = LocalContext.current.resources
     val accessibilityDesc = buildAccessibilityDescription(resources, dayCode, if (isAdjacentMonth) 0 else events.size)
 
-    val dotColors = extractDotColors(events)
+    val dotColors = extractDotColors(events.take(maxEventsPerDay.coerceAtLeast(1)))
     val textColor = when {
         isAdjacentMonth -> WidgetTheme.adjacentMonthText(forcedDark)
         isToday -> WidgetTheme.onTodayMarker
@@ -1059,7 +1112,7 @@ internal fun weekColumnWidthDp(widgetWidthDp: Float, showWeekNumbers: Boolean): 
 
 /**
  * Returns how many event slot rows fit a week row of [cellHeightDp] below the day-number block,
- * capped at [MAX_EVENT_ROWS], or 0 when not even one fits.
+ * capped at [monthWidgetRowBudget] for the visible weeks, or 0 when not even one fits.
  *
  * Every slot row, the first included, costs [TIMED_TITLE_ROW_HEIGHT_DP] plus one
  * [EVENT_ROW_GAP_DP] of top padding. The row height and [DAY_NUMBER_BLOCK_HEIGHT_DP] scale with
@@ -1069,12 +1122,19 @@ internal fun weekColumnWidthDp(widgetWidthDp: Float, showWeekNumbers: Boolean): 
  * The count must not over-estimate: each titles-mode week is a fixed weighted share of the grid
  * height, so a row the cell can't hold is clipped, not absorbed.
  */
-internal fun maxEventRows(cellHeightDp: Float, fontScale: Float = 1f): Int {
+internal fun monthWidgetGridHeightDp(widgetHeightDp: Float, fontScale: Float = 1f): Float =
+    (widgetHeightDp - MONTH_HEADER_HEIGHT_DP - MONTH_DOW_ROW_HEIGHT_DP * fontScale).coerceAtLeast(0f)
+
+/** Host minimum for the chosen row count; automatic mode reserves a six-week month. */
+internal fun monthWidgetMinHeightDp(weekCount: Int): Int =
+    100 + 28 * ((weekCount.takeIf { it in 1..6 } ?: 6) - 1)
+
+internal fun maxEventRows(cellHeightDp: Float, fontScale: Float = 1f, weekCount: Int = WORST_CASE_MONTH_WEEKS): Int {
     val perRow = TIMED_TITLE_ROW_HEIGHT_DP * fontScale + EVENT_ROW_GAP_DP
     val numberBlock = DAY_NUMBER_BLOCK_HEIGHT_DP * fontScale
     val usable = cellHeightDp - numberBlock
     if (usable < perRow) return 0
-    return (usable / perRow).toInt().coerceAtMost(MAX_EVENT_ROWS)
+    return (usable / perRow).toInt().coerceAtMost(monthWidgetRowBudget(weekCount))
 }
 
 /**
@@ -1087,11 +1147,11 @@ internal fun maxEventRows(cellHeightDp: Float, fontScale: Float = 1f): Int {
  * so a widget at or above the threshold fits [titleRows] rows. The fixed week count keeps the
  * decision month-stable ([WORST_CASE_MONTH_WEEKS]).
  */
-internal fun minWidgetHeightForTitlesDp(titleRows: Int, fontScale: Float = 1f): Float {
+internal fun minWidgetHeightForTitlesDp(titleRows: Int, fontScale: Float = 1f, weekCount: Int = WORST_CASE_MONTH_WEEKS): Float {
     val perRow = TIMED_TITLE_ROW_HEIGHT_DP * fontScale + EVENT_ROW_GAP_DP
     val numberBlock = DAY_NUMBER_BLOCK_HEIGHT_DP * fontScale
     val perWeek = numberBlock + titleRows * perRow
-    return MONTH_HEADER_HEIGHT_DP + MONTH_DOW_ROW_HEIGHT_DP + WORST_CASE_MONTH_WEEKS * perWeek
+    return MONTH_HEADER_HEIGHT_DP + MONTH_DOW_ROW_HEIGHT_DP * fontScale + weekCount.coerceIn(1, 6) * perWeek
 }
 
 /**

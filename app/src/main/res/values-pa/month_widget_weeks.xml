@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">ਦਿਸਣ ਵਾਲੇ ਕੈਲੰਡਰ ਹਫ਼ਤੇ</string>
+    <string name="month_widget_weeks_auto">ਆਪਣੇ ਆਪ (ਪੂਰਾ ਮਹੀਨਾ)</string>
+    <string name="month_widget_weeks_description">ਸਾਰੇ ਮਹੀਨਾਵਾਰ ਵਿਜੇਟਾਂ ਵਿੱਚ ਦਿਖਾਏ ਜਾਣ ਵਾਲੇ ਹਫ਼ਤੇ। ਆਪਣੇ ਆਪ ਪੂਰਾ ਮਹੀਨਾ ਦਿਖਾਉਂਦਾ ਹੈ; ਛੋਟੇ ਦ੍ਰਿਸ਼ ਵਿੱਚ ਮੌਜੂਦਾ ਹਫ਼ਤਾ ਦਿਸਦਾ ਰਹਿੰਦਾ ਹੈ।</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d ਹਫ਼ਤਾ</item>
+        <item quantity="other">%1$d ਹਫ਼ਤੇ</item>
+    </plurals>
+</resources>

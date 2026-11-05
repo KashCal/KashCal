@@ -2,6 +2,7 @@ package org.onekash.kashcal.domain.coordinator
 
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -120,6 +121,35 @@ class EventCoordinatorTest {
         rrule = "FREQ=WEEKLY;BYDAY=MO",
         syncStatus = SyncStatus.SYNCED
     )
+
+    @Test
+    fun `hiding and showing a calendar refresh widgets only after the visibility write`() = runTest {
+        coordinator.setCalendarVisibility(2L, false)
+        coordinator.setCalendarVisibility(2L, true)
+        coVerifyOrder {
+            eventReader.setCalendarVisibility(2L, false)
+            widgetUpdateManager.updateAllWidgets()
+            eventReader.setCalendarVisibility(2L, true)
+            widgetUpdateManager.updateAllWidgets()
+        }
+    }
+
+    @Test
+    fun `device visibility toggle refreshes widgets after saving hidden calendars`() = runTest {
+        coordinator.toggleDeviceCalendarVisibility(42L)
+        coVerifyOrder {
+            dataStore.toggleDeviceCalendarHidden(42L)
+            widgetUpdateManager.updateAllWidgets()
+        }
+    }
+
+    @Test
+    fun `failed visibility writes do not refresh widgets with uncommitted state`() = runTest {
+        coEvery { eventReader.setCalendarVisibility(any(), any()) } throws IllegalStateException("write failed")
+        val result = runCatching { coordinator.setCalendarVisibility(2L, false) }
+        assertTrue(result.isFailure)
+        coVerify(exactly = 0) { widgetUpdateManager.updateAllWidgets() }
+    }
 
     @Before
     fun setup() {

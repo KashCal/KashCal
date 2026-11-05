@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">Minggu kalender yang terlihat</string>
+    <string name="month_widget_weeks_auto">Otomatis (sebulan penuh)</string>
+    <string name="month_widget_weeks_description">Minggu di semua widget bulanan. Otomatis menampilkan sebulan penuh; tampilan yang lebih singkat tetap memperlihatkan minggu ini.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d minggu</item>
+        <item quantity="other">%1$d minggu</item>
+    </plurals>
+</resources>

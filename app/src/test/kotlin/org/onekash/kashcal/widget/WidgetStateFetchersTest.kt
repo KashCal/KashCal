@@ -59,6 +59,26 @@ class WidgetStateFetchersTest {
     // ========== fetchUpcomingState ==========
 
     @Test
+    fun `month settings reread every changed preference after a refresh`() = runTest {
+        val weeks = kotlinx.coroutines.flow.MutableStateFlow(2)
+        val limit = kotlinx.coroutines.flow.MutableStateFlow(3)
+        val numbers = kotlinx.coroutines.flow.MutableStateFlow(false)
+        val emojis = kotlinx.coroutines.flow.MutableStateFlow(true)
+        every { dataStore.monthWidgetWeeks } returns weeks
+        every { dataStore.widgetMaxEventsPerDay } returns limit
+        every { dataStore.showWeekNumbers } returns numbers
+        every { dataStore.showEventEmojis } returns emojis
+        coEvery { dataStore.getFirstDayOfWeek() } returns java.util.Calendar.MONDAY
+        assertEquals(MonthWidgetSettings(java.util.Calendar.MONDAY, false, 2, 3, true), fetchMonthWidgetSettings(dataStore))
+        weeks.value = 1
+        limit.value = 15
+        numbers.value = true
+        emojis.value = false
+        coEvery { dataStore.getFirstDayOfWeek() } returns java.util.Calendar.SUNDAY
+        assertEquals(MonthWidgetSettings(java.util.Calendar.SUNDAY, true, 1, 15, false), fetchMonthWidgetSettings(dataStore))
+    }
+
+    @Test
     fun `fetchUpcomingState returns Loaded with events when repository succeeds`() = runTest {
         val today = 20260428
         coEvery { repository.getEventsInRange(any(), any()) } returns mapOf(today to emptyList())

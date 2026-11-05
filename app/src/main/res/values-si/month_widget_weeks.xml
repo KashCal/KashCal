@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">පෙනෙන දින දර්ශන සති</string>
+    <string name="month_widget_weeks_auto">ස්වයංක්‍රීය (සම්පූර්ණ මාසය)</string>
+    <string name="month_widget_weeks_description">සියලු මාසික විජට්වල පෙන්වන සති. ස්වයංක්‍රීයව මුළු මාසයම පෙන්වයි; කෙටි දර්ශනවල වත්මන් සතිය පෙනෙන ලෙස තබයි.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">සති %1$d</item>
+        <item quantity="other">සති %1$d</item>
+    </plurals>
+</resources>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">Amaviki ekhalenda abonakalayo</string>
+    <string name="month_widget_weeks_auto">Ngokuzenzakalelayo (inyanga yonke)</string>
+    <string name="month_widget_weeks_description">Amaviki kuwo wonke amawijethi enyanga. Okuzenzakalelayo kubonisa inyanga yonke; ukubuka okufushane kugcina iviki lamanje libonakala.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">Iviki elingu-%1$d</item>
+        <item quantity="other">Amaviki angu-%1$d</item>
+    </plurals>
+</resources>

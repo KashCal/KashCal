@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">Видљиве календарске недеље</string>
+    <string name="month_widget_weeks_auto">Аутоматски (цео месец)</string>
+    <string name="month_widget_weeks_description">Недеље у свим месечним виџетима. Аутоматски приказује цео месец; краћи прикази задржавају текућу недељу видљивом.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d недеља</item>
+        <item quantity="few">%1$d недеље</item>
+        <item quantity="other">%1$d недеља</item>
+    </plurals>
+</resources>

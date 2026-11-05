@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">Zichtbare kalenderweken</string>
+    <string name="month_widget_weeks_auto">Automatisch (hele maand)</string>
+    <string name="month_widget_weeks_description">Weken in alle maandwidgets. Automatisch toont de hele maand; kortere weergaven houden de huidige week zichtbaar.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d week</item>
+        <item quantity="other">%1$d weken</item>
+    </plurals>
+</resources>

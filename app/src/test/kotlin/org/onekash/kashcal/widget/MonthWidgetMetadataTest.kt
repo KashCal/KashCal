@@ -33,30 +33,21 @@ class MonthWidgetMetadataTest {
     }
 
     @Test
-    fun `minResizeHeight is 200dp`() {
-        assertContainsAttr("minResizeHeight", "200dp")
+    fun `minResizeHeight is 240dp`() {
+        assertContainsAttr("minResizeHeight", "240dp")
     }
 
-    /**
-     * The month grid splits its height, less the header and day-of-week row, evenly among the
-     * week rows, and each cell needs room for its day number or the number clips on the device.
-     * At the declared minResizeHeight, a six-week month must still give each cell at least
-     * [DAY_NUMBER_BLOCK_HEIGHT_DP]. The test copies the cell-height formula from
-     * `MonthWidgetContent.kt` and compares at font scale 1.0, so a taller header, day-of-week row
-     * or number block fails here.
-     */
     @Test
-    fun `day numbers fit at minResizeHeight in a six-week month`() {
-        val minResize = readDpAttr("minResizeHeight")
-        val cellHeight =
-            (minResize - MONTH_HEADER_HEIGHT_DP - MONTH_DOW_ROW_HEIGHT_DP).toFloat() /
-                MONTH_GRID_WEEK_ROWS
-        assertTrue(
-            "At minResizeHeight ${minResize}dp a $MONTH_GRID_WEEK_ROWS-week month gives each " +
-                "cell only ${cellHeight}dp after chrome, below the ${DAY_NUMBER_BLOCK_HEIGHT_DP}dp " +
-                "day-number block; the numbers will clip. Raise minResizeHeight or shrink the chrome.",
-            cellHeight >= DAY_NUMBER_BLOCK_HEIGHT_DP
-        )
+    fun `every week count has matching non scrolling host metadata`() {
+        val root = resolveProjectRoot()
+        val manifest = File(root, "app/src/main/AndroidManifest.xml").readText()
+        for (weeks in 1..6) {
+            val xml = File(root, "app/src/main/res/xml/month_widget_info_$weeks.xml").readText()
+            assertTrue(xml.contains("android:minResizeHeight=\"${monthWidgetMinHeightDp(weeks)}dp\""))
+            assertTrue(manifest.contains("org.onekash.kashcal.MONTH_WEEKS_$weeks"))
+        }
+        val content = File(root, "app/src/main/kotlin/org/onekash/kashcal/widget/MonthWidgetContent.kt").readText()
+        assertTrue(!content.contains("LazyColumn"))
     }
 
     @Test

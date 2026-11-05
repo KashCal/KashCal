@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">Mga nakikitang linggo sa kalendaryo</string>
+    <string name="month_widget_weeks_auto">Awtomatiko (buong buwan)</string>
+    <string name="month_widget_weeks_description">Mga linggo sa lahat ng buwanang widget. Ipinapakita ng awtomatiko ang buong buwan; nananatiling nakikita ang kasalukuyang linggo sa mas maikling view.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d linggo</item>
+        <item quantity="other">%1$d linggo</item>
+    </plurals>
+</resources>
