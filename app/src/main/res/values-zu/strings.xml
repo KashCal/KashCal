@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">izinguquko kulesi nakwezenzakalo ezilandelayo azisekelwa</string>
     <string name="ics_import_reason_own_cancel">nguwe ohlela lo mhlangano, ngakho wukhansele emcimbini</string>
     <string name="ics_import_reason_on_another_calendar">usuvele ukwenye ikhalenda yale akhawunti</string>
+    <string name="ics_import_reason_calendar_keeps_copy">le khalenda igcina ikhophi yayo yomcimbi</string>
+    <string name="ics_import_reason_own_update">nguwe ohlela lo mhlangano, ngakho wushintshe emcimbini</string>
+    <string name="ics_import_reason_change_waiting">umcimbi unenguquko elinde ukuvumelaniswa; ngenisa futhi ngemva kokuthi uvumelaniswe</string>
     <string name="ics_import_notice_unverified">Umthumeli wefayela lesimemo akakwazi ukuqinisekiswa. Hlola ukuthi livela kumhleli.</string>
     <string name="ics_import_notice_answer_notifies">Ukuphendula lesi simemo kungazisa umhleli.</string>
     <string name="ics_import_notice_guests_again">Nguwe umhleli, ngakho izivakashi zingase zithole lesi simemo futhi.</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d unyaka</item>
         <item quantity="other">%1$d iminyaka</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d sek</item>
-        <item quantity="other">%1$d sek</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">Umzuzu ongu-%1$d ngaphambi</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">Asikho isikhumbuzi</string>
     <string name="reminder_at_time_of_event">Ngesikhathi somcimbi</string>
     <string name="reminder_time_before">%1$s ngaphambi</string>
-    <string name="reminder_time_after">%1$s ngemuva</string>
     <string name="reminder_day_of_event_12h">9 AM usuku lomcimbi</string>
     <string name="reminder_day_of_event_24h">09:00 usuku lomcimbi</string>
     <string name="reminder_day_of_event">Day of event</string>

@@ -1052,6 +1052,9 @@
     <string name="ics_import_reason_this_and_future">šio ir vėlesnių pasikartojimų pakeitimai nepalaikomi</string>
     <string name="ics_import_reason_own_cancel">tu organizuoji šį susitikimą, todėl atšauk jį iš įvykio</string>
     <string name="ics_import_reason_on_another_calendar">jis jau yra kitame šios paskyros kalendoriuje</string>
+    <string name="ics_import_reason_calendar_keeps_copy">šis kalendorius saugo savo įvykio kopiją</string>
+    <string name="ics_import_reason_own_update">tu organizuoji šį susitikimą, todėl redaguok jį iš įvykio</string>
+    <string name="ics_import_reason_change_waiting">įvykio pakeitimas dar laukia sinchronizavimo; importuok dar kartą po sinchronizavimo</string>
     <string name="ics_import_notice_unverified">Kvietimo failo siuntėjo patikrinti negalima. Įsitikink, kad failas gautas iš organizatoriaus.</string>
     <string name="ics_import_notice_answer_notifies">Atsakius į šį kvietimą, organizatorius gali gauti pranešimą.</string>
     <string name="ics_import_notice_guests_again">Tu esi organizatorius, todėl dalyviai gali vėl gauti šį kvietimą.</string>
@@ -1159,12 +1162,6 @@
         <item quantity="few">%1$d metai</item>
         <item quantity="many">%1$d metų</item>
         <item quantity="other">%1$d metų</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d sek.</item>
-        <item quantity="few">%1$d sek.</item>
-        <item quantity="many">%1$d sek.</item>
-        <item quantity="other">%1$d sek.</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">Prieš %1$d minutę</item>
@@ -1371,7 +1368,6 @@
     <string name="reminder_none">Be priminimo</string>
     <string name="reminder_at_time_of_event">Įvykio metu</string>
     <string name="reminder_time_before">%1$s prieš</string>
-    <string name="reminder_time_after">%1$s po</string>
     <string name="reminder_day_of_event_12h">9 AM įvykio dieną</string>
     <string name="reminder_day_of_event_24h">09:00 įvykio dieną</string>
     <string name="reminder_day_of_event">Įvykio dieną</string>

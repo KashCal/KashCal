@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -35,7 +34,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -52,6 +50,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -65,7 +66,6 @@ import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.util.location.openInMaps
 import org.onekash.kashcal.util.text.containsUrl
 import org.onekash.kashcal.util.text.extractUrls
-import org.onekash.kashcal.util.text.formatRemindersFromMinutes
 import org.onekash.kashcal.util.text.shouldOpenExternally
 
 /**
@@ -116,6 +116,14 @@ fun DeviceEventQuickViewSheet(
 ) {
     val canWrite = hasWritePermission && isWritableCalendar
     val isRecurring = displayEvent.isPartOfRecurringSeries
+    val you = attendees.firstOrNull { it.isYou }
+    val isCurrentUserOrganizer = you?.isOrganizer == true
+    // A reply writes the tapped occurrence's event row: the series row for an unchanged
+    // occurrence, so it answers for the whole series (DeviceGuestsTagsRoundTripTest); a changed
+    // occurrence has its own row.
+    val instance = displayEvent.instance
+    val rsvpAppliesToSeries = instance.hasRrule &&
+        instance.originalId == null && instance.originalInstanceTime == null
     var showAttendeeSheet by remember { mutableStateOf(false) }
 
     // Opens at its content height, up to the whole window, as [EventQuickViewSheet] does.
@@ -137,10 +145,14 @@ fun DeviceEventQuickViewSheet(
         sheetState = sheetState,
         dragHandle = { BottomSheetDefaults.DragHandle() }
     ) {
+        // TalkBack names the sheet as [EventQuickViewSheet] does: the title, or "Untitled
+        // event" when it is blank.
+        val paneTitleText = displayTitle.ifBlank { stringResource(R.string.cd_event_untitled) }
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 32.dp)
+                .semantics { paneTitle = paneTitleText }
         ) {
             // The details scroll and the buttons below stay pinned, as in [EventQuickViewSheet].
             Column(
@@ -186,13 +198,14 @@ fun DeviceEventQuickViewSheet(
                                 text = displayTitle,
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.semantics { heading() }
                             )
 
                             Spacer(modifier = Modifier.height(4.dp))
 
                             Text(
-                                text = formatDeviceEventDateTime(
+                                text = formatEventDateTime(
                                     displayEvent.startTs,
                                     displayEvent.endTs,
                                     displayEvent.isAllDay,
@@ -268,18 +281,26 @@ fun DeviceEventQuickViewSheet(
                                 }
                             }
 
-                            if (displayEvent.hasRrule) {
+                            // A series occurrence and a changed occurrence both get the
+                            // repeat line; a changed occurrence has no rule of its own and
+                            // reads "Recurring".
+                            if (isRecurring) {
                                 val rruleStrings = rememberRruleDisplayStrings()
-                                val recurringFallback = stringResource(R.string.cd_recurring)
-                                val untilZone = RruleBuilder.untilZoneFor(displayEvent.isAllDay, displayEvent.instance.timezone)
-                                val repeatText = remember(displayEvent.rrule, rruleStrings, untilZone) {
-                                    displayEvent.rrule?.let { rrule ->
-                                        try {
-                                            RruleBuilder.formatForDisplay(rrule, rruleStrings, untilZone)
-                                        } catch (_: Exception) {
-                                            recurringFallback
-                                        }
-                                    } ?: recurringFallback
+                                val repeatText = remember(
+                                    instance.rrule, instance.hasRrule, instance.eventStartTs,
+                                    instance.isAllDay, instance.timezone, rruleStrings, resources,
+                                ) {
+                                    recurrenceDisplayText(
+                                        rrule = instance.rrule.takeIf { instance.hasRrule },
+                                        seriesStartDate = if (instance.hasRrule) {
+                                            formatSeriesStartDateStr(instance.eventStartTs, instance.isAllDay)
+                                        } else {
+                                            null
+                                        },
+                                        rruleStrings = rruleStrings,
+                                        untilZone = RruleBuilder.untilZoneFor(instance.isAllDay, instance.timezone),
+                                        resources = resources,
+                                    )
                                 }
                                 Text(
                                     text = "\uD83D\uDD01 $repeatText",
@@ -293,26 +314,35 @@ fun DeviceEventQuickViewSheet(
 
                 if (attendees.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(12.dp))
+                    val seriesDisclosure = if (
+                        org.onekash.kashcal.ui.components.attendees.shouldShowSeriesRsvpDisclosure(
+                            currentUserPartstat = you?.status,
+                            isOrganizer = isCurrentUserOrganizer,
+                            isRecurring = rsvpAppliesToSeries,
+                        )
+                    ) stringResource(R.string.rsvp_series_disclosure) else null
                     // RSVP cards only on a writable calendar; InviteesBlock also hides
                     // them for the organizer and for a user with no self row.
                     org.onekash.kashcal.ui.components.attendees.InviteesBlock(
                         attendees = attendees,
                         isCurrentUserOnList = isCurrentUserOnList,
-                        isCurrentUserOrganizer = attendees.any { it.isYou && it.isOrganizer },
+                        isCurrentUserOrganizer = isCurrentUserOrganizer,
                         onRsvp = onRsvp,
                         onDrillIntoAttendees = { showAttendeeSheet = true },
+                        seriesDisclosure = seriesDisclosure,
                         suppressRsvp = !canWrite,
                         alwaysExpanded = false,
                         modifier = Modifier.padding(horizontal = 16.dp),
                     )
                 }
 
-                // Draws nothing for an event with no description or reminders.
-                DeviceEventDescriptionSection(
-                    description = displayEvent.description,
-                    reminders = displayEvent.reminders,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
+                if (!displayEvent.description.isNullOrBlank()) {
+                    ExpandedContentSection(
+                        description = displayEvent.description,
+                        validEventUrl = null,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -471,103 +501,6 @@ private fun DeviceEventActionButtons(
                     }
                 }
             }
-        }
-    }
-}
-
-/** Shows the notes, linkified, and the reminders in a scrollable section up to 300 dp tall. */
-@Composable
-private fun DeviceEventDescriptionSection(
-    description: String?,
-    reminders: List<Int>,
-    modifier: Modifier = Modifier
-) {
-    val hasDescription = !description.isNullOrBlank()
-    val hasReminders = reminders.isNotEmpty()
-    if (!hasDescription && !hasReminders) return
-
-    val scrollState = rememberScrollState()
-
-    SelectionContainer {
-        Column(
-            modifier = modifier
-                .fillMaxWidth()
-                .heightIn(max = 300.dp)
-                .verticalScroll(scrollState),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant,
-                modifier = Modifier.padding(vertical = 4.dp)
-            )
-
-            if (hasDescription) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.label_notes),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    LinkifiedText(
-                        text = description!!,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    )
-                }
-            }
-
-            val resources = LocalResources.current
-            val formattedReminders = remember(reminders, resources) {
-                formatRemindersFromMinutes(reminders, resources)
-            }
-            if (formattedReminders != null) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "\uD83D\uDD14", // Bell emoji
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = formattedReminders,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-    }
-}
-
-/** Formats the date and time line the same way as `EventQuickViewSheet.formatEventDateTime`. */
-private fun formatDeviceEventDateTime(
-    startTs: Long,
-    endTs: Long,
-    isAllDay: Boolean,
-    resources: android.content.res.Resources,
-    timePattern: String = "h:mm a"
-): String {
-    val startDateStr = DateTimeUtils.formatEventDateShort(startTs, isAllDay)
-    val endDateStr = DateTimeUtils.formatEventDateShort(endTs, isAllDay)
-    val isMultiDay = DateTimeUtils.spansMultipleDays(startTs, endTs, isAllDay)
-
-    return if (isAllDay) {
-        if (isMultiDay) {
-            resources.getString(R.string.event_date_range_all_day, startDateStr, endDateStr)
-        } else {
-            resources.getString(R.string.event_date_all_day, startDateStr)
-        }
-    } else {
-        val startTime = DateTimeUtils.formatEventTime(startTs, isAllDay, timePattern)
-        val endTime = DateTimeUtils.formatEventTime(endTs, isAllDay, timePattern)
-        if (isMultiDay) {
-            "$startDateStr $startTime \u2192 $endDateStr $endTime"
-        } else {
-            "$startDateStr \u00b7 $startTime - $endTime"
         }
     }
 }

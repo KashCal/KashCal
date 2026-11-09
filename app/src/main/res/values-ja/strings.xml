@@ -962,6 +962,9 @@
     <string name="ics_import_reason_this_and_future">これ以降の繰り返しへの変更には対応していません</string>
     <string name="ics_import_reason_own_cancel">あなたが主催する会議のため、予定からキャンセルしてください</string>
     <string name="ics_import_reason_on_another_calendar">このアカウントの別のカレンダーにすでにあります</string>
+    <string name="ics_import_reason_calendar_keeps_copy">このカレンダーは予定の独自のコピーを保持しています</string>
+    <string name="ics_import_reason_own_update">あなたが主催する会議のため、予定から変更してください</string>
+    <string name="ics_import_reason_change_waiting">この予定には同期待ちの変更があります。同期後にもう一度インポートしてください</string>
     <string name="ics_import_notice_unverified">招待ファイルの送信者は確認できません。主催者から届いたものか確認してください。</string>
     <string name="ics_import_notice_answer_notifies">この招待に回答すると、主催者に通知される場合があります。</string>
     <string name="ics_import_notice_guests_again">あなたが主催者のため、ゲストにこの招待が再度届く場合があります。</string>
@@ -1018,9 +1021,6 @@
     </plurals>
     <plurals name="time_years">
         <item quantity="other">%1$d年</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="other">%1$d秒</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="other">%1$d分前</item>
@@ -1194,7 +1194,6 @@
     <string name="reminder_none">リマインダーなし</string>
     <string name="reminder_at_time_of_event">予定開始時</string>
     <string name="reminder_time_before">%1$s前</string>
-    <string name="reminder_time_after">%1$s後</string>
     <string name="reminder_day_of_event_12h">当日 9 AM</string>
     <string name="reminder_day_of_event_24h">当日 09:00</string>
     <string name="reminder_day_of_event">当日</string>

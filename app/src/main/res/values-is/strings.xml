@@ -991,6 +991,9 @@
     <string name="ics_import_reason_this_and_future">breytingar á þessu og síðari tilvikum eru ekki studdar</string>
     <string name="ics_import_reason_own_cancel">þú skipuleggur þennan fund, svo aflýstu honum úr viðburðinum</string>
     <string name="ics_import_reason_on_another_calendar">viðburðurinn er þegar í öðru dagatali á þessum reikningi</string>
+    <string name="ics_import_reason_calendar_keeps_copy">þetta dagatal geymir sitt eigið afrit af viðburðinum</string>
+    <string name="ics_import_reason_own_update">þú skipuleggur þennan fund, svo breyttu honum úr viðburðinum</string>
+    <string name="ics_import_reason_change_waiting">breyting á viðburðinum bíður samstillingar; flyttu inn aftur þegar hún hefur verið samstillt</string>
     <string name="ics_import_notice_unverified">Ekki er hægt að staðfesta sendanda boðsskrár. Gakktu úr skugga um að hún komi frá skipuleggjandanum.</string>
     <string name="ics_import_notice_answer_notifies">Ef þú svarar þessu boði gæti skipuleggjandinn fengið tilkynningu.</string>
     <string name="ics_import_notice_guests_again">Þú ert skipuleggjandinn, svo gestir gætu fengið þetta boð aftur.</string>
@@ -1064,10 +1067,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d ár</item>
         <item quantity="other">%1$d ár</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d sek</item>
-        <item quantity="other">%1$d sek</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d mínútu áður</item>
@@ -1252,7 +1251,6 @@
     <string name="reminder_none">Engin áminning</string>
     <string name="reminder_at_time_of_event">Á tíma viðburðarins</string>
     <string name="reminder_time_before">%1$s áður</string>
-    <string name="reminder_time_after">%1$s eftir</string>
     <string name="reminder_day_of_event_12h">9 AM á degi viðburðarins</string>
     <string name="reminder_day_of_event_24h">09:00 á degi viðburðarins</string>
     <string name="reminder_day_of_event">Á degi viðburðarins</string>

@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">changes to this and later occurrences aren\'t supported</string>
     <string name="ics_import_reason_own_cancel">you organise this meeting, so cancel it from the event</string>
     <string name="ics_import_reason_on_another_calendar">it\'s already in another calendar of this account</string>
+    <string name="ics_import_reason_calendar_keeps_copy">this calendar keeps its own copy of the event</string>
+    <string name="ics_import_reason_own_update">you organise this meeting, so change it from the event</string>
+    <string name="ics_import_reason_change_waiting">the event has a change waiting to sync; import again after it syncs</string>
     <string name="ics_import_notice_unverified">The sender of an invitation file can\'t be verified. Check it came from the organiser.</string>
     <string name="ics_import_notice_answer_notifies">Answering this invitation may notify the organiser.</string>
     <string name="ics_import_notice_guests_again">You\'re the organiser, so guests may receive this invitation again.</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d year</item>
         <item quantity="other">%1$d years</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d sec</item>
-        <item quantity="other">%1$d sec</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d minute before</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">No reminder</string>
     <string name="reminder_at_time_of_event">At time of event</string>
     <string name="reminder_time_before">%1$s before</string>
-    <string name="reminder_time_after">%1$s after</string>
     <string name="reminder_day_of_event_12h">9 AM day of event</string>
     <string name="reminder_day_of_event_24h">09:00 day of event</string>
     <string name="reminder_day_of_event">Day of event</string>

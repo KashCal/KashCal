@@ -2984,19 +2984,23 @@ internal fun parseIso8601DurationToMinutes(duration: String?): Int? {
 }
 
 /**
- * Parses an event's first [MAX_REMINDERS] reminders into signed minutes, paired with the
- * count beyond that limit (from [alarmCount]). Unparseable entries are dropped; after-start
- * (negative) values are kept.
+ * Parses an event's stored reminders into signed minutes for the form, one alert per offset
+ * (sorted, so after-start values come first), at most [MAX_REMINDERS], paired with the number of
+ * alarms the form doesn't show. Unparseable entries are dropped.
+ *
+ * The form can't show an alarm's kind, and the edit save keeps one alarm per offset, so a display
+ * and an email alarm at the same offset show as one alert. The hidden count is the alarms a pull
+ * counted beyond the stored list (a form save doesn't recount [Event.alarmCount], so only the
+ * part past [MAX_REMINDERS] counts) plus any distinct offsets past the cap. The form's
+ * notice shows that count, and its total is the shown alerts plus the hidden ones.
  */
 private fun parseRemindersFromEvent(reminders: List<String>?, alarmCount: Int = 0): Pair<List<Int>, Int> {
     if (reminders.isNullOrEmpty()) return Pair(emptyList(), 0)
 
-    val parsed = reminders.take(MAX_REMINDERS).mapNotNull { duration ->
-        parseIso8601DurationToMinutes(duration)
-    }
-    val truncatedCount = (alarmCount - MAX_REMINDERS).coerceAtLeast(0)
-
-    return Pair(parsed, truncatedCount)
+    val distinct = deduplicateAndSortReminders(reminders.mapNotNull { parseIso8601DurationToMinutes(it) })
+    val shown = distinct.take(MAX_REMINDERS)
+    val notStored = (alarmCount - maxOf(reminders.size, MAX_REMINDERS)).coerceAtLeast(0)
+    return Pair(shown, notStored + (distinct.size - shown.size))
 }
 
 

@@ -406,6 +406,36 @@ class FormConstantsTest {
     }
 
     @Test
+    fun `formatReminderSummary shows a custom reminder in days, hours and minutes`() {
+        // The custom wheel's 5 days 1 hour 10 minutes (#378) reads in parts, not as "7270m".
+        assertEquals("5d 1h 10m", formatReminderSummary(listOf(7270), use24Hour = false, resources = resources))
+        assertEquals(
+            "15m, 1h 30m, 5d 1h 10m",
+            formatReminderSummary(listOf(15, 90, 7270), use24Hour = false, resources = resources),
+        )
+    }
+
+    @Test
+    fun `formatReminderShort leaves out zero parts of a mixed value`() {
+        assertEquals("1h 30m", formatReminderShort(90, resources = resources))
+        assertEquals("1d 1h", formatReminderShort(1500, resources = resources))
+        assertEquals("1d 5m", formatReminderShort(1445, resources = resources))
+        assertEquals("8d 2h", formatReminderShort(11640, resources = resources))
+    }
+
+    @Test
+    fun `formatReminderShort splits a non-preset all-day offset by magnitude`() {
+        assertEquals("1d 1h 30m", formatReminderShort(-1530, isAllDay = true, resources = resources))
+    }
+
+    @Test
+    fun `formatReminderShort keeps the sign of a negative timed value`() {
+        // An after-start alarm; splitting by magnitude would make it read as a before-start one.
+        assertEquals("-90m", formatReminderShort(-90, resources = resources))
+        assertEquals("-60m", formatReminderShort(-60, resources = resources))
+    }
+
+    @Test
     fun `formatReminderSummary shows None for empty list`() {
         assertEquals("None", formatReminderSummary(emptyList(), use24Hour = false, resources = resources))
     }

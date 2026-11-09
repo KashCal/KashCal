@@ -7,6 +7,7 @@ import org.onekash.kashcal.domain.ics.GroupPlan
 import org.onekash.kashcal.domain.ics.IcsImportResult
 import org.onekash.kashcal.domain.ics.IgnoreReason
 import org.onekash.kashcal.domain.ics.ImportAction
+import org.onekash.kashcal.domain.ics.writesStoredEvent
 
 /** An inline notice the import sheet shows before the tap; each can be dismissed. */
 enum class ImportNotice {
@@ -16,7 +17,7 @@ enum class ImportNotice {
     /** The user attends an invitation in the file, and answering it may reach the organizer. */
     ANSWER_MAY_NOTIFY,
 
-    /** The user organizes a meeting in the file, and its guests may be invited again. */
+    /** The user organizes a meeting the import writes, and its guests may be invited again. */
     GUESTS_MAY_RECEIVE_AGAIN,
 }
 
@@ -64,7 +65,9 @@ fun buildImportPreview(plans: List<GroupPlan>, targetCanSend: Boolean): IcsImpor
             if (plans.any { it.isInvitation && it.userIsAttendee && !it.userIsOrganizer }) {
                 add(ImportNotice.ANSWER_MAY_NOTIFY)
             }
-            if (plans.any { it.userIsOrganizer }) add(ImportNotice.GUESTS_MAY_RECEIVE_AGAIN)
+            if (plans.any { p -> p.userIsOrganizer && p.actions.any { it is ImportAction.Create || it.writesStoredEvent } }) {
+                add(ImportNotice.GUESTS_MAY_RECEIVE_AGAIN)
+            }
         }
     }
     return IcsImportPreview(
@@ -111,6 +114,9 @@ private fun IgnoreReason.textRes(): Int = when (this) {
     IgnoreReason.THIS_AND_FUTURE -> R.string.ics_import_reason_this_and_future
     IgnoreReason.OWN_CANCEL -> R.string.ics_import_reason_own_cancel
     IgnoreReason.ON_ANOTHER_CALENDAR -> R.string.ics_import_reason_on_another_calendar
+    IgnoreReason.CALENDAR_KEEPS_COPY -> R.string.ics_import_reason_calendar_keeps_copy
+    IgnoreReason.OWN_UPDATE -> R.string.ics_import_reason_own_update
+    IgnoreReason.CHANGE_WAITING -> R.string.ics_import_reason_change_waiting
 }
 
 /** Returns the snackbar text after an import, naming each non-zero count. */

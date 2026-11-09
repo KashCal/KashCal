@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">selle ja hilisemate korduste muudatusi ei toetata</string>
     <string name="ics_import_reason_own_cancel">sina korraldad seda koosolekut, seega tühista see sündmuse juurest</string>
     <string name="ics_import_reason_on_another_calendar">see on juba selle konto teises kalendris</string>
+    <string name="ics_import_reason_calendar_keeps_copy">see kalender hoiab sündmusest oma koopiat</string>
+    <string name="ics_import_reason_own_update">sina korraldad seda koosolekut, seega muuda seda sündmuse juurest</string>
+    <string name="ics_import_reason_change_waiting">sündmuse muudatus ootab veel sünkroonimist; impordi uuesti pärast sünkroonimist</string>
     <string name="ics_import_notice_unverified">Kutsefaili saatjat ei saa kontrollida. Veendu, et fail tuli korraldajalt.</string>
     <string name="ics_import_notice_answer_notifies">Sellele kutsele vastamine võib korraldajat teavitada.</string>
     <string name="ics_import_notice_guests_again">Sina oled korraldaja, seega võivad osalejad selle kutse uuesti saada.</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d aasta</item>
         <item quantity="other">%1$d aastat</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d sek</item>
-        <item quantity="other">%1$d sek</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d minut enne</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">Meeldetuletuseta</string>
     <string name="reminder_at_time_of_event">Sündmuse ajal</string>
     <string name="reminder_time_before">%1$s enne</string>
-    <string name="reminder_time_after">%1$s pärast</string>
     <string name="reminder_day_of_event_12h">9 AM sündmuse päeval</string>
     <string name="reminder_day_of_event_24h">09:00 sündmuse päeval</string>
     <string name="reminder_day_of_event">Sündmuse päeval</string>

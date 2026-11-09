@@ -91,6 +91,35 @@ class IcsImportPreviewTextTest {
     }
 
     @Test
+    fun `the calendar-copy, own-meeting and change-waiting skips name their reason`() {
+        val preview = buildImportPreview(
+            listOf(
+                plan(
+                    ImportAction.Ignored(IgnoreReason.CALENDAR_KEEPS_COPY, component("A")),
+                    ImportAction.Ignored(IgnoreReason.OWN_UPDATE, component("B")),
+                    ImportAction.Ignored(IgnoreReason.CHANGE_WAITING, component("C")),
+                ),
+            ),
+            targetCanSend = true,
+        )
+
+        assertEquals(
+            listOf(
+                "1 skipped: this calendar keeps its own copy of the event",
+                "1 skipped: you organize this meeting, so change it from the event",
+                "1 skipped: the event has a change waiting to sync; import again after it syncs",
+            ),
+            previewLines(preview, resources),
+        )
+    }
+
+    @Test
+    fun `an own meeting the import skips doesn't warn that guests may be invited again`() {
+        val skipped = plan(ImportAction.Ignored(IgnoreReason.OWN_UPDATE, component("M")), organizer = true, attendee = false)
+        assertEquals(listOf(ImportNotice.SENDER_UNVERIFIED), buildImportPreview(listOf(skipped), true).notices)
+    }
+
+    @Test
     fun `the summary names each count it has`() {
         assertEquals(
             "2 added, 1 cancelled, 1 skipped",

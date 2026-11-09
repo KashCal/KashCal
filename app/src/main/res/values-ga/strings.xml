@@ -1082,6 +1082,9 @@
     <string name="ics_import_reason_this_and_future">ní thacaítear le hathruithe ar an tarlú seo agus ar tharluithe níos déanaí</string>
     <string name="ics_import_reason_own_cancel">is tusa eagraí an chruinnithe seo, mar sin cealaigh é ón imeacht</string>
     <string name="ics_import_reason_on_another_calendar">tá sé i bhféilire eile den chuntas seo cheana</string>
+    <string name="ics_import_reason_calendar_keeps_copy">coinníonn an féilire seo a chóip féin den imeacht</string>
+    <string name="ics_import_reason_own_update">is tusa eagraí an chruinnithe seo, mar sin athraigh é ón imeacht</string>
+    <string name="ics_import_reason_change_waiting">tá athrú ar an imeacht ag fanacht le sioncronú; iompórtáil arís nuair a bheidh sé sioncronaithe</string>
     <string name="ics_import_notice_unverified">Ní féidir seoltóir comhaid chuiridh a fhíorú. Seiceáil gur ón eagraí a tháinig sé.</string>
     <string name="ics_import_notice_answer_notifies">D\'fhéadfadh fógra dul chuig an eagraí má fhreagraíonn tú an cuireadh seo.</string>
     <string name="ics_import_notice_guests_again">Is tusa an t-eagraí, mar sin d\'fhéadfadh na freastalaithe an cuireadh seo a fháil arís.</string>
@@ -1206,13 +1209,6 @@
         <item quantity="few">%1$d bliana</item>
         <item quantity="many">%1$d mbliana</item>
         <item quantity="other">%1$d bliain</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d soic</item>
-        <item quantity="two">%1$d shoic</item>
-        <item quantity="few">%1$d shoic</item>
-        <item quantity="many">%1$d soic</item>
-        <item quantity="other">%1$d soic</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d nóiméad roimhe</item>
@@ -1430,7 +1426,6 @@
     <string name="reminder_none">Gan meabhrúchán</string>
     <string name="reminder_at_time_of_event">Ag am an imeachta</string>
     <string name="reminder_time_before">%1$s roimhe</string>
-    <string name="reminder_time_after">%1$s i ndiaidh</string>
     <string name="reminder_day_of_event_12h">9 AM lá an imeachta</string>
     <string name="reminder_day_of_event_24h">09:00 lá an imeachta</string>
     <string name="reminder_day_of_event">Lá an imeachta</string>

@@ -1022,6 +1022,9 @@
     <string name="ics_import_reason_this_and_future">šīs un turpmāko reižu izmaiņas netiek atbalstītas</string>
     <string name="ics_import_reason_own_cancel">tu organizē šo sapulci, tāpēc atcel to no notikuma</string>
     <string name="ics_import_reason_on_another_calendar">tas jau ir citā šī konta kalendārā</string>
+    <string name="ics_import_reason_calendar_keeps_copy">šis kalendārs glabā savu notikuma kopiju</string>
+    <string name="ics_import_reason_own_update">tu organizē šo sapulci, tāpēc rediģē to no notikuma</string>
+    <string name="ics_import_reason_change_waiting">notikuma izmaiņas vēl gaida sinhronizāciju; importē vēlreiz pēc sinhronizācijas</string>
     <string name="ics_import_notice_unverified">Ielūguma faila sūtītāju nevar pārbaudīt. Pārliecinies, ka fails ir no organizatora.</string>
     <string name="ics_import_notice_answer_notifies">Atbildot uz šo ielūgumu, organizators var saņemt paziņojumu.</string>
     <string name="ics_import_notice_guests_again">Tu esi organizators, tāpēc dalībnieki var vēlreiz saņemt šo ielūgumu.</string>
@@ -1112,11 +1115,6 @@
         <item quantity="zero">%1$d gadu</item>
         <item quantity="one">%1$d gads</item>
         <item quantity="other">%1$d gadi</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="zero">%1$d sek</item>
-        <item quantity="one">%1$d sek</item>
-        <item quantity="other">%1$d sek</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="zero">%1$d minūšu pirms</item>
@@ -1312,7 +1310,6 @@
     <string name="reminder_none">Bez atgādinājuma</string>
     <string name="reminder_at_time_of_event">Notikuma laikā</string>
     <string name="reminder_time_before">%1$s pirms</string>
-    <string name="reminder_time_after">%1$s pēc</string>
     <string name="reminder_day_of_event_12h">9 AM notikuma dienā</string>
     <string name="reminder_day_of_event_24h">09:00 notikuma dienā</string>
     <string name="reminder_day_of_event">Notikuma dienā</string>

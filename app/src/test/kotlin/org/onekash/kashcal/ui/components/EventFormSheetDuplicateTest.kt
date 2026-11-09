@@ -26,6 +26,7 @@ import org.onekash.kashcal.data.contacts.ContactEmail
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.preferences.DefaultCalendar
+import org.onekash.kashcal.domain.model.toEventForDuplicate
 import org.onekash.kashcal.testutil.phoneLocalDate
 import org.onekash.kashcal.testutil.withDeviceTimeZone
 import org.onekash.kashcal.ui.model.CalendarGroup
@@ -390,6 +391,36 @@ class EventFormSheetDuplicateTest {
         assertEquals(listOf(30), state.reminders)
         assertEquals("TRANSPARENT", state.transp)
         assertEquals(0xFF00AA00.toInt(), state.eventColor)
+    }
+
+    @Test
+    fun `duplicate of a device event fills its alerts and colour, also for a Room calendar`() {
+        val device = org.onekash.kashcal.domain.model.DisplayEvent.Device(
+            org.onekash.kashcal.data.calendar_provider.DeviceCalendarInstance(
+                instanceId = 1L, eventId = 100L, title = "Standup", description = "", location = "",
+                startTs = nyStart, endTs = nyEnd, startDay = 20240305, endDay = 20240305, isAllDay = false,
+                hasRrule = false, rrule = null, reminders = listOf(15, 1440), calendarId = 5L,
+                calendarDisplayName = "Phone", calendarColor = 0xFF1976D2.toInt(), eventColor = 0xFF4CAF50.toInt(),
+                status = 1, availability = 0, hasAlarm = true, selfAttendeeStatus = 0, isWritable = true,
+                originalId = null, originalInstanceTime = null, timezone = "America/New_York",
+                eventStartTs = nyStart, categories = emptyList(),
+            )
+        )
+
+        val state = EventFormState().withDuplicateOf(device.toEventForDuplicate())
+            .copy(selectedCalendarId = 1L, isDeviceCalendar = false)
+
+        assertEquals(listOf(15, 1440), state.reminders)
+        assertEquals(0xFF4CAF50.toInt(), state.eventColor)
+    }
+
+    @Test
+    fun `duplicate of an event with a repeated alert copies each alert once`() {
+        val state = EventFormState().withDuplicateOf(
+            sourceEvent(startTs = nyStart, endTs = nyEnd).copy(reminders = listOf("-PT15M", "-PT15M", "-PT1H"))
+        )
+
+        assertEquals(listOf(15, 60), state.reminders)
     }
 
     @Test

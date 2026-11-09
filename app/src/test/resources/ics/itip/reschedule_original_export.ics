@@ -1,0 +1,63 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//KashCal//KashCal 2.0//EN
+CALSCALE:GREGORIAN
+BEGIN:VTIMEZONE
+TZID:America/Chicago
+BEGIN:DAYLIGHT
+DTSTART:19700308T020000
+RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU
+TZOFFSETFROM:-0600
+TZOFFSETTO:-0500
+TZNAME:CDT
+END:DAYLIGHT
+BEGIN:STANDARD
+DTSTART:19701101T020000
+RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU
+TZOFFSETFROM:-0500
+TZOFFSETTO:-0600
+TZNAME:CST
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+UID:0example0reschedule0uid00@example.test
+DTSTAMP:20261106T213131Z
+DTSTART;TZID=America/Chicago:20261106T140000
+DTEND;TZID=America/Chicago:20261106T143000
+SUMMARY:Project review call
+DESCRIPTION:-::~:~::~::~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:
+ ~:~:~:~:~:~:~:~:~:~:~::~:~::-\nJoin the call: https://meet.example.test/ab
+ c-defg-hij\nOr dial: (US) +1 555-0100 PIN: 000000000#\nMore phone numbers:
+  https://tel.example.test/abc-defg-hij?pin=0000000000000&hs=7\n\nPlease do
+  not edit this section.\n-::~:~::~::~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:
+ ~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~::~:~::-
+LOCATION:https://meet.example.test/abc-defg-hij
+STATUS:CONFIRMED
+SEQUENCE:0
+CLASS:PUBLIC
+ORGANIZER;CN=Olivia Organizer:mailto:organizer@example.test
+ATTENDEE;CN=Olivia Organizer;PARTSTAT=ACCEPTED;RSVP=TRUE:mailto:organizer@e
+ xample.test
+ATTENDEE;CN=attendee@example.test;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:at
+ tendee@example.test
+ATTENDEE;CN=guest1@example.test;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:gues
+ t1@example.test
+ATTENDEE;CN=guest2@example.test;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:gues
+ t2@example.test
+BEGIN:VALARM
+UID:00000000-0000-4000-8000-000000000001
+X-WR-ALARMUID:00000000-0000-4000-8000-000000000001
+X-APPLE-DEFAULT-ALARM:FALSE
+ACTION:DISPLAY
+TRIGGER:-PT15M
+DESCRIPTION:Reminder\nJoin the call: https://meet.example.test/abc-defg-hij
+ \nOr dial: (US) +1 555-0100 PIN: 000000000#\nMore phone numbers: https://t
+ el.example.test/abc-defg-hij?pin=0000000000000&hs=7\n\nPlease do not edit 
+ this section.\nReminder
+END:VALARM
+CREATED:20261105T225448Z
+LAST-MODIFIED:20261105T230356Z
+X-EXAMPLE-CONFERENCE:https://meet.example.test/abc-defg-hij
+X-EXAMPLE-OWNER-ID:-1000000001
+END:VEVENT
+END:VCALENDAR

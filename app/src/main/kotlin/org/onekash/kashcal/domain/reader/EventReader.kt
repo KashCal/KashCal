@@ -730,6 +730,10 @@ class EventReader @Inject constructor(
         return database.pendingOperationsDao().getPendingCount()
     }
 
+    /** Returns whether any of [eventIds] has a PENDING or IN_PROGRESS operation. */
+    suspend fun hasChangeWaiting(eventIds: List<Long>): Boolean =
+        eventIds.isNotEmpty() && database.pendingOperationsDao().hasActiveOperationForAny(eventIds)
+
     // ========== Statistics ==========
 
     /**

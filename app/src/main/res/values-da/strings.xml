@@ -991,6 +991,9 @@
     <string name="ics_import_reason_this_and_future">ændringer af denne og senere forekomster understøttes ikke</string>
     <string name="ics_import_reason_own_cancel">du er arrangør af dette møde, så aflys det fra begivenheden</string>
     <string name="ics_import_reason_on_another_calendar">begivenheden er allerede i en anden kalender på denne konto</string>
+    <string name="ics_import_reason_calendar_keeps_copy">denne kalender har sin egen kopi af begivenheden</string>
+    <string name="ics_import_reason_own_update">du er arrangør af dette møde, så rediger det fra begivenheden</string>
+    <string name="ics_import_reason_change_waiting">begivenheden har en ændring, der venter på synkronisering; importer igen, når den er synkroniseret</string>
     <string name="ics_import_notice_unverified">Afsenderen af en invitationsfil kan ikke bekræftes. Tjek, at den kom fra arrangøren.</string>
     <string name="ics_import_notice_answer_notifies">Hvis du svarer på denne invitation, får arrangøren muligvis besked.</string>
     <string name="ics_import_notice_guests_again">Du er arrangør, så gæsterne modtager muligvis denne invitation igen.</string>
@@ -1064,10 +1067,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d år</item>
         <item quantity="other">%1$d år</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d sek</item>
-        <item quantity="other">%1$d sek</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d minut før</item>
@@ -1252,7 +1251,6 @@
     <string name="reminder_none">Ingen påmindelse</string>
     <string name="reminder_at_time_of_event">På tidspunktet for begivenheden</string>
     <string name="reminder_time_before">%1$s før</string>
-    <string name="reminder_time_after">%1$s efter</string>
     <string name="reminder_day_of_event_12h">9 AM på dagen for begivenheden</string>
     <string name="reminder_day_of_event_24h">09:00 på dagen for begivenheden</string>
     <string name="reminder_day_of_event">På dagen for begivenheden</string>

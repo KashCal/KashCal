@@ -228,6 +228,16 @@ interface PendingOperationsDao {
     """)
     suspend fun hasActiveOperation(eventId: Long, operation: String): Boolean
 
+    /** Returns whether any of [eventIds] has a PENDING or IN_PROGRESS operation of any kind. */
+    @Query("""
+        SELECT EXISTS(
+            SELECT 1 FROM pending_operations
+            WHERE event_id IN (:eventIds)
+            AND status IN ('PENDING', 'IN_PROGRESS')
+        )
+    """)
+    suspend fun hasActiveOperationForAny(eventIds: List<Long>): Boolean
+
     /** Returns whether any of [eventIds] has a PENDING or IN_PROGRESS PARTSTAT-only answer. */
     @Query("""
         SELECT EXISTS(

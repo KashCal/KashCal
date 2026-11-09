@@ -1434,6 +1434,9 @@
     <string name="ics_import_reason_this_and_future">changes to this and later occurrences aren\'t supported</string>
     <string name="ics_import_reason_own_cancel">you organize this meeting, so cancel it from the event</string>
     <string name="ics_import_reason_on_another_calendar">it\'s already in another calendar of this account</string>
+    <string name="ics_import_reason_calendar_keeps_copy">this calendar keeps its own copy of the event</string>
+    <string name="ics_import_reason_own_update">you organize this meeting, so change it from the event</string>
+    <string name="ics_import_reason_change_waiting">the event has a change waiting to sync; import again after it syncs</string>
     <!-- Inline notices in the import sheet; each can be dismissed. -->
     <string name="ics_import_notice_unverified">The sender of an invitation file can\'t be verified. Check it came from the organizer.</string>
     <string name="ics_import_notice_answer_notifies">Answering this invitation may notify the organizer.</string>
@@ -1513,10 +1516,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d year</item>
         <item quantity="other">%1$d years</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d sec</item>
-        <item quantity="other">%1$d sec</item>
     </plurals>
 
     <!-- Duration-with-context plurals -->
@@ -1792,12 +1791,11 @@
     <string name="cd_circular_scrolling">Circular scrolling enabled</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
-    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
+    <!-- Reminder picker options (used in DateTimeUtils, FormConstants) -->
     <string name="reminder_none">No reminder</string>
     <string name="reminder_at_time_of_event">At time of event</string>
     <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
     <string name="reminder_time_before">%1$s before</string>
-    <string name="reminder_time_after">%1$s after</string>
     <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
     <string name="reminder_day_of_event_12h">9 AM day of event</string>
     <string name="reminder_day_of_event_24h">09:00 day of event</string>

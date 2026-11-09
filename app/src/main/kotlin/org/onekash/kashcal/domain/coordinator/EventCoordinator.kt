@@ -7,11 +7,13 @@ import org.onekash.kashcal.data.ics.ImportedCopy
 import org.onekash.kashcal.domain.ics.GroupPlan
 import org.onekash.kashcal.domain.ics.IcsImportPlanner
 import org.onekash.kashcal.domain.ics.IcsImportResult
+import org.onekash.kashcal.domain.ics.IgnoreReason
 import org.onekash.kashcal.domain.ics.ImportAction
 import org.onekash.kashcal.domain.ics.ImportPlanInput
 import org.onekash.kashcal.domain.ics.ImportTarget
 import org.onekash.kashcal.domain.ics.StoredComponent
 import org.onekash.kashcal.domain.ics.StoredUid
+import org.onekash.kashcal.domain.ics.isUpdate
 import org.onekash.kashcal.domain.identity.matchesAttendee
 import org.onekash.kashcal.util.AddressNormalizer
 import android.util.Log
@@ -46,10 +48,12 @@ import org.onekash.kashcal.domain.model.EventExport
 import org.onekash.kashcal.domain.model.LocalCalendarSummary
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.domain.reader.EventReader.OccurrenceWithEvent
+import org.onekash.kashcal.domain.scheduling.SequenceBumper
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.sync.scheduler.IcsRefreshScheduleReconciler
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
+import org.onekash.kashcal.sync.strategy.isPullSyntheticMaster
 import org.onekash.kashcal.widget.WidgetUpdateManager
 import java.util.UUID
 import javax.inject.Inject
@@ -1023,8 +1027,10 @@ class EventCoordinator @Inject constructor(
      * Imports a parsed ICS file into Room calendar [calendarId], applying its iTIP METHOD the way
      * [IcsImportPlanner] decides (RFC 5546): a new UID is created with the file's UID, organizer
      * and guests; a UID the calendar holds is updated, left alone or cancelled; a REPLY or
-     * another unsupported method writes nothing. For one-shot file imports; subscriptions
-     * refresh through [IcsSubscriptionRepository].
+     * another unsupported method writes nothing. On a synced calendar an update is uploaded: one
+     * UPDATE for the series per group ([EventWriter.queueImportedUpdate]), planned inside the
+     * group's transaction. For one-shot file imports; subscriptions refresh through
+     * [IcsSubscriptionRepository].
      *
      * Creates keep [Event.uid] unless another calendar of the account holds it (a plain event
      * then gets a fresh UID) or the group is malformed (two masters with one UID, or exceptions
@@ -1040,12 +1046,20 @@ class EventCoordinator @Inject constructor(
         for (group in file.groups) {
             val effects = ReminderEffects()
             result += try {
-                val plan = IcsImportPlanner.plan(planInput(context, file, group))
-                // One transaction per group, so a failure leaves none of its components written.
+                // One transaction per group, so a failure leaves none of its components written,
+                // and the plan reads the stored event as the writes find it.
                 eventWriter.inTransaction {
-                    plan.actions.fold(IcsImportResult()) { sum, action ->
-                        sum + applyImportAction(context, file, action, effects)
+                    val input = planInput(context, file, group)
+                    val actions = IcsImportPlanner.plan(input).actions
+                    // On a synced calendar a group that updates the series uploads it once, its
+                    // changed and cancelled occurrences inside that PUT; a cancel's own PUT first
+                    // would leave the series PUT a stale etag. A cancel-only group keeps its own.
+                    val uploadSeries = !context.isLocal && actions.any { it.isUpdate }
+                    val sum = actions.fold(IcsImportResult()) { sum, action ->
+                        sum + applyImportAction(context, file, action, effects, queueCancel = !uploadSeries)
                     }
+                    if (uploadSeries) input.stored?.master?.eventId?.let { eventWriter.queueImportedUpdate(it) }
+                    sum
                 }
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
@@ -1124,6 +1138,7 @@ class EventCoordinator @Inject constructor(
             target = if (context.isLocal) ImportTarget.LOCAL else ImportTarget.CALDAV,
             userAddresses = context.userAddresses,
             elsewhereInAccount = elsewhere,
+            changeWaiting = !context.isLocal && eventReader.hasChangeWaiting(here.map { it.id }),
         )
     }
 
@@ -1135,6 +1150,7 @@ class EventCoordinator @Inject constructor(
         itipDtstamp = itipDtstamp,
         status = status,
         pendingDelete = isPendingDelete,
+        isPullPlaceholder = isPullSyntheticMaster,
     )
 
     /** Reminder work for a group's writes, done once its transaction commits. */
@@ -1152,16 +1168,22 @@ class EventCoordinator @Inject constructor(
         file: IcsImportFile,
         action: ImportAction,
         effects: ReminderEffects,
+        queueCancel: Boolean,
     ): IcsImportResult = when (action) {
         is ImportAction.Create -> createImported(context, file, action, effects)
         is ImportAction.UpdateSeries -> importedUpdate(context, action.stored.eventId, action.component, effects)
         is ImportAction.UpdateInstance -> importedUpdate(context, action.stored.eventId, action.component, effects)
         is ImportAction.CreateInstance -> {
+            val instanceTime = requireNotNull(action.component.event.originalInstanceTime)
+            val master = requireNotNull(eventReader.getEventById(action.master.eventId)) {
+                "Event not found: ${action.master.eventId}"
+            }
             val created = eventWriter.createImportedException(
                 action.master.eventId,
-                requireNotNull(action.component.event.originalInstanceTime),
+                instanceTime,
                 action.component.event,
-                attendeeRows(context, action.component),
+                updatedAttendeeRows(context, action.component, master.projectOntoOccurrence(instanceTime)),
+                keepUserFields = !context.isLocal,
             )
             effects.armed += created
             IcsImportResult(updated = 1, firstStartTs = created.startTs)
@@ -1169,7 +1191,7 @@ class EventCoordinator @Inject constructor(
         is ImportAction.CancelSeries -> {
             val cancelled = eventWriter.applyImportedCancel(
                 action.master.eventId, null, action.component.event.sequence,
-                action.component.event.itipDtstamp, context.isLocal
+                action.component.event.itipDtstamp, context.isLocal, queueCancel
             )
             effects.cancelled += cancelled.map { it.id }
             IcsImportResult(cancelled = 1, firstStartTs = cancelled.firstOrNull()?.startTs)
@@ -1178,7 +1200,7 @@ class EventCoordinator @Inject constructor(
             val instanceTime = requireNotNull(action.component.event.originalInstanceTime)
             val cancelled = eventWriter.applyImportedCancel(
                 action.master.eventId, instanceTime, action.component.event.sequence,
-                action.component.event.itipDtstamp, context.isLocal
+                action.component.event.itipDtstamp, context.isLocal, queueCancel
             )
             effects.cancelled += cancelled.map { it.id }
             effects.cancelledOccurrences += action.master.eventId to instanceTime
@@ -1194,7 +1216,11 @@ class EventCoordinator @Inject constructor(
         component: ImportedComponent,
         effects: ReminderEffects,
     ): IcsImportResult {
-        val updated = eventWriter.applyImportedUpdate(eventId, component.event, attendeeRows(context, component))
+        val existing = requireNotNull(eventReader.getEventById(eventId)) { "Event not found: $eventId" }
+        val updated = eventWriter.applyImportedUpdate(
+            eventId, component.event, updatedAttendeeRows(context, component, existing),
+            keepUserFields = !context.isLocal,
+        )
         effects.armed += updated
         return IcsImportResult(updated = 1, firstStartTs = updated.startTs)
     }
@@ -1284,6 +1310,33 @@ class EventCoordinator @Inject constructor(
             result += IcsImportResult(created = 1, firstStartTs = created.startTs)
         }
         return result
+    }
+
+    /**
+     * Returns [component]'s attendee rows for a write over [before] on a synced calendar: the
+     * stored row it rewrites, or for a new changed occurrence the series projected onto it. The
+     * user's own row takes NEEDS-ACTION when the write reschedules ([SequenceBumper.reschedules],
+     * RFC 6638 §3.2.8), else the user's answer stored on [before], else the file's; other guests
+     * come from the file. An offline calendar takes the file's rows as they are. DURATION is left
+     * out of the comparison: start and end already carry a change of length, and a series row
+     * stores a DURATION an occurrence change doesn't.
+     */
+    private suspend fun updatedAttendeeRows(
+        context: ImportContext,
+        component: ImportedComponent,
+        before: Event,
+    ): List<Attendee> {
+        val rows = attendeeRows(context, component)
+        if (context.isLocal) return rows
+        val account = context.account ?: return rows
+        if (rows.none { account.matchesAttendee(it.address) }) return rows
+        val partstat = if (SequenceBumper.reschedules(before.copy(duration = null), component.event.copy(duration = null))) {
+            "NEEDS-ACTION"
+        } else {
+            eventReader.getAttendeesForEventsOnce(listOf(before.id))[before.id].orEmpty()
+                .firstOrNull { account.matchesAttendee(it.address) }?.partstat ?: return rows
+        }
+        return rows.map { if (account.matchesAttendee(it.address)) it.copy(partstat = partstat) else it }
     }
 
     /**

@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">මෙම සහ පසු අවස්ථා සඳහා වෙනස්කම් සහාය නොදක්වයි</string>
     <string name="ics_import_reason_own_cancel">ඔබ මෙම රැස්වීම සංවිධානය කරන නිසා, සිදුවීමෙන් එය අවලංගු කරන්න</string>
     <string name="ics_import_reason_on_another_calendar">එය දැනටමත් මෙම ගිණුමේ වෙනත් දින දර්ශනයක ඇත</string>
+    <string name="ics_import_reason_calendar_keeps_copy">මෙම දින දර්ශනය සිදුවීමේ තමන්ගේම පිටපතක් තබා ගනී</string>
+    <string name="ics_import_reason_own_update">ඔබ මෙම රැස්වීම සංවිධානය කරන නිසා, සිදුවීමෙන් එය වෙනස් කරන්න</string>
+    <string name="ics_import_reason_change_waiting">සිදුවීමේ සමමුහුර්ත වීමට පොරොත්තු වන වෙනසක් ඇත; එය සමමුහුර්ත වූ පසු නැවත ආයාත කරන්න</string>
     <string name="ics_import_notice_unverified">ආරාධනා ගොනුවක යවන්නා තහවුරු කළ නොහැක. එය සංවිධායකගෙන් පැමිණි බව පරීක්ෂා කරන්න.</string>
     <string name="ics_import_notice_answer_notifies">මෙම ආරාධනාවට පිළිතුරු දීමෙන් සංවිධායකට දැනුම් යා හැක.</string>
     <string name="ics_import_notice_guests_again">ඔබ සංවිධායක බැවින්, සහභාගිවන්නන්ට මෙම ආරාධනාව නැවත ලැබිය හැක.</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">වසර %1$d</item>
         <item quantity="other">වසර %1$d</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">තත් %1$d</item>
-        <item quantity="other">තත් %1$d</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">මිනිත්තු %1$d කට පෙර</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">මතක් කිරීමක් නැත</string>
     <string name="reminder_at_time_of_event">සිදුවීමේ වේලාවට</string>
     <string name="reminder_time_before">%1$s කලින්</string>
-    <string name="reminder_time_after">%1$s පසුව</string>
     <string name="reminder_day_of_event_12h">සිදුවීමේ දින පෙ.ව. 9</string>
     <string name="reminder_day_of_event_24h">සිදුවීමේ දින 09:00</string>
     <string name="reminder_day_of_event">සිදුවීමේ දිනය</string>

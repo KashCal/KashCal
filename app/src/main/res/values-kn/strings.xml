@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">ಇದಕ್ಕೆ ಮತ್ತು ಮುಂದಿನ ಪುನರಾವರ್ತನೆಗಳಿಗೆ ಮಾಡಿದ ಬದಲಾವಣೆಗಳಿಗೆ ಬೆಂಬಲವಿಲ್ಲ</string>
     <string name="ics_import_reason_own_cancel">ಈ ಮೀಟಿಂಗ್ ಅನ್ನು ನೀವೇ ಆಯೋಜಿಸುತ್ತೀರಿ, ಆದ್ದರಿಂದ ಈವೆಂಟ್‌ನಿಂದಲೇ ಇದನ್ನು ರದ್ದುಗೊಳಿಸಿ</string>
     <string name="ics_import_reason_on_another_calendar">ಇದು ಈಗಾಗಲೇ ಈ ಖಾತೆಯ ಮತ್ತೊಂದು ಕ್ಯಾಲೆಂಡರ್‌ನಲ್ಲಿದೆ</string>
+    <string name="ics_import_reason_calendar_keeps_copy">ಈ ಕ್ಯಾಲೆಂಡರ್ ಈವೆಂಟ್‌ನ ತನ್ನದೇ ಪ್ರತಿಯನ್ನು ಇಟ್ಟುಕೊಳ್ಳುತ್ತದೆ</string>
+    <string name="ics_import_reason_own_update">ಈ ಮೀಟಿಂಗ್ ಅನ್ನು ನೀವೇ ಆಯೋಜಿಸುತ್ತೀರಿ, ಆದ್ದರಿಂದ ಈವೆಂಟ್‌ನಿಂದಲೇ ಇದನ್ನು ಬದಲಾಯಿಸಿ</string>
+    <string name="ics_import_reason_change_waiting">ಈವೆಂಟ್‌ನಲ್ಲಿ ಒಂದು ಬದಲಾವಣೆ ಸಿಂಕ್ ಆಗಲು ಕಾಯುತ್ತಿದೆ; ಸಿಂಕ್ ಆದ ನಂತರ ಮತ್ತೆ ಆಮದು ಮಾಡಿ</string>
     <string name="ics_import_notice_unverified">ಆಹ್ವಾನ ಫೈಲ್ ಕಳುಹಿಸಿದವರನ್ನು ಪರಿಶೀಲಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ. ಇದು ಆಯೋಜಕರಿಂದ ಬಂದಿದೆಯೇ ಎಂದು ಪರಿಶೀಲಿಸಿ.</string>
     <string name="ics_import_notice_answer_notifies">ಈ ಆಹ್ವಾನಕ್ಕೆ ಉತ್ತರಿಸಿದರೆ ಆಯೋಜಕರಿಗೆ ತಿಳಿಸಬಹುದು.</string>
     <string name="ics_import_notice_guests_again">ನೀವು ಆಯೋಜಕರು, ಆದ್ದರಿಂದ ಅತಿಥಿಗಳು ಈ ಆಹ್ವಾನವನ್ನು ಮತ್ತೆ ಸ್ವೀಕರಿಸಬಹುದು.</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d ವರ್ಷ</item>
         <item quantity="other">%1$d ವರ್ಷಗಳು</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d ಸೆ.</item>
-        <item quantity="other">%1$d ಸೆ.</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d ನಿಮಿಷ ಮುಂಚೆ</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">ರಿಮೈಂಡರ್ ಇಲ್ಲ</string>
     <string name="reminder_at_time_of_event">ಈವೆಂಟ್ ಸಮಯದಲ್ಲಿ</string>
     <string name="reminder_time_before">%1$s ಮೊದಲು</string>
-    <string name="reminder_time_after">%1$s ನಂತರ</string>
     <string name="reminder_day_of_event_12h">ಈವೆಂಟ್ ದಿನದಲ್ಲಿ 9 AM</string>
     <string name="reminder_day_of_event_24h">ಈವೆಂಟ್ ದಿನದಲ್ಲಿ 09:00</string>
     <string name="reminder_day_of_event">ಈವೆಂಟ್ ದಿನ</string>

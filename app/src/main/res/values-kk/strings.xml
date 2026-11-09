@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">осы және кейінгі қайталанулардағы өзгерістерге қолдау көрсетілмейді</string>
     <string name="ics_import_reason_own_cancel">бұл кездесуді сіз ұйымдастырасыз, сондықтан оны оқиғаның өзінен болдырмаңыз</string>
     <string name="ics_import_reason_on_another_calendar">ол осы есептік жазбаның басқа күнтізбесінде бар</string>
+    <string name="ics_import_reason_calendar_keeps_copy">бұл күнтізбе оқиғаның өз көшірмесін сақтайды</string>
+    <string name="ics_import_reason_own_update">бұл кездесуді сіз ұйымдастырасыз, сондықтан оны оқиғаның өзінен өзгертіңіз</string>
+    <string name="ics_import_reason_change_waiting">оқиғада синхрондауды күтіп тұрған өзгеріс бар; ол синхрондалғаннан кейін қайта импорттаңыз</string>
     <string name="ics_import_notice_unverified">Шақыру файлын жіберушіні растау мүмкін емес. Оның ұйымдастырушыдан келгенін тексеріңіз.</string>
     <string name="ics_import_notice_answer_notifies">Бұл шақыруға жауап беру ұйымдастырушыға хабарлауы мүмкін.</string>
     <string name="ics_import_notice_guests_again">Сіз ұйымдастырушысыз, сондықтан қонақтар бұл шақыруды қайта алуы мүмкін.</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d жыл</item>
         <item quantity="other">%1$d жыл</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d сек</item>
-        <item quantity="other">%1$d сек</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d минут бұрын</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">Еске салғыш жоқ</string>
     <string name="reminder_at_time_of_event">Оқиға уақытында</string>
     <string name="reminder_time_before">%1$s бұрын</string>
-    <string name="reminder_time_after">%1$s кейін</string>
     <string name="reminder_day_of_event_12h">9 AM оқиға күні</string>
     <string name="reminder_day_of_event_24h">09:00 оқиға күні</string>
     <string name="reminder_day_of_event">Day of event</string>

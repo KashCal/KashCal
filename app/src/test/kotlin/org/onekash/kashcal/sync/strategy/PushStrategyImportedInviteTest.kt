@@ -26,6 +26,15 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.ics.IcsParserService
+import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.domain.coordinator.EventCoordinator
+import org.onekash.kashcal.domain.initializer.LocalCalendarInitializer
+import org.onekash.kashcal.domain.reader.EventReader
+import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
+import org.onekash.icaldav.parser.ICalParser
+import io.mockk.every
+import kotlinx.coroutines.flow.flowOf
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.repository.CalendarRepositoryImpl
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
@@ -47,8 +56,9 @@ import java.util.Collections
  * Measured 2026-10-09 on 10 servers: only Cyrus sends the iTIP REPLY when a create already
  * carries the answer, so the create goes up at NEEDS-ACTION and the answer as the next PUT. A
  * server that already holds the UID refuses the create; for an imported event that ends the
- * operation instead of retrying. Every rule applies only to imported rows; the same input on an
- * ordinary row takes today's path.
+ * operation instead of retrying. Those create and answer rules apply only to imported rows; the
+ * same input on an ordinary row takes today's path. A newer invitation imported over a pulled
+ * row goes up as one ordinary UPDATE of the series, with its changed occurrences in the same PUT.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -59,6 +69,7 @@ class PushStrategyImportedInviteTest {
     private lateinit var client: CalDavClient
     private lateinit var pushStrategy: PushStrategy
     private lateinit var eventWriter: EventWriter
+    private lateinit var generator: OccurrenceGenerator
     private lateinit var account: Account
     private var calendarId = 0L
 
@@ -133,7 +144,7 @@ class PushStrategyImportedInviteTest {
         val context: Context = ApplicationProvider.getApplicationContext()
         database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
             .addCallback(PendingOperationTriggers.callback()).allowMainThreadQueries().build()
-        val generator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
+        generator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
         eventWriter = EventWriter(database, generator)
         val accountId = database.accountsDao().insert(
             Account(provider = AccountProvider.CALDAV, email = self, calendarUserAddresses = listOf("mailto:$self"))
@@ -176,6 +187,137 @@ class PushStrategyImportedInviteTest {
     }
 
     private fun unfold(s: String) = s.replace(Regex("""\r?\n[ \t]"""), "")
+
+    // ---- a newer invitation imported over a pulled copy ----
+
+    private val coordinator by lazy {
+        val accounts = org.onekash.kashcal.data.repository.AccountRepositoryImpl(
+            accountsDao = database.accountsDao(), addressBookDao = database.addressBookDao(),
+            calendarsDao = database.calendarsDao(), eventsDao = database.eventsDao(),
+            pendingOperationsDao = database.pendingOperationsDao(),
+            credentialManager = org.onekash.kashcal.data.credential.FakeCredentialManager(),
+            reminderScheduler = mockk(relaxed = true), workManager = mockk(relaxed = true),
+            contactSystemAccountRegistrar = mockk(relaxed = true),
+            contactsProviderRepository = org.onekash.kashcal.sync.contacts.FakeContactsProviderRepository(),
+        )
+        val dataStore = mockk<KashCalDataStore> {
+            every { defaultReminderMinutes } returns flowOf(15)
+            every { defaultAllDayReminder } returns flowOf(1440)
+        }
+        EventCoordinator(
+            eventWriter = eventWriter, eventReader = EventReader(database), occurrenceGenerator = generator,
+            localCalendarInitializer = LocalCalendarInitializer(database), icsSubscriptionRepository = mockk(),
+            contactBirthdayRepository = mockk(), contactAnniversaryRepository = mockk(), accountRepository = accounts,
+            syncScheduler = mockk(relaxed = true), reminderScheduler = mockk(relaxed = true),
+            widgetUpdateManager = mockk(relaxed = true), inviteNotifier = mockk(relaxed = true),
+            icsRefreshScheduleReconciler = mockk(relaxed = true), dataStore = dataStore,
+        )
+    }
+
+    private fun fixtureText(name: String) =
+        unfold(requireNotNull(javaClass.classLoader?.getResource("ics/itip/$name")).readText())
+            .replace("attendee@example.test", self)
+
+    /** Puts [body] on the server and stores the row a pull of it would. */
+    private suspend fun seedPulled(body: String): Event {
+        val stored = body.replace(Regex("METHOD:\\w+\r?\n"), "")
+        val parsed = ICalParser().parseAllEvents(stored).getOrNull()!!
+        val path = "/cal/${parsed.first().uid}.ics"
+        resources[path] = stored; etags[path] = 1
+        val master = parsed.first { it.recurrenceId == null }
+        // The client stores etags unquoted and quotes them on the wire.
+        val mapped = ICalEventMapper.toEntity(master, stored, calendarId, server.url(path).toString(), "e1")
+        val id = database.eventsDao().insert(mapped.event.copy(syncStatus = SyncStatus.SYNCED))
+        database.attendeesDao().replaceForEvent(id, mapped.attendees.map { it.copy(eventId = id) })
+        generator.regenerateOccurrences(database.eventsDao().getById(id)!!)
+        return database.eventsDao().getById(id)!!
+    }
+
+    private fun series(sequence: Int, vararg extra: String) = (listOf(
+        "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Organizer//Client//EN", "METHOD:REQUEST",
+        "BEGIN:VEVENT", "UID:weekly@example.test", "DTSTAMP:2026110${sequence + 1}T100000Z",
+        "DTSTART:20261201T150000Z", "DTEND:20261201T160000Z", "RRULE:FREQ=DAILY;COUNT=5",
+        "SUMMARY:Weekly v$sequence", "SEQUENCE:$sequence", "ORGANIZER;CN=Boss:mailto:boss@example.test",
+        "ATTENDEE;PARTSTAT=ACCEPTED:mailto:boss@example.test",
+        "ATTENDEE;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:$self", "END:VEVENT",
+    ) + extra.toList() + listOf("END:VCALENDAR", "")).joinToString("\r\n")
+
+    private fun occurrence(sequence: Int, status: String) = listOf(
+        "BEGIN:VEVENT", "UID:weekly@example.test", "DTSTAMP:2026110${sequence + 1}T100000Z",
+        "RECURRENCE-ID:20261202T150000Z", "DTSTART:20261202T170000Z", "DTEND:20261202T180000Z",
+        "SUMMARY:Moved", "SEQUENCE:$sequence", "STATUS:$status", "ORGANIZER;CN=Boss:mailto:boss@example.test",
+        "ATTENDEE;PARTSTAT=ACCEPTED:mailto:boss@example.test",
+        "ATTENDEE;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:$self", "END:VEVENT",
+    ).joinToString("\r\n")
+
+    @Test
+    fun `a newer invitation imported over a pulled copy goes up as one full PUT`() = runTest {
+        val original = seedPulled(fixtureText("reschedule_original_export.ics"))
+        database.eventsDao().update(original.copy(categories = listOf("Work")))
+        val organizerLine = lines(fixtureText("reschedule_original_export.ics"), "ORGANIZER").single()
+
+        val result = coordinator.importIcsFile(
+            IcsParserService.parseForImport(
+                fixtureText("reschedule_request.ics").replace("SUMMARY:Project review call", "SUMMARY:Project review call (moved)")
+            )!!,
+            calendarId,
+        )
+        pushStrategy.pushAll(client)
+
+        assertEquals("$result", 1, result.updated)
+        val (_, body, ifMatch) = puts.single()
+        assertEquals("\"e1\"", ifMatch)
+        val unfolded = unfold(body)
+        assertTrue(unfolded, unfolded.lines().any { it == "DTSTART;TZID=America/Chicago:20261109T130000" })
+        assertTrue(unfolded, unfolded.lines().any { it == "DTEND;TZID=America/Chicago:20261109T133000" })
+        assertEquals(listOf("SUMMARY:Project review call (moved)"), lines(body, "SUMMARY"))
+        assertEquals(listOf("SEQUENCE:1"), lines(body, "SEQUENCE"))
+        assertEquals("the stored ORGANIZER line is kept", listOf(organizerLine), lines(body, "ORGANIZER"))
+        val attendees = lines(body, "ATTENDEE")
+        assertEquals(attendees.toString(), 4, attendees.size)
+        assertTrue(attendees.single { it.endsWith(":mailto:$self") }.contains("PARTSTAT=NEEDS-ACTION"))
+        assertEquals(listOf("CATEGORIES:Work"), lines(body, "CATEGORIES"))
+        assertTrue("no METHOD in a stored resource (RFC 4791 4.1)", lines(body, "METHOD").isEmpty())
+        assertTrue(database.pendingOperationsDao().getAllOnce().isEmpty())
+    }
+
+    @Test
+    fun `a series update with a cancelled occurrence goes up as one PUT`() = runTest {
+        seedPulled(series(0))
+
+        val result = coordinator.importIcsFile(IcsParserService.parseForImport(series(1, occurrence(1, "CANCELLED")))!!, calendarId)
+        pushStrategy.pushAll(client)
+
+        assertEquals("$result", 1, result.updated)
+        assertEquals("$result", 1, result.cancelled)
+        assertEquals("one PUT, no stale-etag 412: $puts", 1, puts.size)
+        val body = unfold(puts.single().second)
+        // A cancel marks the occurrence's status only; the series carries the new title.
+        val vevents = body.split("BEGIN:VEVENT").drop(1)
+        assertEquals(2, vevents.size)
+        val cancelled = vevents.single { it.contains("RECURRENCE-ID") }
+        assertTrue(cancelled, cancelled.lines().any { it.startsWith("RECURRENCE-ID") && it.endsWith("20261202T150000Z") })
+        assertTrue(cancelled, cancelled.lines().contains("STATUS:CANCELLED"))
+        assertFalse("the file's title for the occurrence isn't written", cancelled.contains("SUMMARY:Moved"))
+        assertTrue(vevents.single { !it.contains("RECURRENCE-ID") }.lines().contains("SUMMARY:Weekly v1"))
+        assertTrue(database.pendingOperationsDao().getAllOnce().isEmpty())
+    }
+
+    @Test
+    fun `a changed occurrence of a pulled series rides in the series PUT`() = runTest {
+        seedPulled(series(0))
+
+        // The file holds only the changed occurrence, as an organizer's update of one date does.
+        val onlyOccurrence = series(0).let { it.substring(0, it.indexOf("BEGIN:VEVENT")) } +
+            occurrence(1, "CONFIRMED") + "\r\nEND:VCALENDAR\r\n"
+        coordinator.importIcsFile(IcsParserService.parseForImport(onlyOccurrence)!!, calendarId)
+        pushStrategy.pushAll(client)
+
+        val body = unfold(puts.single().second)
+        assertEquals(listOf("SUMMARY:Weekly v0", "SUMMARY:Moved"), lines(body, "SUMMARY"))
+        assertTrue(body, lines(body, "DTSTART").any { it.endsWith("20261202T170000Z") })
+    }
+
     private fun lines(body: String, prefix: String) = unfold(body).lines().filter { it.startsWith(prefix) }
 
     @Test

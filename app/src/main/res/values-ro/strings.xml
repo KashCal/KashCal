@@ -1022,6 +1022,9 @@
     <string name="ics_import_reason_this_and_future">modificările pentru această apariție și cele ulterioare nu sunt acceptate</string>
     <string name="ics_import_reason_own_cancel">tu organizezi această întâlnire, așa că anuleaz-o din eveniment</string>
     <string name="ics_import_reason_on_another_calendar">este deja în alt calendar al acestui cont</string>
+    <string name="ics_import_reason_calendar_keeps_copy">acest calendar păstrează propria copie a evenimentului</string>
+    <string name="ics_import_reason_own_update">tu organizezi această întâlnire, așa că modific-o din eveniment</string>
+    <string name="ics_import_reason_change_waiting">evenimentul are o modificare care așteaptă sincronizarea; importă din nou după sincronizare</string>
     <string name="ics_import_notice_unverified">Expeditorul unui fișier de invitație nu poate fi verificat. Verifică dacă provine de la organizator.</string>
     <string name="ics_import_notice_answer_notifies">Răspunsul la această invitație poate notifica organizatorul.</string>
     <string name="ics_import_notice_guests_again">Tu ești organizatorul, așa că invitații pot primi din nou această invitație.</string>
@@ -1112,11 +1115,6 @@
         <item quantity="one">%1$d an</item>
         <item quantity="few">%1$d ani</item>
         <item quantity="other">%1$d de ani</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d sec</item>
-        <item quantity="few">%1$d sec</item>
-        <item quantity="other">%1$d sec</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d minut înainte</item>
@@ -1312,7 +1310,6 @@
     <string name="reminder_none">Fără memento</string>
     <string name="reminder_at_time_of_event">La ora evenimentului</string>
     <string name="reminder_time_before">Cu %1$s înainte</string>
-    <string name="reminder_time_after">Cu %1$s după</string>
     <string name="reminder_day_of_event_12h">9 AM în ziua evenimentului</string>
     <string name="reminder_day_of_event_24h">09:00 în ziua evenimentului</string>
     <string name="reminder_day_of_event">În ziua evenimentului</string>

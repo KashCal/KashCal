@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">इस और बाद के दोहरावों में बदलाव समर्थित नहीं हैं</string>
     <string name="ics_import_reason_own_cancel">आप इस मीटिंग के आयोजक हैं, इसलिए इसे इवेंट से ही रद्द करें</string>
     <string name="ics_import_reason_on_another_calendar">यह इस खाते के किसी अन्य कैलेंडर में पहले से है</string>
+    <string name="ics_import_reason_calendar_keeps_copy">यह कैलेंडर इवेंट की अपनी कॉपी रखता है</string>
+    <string name="ics_import_reason_own_update">आप इस मीटिंग के आयोजक हैं, इसलिए इसे इवेंट से ही बदलें</string>
+    <string name="ics_import_reason_change_waiting">इवेंट में एक बदलाव सिंक होने की प्रतीक्षा में है; सिंक होने के बाद फिर से आयात करें</string>
     <string name="ics_import_notice_unverified">आमंत्रण फ़ाइल भेजने वाले की पुष्टि नहीं की जा सकती। जाँच लें कि यह आयोजक की ओर से आई है।</string>
     <string name="ics_import_notice_answer_notifies">इस आमंत्रण का जवाब देने पर आयोजक को सूचना जा सकती है।</string>
     <string name="ics_import_notice_guests_again">आप आयोजक हैं, इसलिए अतिथियों को यह आमंत्रण फिर से मिल सकता है।</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d वर्ष</item>
         <item quantity="other">%1$d वर्ष</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d से.</item>
-        <item quantity="other">%1$d से.</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d मिनट पहले</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">कोई रिमाइंडर नहीं</string>
     <string name="reminder_at_time_of_event">इवेंट के समय</string>
     <string name="reminder_time_before">%1$s पहले</string>
-    <string name="reminder_time_after">%1$s बाद</string>
     <string name="reminder_day_of_event_12h">इवेंट के दिन 9 AM</string>
     <string name="reminder_day_of_event_24h">इवेंट के दिन 09:00</string>
     <string name="reminder_day_of_event">इवेंट के दिन</string>

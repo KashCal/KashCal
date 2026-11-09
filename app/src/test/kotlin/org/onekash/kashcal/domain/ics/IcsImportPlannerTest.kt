@@ -44,7 +44,8 @@ class IcsImportPlannerTest {
         status: String = "CONFIRMED",
         organizer: String? = boss,
         pendingDelete: Boolean = false,
-    ) = StoredComponent(eventId, instanceTime, organizer, sequence, itipDtstamp, status, pendingDelete)
+        placeholder: Boolean = false,
+    ) = StoredComponent(eventId, instanceTime, organizer, sequence, itipDtstamp, status, pendingDelete, placeholder)
 
     private fun plan(
         method: ImportMethod?,
@@ -53,6 +54,7 @@ class IcsImportPlannerTest {
         target: ImportTarget = ImportTarget.CALDAV,
         user: Set<String> = setOf(me),
         elsewhere: Boolean = false,
+        changeWaiting: Boolean = false,
     ): GroupPlan = IcsImportPlanner.plan(
         ImportPlanInput(
             group = ImportGroup(uid, components.filter { !it.isInstance }, components.filter { it.isInstance }),
@@ -61,6 +63,7 @@ class IcsImportPlannerTest {
             target = target,
             userAddresses = user,
             elsewhereInAccount = elsewhere,
+            changeWaiting = changeWaiting,
         )
     )
 
@@ -111,17 +114,125 @@ class IcsImportPlannerTest {
     // ---- REQUEST against a stored event ----
 
     @Test
-    fun `on CalDAV and device calendars a matched REQUEST keeps the calendar's copy, even when newer`() {
-        for (target in listOf(ImportTarget.CALDAV, ImportTarget.DEVICE)) {
-            val action = plan(ImportMethod.REQUEST, listOf(component(sequence = 3)), StoredUid(stored(), emptyList()), target).single()
-            assertEquals(target.name, UpToDateReason.KEPT_CALENDAR_COPY, (action as ImportAction.UpToDate).reason)
+    fun `on CalDAV a newer REQUEST from the stored organizer updates the series`() {
+        val action = plan(ImportMethod.REQUEST, listOf(component(sequence = 1)), StoredUid(stored(), emptyList())).single()
+        assertTrue(action is ImportAction.UpdateSeries)
+    }
+
+    @Test
+    fun `on CalDAV the same version is up to date and an older one is older`() {
+        val same = plan(ImportMethod.REQUEST, listOf(component(sequence = 1)), StoredUid(stored(sequence = 1), emptyList())).single()
+        assertEquals(UpToDateReason.SAME_VERSION, (same as ImportAction.UpToDate).reason)
+        val older = plan(ImportMethod.REQUEST, listOf(component(sequence = 0)), StoredUid(stored(sequence = 1), emptyList())).single()
+        assertEquals(UpToDateReason.OLDER_VERSION, (older as ImportAction.UpToDate).reason)
+    }
+
+    @Test
+    fun `on CalDAV the same SEQUENCE with a later DTSTAMP updates`() {
+        val action = plan(ImportMethod.REQUEST, listOf(component(sequence = 1, itipDtstamp = 2_000L)), StoredUid(stored(sequence = 1, itipDtstamp = 1_000L), emptyList())).single()
+        assertTrue(action is ImportAction.UpdateSeries)
+    }
+
+    @Test
+    fun `on CalDAV a newer REQUEST from another organizer is ignored`() {
+        val action = plan(ImportMethod.REQUEST, listOf(component(sequence = 1, organizer = "other@example.com")), StoredUid(stored(), emptyList())).single()
+        assertEquals(IgnoreReason.ORGANIZER_MISMATCH, (action as ImportAction.Ignored).reason)
+    }
+
+    @Test
+    fun `on CalDAV a newer cancelled REQUEST cancels the series`() {
+        val action = plan(ImportMethod.REQUEST, listOf(component(sequence = 1, status = "CANCELLED")), StoredUid(stored(), emptyList())).single()
+        assertTrue(action is ImportAction.CancelSeries)
+    }
+
+    @Test
+    fun `on CalDAV a REQUEST for the user's own meeting writes nothing, cancelled or not`() {
+        for (status in listOf("CONFIRMED", "CANCELLED")) {
+            val action = plan(
+                ImportMethod.REQUEST, listOf(component(sequence = 1, status = status, organizer = me)),
+                StoredUid(stored(organizer = me), emptyList())
+            ).single()
+            assertEquals(status, IgnoreReason.OWN_UPDATE, (action as ImportAction.Ignored).reason)
         }
     }
 
     @Test
-    fun `a matched newer PUBLISH on CalDAV keeps the calendar's copy`() {
-        val action = plan(ImportMethod.PUBLISH, listOf(component(sequence = 3)), StoredUid(stored(), emptyList())).single()
-        assertEquals(UpToDateReason.KEPT_CALENDAR_COPY, (action as ImportAction.UpToDate).reason)
+    fun `on the local calendar a REQUEST for the user's own meeting still updates`() {
+        val action = plan(
+            ImportMethod.REQUEST, listOf(component(sequence = 1, organizer = me)),
+            StoredUid(stored(organizer = me), emptyList()), ImportTarget.LOCAL, setOf(me)
+        ).single()
+        assertTrue(action is ImportAction.UpdateSeries)
+    }
+
+    @Test
+    fun `on CalDAV a change waiting to upload blocks every write but not an up-to-date read`() {
+        val newer = plan(ImportMethod.REQUEST, listOf(component(sequence = 1)), StoredUid(stored(), emptyList()), changeWaiting = true).single()
+        assertEquals(IgnoreReason.CHANGE_WAITING, (newer as ImportAction.Ignored).reason)
+        val same = plan(ImportMethod.REQUEST, listOf(component(sequence = 0)), StoredUid(stored(), emptyList()), changeWaiting = true).single()
+        assertEquals(UpToDateReason.SAME_VERSION, (same as ImportAction.UpToDate).reason)
+    }
+
+    @Test
+    fun `a CANCEL still cancels while a change waits to upload`() {
+        val action = plan(ImportMethod.CANCEL, listOf(component(sequence = 1, status = "CANCELLED")), StoredUid(stored(), emptyList()), changeWaiting = true).single()
+        assertTrue(action is ImportAction.CancelSeries)
+    }
+
+    @Test
+    fun `on the local calendar a waiting change is not read`() {
+        val action = plan(ImportMethod.REQUEST, listOf(component(sequence = 1)), StoredUid(stored(), emptyList()), ImportTarget.LOCAL, emptySet(), changeWaiting = true).single()
+        assertTrue(action is ImportAction.UpdateSeries)
+    }
+
+    @Test
+    fun `on CalDAV the pull's placeholder series keeps the calendar's copy for every component`() {
+        val actions = plan(
+            ImportMethod.REQUEST, listOf(component(sequence = 1), component(sequence = 1, instanceTime = slot)),
+            StoredUid(stored(placeholder = true, status = "CANCELLED", organizer = null), listOf(stored(eventId = 2, instanceTime = slot)))
+        ).actions
+        assertEquals(2, actions.size)
+        actions.forEach { assertEquals(IgnoreReason.CALENDAR_KEEPS_COPY, (it as ImportAction.Ignored).reason) }
+    }
+
+    @Test
+    fun `a CANCEL for an occurrence of a placeholder series still cancels it`() {
+        val action = plan(
+            ImportMethod.CANCEL, listOf(component(sequence = 1, status = "CANCELLED", instanceTime = slot)),
+            StoredUid(stored(placeholder = true, status = "CANCELLED"), listOf(stored(eventId = 2, instanceTime = slot)))
+        ).single()
+        assertTrue(action is ImportAction.CancelInstance)
+    }
+
+    @Test
+    fun `with no series row stored, the local calendar is up to date and CalDAV and device keep their copy`() {
+        val onlyException = StoredUid(null, listOf(stored(eventId = 2, instanceTime = slot)))
+        val local = plan(ImportMethod.REQUEST, listOf(component(sequence = 1)), onlyException, ImportTarget.LOCAL, emptySet()).single()
+        assertEquals(UpToDateReason.SAME_VERSION, (local as ImportAction.UpToDate).reason)
+        for (target in listOf(ImportTarget.CALDAV, ImportTarget.DEVICE)) {
+            val action = plan(ImportMethod.REQUEST, listOf(component(sequence = 1)), onlyException, target).single()
+            assertEquals(target.name, IgnoreReason.CALENDAR_KEEPS_COPY, (action as ImportAction.Ignored).reason)
+        }
+    }
+
+    @Test
+    fun `on a device calendar a matched REQUEST keeps the calendar's copy, even when newer`() {
+        val action = plan(ImportMethod.REQUEST, listOf(component(sequence = 3)), StoredUid(stored(), emptyList()), ImportTarget.DEVICE).single()
+        assertEquals(IgnoreReason.CALENDAR_KEEPS_COPY, (action as ImportAction.Ignored).reason)
+    }
+
+    @Test
+    fun `a matched newer PUBLISH or plain file on CalDAV keeps the calendar's copy`() {
+        for (method in listOf(ImportMethod.PUBLISH, null)) {
+            val action = plan(method, listOf(component(sequence = 3)), StoredUid(stored(), emptyList())).single()
+            assertEquals("$method", IgnoreReason.CALENDAR_KEEPS_COPY, (action as ImportAction.Ignored).reason)
+        }
+    }
+
+    @Test
+    fun `a PUBLISH over an event pending deletion reads as pending deletion`() {
+        val action = plan(ImportMethod.PUBLISH, listOf(component(sequence = 3)), StoredUid(stored(pendingDelete = true), emptyList())).single()
+        assertEquals(IgnoreReason.DELETION_PENDING, (action as ImportAction.Ignored).reason)
     }
 
     @Test
@@ -181,9 +292,11 @@ class IcsImportPlannerTest {
     }
 
     @Test
-    fun `an instance REQUEST on CalDAV keeps the calendar's copy`() {
-        val action = plan(ImportMethod.REQUEST, listOf(component(sequence = 1, instanceTime = slot)), StoredUid(stored(), emptyList())).single()
-        assertEquals(UpToDateReason.KEPT_CALENDAR_COPY, (action as ImportAction.UpToDate).reason)
+    fun `an instance REQUEST on CalDAV creates or updates that exception`() {
+        val create = plan(ImportMethod.REQUEST, listOf(component(sequence = 1, instanceTime = slot)), StoredUid(stored(), emptyList())).single()
+        assertTrue(create is ImportAction.CreateInstance)
+        val update = plan(ImportMethod.REQUEST, listOf(component(sequence = 1, instanceTime = slot)), StoredUid(stored(), listOf(stored(eventId = 2, instanceTime = slot)))).single()
+        assertTrue(update is ImportAction.UpdateInstance)
     }
 
     @Test

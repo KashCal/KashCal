@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">az erre és a későbbi előfordulásokra vonatkozó módosítások nem támogatottak</string>
     <string name="ics_import_reason_own_cancel">te szervezed ezt a megbeszélést, ezért az eseményből mondd le</string>
     <string name="ics_import_reason_on_another_calendar">már szerepel a fiók egy másik naptárában</string>
+    <string name="ics_import_reason_calendar_keeps_copy">ez a naptár saját másolatot tárol az eseményről</string>
+    <string name="ics_import_reason_own_update">te szervezed ezt a megbeszélést, ezért az eseményből módosítsd</string>
+    <string name="ics_import_reason_change_waiting">az eseménynek szinkronizálásra váró módosítása van; a szinkronizálás után importáld újra</string>
     <string name="ics_import_notice_unverified">A meghívófájl feladója nem ellenőrizhető. Győződj meg róla, hogy a szervezőtől érkezett.</string>
     <string name="ics_import_notice_answer_notifies">Ha válaszolsz erre a meghívóra, a szervező értesítést kaphat.</string>
     <string name="ics_import_notice_guests_again">Te vagy a szervező, ezért a vendégek újra megkaphatják ezt a meghívót.</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d év</item>
         <item quantity="other">%1$d év</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d mp</item>
-        <item quantity="other">%1$d mp</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d perccel előtte</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">Nincs emlékeztető</string>
     <string name="reminder_at_time_of_event">Az esemény időpontjában</string>
     <string name="reminder_time_before">%1$s előtt</string>
-    <string name="reminder_time_after">%1$s után</string>
     <string name="reminder_day_of_event_12h">Az esemény napján 9 AM</string>
     <string name="reminder_day_of_event_24h">Az esemény napján 09:00</string>
     <string name="reminder_day_of_event">Az esemény napján</string>

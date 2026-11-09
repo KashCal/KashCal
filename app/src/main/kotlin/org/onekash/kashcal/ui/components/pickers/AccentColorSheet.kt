@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -61,8 +62,9 @@ fun AccentColorSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        dragHandle = {},
-        sheetGesturesEnabled = false
+        // Swipes and shows its handle as [ColorPaletteSheet] does.
+        dragHandle = if (showWheel) null else { { BottomSheetDefaults.DragHandle() } },
+        sheetGesturesEnabled = !showWheel
     ) {
         Crossfade(
             targetState = showWheel,

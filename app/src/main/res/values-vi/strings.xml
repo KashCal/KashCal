@@ -962,6 +962,9 @@
     <string name="ics_import_reason_this_and_future">không hỗ trợ thay đổi cho lần này và các lần sau</string>
     <string name="ics_import_reason_own_cancel">bạn là người tổ chức cuộc họp này, hãy hủy từ sự kiện</string>
     <string name="ics_import_reason_on_another_calendar">đã có trong một lịch khác của tài khoản này</string>
+    <string name="ics_import_reason_calendar_keeps_copy">lịch này giữ bản sao riêng của sự kiện</string>
+    <string name="ics_import_reason_own_update">bạn là người tổ chức cuộc họp này, hãy thay đổi từ sự kiện</string>
+    <string name="ics_import_reason_change_waiting">sự kiện có thay đổi đang chờ đồng bộ; hãy nhập lại sau khi đồng bộ xong</string>
     <string name="ics_import_notice_unverified">Không thể xác minh người gửi tệp lời mời. Hãy kiểm tra xem tệp có đến từ người tổ chức không.</string>
     <string name="ics_import_notice_answer_notifies">Trả lời lời mời này có thể thông báo cho người tổ chức.</string>
     <string name="ics_import_notice_guests_again">Bạn là người tổ chức, vì vậy khách có thể nhận lại lời mời này.</string>
@@ -1018,9 +1021,6 @@
     </plurals>
     <plurals name="time_years">
         <item quantity="other">%1$d năm</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="other">%1$d giây</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="other">%1$d phút trước</item>
@@ -1194,7 +1194,6 @@
     <string name="reminder_none">Không nhắc nhở</string>
     <string name="reminder_at_time_of_event">Khi sự kiện bắt đầu</string>
     <string name="reminder_time_before">Trước %1$s</string>
-    <string name="reminder_time_after">Sau %1$s</string>
     <string name="reminder_day_of_event_12h">9 AM ngày diễn ra</string>
     <string name="reminder_day_of_event_24h">09:00 ngày diễn ra</string>
     <string name="reminder_day_of_event">Ngày diễn ra sự kiện</string>

@@ -1,6 +1,9 @@
 package org.onekash.kashcal.ui.screens
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.rememberScrollableState
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -61,13 +64,24 @@ internal const val EMPTY_DAY_KASH_TAG = "empty_day_kash"
  * Shows the empty day for [epochDay]: the day's line, with Kash above it when there is room. The
  * line is measured first and Kash takes what height is left ([emptyDayKashSize]), so Kash never
  * pushes the line out of view. Only the line is read aloud ([KashArt] is decorative).
+ *
+ * Material3 pull-to-refresh only sees drags a descendant passes up through nested scroll, and
+ * nothing here scrolls. A vertical scrollable that consumes nothing hands the drag on, so a pull
+ * on an empty day refreshes (`EmptyDayPullToRefreshTest`) while the panel keeps the bounded height
+ * Kash is sized from.
  */
 @Composable
 internal fun EmptyDayState(epochDay: Long, modifier: Modifier = Modifier) {
     val line = emptyDayLine(epochDay)
     val text = stringResource(line.phrase)
     val color = MaterialTheme.colorScheme.onSurfaceVariant
-    SubcomposeLayout(modifier.fillMaxSize().padding(32.dp)) { constraints ->
+    val scrollDonor = rememberScrollableState { 0f }
+    SubcomposeLayout(
+        modifier
+            .fillMaxSize()
+            .scrollable(orientation = Orientation.Vertical, state = scrollDonor)
+            .padding(32.dp)
+    ) { constraints ->
         val loose = constraints.copy(minWidth = 0, minHeight = 0)
         val textPlaceable = subcompose("line") {
             Text(text, color = color, textAlign = TextAlign.Center)

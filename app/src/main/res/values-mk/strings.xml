@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">промените на ова и следните повторувања не се поддржани</string>
     <string name="ics_import_reason_own_cancel">вие го организирате овој состанок, затоа откажете го од настанот</string>
     <string name="ics_import_reason_on_another_calendar">веќе е во друг календар на оваа сметка</string>
+    <string name="ics_import_reason_calendar_keeps_copy">овој календар чува сопствена копија од настанот</string>
+    <string name="ics_import_reason_own_update">вие го организирате овој состанок, затоа изменете го од настанот</string>
+    <string name="ics_import_reason_change_waiting">настанот има промена што чека синхронизација; увезете повторно по синхронизацијата</string>
     <string name="ics_import_notice_unverified">Испраќачот на датотека со покана не може да се потврди. Проверете дали доаѓа од организаторот.</string>
     <string name="ics_import_notice_answer_notifies">Одговорот на оваа покана може да го извести организаторот.</string>
     <string name="ics_import_notice_guests_again">Вие сте организаторот, па гостите може повторно да ја добијат оваа покана.</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d година</item>
         <item quantity="other">%1$d години</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d сек</item>
-        <item quantity="other">%1$d сек</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d минута пред</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">Без потсетник</string>
     <string name="reminder_at_time_of_event">Во време на настанот</string>
     <string name="reminder_time_before">%1$s пред</string>
-    <string name="reminder_time_after">%1$s после</string>
     <string name="reminder_day_of_event_12h">9 AM на денот на настанот</string>
     <string name="reminder_day_of_event_24h">09:00 на денот на настанот</string>
     <string name="reminder_day_of_event">На денот на настанот</string>

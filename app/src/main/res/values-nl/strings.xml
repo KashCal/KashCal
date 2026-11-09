@@ -991,6 +991,9 @@
     <string name="ics_import_reason_this_and_future">wijzigingen aan deze en latere herhalingen worden niet ondersteund</string>
     <string name="ics_import_reason_own_cancel">jij organiseert deze afspraak, dus annuleer hem vanuit de afspraak</string>
     <string name="ics_import_reason_on_another_calendar">de afspraak staat al in een andere agenda van dit account</string>
+    <string name="ics_import_reason_calendar_keeps_copy">deze agenda bewaart een eigen kopie van de afspraak</string>
+    <string name="ics_import_reason_own_update">jij organiseert deze afspraak, dus wijzig hem vanuit de afspraak</string>
+    <string name="ics_import_reason_change_waiting">de afspraak heeft een wijziging die nog moet synchroniseren; importeer opnieuw zodra die gesynchroniseerd is</string>
     <string name="ics_import_notice_unverified">De afzender van een uitnodigingsbestand kan niet worden geverifieerd. Controleer of het van de organisator komt.</string>
     <string name="ics_import_notice_answer_notifies">Als je op deze uitnodiging reageert, krijgt de organisator mogelijk een melding.</string>
     <string name="ics_import_notice_guests_again">Jij bent de organisator, dus gasten kunnen deze uitnodiging opnieuw ontvangen.</string>
@@ -1064,10 +1067,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d jaar</item>
         <item quantity="other">%1$d jaar</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d sec</item>
-        <item quantity="other">%1$d sec</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d minuut van tevoren</item>
@@ -1252,7 +1251,6 @@
     <string name="reminder_none">Geen herinnering</string>
     <string name="reminder_at_time_of_event">Op het moment van de afspraak</string>
     <string name="reminder_time_before">%1$s van tevoren</string>
-    <string name="reminder_time_after">%1$s na</string>
     <string name="reminder_day_of_event_12h">9 AM op de dag van de afspraak</string>
     <string name="reminder_day_of_event_24h">09:00 op de dag van de afspraak</string>
     <string name="reminder_day_of_event">Op de dag van de afspraak</string>

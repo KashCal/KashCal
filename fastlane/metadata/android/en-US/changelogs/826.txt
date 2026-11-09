@@ -1,0 +1,3 @@
+• A rescheduled invitation now updates the event in iCloud and CalDAV calendars
+• The import sheet keeps its buttons in view
+• Alert times read in days, hours and minutes (#378)

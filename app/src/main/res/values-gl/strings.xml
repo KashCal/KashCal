@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">os cambios nesta repetición e nas seguintes non son compatibles</string>
     <string name="ics_import_reason_own_cancel">ti organizas esta reunión, así que cancélaa desde o evento</string>
     <string name="ics_import_reason_on_another_calendar">xa está noutro calendario desta conta</string>
+    <string name="ics_import_reason_calendar_keeps_copy">este calendario garda a súa propia copia do evento</string>
+    <string name="ics_import_reason_own_update">ti organizas esta reunión, así que cámbiaa desde o evento</string>
+    <string name="ics_import_reason_change_waiting">o evento ten un cambio pendente de sincronizar; impórtao de novo cando se sincronice</string>
     <string name="ics_import_notice_unverified">Non se pode verificar quen envía un ficheiro de invitación. Comproba que veña do organizador.</string>
     <string name="ics_import_notice_answer_notifies">Responder a esta invitación pode avisar ao organizador.</string>
     <string name="ics_import_notice_guests_again">Es o organizador, así que os asistentes poderían recibir esta invitación de novo.</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d ano</item>
         <item quantity="other">%1$d anos</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d seg</item>
-        <item quantity="other">%1$d seg</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d minuto antes</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">Sen recordatorio</string>
     <string name="reminder_at_time_of_event">Na hora do evento</string>
     <string name="reminder_time_before">%1$s antes</string>
-    <string name="reminder_time_after">%1$s despois</string>
     <string name="reminder_day_of_event_12h">9 AM o día do evento</string>
     <string name="reminder_day_of_event_24h">09:00 o día do evento</string>
     <string name="reminder_day_of_event">O día do evento</string>

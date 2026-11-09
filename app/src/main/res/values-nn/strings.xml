@@ -991,6 +991,9 @@
     <string name="ics_import_reason_this_and_future">endringar i denne og seinare førekomstar er ikkje støtta</string>
     <string name="ics_import_reason_own_cancel">du arrangerer dette møtet, så avlys det frå hendinga</string>
     <string name="ics_import_reason_on_another_calendar">hendinga finst allereie i ein annan kalender på denne kontoen</string>
+    <string name="ics_import_reason_calendar_keeps_copy">denne kalenderen har sin eigen kopi av hendinga</string>
+    <string name="ics_import_reason_own_update">du arrangerer dette møtet, så endre det frå hendinga</string>
+    <string name="ics_import_reason_change_waiting">hendinga har ei endring som ventar på synkronisering; importer på nytt når ho er synkronisert</string>
     <string name="ics_import_notice_unverified">Avsendaren av ei invitasjonsfil kan ikkje stadfestast. Sjekk at ho kom frå arrangøren.</string>
     <string name="ics_import_notice_answer_notifies">Om du svarar på denne invitasjonen, kan arrangøren bli varsla.</string>
     <string name="ics_import_notice_guests_again">Du er arrangøren, så gjestene kan få denne invitasjonen på nytt.</string>
@@ -1064,10 +1067,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d år</item>
         <item quantity="other">%1$d år</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d sek</item>
-        <item quantity="other">%1$d sek</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d minutt før</item>
@@ -1252,7 +1251,6 @@
     <string name="reminder_none">Inga påminning</string>
     <string name="reminder_at_time_of_event">På tidspunktet for hendinga</string>
     <string name="reminder_time_before">%1$s før</string>
-    <string name="reminder_time_after">%1$s etter</string>
     <string name="reminder_day_of_event_12h">9 AM på dagen for hendinga</string>
     <string name="reminder_day_of_event_24h">09:00 på dagen for hendinga</string>
     <string name="reminder_day_of_event">På dagen for hendinga</string>

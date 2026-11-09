@@ -104,9 +104,11 @@ fun formatReminderOption(minutes: Int, isAllDay: Boolean, resources: Resources):
 /**
  * Returns the compact reminder label used in [formatReminderSummary], for any stored value.
  *
- * @param use24Hour whether the 9 AM label reads "09:00" instead of "9AM".
+ * @param use24Hour whether the all-day 9 AM label reads "09:00" instead of "9AM"; a timed 540 is
+ *   9 hours before and reads "9h".
  * @param isAllDay whether [minutes] is a signed all-day offset.
- * @return e.g. "15m", "1h", "1d", "09:00" or "9AM".
+ * @return e.g. "15m", "1h", "1d", "5d 1h 10m", or "09:00" or "9AM" for the all-day 9 AM. A
+ *   negative timed value keeps its sign in minutes ("-90m").
  */
 fun formatReminderShort(minutes: Int, use24Hour: Boolean = false, isAllDay: Boolean = false, resources: Resources): String {
     // All-day offsets: -540 is 9 AM day of; 900, 2340 and 9540 are 9 AM 1, 2 and 7 days before.
@@ -125,21 +127,42 @@ fun formatReminderShort(minutes: Int, use24Hour: Boolean = false, isAllDay: Bool
     return when (minutes) {
         REMINDER_OFF -> resources.getString(R.string.reminder_short_off)
         0 -> resources.getString(R.string.reminder_short_at_event)
-        540 -> resources.getString(if (use24Hour) R.string.reminder_short_9am_24h else R.string.reminder_short_9am_12h)
         else -> reminderShortByMagnitude(minutes, resources)
     }
 }
 
 private fun reminderShortByMagnitude(minutes: Int, resources: Resources): String = when {
     minutes >= 10080 && minutes % 10080 == 0 -> resources.getString(R.string.reminder_short_weeks, minutes / 10080)
-    minutes >= 1440 && minutes % 1440 == 0 -> resources.getString(R.string.reminder_short_days, minutes / 1440)
-    minutes >= 60 && minutes % 60 == 0 -> resources.getString(R.string.reminder_short_hours, minutes / 60)
+    minutes > 0 -> joinUnitParts(
+        minutes,
+        days = { resources.getString(R.string.reminder_short_days, it) },
+        hours = { resources.getString(R.string.reminder_short_hours, it) },
+        mins = { resources.getString(R.string.reminder_short_minutes, it) },
+    )
     else -> resources.getString(R.string.reminder_short_minutes, minutes)
 }
 
 /**
+ * Joins the non-zero days, hours and minutes of positive [minutes] ([minutesToComponents]) with a
+ * space, each written by its unit's label, so 7270 reads "5d 1h 10m" and 90 reads "1h 30m".
+ */
+private fun joinUnitParts(
+    minutes: Int,
+    days: (Int) -> String,
+    hours: (Int) -> String,
+    mins: (Int) -> String,
+): String {
+    val (d, h, m) = minutesToComponents(minutes)
+    return listOfNotNull(
+        d.takeIf { it > 0 }?.let(days),
+        h.takeIf { it > 0 }?.let(hours),
+        m.takeIf { it > 0 }?.let(mins),
+    ).joinToString(" ")
+}
+
+/**
  * Returns the medium-length label for a reminder or duration in a Settings row, in abbreviated
- * words ("30 min", "1 hr", "1 day", "2 days", "1 wk").
+ * words ("30 min", "1 hr", "1 day", "2 days", "1 wk", "5 days 1 hr 10 min").
  *
  * It sits between the compact [formatReminderShort] and the sheet's full "N minutes before". The
  * picker's all-day offsets map to their day or week meaning like [formatReminderShort] does:
@@ -165,8 +188,12 @@ fun formatReminderMedium(minutes: Int, isAllDay: Boolean, resources: Resources):
 
 private fun reminderMediumByMagnitude(minutes: Int, resources: Resources): String = when {
     minutes >= 10080 && minutes % 10080 == 0 -> resources.getString(R.string.reminder_med_weeks, minutes / 10080)
-    minutes >= 1440 && minutes % 1440 == 0 -> resources.getQuantityString(R.plurals.reminder_med_days, minutes / 1440, minutes / 1440)
-    minutes >= 60 && minutes % 60 == 0 -> resources.getString(R.string.reminder_med_hours, minutes / 60)
+    minutes > 0 -> joinUnitParts(
+        minutes,
+        days = { resources.getQuantityString(R.plurals.reminder_med_days, it, it) },
+        hours = { resources.getString(R.string.reminder_med_hours, it) },
+        mins = { resources.getString(R.string.reminder_med_minutes, it) },
+    )
     else -> resources.getString(R.string.reminder_med_minutes, minutes)
 }
 

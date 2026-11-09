@@ -991,6 +991,9 @@
     <string name="ics_import_reason_this_and_future">endringer i denne og senere forekomster støttes ikke</string>
     <string name="ics_import_reason_own_cancel">du arrangerer dette møtet, så avlys det fra hendelsen</string>
     <string name="ics_import_reason_on_another_calendar">hendelsen finnes allerede i en annen kalender på denne kontoen</string>
+    <string name="ics_import_reason_calendar_keeps_copy">denne kalenderen har sin egen kopi av hendelsen</string>
+    <string name="ics_import_reason_own_update">du arrangerer dette møtet, så endre det fra hendelsen</string>
+    <string name="ics_import_reason_change_waiting">hendelsen har en endring som venter på synkronisering; importer på nytt når den er synkronisert</string>
     <string name="ics_import_notice_unverified">Avsenderen av en invitasjonsfil kan ikke bekreftes. Sjekk at den kom fra arrangøren.</string>
     <string name="ics_import_notice_answer_notifies">Hvis du svarer på denne invitasjonen, kan arrangøren bli varslet.</string>
     <string name="ics_import_notice_guests_again">Du er arrangøren, så gjestene kan få denne invitasjonen på nytt.</string>
@@ -1064,10 +1067,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d år</item>
         <item quantity="other">%1$d år</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d sek</item>
-        <item quantity="other">%1$d sek</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d minutt før</item>
@@ -1252,7 +1251,6 @@
     <string name="reminder_none">Ingen påminnelse</string>
     <string name="reminder_at_time_of_event">På tidspunktet for hendelsen</string>
     <string name="reminder_time_before">%1$s før</string>
-    <string name="reminder_time_after">%1$s etter</string>
     <string name="reminder_day_of_event_12h">9 AM på dagen for hendelsen</string>
     <string name="reminder_day_of_event_24h">09:00 på dagen for hendelsen</string>
     <string name="reminder_day_of_event">På dagen for hendelsen</string>

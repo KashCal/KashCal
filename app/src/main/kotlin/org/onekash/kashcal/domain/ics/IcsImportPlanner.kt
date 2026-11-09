@@ -7,7 +7,11 @@ import org.onekash.kashcal.util.AddressNormalizer
 
 /** The kind of calendar an import writes to; each applies the iTIP rules differently. */
 enum class ImportTarget {
-    /** A synced Room calendar (CalDAV, iCloud included): the server's copy stays the truth. */
+    /**
+     * A synced Room calendar (CalDAV, iCloud included). A newer invitation (METHOD:REQUEST)
+     * updates it and the change is uploaded, a CANCEL cancels it, and a PUBLISH or METHOD-less
+     * file leaves a stored UID as it is.
+     */
     CALDAV,
 
     /**
@@ -17,7 +21,10 @@ enum class ImportTarget {
      */
     LOCAL,
 
-    /** An Android calendar-provider calendar: rows keep no SEQUENCE or DTSTAMP to compare. */
+    /**
+     * An Android calendar-provider calendar: rows keep no SEQUENCE or DTSTAMP to compare, so a
+     * stored UID keeps the calendar's copy (only a CANCEL changes it).
+     */
     DEVICE,
 }
 
@@ -35,6 +42,8 @@ data class StoredComponent(
     val itipDtstamp: Long?,
     val status: String,
     val pendingDelete: Boolean,
+    /** True for the pull's placeholder series of a resource that holds only changed occurrences. */
+    val isPullPlaceholder: Boolean = false,
 ) {
     val isCancelled: Boolean get() = status == ImportedComponent.STATUS_CANCELLED
 }
@@ -54,6 +63,9 @@ data class StoredUid(
  * @param userAddresses the user's addresses canonicalized ([AddressNormalizer.canonical]);
  *   empty for a [ImportTarget.LOCAL] calendar, which has no identity
  * @param elsewhereInAccount true when another calendar of the same account holds the UID
+ * @param changeWaiting true when the stored series or one of its occurrences has a change waiting
+ *   to upload ([org.onekash.kashcal.domain.reader.EventReader.hasChangeWaiting]); read only for a
+ *   [ImportTarget.CALDAV] target and a file other than a CANCEL
  */
 data class ImportPlanInput(
     val group: ImportGroup,
@@ -62,18 +74,19 @@ data class ImportPlanInput(
     val target: ImportTarget,
     val userAddresses: Set<String>,
     val elsewhereInAccount: Boolean = false,
+    val changeWaiting: Boolean = false,
 )
 
 /** Why a component changes nothing although the calendar holds it. */
 enum class UpToDateReason {
-    /** Same SEQUENCE and DTSTAMP as the stored copy. */
+    /**
+     * Same SEQUENCE and DTSTAMP as the stored copy; also an offline calendar's UID with only
+     * changed occurrences stored.
+     */
     SAME_VERSION,
 
     /** Older than the stored copy (RFC 5546 §2.1.5). */
     OLDER_VERSION,
-
-    /** A CalDAV or device calendar keeps its own copy; the import only offers Respond. */
-    KEPT_CALENDAR_COPY,
 }
 
 /** Why a component is not applied. */
@@ -107,6 +120,21 @@ enum class IgnoreReason {
 
     /** An invitation whose UID another calendar of the same account already holds. */
     ON_ANOTHER_CALENDAR,
+
+    /**
+     * The calendar keeps its own copy of a UID it holds: a device calendar, a PUBLISH or
+     * METHOD-less file on a CalDAV calendar, or a CalDAV UID with no real series row.
+     */
+    CALENDAR_KEEPS_COPY,
+
+    /**
+     * An invitation for a meeting the user organizes on a CalDAV calendar: uploading the
+     * organizer's copy would send the change to every guest (RFC 6638 implicit scheduling).
+     */
+    OWN_UPDATE,
+
+    /** The stored event has a change waiting to upload on a CalDAV calendar. */
+    CHANGE_WAITING,
 }
 
 /** What import does with one component (or, for [ImportAction.Create], one whole group). */
@@ -114,13 +142,13 @@ sealed interface ImportAction {
     /** Creates the group; under a fresh UID when [freshUid], as another calendar holds it. */
     data class Create(val group: ImportGroup, val freshUid: Boolean) : ImportAction
 
-    /** Rewrites the stored master from the file (local calendar only). */
+    /** Rewrites the stored master from the file (offline and CalDAV calendars). */
     data class UpdateSeries(val stored: StoredComponent, val component: ImportedComponent) : ImportAction
 
-    /** Rewrites a stored exception from the file (local calendar only). */
+    /** Rewrites a stored exception from the file (offline and CalDAV calendars). */
     data class UpdateInstance(val stored: StoredComponent, val component: ImportedComponent) : ImportAction
 
-    /** Adds an exception to a stored series (local calendar only). */
+    /** Adds an exception to a stored series (offline and CalDAV calendars). */
     data class CreateInstance(val master: StoredComponent, val component: ImportedComponent) : ImportAction
 
     /** Cancels a stored series: its master and every exception. */
@@ -146,6 +174,15 @@ sealed interface ImportAction {
         val storedOrganizer: String? = null,
     ) : ImportAction
 }
+
+/** True for the actions that rewrite or add to a stored series from the file. */
+val ImportAction.isUpdate: Boolean
+    get() = this is ImportAction.UpdateSeries || this is ImportAction.UpdateInstance ||
+        this is ImportAction.CreateInstance
+
+/** True for the actions that write a stored event: [isUpdate] and the cancels. */
+val ImportAction.writesStoredEvent: Boolean
+    get() = isUpdate || this is ImportAction.CancelSeries || this is ImportAction.CancelInstance
 
 /**
  * The plan for one group.
@@ -183,7 +220,7 @@ object IcsImportPlanner {
             ImportMethod.ADD, ImportMethod.REFRESH, ImportMethod.COUNTER, ImportMethod.DECLINECOUNTER ->
                 group.components.map { ImportAction.Ignored(IgnoreReason.UNSUPPORTED_METHOD, it) }
             ImportMethod.CANCEL -> planCancel(input, userIsOrganizer)
-            ImportMethod.REQUEST, ImportMethod.PUBLISH, null -> planRequest(input)
+            ImportMethod.REQUEST, ImportMethod.PUBLISH, null -> planRequest(input, userIsOrganizer)
         }
         return GroupPlan(
             uid = group.uid,
@@ -238,7 +275,7 @@ object IcsImportPlanner {
         }
     }
 
-    private fun planRequest(input: ImportPlanInput): List<ImportAction> {
+    private fun planRequest(input: ImportPlanInput, userIsOrganizer: Boolean): List<ImportAction> {
         val group = input.group
         val stored = input.stored
         val isInvitation = input.method == ImportMethod.REQUEST
@@ -267,16 +304,34 @@ object IcsImportPlanner {
         return group.components.map { c ->
             when {
                 c.thisAndFuture -> ImportAction.Ignored(IgnoreReason.THIS_AND_FUTURE, c)
-                master == null -> ImportAction.UpToDate(UpToDateReason.KEPT_CALENDAR_COPY, c)
+                master?.isPullPlaceholder == true -> ImportAction.Ignored(IgnoreReason.CALENDAR_KEEPS_COPY, c)
+                master == null -> if (input.target == ImportTarget.LOCAL) {
+                    ImportAction.UpToDate(UpToDateReason.SAME_VERSION, c)
+                } else {
+                    ImportAction.Ignored(IgnoreReason.CALENDAR_KEEPS_COPY, c)
+                }
                 master.pendingDelete -> ImportAction.Ignored(IgnoreReason.DELETION_PENDING, c)
-                input.target != ImportTarget.LOCAL -> ImportAction.UpToDate(UpToDateReason.KEPT_CALENDAR_COPY, c)
-                !c.isInstance -> planLocalSeries(c, master, stored, storedOrganizer)
-                else -> planLocalInstance(c, master, stored, storedOrganizer)
+                input.target == ImportTarget.DEVICE -> ImportAction.Ignored(IgnoreReason.CALENDAR_KEEPS_COPY, c)
+                input.target == ImportTarget.CALDAV && !isInvitation ->
+                    ImportAction.Ignored(IgnoreReason.CALENDAR_KEEPS_COPY, c)
+                else -> {
+                    val action = if (!c.isInstance) {
+                        planSeries(c, master, stored, storedOrganizer)
+                    } else {
+                        planInstance(c, master, stored, storedOrganizer)
+                    }
+                    when {
+                        input.target != ImportTarget.CALDAV || !action.writesStoredEvent -> action
+                        userIsOrganizer -> ImportAction.Ignored(IgnoreReason.OWN_UPDATE, c)
+                        input.changeWaiting -> ImportAction.Ignored(IgnoreReason.CHANGE_WAITING, c)
+                        else -> action
+                    }
+                }
             }
         }
     }
 
-    private fun planLocalSeries(
+    private fun planSeries(
         c: ImportedComponent,
         master: StoredComponent,
         stored: StoredUid,
@@ -292,7 +347,7 @@ object IcsImportPlanner {
         }
     }
 
-    private fun planLocalInstance(
+    private fun planInstance(
         c: ImportedComponent,
         master: StoredComponent,
         stored: StoredUid,

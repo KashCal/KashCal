@@ -442,11 +442,12 @@ class EventWriter @Inject constructor(
     }
 
     /**
-     * Rewrites stored row [eventId] from a newer imported file (local calendars only,
-     * [org.onekash.kashcal.domain.ics.ImportTarget.LOCAL]): [incoming]'s content, SEQUENCE and
+     * Rewrites stored row [eventId] from a newer imported file: [incoming]'s content, SEQUENCE and
      * [Event.itipDtstamp] as given, with no SEQUENCE bump, and its attendee rows. The row keeps
-     * its id, calendar, UID, links, sync fields and the user's reminders; occurrences are
-     * regenerated (or the exception relinked). Queues nothing.
+     * its id, calendar, UID, links, sync fields and the user's reminders; with [keepUserFields]
+     * (a synced calendar, where the row is uploaded) also its tags, free/busy and color.
+     * Occurrences are regenerated (or the exception relinked). Queues nothing: a synced
+     * calendar's upload is [queueImportedUpdate], once per file group.
      *
      * The stored copy becomes the newer file's when the row is an import not on a server
      * ([Event.isUnsyncedImport]) and the newer file has one; any other row (a synced event moved
@@ -456,7 +457,8 @@ class EventWriter @Inject constructor(
     suspend fun applyImportedUpdate(
         eventId: Long,
         incoming: Event,
-        attendees: List<org.onekash.kashcal.data.db.entity.Attendee>
+        attendees: List<org.onekash.kashcal.data.db.entity.Attendee>,
+        keepUserFields: Boolean = false
     ): Event = database.withTransaction {
         val existing = requireNotNull(eventsDao.getById(eventId)) { "Event not found: $eventId" }
         val now = System.currentTimeMillis()
@@ -474,7 +476,9 @@ class EventWriter @Inject constructor(
             originalInstanceTime = existing.originalInstanceTime,
             originalSyncId = existing.originalSyncId,
             importSource = existing.importSource,
-            color = incoming.color ?: existing.color,
+            color = if (keepUserFields) existing.color else incoming.color ?: existing.color,
+            categories = if (keepUserFields) existing.categories else incoming.categories,
+            transp = if (keepUserFields) existing.transp else incoming.transp,
             createdAt = existing.createdAt,
             updatedAt = now,
             localModifiedAt = now
@@ -492,17 +496,19 @@ class EventWriter @Inject constructor(
     }
 
     /**
-     * Adds an exception to series [masterEventId] at [instanceTime] from an imported file (local
-     * calendars only, [org.onekash.kashcal.domain.ics.ImportTarget.LOCAL]): [incoming]'s content
-     * with its SEQUENCE and [Event.itipDtstamp], the master's UID and links, [attendees], linked
-     * to its occurrence. Queues nothing. It keeps [incoming]'s stored copy, the newer file's, when
-     * the master is an import not on a server ([Event.isUnsyncedImport]), none otherwise.
+     * Adds an exception to series [masterEventId] at [instanceTime] from an imported file:
+     * [incoming]'s content with its SEQUENCE and [Event.itipDtstamp], the master's UID and links,
+     * [attendees], linked to its occurrence; with [keepUserFields] (a synced calendar) the
+     * series' tags, free/busy and color. Queues nothing: a synced calendar's upload is
+     * [queueImportedUpdate]. It keeps [incoming]'s stored copy, the newer file's, when the master
+     * is an import not on a server ([Event.isUnsyncedImport]), none otherwise.
      */
     suspend fun createImportedException(
         masterEventId: Long,
         instanceTime: Long,
         incoming: Event,
-        attendees: List<org.onekash.kashcal.data.db.entity.Attendee>
+        attendees: List<org.onekash.kashcal.data.db.entity.Attendee>,
+        keepUserFields: Boolean = false
     ): Event = database.withTransaction {
         val master = requireNotNull(eventsDao.getById(masterEventId)) { "Event not found: $masterEventId" }
         val now = System.currentTimeMillis()
@@ -524,6 +530,9 @@ class EventWriter @Inject constructor(
             reminders = master.reminders,
             alarmCount = master.alarmCount,
             importSource = Event.IMPORT_SOURCE_ICS_FILE,
+            color = if (keepUserFields) master.color else incoming.color,
+            categories = if (keepUserFields) master.categories else incoming.categories,
+            transp = if (keepUserFields) master.transp else incoming.transp,
             createdAt = now,
             updatedAt = now
         )
@@ -536,16 +545,17 @@ class EventWriter @Inject constructor(
 
     /**
      * Applies an imported CANCEL to the user's copy of series [masterEventId], or of one
-     * occurrence when [instanceTime] is set, and on a synced calendar queues the attendee-side
-     * cancel ([PendingOperation.OPERATION_ATTENDEE_CANCEL]) that patches STATUS:CANCELLED into
-     * the server copy.
+     * occurrence when [instanceTime] is set, and on a synced calendar, unless [queueCancel] is
+     * false, queues the attendee-side cancel ([PendingOperation.OPERATION_ATTENDEE_CANCEL]) that
+     * patches STATUS:CANCELLED into the server copy.
      *
      * A series cancel marks the master and every exception (RFC 5546 §3.2.5 cancels the whole
      * range); an occurrence cancel marks its exception, first creating one linked to the
      * occurrence, with the master's attendee rows, when it has none. Each row gets STATUS
      * CANCELLED, the CANCEL's [sequence] and [itipDtstamp], and [Event.IMPORT_SOURCE_ICS_CANCEL]
      * unless an import created it. A series still PENDING_CREATE queues nothing: its create
-     * carries the cancel.
+     * carries the cancel. With [queueCancel] false the caller's [queueImportedUpdate] uploads the
+     * series with the cancelled rows in one PUT.
      *
      * @return the rows marked cancelled
      */
@@ -554,7 +564,8 @@ class EventWriter @Inject constructor(
         instanceTime: Long?,
         sequence: Int,
         itipDtstamp: Long?,
-        isLocal: Boolean
+        isLocal: Boolean,
+        queueCancel: Boolean = true
     ): List<Event> = database.withTransaction {
         val master = requireNotNull(eventsDao.getById(masterEventId)) { "Event not found: $masterEventId" }
         val now = System.currentTimeMillis()
@@ -577,7 +588,7 @@ class EventWriter @Inject constructor(
                 localModifiedAt = now
             ).also { eventsDao.update(it) }
         }
-        if (!isLocal && master.syncStatus != SyncStatus.PENDING_CREATE) {
+        if (!isLocal && queueCancel && master.syncStatus != SyncStatus.PENDING_CREATE) {
             pendingOpsDao.insert(
                 PendingOperation(
                     eventId = if (instanceTime == null) master.id else cancelled.single().id,
@@ -587,6 +598,33 @@ class EventWriter @Inject constructor(
             )
         }
         cancelled
+    }
+
+    /**
+     * Queues the upload of series [masterEventId] after an imported update on a synced calendar:
+     * marks it PENDING_UPDATE when SYNCED and inserts one [PendingOperation.OPERATION_UPDATE]
+     * with its URL. Its exceptions ride in the series' PUT, so the series carries the change for
+     * every row the import wrote. Inserted directly, not through [queueOperation], which folds a
+     * new UPDATE into a pending answer-only op and would upload the change as an RSVP; the
+     * caller makes sure no operation is waiting. A series not yet on the server (PENDING_CREATE,
+     * or no URL) queues nothing: its create carries the change.
+     */
+    suspend fun queueImportedUpdate(masterEventId: Long): Unit = database.withTransaction {
+        val master = eventsDao.getById(masterEventId) ?: return@withTransaction
+        if (master.syncStatus == SyncStatus.PENDING_CREATE || master.caldavUrl == null) {
+            return@withTransaction
+        }
+        val now = System.currentTimeMillis()
+        if (master.syncStatus == SyncStatus.SYNCED) {
+            eventsDao.updateSyncStatus(master.id, SyncStatus.PENDING_UPDATE, now)
+        }
+        pendingOpsDao.insert(
+            PendingOperation(
+                eventId = master.id,
+                operation = PendingOperation.OPERATION_UPDATE,
+                targetUrl = master.caldavUrl
+            )
+        )
     }
 
     /** Inserts a SYNCED exception of [master] at [instanceTime], linked to its occurrence. */

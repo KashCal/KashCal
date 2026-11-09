@@ -136,13 +136,14 @@ sealed interface DisplayEvent {
         /** RFC 5545 RRULE, or null for an event that doesn't repeat. */
         val rrule: String? get() = instance.rrule
 
-        /** Reminder offsets in minutes before the start, e.g. [15, 60]. */
-        val reminders: List<Int> get() = instance.reminders
-
         /** True for any occurrence of a recurring series, including an exception. */
         val isPartOfRecurringSeries: Boolean get() = instance.isPartOfRecurringSeries
     }
 }
+
+/** Returns the instance's reminder minutes as ISO trigger durations, or null when it has none. */
+private fun DisplayEvent.Device.isoReminders(): List<String>? =
+    instance.reminders.takeIf { it.isNotEmpty() }?.map { ContactEventUtils.minutesToIsoDuration(it) }
 
 /**
  * Builds an unsaved [Event] copy of this device event for the duplicate form.
@@ -153,6 +154,10 @@ sealed interface DisplayEvent {
  * and this is the only place that drops the rule. An instance can't tell whether it exists
  * only through RDATE, so such an occurrence copies the rule too, unlike the Room
  * [Event.toEventForDuplicate].
+ *
+ * It carries the alerts and the event colour too, as [toEventForShareCard] does: every reminder
+ * row's minutes become an alert whatever its method (a form save writes alerts only), and the
+ * form keeps the first 5 after sorting.
  *
  * `calendarId` is 0 because device calendar ids aren't Room ids; the form picks the calendar
  * from the source device calendar id, falling back to the default if it isn't writable.
@@ -170,7 +175,9 @@ fun DisplayEvent.Device.toEventForDuplicate(): Event = Event(
     rrule = rrule.takeIf { instance.originalId == null },
     dtstamp = System.currentTimeMillis(),
     transp = availabilityIntToTransp(instance.availability),
-    categories = categories
+    categories = categories,
+    color = eventColor,
+    reminders = isoReminders(),
 )
 
 /**
@@ -204,8 +211,7 @@ fun DisplayEvent.Device.toEventForShareCard(): Event = Event(
     status = statusIntToString(instance.status),
     transp = availabilityIntToTransp(instance.availability),
     color = eventColor,
-    reminders = instance.reminders.takeIf { it.isNotEmpty() }
-        ?.map { ContactEventUtils.minutesToIsoDuration(it) },
+    reminders = isoReminders(),
     dtstamp = System.currentTimeMillis(),
 )
 

@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">இதற்கும் அடுத்த மறுநிகழ்வுகளுக்குமான மாற்றங்கள் ஆதரிக்கப்படவில்லை</string>
     <string name="ics_import_reason_own_cancel">இந்தச் சந்திப்பை நீங்கள் ஏற்பாடு செய்கிறீர்கள், எனவே நிகழ்விலிருந்தே ரத்து செய்யுங்கள்</string>
     <string name="ics_import_reason_on_another_calendar">இது ஏற்கெனவே இந்தக் கணக்கின் மற்றொரு நாட்காட்டியில் உள்ளது</string>
+    <string name="ics_import_reason_calendar_keeps_copy">இந்த நாட்காட்டி நிகழ்வின் சொந்த நகலை வைத்திருக்கிறது</string>
+    <string name="ics_import_reason_own_update">இந்தச் சந்திப்பை நீங்கள் ஏற்பாடு செய்கிறீர்கள், எனவே நிகழ்விலிருந்தே மாற்றுங்கள்</string>
+    <string name="ics_import_reason_change_waiting">நிகழ்வில் ஒரு மாற்றம் ஒத்திசைக்கப்படக் காத்திருக்கிறது; ஒத்திசைக்கப்பட்ட பிறகு மீண்டும் இறக்குமதி செய்யுங்கள்</string>
     <string name="ics_import_notice_unverified">அழைப்புக் கோப்பை அனுப்பியவரைச் சரிபார்க்க முடியாது. இது ஏற்பாட்டாளரிடமிருந்து வந்ததா எனச் சரிபாருங்கள்.</string>
     <string name="ics_import_notice_answer_notifies">இந்த அழைப்புக்குப் பதிலளித்தால் ஏற்பாட்டாளருக்குத் தெரிவிக்கப்படலாம்.</string>
     <string name="ics_import_notice_guests_again">நீங்கள் ஏற்பாட்டாளர், எனவே விருந்தினர்கள் இந்த அழைப்பை மீண்டும் பெறக்கூடும்.</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d ஆண்டு</item>
         <item quantity="other">%1$d ஆண்டுகள்</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d வி.</item>
-        <item quantity="other">%1$d வி.</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d நிமிடம் முன்</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">நினைவூட்டல் இல்லை</string>
     <string name="reminder_at_time_of_event">நிகழ்வின் நேரத்தில்</string>
     <string name="reminder_time_before">%1$s முன்பு</string>
-    <string name="reminder_time_after">%1$s பின்பு</string>
     <string name="reminder_day_of_event_12h">நிகழ்வு நாளில் 9 AM</string>
     <string name="reminder_day_of_event_24h">நிகழ்வு நாளில் 09:00</string>
     <string name="reminder_day_of_event">நிகழ்வு நாள்</string>

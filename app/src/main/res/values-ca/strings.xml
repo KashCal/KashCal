@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">els canvis en aquesta repetició i les següents no són compatibles</string>
     <string name="ics_import_reason_own_cancel">organitzes aquesta reunió, així que cancel·la-la des de l\'esdeveniment</string>
     <string name="ics_import_reason_on_another_calendar">ja és en un altre calendari d\'aquest compte</string>
+    <string name="ics_import_reason_calendar_keeps_copy">aquest calendari conserva la seva pròpia còpia de l\'esdeveniment</string>
+    <string name="ics_import_reason_own_update">organitzes aquesta reunió, així que canvia-la des de l\'esdeveniment</string>
+    <string name="ics_import_reason_change_waiting">l\'esdeveniment té un canvi pendent de sincronitzar; torna a importar-lo quan s\'hagi sincronitzat</string>
     <string name="ics_import_notice_unverified">No es pot verificar qui envia un fitxer d\'invitació. Comprova que vingui de l\'organitzador.</string>
     <string name="ics_import_notice_answer_notifies">Respondre a aquesta invitació pot avisar l\'organitzador.</string>
     <string name="ics_import_notice_guests_again">Ets l\'organitzador, així que els assistents podrien tornar a rebre aquesta invitació.</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d any</item>
         <item quantity="other">%1$d anys</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d seg</item>
-        <item quantity="other">%1$d seg</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d minut abans</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">Sense recordatori</string>
     <string name="reminder_at_time_of_event">A l\'hora de l\'esdeveniment</string>
     <string name="reminder_time_before">%1$s abans</string>
-    <string name="reminder_time_after">%1$s després</string>
     <string name="reminder_day_of_event_12h">9 AM el dia de l\'esdeveniment</string>
     <string name="reminder_day_of_event_24h">09:00 el dia de l\'esdeveniment</string>
     <string name="reminder_day_of_event">El dia de l\'esdeveniment</string>

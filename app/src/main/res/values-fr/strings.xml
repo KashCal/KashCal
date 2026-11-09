@@ -1011,6 +1011,9 @@
     <string name="ics_import_reason_this_and_future">les modifications de cette occurrence et des suivantes ne sont pas prises en charge</string>
     <string name="ics_import_reason_own_cancel">tu organises cette réunion, annule-la donc depuis l\'événement</string>
     <string name="ics_import_reason_on_another_calendar">il est déjà dans un autre calendrier de ce compte</string>
+    <string name="ics_import_reason_calendar_keeps_copy">ce calendrier garde sa propre copie de l\'événement</string>
+    <string name="ics_import_reason_own_update">tu organises cette réunion, modifie-la donc depuis l\'événement</string>
+    <string name="ics_import_reason_change_waiting">l\'événement a une modification en attente de synchronisation ; réimporte-le après la synchronisation</string>
     <string name="ics_import_notice_unverified">L\'expéditeur d\'un fichier d\'invitation ne peut pas être vérifié. Vérifie qu\'il provient de l\'organisateur.</string>
     <string name="ics_import_notice_answer_notifies">Répondre à cette invitation peut avertir l\'organisateur.</string>
     <string name="ics_import_notice_guests_again">Tu es l\'organisateur, les participants pourraient donc recevoir à nouveau cette invitation.</string>
@@ -1092,11 +1095,6 @@
         <item quantity="one">%1$d an</item>
         <item quantity="many">%1$d ans</item>
         <item quantity="other">%1$d ans</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d sec</item>
-        <item quantity="many">%1$d sec</item>
-        <item quantity="other">%1$d sec</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d minute avant</item>
@@ -1286,7 +1284,6 @@
     <string name="reminder_none">Aucun rappel</string>
     <string name="reminder_at_time_of_event">Au moment de l\'événement</string>
     <string name="reminder_time_before">%1$s avant</string>
-    <string name="reminder_time_after">%1$s après</string>
     <string name="reminder_day_of_event_12h">9 h le jour de l\'événement</string>
     <string name="reminder_day_of_event_24h">09:00 le jour de l\'événement</string>
     <string name="reminder_day_of_event">Jour de l\'événement</string>

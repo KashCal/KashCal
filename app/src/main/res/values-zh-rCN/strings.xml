@@ -962,6 +962,9 @@
     <string name="ics_import_reason_this_and_future">不支持对此次及以后重复的更改</string>
     <string name="ics_import_reason_own_cancel">您是此会议的组织者，请从事件中取消</string>
     <string name="ics_import_reason_on_another_calendar">已在此账户的另一个日历中</string>
+    <string name="ics_import_reason_calendar_keeps_copy">此日历保留了该事件的自有副本</string>
+    <string name="ics_import_reason_own_update">您是此会议的组织者，请从事件中更改</string>
+    <string name="ics_import_reason_change_waiting">该事件有待同步的更改；同步后请重新导入</string>
     <string name="ics_import_notice_unverified">无法验证邀请文件的发件人。请确认它来自组织者。</string>
     <string name="ics_import_notice_answer_notifies">回复此邀请可能会通知组织者。</string>
     <string name="ics_import_notice_guests_again">您是组织者，因此嘉宾可能会再次收到此邀请。</string>
@@ -1018,9 +1021,6 @@
     </plurals>
     <plurals name="time_years">
         <item quantity="other">%1$d 年</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="other">%1$d 秒</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="other">%1$d 分钟前</item>
@@ -1194,7 +1194,6 @@
     <string name="reminder_none">无提醒</string>
     <string name="reminder_at_time_of_event">事件开始时</string>
     <string name="reminder_time_before">提前%1$s</string>
-    <string name="reminder_time_after">%1$s后</string>
     <string name="reminder_day_of_event_12h">当天上午9点</string>
     <string name="reminder_day_of_event_24h">当天09:00</string>
     <string name="reminder_day_of_event">活动当天</string>

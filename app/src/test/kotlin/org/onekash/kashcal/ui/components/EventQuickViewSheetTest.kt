@@ -15,7 +15,6 @@ import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.util.text.cleanHtmlEntities
 import org.onekash.kashcal.util.text.containsUrl
 import org.onekash.kashcal.util.text.extractUrls
-import org.onekash.kashcal.util.text.formatRemindersForDisplay
 import org.onekash.kashcal.util.text.isValidUrl
 import org.robolectric.RobolectricTestRunner
 import java.time.LocalDate
@@ -23,12 +22,14 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 
 /**
- * Tests the quick-view sheet's logic through local copies of its predicates and formatters,
- * plus the shared helpers it calls ([containsUrl], [isValidUrl], [formatRemindersForDisplay],
- * [cleanHtmlEntities], [extractUrls], [formatSeriesStartDateStr]).
+ * Tests the quick-view sheet's logic through local copies of some of its predicates and
+ * formatters, plus the helpers it calls ([containsUrl], [isValidUrl], [cleanHtmlEntities],
+ * [extractUrls], [formatSeriesStartDateStr], and [recurrenceDisplayText] with
+ * [seriesStartDateFor] for the repeat line).
  *
- * The copies don't call EventQuickViewSheet, so they keep passing if it drifts, and the
- * button-visibility, read-only and expand-hint tests assert local booleans only. A master (has
+ * The local copies don't call EventQuickViewSheet, so they keep passing if it drifts, and the
+ * button-visibility and read-only tests assert local booleans only. Which events show the notes
+ * and link section is tested on the rendered sheet in `EventQuickViewDetailsTest`. A master (has
  * an RRULE) and an exception (has originalEventId, no RRULE) both get the recurring icon.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -80,7 +81,7 @@ class EventQuickViewSheetTest {
 
     /**
      * Formats an RRULE with a simplified local stand-in. The sheet has no such function; it
-     * calls `RruleBuilder.formatForDisplayParts`, as [buildRecurrenceText] does.
+     * calls `RruleBuilder.formatForDisplayParts` through [recurrenceDisplayText].
      */
     private fun formatRruleDisplay(rrule: String?): String {
         if (rrule == null) return "Does not repeat"
@@ -535,64 +536,6 @@ class EventQuickViewSheetTest {
         }
     }
 
-    // ========== Expandable Content Detection Tests ==========
-
-    // A local predicate modeled on the sheet's hasExpandableContent, which decides whether the
-    // sheet shows the URL, notes and reminders section. The sheet checks description, URL and
-    // attendees; this copy checks reminders in place of attendees.
-
-    private fun hasExpandableContent(event: Event): Boolean {
-        return !event.description.isNullOrBlank() ||
-            !event.url.isNullOrBlank() ||
-            !event.reminders.isNullOrEmpty()
-    }
-
-    @Test
-    fun `event with description has expandable content`() {
-        val event = createEvent().copy(description = "Meeting notes here")
-        assertTrue("Event with description should be expandable", hasExpandableContent(event))
-    }
-
-    @Test
-    fun `event with URL has expandable content`() {
-        val event = createEvent().copy(url = "https://zoom.us/j/123")
-        assertTrue("Event with URL should be expandable", hasExpandableContent(event))
-    }
-
-    @Test
-    fun `event with reminders has expandable content`() {
-        val event = createEvent().copy(reminders = listOf("-PT15M"))
-        assertTrue("Event with reminders should be expandable", hasExpandableContent(event))
-    }
-
-    @Test
-    fun `event with all fields has expandable content`() {
-        val event = createEvent().copy(
-            description = "Notes",
-            url = "https://example.com",
-            reminders = listOf("-PT15M", "-P1D")
-        )
-        assertTrue("Event with all fields should be expandable", hasExpandableContent(event))
-    }
-
-    @Test
-    fun `event without description URL or reminders has no expandable content`() {
-        val event = createEvent()
-        assertFalse("Event without content should not be expandable", hasExpandableContent(event))
-    }
-
-    @Test
-    fun `event with blank description has no expandable content`() {
-        val event = createEvent().copy(description = "   ")
-        assertFalse("Event with blank description should not be expandable", hasExpandableContent(event))
-    }
-
-    @Test
-    fun `event with empty reminders list has no expandable content`() {
-        val event = createEvent().copy(reminders = emptyList())
-        assertFalse("Event with empty reminders should not be expandable", hasExpandableContent(event))
-    }
-
     // ========== Location Tappability Tests ==========
 
     @Test
@@ -660,36 +603,6 @@ class EventQuickViewSheetTest {
         val validUrl = url?.takeIf { isValidUrl(it) }
 
         assertNull("Null URL should remain null", validUrl)
-    }
-
-    // ========== Reminders Formatting Tests ==========
-
-    @Test
-    fun `reminder list is formatted for display`() {
-        val reminders = listOf("-PT15M", "-P1D")
-        val formatted = formatRemindersForDisplay(reminders, resources)
-
-        assertEquals("15 min before, 1 day before", formatted)
-    }
-
-    @Test
-    fun `null reminders return null`() {
-        val formatted = formatRemindersForDisplay(null, resources)
-        assertNull(formatted)
-    }
-
-    @Test
-    fun `empty reminders return null`() {
-        val formatted = formatRemindersForDisplay(emptyList(), resources)
-        assertNull(formatted)
-    }
-
-    @Test
-    fun `single reminder is formatted`() {
-        val reminders = listOf("-PT30M")
-        val formatted = formatRemindersForDisplay(reminders, resources)
-
-        assertEquals("30 min before", formatted)
     }
 
     // ========== Invalid URL Filtering Tests ==========
@@ -892,6 +805,18 @@ class EventQuickViewSheetTest {
     }
 
     @Test
+    fun `a blank rule reads Recurring, not Does not repeat`() {
+        val text = recurrenceDisplayText(
+            rrule = "",
+            seriesStartDate = "Mar 6, 2023",
+            rruleStrings = org.onekash.kashcal.domain.rrule.RruleDisplayStrings.english(),
+            untilZone = null,
+            resources = resources,
+        )
+        assertEquals("Recurring", text)
+    }
+
+    @Test
     fun `exception event recurrence text does NOT include since suffix`() {
         val event = createEvent(rrule = null, originalEventId = 100L)
 
@@ -952,98 +877,14 @@ class EventQuickViewSheetTest {
     }
 
     /**
-     * Copies the sheet's repeat-line logic with the English strings and no UNTIL zone. A
-     * contact event with no decoded year has a synthetic start, so it shows no start date.
+     * Builds the repeat line through the sheet's [recurrenceDisplayText] and [seriesStartDateFor]
+     * with the English rrule strings.
      */
-    private fun buildRecurrenceText(event: Event): String {
-        return if (event.rrule != null) {
-            val (freq, endSuffix) = org.onekash.kashcal.domain.rrule.RruleBuilder.formatForDisplayParts(event.rrule)
-            val isContactEvent = org.onekash.kashcal.data.contacts.ContactEventType.fromCaldavUrl(event.caldavUrl) != null
-            val hasSyntheticStart = isContactEvent && org.onekash.kashcal.data.contacts.ContactEventUtils.decodeEventYear(event.description) == null
-            val startDate = if (!hasSyntheticStart) formatSeriesStartDateStr(event.startTs, event.isAllDay) else null
-            if (endSuffix != null && startDate != null) {
-                "$freq starting $startDate$endSuffix"
-            } else if (endSuffix != null) {
-                "$freq$endSuffix"
-            } else if (startDate != null) {
-                "$freq \u00b7 since $startDate"
-            } else {
-                freq
-            }
-        } else {
-            "Recurring"
-        }
-    }
-
-    // ========== Expand Hint Logic (local booleans; the sheet has no hint) ==========
-
-    @Test
-    fun `expand hint shown when content exists and not expanded`() {
-        val event = createEvent().copy(description = "Some notes")
-        val hasContent = hasExpandableContent(event)
-        val isExpanded = false
-
-        val showExpandHint = hasContent && !isExpanded
-        assertTrue("Should show expand hint", showExpandHint)
-    }
-
-    @Test
-    fun `expand hint hidden when expanded`() {
-        val event = createEvent().copy(description = "Some notes")
-        val hasContent = hasExpandableContent(event)
-        val isExpanded = true
-
-        val showExpandHint = hasContent && !isExpanded
-        assertFalse("Should not show expand hint when expanded", showExpandHint)
-    }
-
-    @Test
-    fun `expand hint hidden when no expandable content`() {
-        val event = createEvent()  // No description, url, or reminders
-        val hasContent = hasExpandableContent(event)
-        val isExpanded = false
-
-        val showExpandHint = hasContent && !isExpanded
-        assertFalse("Should not show expand hint without content", showExpandHint)
-    }
-
-    // ========== Combined Expandable Content Scenarios ==========
-
-    @Test
-    fun `event with invalid URL but valid description has expandable content`() {
-        val event = createEvent().copy(
-            url = "not-a-url",
-            description = "Valid description"
-        )
-
-        assertTrue("Should be expandable due to description", hasExpandableContent(event))
-        assertNull("URL should be filtered out", event.url?.takeIf { isValidUrl(it) })
-    }
-
-    @Test
-    fun `event with only reminders has expandable content`() {
-        val event = createEvent().copy(
-            description = null,
-            url = null,
-            reminders = listOf("-PT15M", "-PT1H")
-        )
-
-        assertTrue("Should be expandable due to reminders", hasExpandableContent(event))
-    }
-
-    @Test
-    fun `hasExpandableContent matches implementation logic exactly`() {
-        // Cases for the local copy, which differs from the sheet (see its note above)
-        val eventWithAll = createEvent().copy(
-            description = "Notes",
-            url = "https://example.com",
-            reminders = listOf("-PT15M")
-        )
-        val eventWithNone = createEvent()
-        val eventWithBlankDescription = createEvent().copy(description = "")
-
-        assertTrue(hasExpandableContent(eventWithAll))
-        assertFalse(hasExpandableContent(eventWithNone))
-        assertFalse(hasExpandableContent(eventWithBlankDescription))
-    }
+    private fun buildRecurrenceText(event: Event): String = recurrenceDisplayText(
+        rrule = event.rrule,
+        seriesStartDate = seriesStartDateFor(event),
+        rruleStrings = org.onekash.kashcal.domain.rrule.RruleDisplayStrings.english(),
+        untilZone = org.onekash.kashcal.domain.rrule.RruleBuilder.untilZoneFor(event.isAllDay, event.timezone),
+        resources = resources,
+    )
 }

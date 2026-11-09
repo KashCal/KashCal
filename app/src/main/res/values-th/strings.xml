@@ -962,6 +962,9 @@
     <string name="ics_import_reason_this_and_future">ไม่รองรับการเปลี่ยนแปลงครั้งนี้และครั้งถัดไป</string>
     <string name="ics_import_reason_own_cancel">คุณเป็นผู้จัดของการประชุมนี้ จึงต้องยกเลิกจากกิจกรรม</string>
     <string name="ics_import_reason_on_another_calendar">มีอยู่แล้วในปฏิทินอื่นของบัญชีนี้</string>
+    <string name="ics_import_reason_calendar_keeps_copy">ปฏิทินนี้เก็บสำเนาของกิจกรรมไว้เอง</string>
+    <string name="ics_import_reason_own_update">คุณเป็นผู้จัดของการประชุมนี้ จึงต้องเปลี่ยนจากกิจกรรม</string>
+    <string name="ics_import_reason_change_waiting">กิจกรรมนี้มีการเปลี่ยนแปลงที่รอซิงค์ นำเข้าอีกครั้งหลังซิงค์เสร็จ</string>
     <string name="ics_import_notice_unverified">ไม่สามารถยืนยันผู้ส่งไฟล์คำเชิญได้ โปรดตรวจสอบว่าไฟล์มาจากผู้จัด</string>
     <string name="ics_import_notice_answer_notifies">การตอบคำเชิญนี้อาจแจ้งเตือนผู้จัด</string>
     <string name="ics_import_notice_guests_again">คุณเป็นผู้จัด ผู้เข้าร่วมจึงอาจได้รับคำเชิญนี้อีกครั้ง</string>
@@ -1018,9 +1021,6 @@
     </plurals>
     <plurals name="time_years">
         <item quantity="other">%1$d ปี</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="other">%1$d วินาที</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="other">%1$d นาทีก่อน</item>
@@ -1194,7 +1194,6 @@
     <string name="reminder_none">ไม่มีการแจ้งเตือน</string>
     <string name="reminder_at_time_of_event">เมื่อเริ่มกิจกรรม</string>
     <string name="reminder_time_before">%1$s ก่อน</string>
-    <string name="reminder_time_after">%1$s หลัง</string>
     <string name="reminder_day_of_event_12h">9 AM วันที่มีกิจกรรม</string>
     <string name="reminder_day_of_event_24h">09:00 วันที่มีกิจกรรม</string>
     <string name="reminder_day_of_event">วันที่มีกิจกรรม</string>

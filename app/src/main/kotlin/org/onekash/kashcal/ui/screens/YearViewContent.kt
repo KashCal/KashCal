@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,7 +19,10 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,10 +36,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.collections.immutable.ImmutableList
@@ -46,6 +55,8 @@ import java.time.DayOfWeek
 import java.time.format.TextStyle
 import java.util.Calendar
 import java.util.Locale
+import kotlin.math.ceil
+import kotlin.math.floor
 
 private const val YEAR_PAGER_TOTAL = 200
 private const val YEAR_PAGER_CENTER = 100
@@ -57,7 +68,7 @@ private fun getLocalizedMonthNames(): List<String> {
     }
 }
 
-/** Shows a year as 12 mini-months, 4 rows by 3 columns, paged horizontally by year. */
+/** Shows a year as 12 mini-months laid out by [yearLayout], paged horizontally by year. */
 @Composable
 fun YearViewContent(
     eventDots: ImmutableMap<String, ImmutableMap<Int, ImmutableList<Int>>>,
@@ -159,7 +170,7 @@ private fun YearHeaderStrip(
         state = listState,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+            .padding(horizontal = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         items(totalYears) { index ->
@@ -172,6 +183,7 @@ private fun YearHeaderStrip(
                 color = if (isDisplayed) MaterialTheme.colorScheme.primary
                 else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                 modifier = Modifier
+                    // 8dp above and below a 24dp line: a 40dp tap target.
                     .clickable { onYearClick(year) }
                     .padding(horizontal = 12.dp, vertical = 8.dp)
             )
@@ -179,7 +191,107 @@ private fun YearHeaderStrip(
     }
 }
 
-/** Lays out one year as 4 rows of 3 [MiniMonth]s. */
+private val PAGE_PADDING = 8.dp
+private val COLUMN_GAP = 4.dp
+private val ROW_GAP = 8.dp
+private val MONTH_PADDING = 4.dp
+private val LABEL_GAP = 2.dp
+/** Space above and below the weekday letters, on top of their line. */
+private val WEEKDAY_PADDING = 3.dp
+private val WEEKDAY_TEXT_SIZE = 7.sp
+/** Padding above and below each day in a mini-month. */
+private val DAY_ROW_PADDING = 1.dp
+private val DOT_SIZE = 2.dp
+private val MIN_CELL = 8.dp
+private val MAX_CELL = 24.dp
+/** Day number font size as a share of its cell: 8sp in a 14dp cell. */
+private const val DAY_NUMBER_SCALE = 8f / 14f
+
+/** How [YearPage] lays out a year: [columns] mini-months a row, day cells [cell] square. */
+internal data class YearLayout(val columns: Int, val cell: Dp, val scrolls: Boolean)
+
+/**
+ * Returns the layout that shows all 12 months in [width] by [height] with the largest day cells:
+ * 3, 4 or 6 columns, each cell as large as the width and height allow, at most [MAX_CELL] at the
+ * normal font size. Each
+ * month also holds its name, [labelHeight] tall, and the weekday letters, [weekdayHeight] tall.
+ * When no choice reaches the smallest cell, the page scrolls, so only the width limits the cells:
+ * the columns are the ones that give the widest cell, and the cell is at least the smallest one.
+ *
+ * At a font scale of 1.0 or less the smallest cell is [MIN_CELL]. With a larger font, day numbers
+ * must not shrink: the smallest cell is the cell the same room gets at font scale 1.0 (laid out
+ * with [baseLabelHeight] and [baseWeekdayHeight], the rows' heights at that scale) times the
+ * font scale, capped by the widest cell the width allows, and the largest cell grows to it. So a
+ * larger font scrolls the page instead of shrinking the days, keeping the most columns whose
+ * cells reach that size, at that size; on a narrow phone at a very large font the width still
+ * caps them.
+ *
+ * Sizes are counted in whole pixels as layout rounds each padding and size, so six rows of
+ * rounded cells can't add up to more than the page.
+ */
+internal fun yearLayout(
+    width: Dp,
+    height: Dp,
+    density: Density,
+    labelHeight: Dp,
+    weekdayHeight: Dp,
+    baseLabelHeight: Dp = labelHeight,
+    baseWeekdayHeight: Dp = weekdayHeight,
+): YearLayout {
+    if (density.fontScale <= 1f) {
+        return fitYear(width, height, density, labelHeight, weekdayHeight, minCellPx = null)
+    }
+    val normal = Density(density.density, 1f)
+    val base = fitYear(width, height, normal, baseLabelHeight, baseWeekdayHeight, minCellPx = null)
+    // The cell back in whole pixels first, so an exact product (22px x 1.5) isn't rounded up.
+    val basePx = with(normal) { base.cell.roundToPx() }
+    val floorPx = ceil(basePx * density.fontScale - 0.001f).toInt()
+    return fitYear(width, height, density, labelHeight, weekdayHeight, minCellPx = floorPx)
+}
+
+/**
+ * Lays out the year for [yearLayout] with the smallest cell [minCellPx], capped by the widest
+ * cell the width allows; null is [MIN_CELL].
+ */
+private fun fitYear(
+    width: Dp,
+    height: Dp,
+    density: Density,
+    labelHeight: Dp,
+    weekdayHeight: Dp,
+    minCellPx: Int?,
+): YearLayout = with(density) {
+    val dayRowExtra = DAY_ROW_PADDING.roundToPx() * 2 + DOT_SIZE.roundToPx()
+    val monthOverhead = MONTH_PADDING.roundToPx() * 2 + labelHeight.roundToPx() +
+        LABEL_GAP.roundToPx() + weekdayHeight.roundToPx()
+    val cellByWidth = intArrayOf(3, 4, 6).associateWith { columns ->
+        val monthWidth = (width.toPx() - PAGE_PADDING.roundToPx() * 2 -
+            COLUMN_GAP.roundToPx() * (columns - 1)) / columns
+        floor((monthWidth - MONTH_PADDING.roundToPx() * 2) / 7).toInt()
+    }
+    val minCell = if (minCellPx == null) MIN_CELL.roundToPx() else {
+        maxOf(MIN_CELL.roundToPx(), minOf(minCellPx, cellByWidth.values.max()))
+    }
+    val maxCell = maxOf(MAX_CELL.roundToPx(), minCell)
+    val fitted = cellByWidth.map { (columns, byWidth) ->
+        val rows = 12 / columns
+        val monthHeight = floor((height.toPx() - ROW_GAP.roundToPx() * (rows - 1)) / rows)
+        val cellByHeight = floor((monthHeight - monthOverhead) / 6).toInt() - dayRowExtra
+        columns to minOf(byWidth, cellByHeight, maxCell)
+    }.maxBy { it.second }
+    if (fitted.second >= minCell) {
+        YearLayout(columns = fitted.first, cell = fitted.second.toDp(), scrolls = false)
+    } else if (minCellPx != null) {
+        // A larger font: the most columns whose cells reach the smallest cell, at that size.
+        val columns = cellByWidth.filter { it.value >= minCell }.keys.max()
+        YearLayout(columns = columns, cell = minCell.toDp(), scrolls = true)
+    } else {
+        val (columns, byWidth) = cellByWidth.maxBy { it.value }
+        YearLayout(columns = columns, cell = minOf(maxOf(byWidth, minCell), maxCell).toDp(), scrolls = true)
+    }
+}
+
+/** Lays out one year of [MiniMonth]s to fit the page ([yearLayout]). */
 @Composable
 private fun YearPage(
     year: Int,
@@ -188,28 +300,62 @@ private fun YearPage(
     today: Calendar,
     onMonthClick: (year: Int, month: Int) -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        for (row in 0..3) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                for (col in 0..2) {
-                    val month = row * 3 + col // 0-based, like Calendar.MONTH
-                    Box(modifier = Modifier.weight(1f)) {
-                        MiniMonth(
-                            year = year,
-                            month = month,
-                            eventDots = eventDots,
-                            firstDayOfWeek = firstDayOfWeek,
-                            today = today,
-                            onClick = { onMonthClick(year, month) }
-                        )
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val density = LocalDensity.current
+        // Both rows take the height their text measures at the current font size, so month
+        // names and weekday letters are never cut.
+        val textMeasurer = rememberTextMeasurer()
+        val labelStyle = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium)
+        val weekdayStyle = LocalTextStyle.current.copy(
+            fontSize = WEEKDAY_TEXT_SIZE,
+            lineHeight = WEEKDAY_TEXT_SIZE,
+        )
+        val labelHeight = with(density) {
+            textMeasurer.measure("Ag", labelStyle, maxLines = 1).size.height.toDp()
+        }
+        val weekdayHeight = with(density) {
+            textMeasurer.measure("Ag", weekdayStyle, maxLines = 1).size.height.toDp()
+        } + WEEKDAY_PADDING * 2
+        // The same rows at font scale 1.0, so a larger font never gets smaller days (yearLayout).
+        val normalDensity = Density(density.density, 1f)
+        val baseLabelHeight = with(density) {
+            textMeasurer.measure("Ag", labelStyle, maxLines = 1, density = normalDensity).size.height.toDp()
+        }
+        val baseWeekdayHeight = with(density) {
+            textMeasurer.measure("Ag", weekdayStyle, maxLines = 1, density = normalDensity).size.height.toDp()
+        } + WEEKDAY_PADDING * 2
+        val layout = remember(maxWidth, maxHeight, density, labelHeight, weekdayHeight, baseLabelHeight, baseWeekdayHeight) {
+            yearLayout(maxWidth, maxHeight, density, labelHeight, weekdayHeight, baseLabelHeight, baseWeekdayHeight)
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(
+                    if (layout.scrolls) Modifier.verticalScroll(rememberScrollState()) else Modifier
+                )
+                .padding(horizontal = PAGE_PADDING),
+            verticalArrangement = Arrangement.spacedBy(ROW_GAP)
+        ) {
+            for (row in 0 until 12 / layout.columns) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(COLUMN_GAP)
+                ) {
+                    for (col in 0 until layout.columns) {
+                        val month = row * layout.columns + col // 0-based, like Calendar.MONTH
+                        Box(modifier = Modifier.weight(1f)) {
+                            MiniMonth(
+                                year = year,
+                                month = month,
+                                eventDots = eventDots,
+                                firstDayOfWeek = firstDayOfWeek,
+                                today = today,
+                                cellSize = layout.cell,
+                                labelHeight = labelHeight,
+                                weekdayHeight = weekdayHeight,
+                                onClick = { onMonthClick(year, month) }
+                            )
+                        }
                     }
                 }
             }
@@ -228,6 +374,9 @@ private fun MiniMonth(
     eventDots: ImmutableMap<String, ImmutableMap<Int, ImmutableList<Int>>>,
     firstDayOfWeek: Int,
     today: Calendar,
+    cellSize: Dp,
+    labelHeight: Dp,
+    weekdayHeight: Dp,
     onClick: () -> Unit
 ) {
     val monthGrid = remember(year, month, firstDayOfWeek) {
@@ -253,7 +402,7 @@ private fun MiniMonth(
         modifier = Modifier
             .semantics { contentDescription = accessibilityLabel }
             .clickable(onClick = onClick)
-            .padding(4.dp)
+            .padding(MONTH_PADDING)
     ) {
         Text(
             text = monthLabel,
@@ -262,16 +411,24 @@ private fun MiniMonth(
             color = if (isCurrentMonth) MaterialTheme.colorScheme.primary
             else MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 2.dp)
+                .height(labelHeight)
         )
+        Spacer(modifier = Modifier.height(LABEL_GAP))
 
-        Row(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().height(weekdayHeight),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             dayHeaders.forEach { letter ->
                 Text(
                     text = letter,
-                    fontSize = 7.sp,
+                    fontSize = WEEKDAY_TEXT_SIZE,
+                    lineHeight = WEEKDAY_TEXT_SIZE,
+                    maxLines = 1,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.weight(1f)
@@ -289,6 +446,7 @@ private fun MiniMonth(
                             year == todayYear && month == todayMonth,
                         dotColor = if (cell.position == MonthGrid.DayPosition.MonthDate)
                             monthDots[cell.dayOfMonth]?.firstOrNull() else null,
+                        size = cellSize,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -298,38 +456,42 @@ private fun MiniMonth(
 }
 
 /**
- * Draws one day of a mini-month. No aspectRatio: cells are narrow (about 16dp), so a square
- * constraint clips the content.
+ * Draws one day of a mini-month in a [size] square, the number sized to the square so it fits at
+ * any font scale. [yearLayout] keeps the square from shrinking at a larger font, so the number
+ * grows with the font size. No aspectRatio: the row's weight already gives each day its width.
  */
 @Composable
 private fun MiniDayCell(
     cell: MonthGrid.DayCell,
     isToday: Boolean,
     dotColor: Int?,
+    size: Dp,
     modifier: Modifier = Modifier
 ) {
+    val fontSize = with(LocalDensity.current) { (size * DAY_NUMBER_SCALE).toSp() }
     Column(
-        modifier = modifier.padding(vertical = 1.dp),
+        modifier = modifier.padding(vertical = DAY_ROW_PADDING),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = if (isToday) {
                 Modifier
-                    .size(14.dp)
+                    .size(size)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primaryContainer)
                     // The tonal fill alone can wash out against the surface for pale
                     // accent seeds; a hairline outline keeps the today ring visible.
                     .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
             } else {
-                Modifier.size(14.dp)
+                Modifier.size(size)
             }
         ) {
             Text(
                 text = cell.dayOfMonth.toString(),
-                fontSize = 8.sp,
-                lineHeight = 8.sp,
+                fontSize = fontSize,
+                lineHeight = fontSize,
+                maxLines = 1,
                 textAlign = TextAlign.Center,
                 color = when {
                     isToday -> MaterialTheme.colorScheme.onPrimaryContainer
@@ -344,12 +506,12 @@ private fun MiniDayCell(
         if (dotColor != null) {
             Box(
                 modifier = Modifier
-                    .size(2.dp)
+                    .size(DOT_SIZE)
                     .clip(CircleShape)
                     .background(Color(dotColor))
             )
         } else {
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(DOT_SIZE))
         }
     }
 }

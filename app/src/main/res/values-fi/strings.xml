@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">tämän ja myöhempien toistojen muutoksia ei tueta</string>
     <string name="ics_import_reason_own_cancel">olet tämän kokouksen järjestäjä, joten peru se tapahtumasta</string>
     <string name="ics_import_reason_on_another_calendar">se on jo tämän tilin toisessa kalenterissa</string>
+    <string name="ics_import_reason_calendar_keeps_copy">tämä kalenteri säilyttää tapahtumasta oman kopionsa</string>
+    <string name="ics_import_reason_own_update">olet tämän kokouksen järjestäjä, joten muokkaa sitä tapahtumasta</string>
+    <string name="ics_import_reason_change_waiting">tapahtuman muutos odottaa vielä synkronointia; tuo uudelleen synkronoinnin jälkeen</string>
     <string name="ics_import_notice_unverified">Kutsutiedoston lähettäjää ei voi varmistaa. Tarkista, että se tuli järjestäjältä.</string>
     <string name="ics_import_notice_answer_notifies">Tähän kutsuun vastaaminen voi ilmoittaa järjestäjälle.</string>
     <string name="ics_import_notice_guests_again">Olet järjestäjä, joten osallistujat voivat saada tämän kutsun uudelleen.</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d vuosi</item>
         <item quantity="other">%1$d vuotta</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d sek</item>
-        <item quantity="other">%1$d sek</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d minuutti ennen</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">Ei muistutusta</string>
     <string name="reminder_at_time_of_event">Tapahtuman aikaan</string>
     <string name="reminder_time_before">%1$s ennen</string>
-    <string name="reminder_time_after">%1$s jälkeen</string>
     <string name="reminder_day_of_event_12h">9 AM tapahtumapäivänä</string>
     <string name="reminder_day_of_event_24h">09:00 tapahtumapäivänä</string>
     <string name="reminder_day_of_event">Tapahtumapäivänä</string>

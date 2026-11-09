@@ -1,5 +1,6 @@
 package org.onekash.kashcal.ui.components.pickers
 
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -11,7 +12,9 @@ import androidx.compose.runtime.Composable
  *
  * Same grid and wheel as [EventColorPalettePanel] without the leading "Calendar default" cell, so
  * all 12 palette entries fill a 4×3 grid. "More colors" opens the 92-color CSS3 wheel, whose
- * selection commits only on Done. Back closes the sheet from either.
+ * selection commits only on Done. Back closes the sheet from either. A drag down closes it from
+ * the grid; on the wheel a fling picks a color, so there the sheet holds still and shows no drag
+ * handle (`ColorSheetSwipeTest`).
  *
  * @param selectedArgb current color ARGB
  * @param onColorSelected invoked with the chosen ARGB
@@ -30,8 +33,8 @@ fun ColorPaletteSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        dragHandle = {},
-        sheetGesturesEnabled = false
+        dragHandle = if (modeState.showWheel) null else { { BottomSheetDefaults.DragHandle() } },
+        sheetGesturesEnabled = !modeState.showWheel
     ) {
         PaletteModes(
             state = modeState,

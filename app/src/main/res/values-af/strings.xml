@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">veranderinge aan hierdie en latere voorkomste word nie ondersteun nie</string>
     <string name="ics_import_reason_own_cancel">jy reël hierdie vergadering, so kanselleer dit vanaf die gebeurtenis</string>
     <string name="ics_import_reason_on_another_calendar">dit is reeds in \'n ander kalender van hierdie rekening</string>
+    <string name="ics_import_reason_calendar_keeps_copy">hierdie kalender hou sy eie kopie van die gebeurtenis</string>
+    <string name="ics_import_reason_own_update">jy reël hierdie vergadering, so verander dit vanaf die gebeurtenis</string>
+    <string name="ics_import_reason_change_waiting">die gebeurtenis het \'n verandering wat wag om te sinkroniseer; voer weer in nadat dit gesinkroniseer het</string>
     <string name="ics_import_notice_unverified">Die sender van \'n uitnodigingslêer kan nie geverifieer word nie. Maak seker dit kom van die reëlaar.</string>
     <string name="ics_import_notice_answer_notifies">As jy hierdie uitnodiging beantwoord, kan die reëlaar in kennis gestel word.</string>
     <string name="ics_import_notice_guests_again">Jy is die reëlaar, so gaste kan hierdie uitnodiging weer ontvang.</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d jaar</item>
         <item quantity="other">%1$d jaar</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d sek</item>
-        <item quantity="other">%1$d sek</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d minuut voor</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">Geen herinnering</string>
     <string name="reminder_at_time_of_event">Op tyd van gebeurtenis</string>
     <string name="reminder_time_before">%1$s voor</string>
-    <string name="reminder_time_after">%1$s na</string>
     <string name="reminder_day_of_event_12h">9 VM dag van gebeurtenis</string>
     <string name="reminder_day_of_event_24h">09:00 dag van gebeurtenis</string>
     <string name="reminder_day_of_event">Day of event</string>

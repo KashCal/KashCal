@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">agerpen honen eta hurrengoen aldaketak ez dira onartzen</string>
     <string name="ics_import_reason_own_cancel">zuk antolatzen duzu bilera hau, beraz utzi bertan behera gertaeratik</string>
     <string name="ics_import_reason_on_another_calendar">dagoeneko kontu honetako beste egutegi batean dago</string>
+    <string name="ics_import_reason_calendar_keeps_copy">egutegi honek gertaeraren bere kopia gordetzen du</string>
+    <string name="ics_import_reason_own_update">zuk antolatzen duzu bilera hau, beraz aldatu gertaeratik</string>
+    <string name="ics_import_reason_change_waiting">gertaerak sinkronizatzeko zain dagoen aldaketa bat du; inportatu berriro sinkronizatu ondoren</string>
     <string name="ics_import_notice_unverified">Ezin da egiaztatu gonbidapen-fitxategi baten igorlea. Egiaztatu antolatzailearengandik datorrela.</string>
     <string name="ics_import_notice_answer_notifies">Gonbidapen honi erantzuten badiozu, antolatzaileari jakinarazi diezaioke.</string>
     <string name="ics_import_notice_guests_again">Zu zara antolatzailea, beraz parte-hartzaileek gonbidapen hau berriro jaso dezakete.</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">urte %1$d</item>
         <item quantity="other">%1$d urte</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d seg</item>
-        <item quantity="other">%1$d seg</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">minutu %1$d lehenago</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">Gogorarazlerik ez</string>
     <string name="reminder_at_time_of_event">Gertaeraren orduan</string>
     <string name="reminder_time_before">%1$s lehenago</string>
-    <string name="reminder_time_after">%1$s geroago</string>
     <string name="reminder_day_of_event_12h">9 AM gertaeraren egunean</string>
     <string name="reminder_day_of_event_24h">09:00 gertaeraren egunean</string>
     <string name="reminder_day_of_event">Gertaeraren egunean</string>

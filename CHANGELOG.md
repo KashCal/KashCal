@@ -1,3 +1,13 @@
+## [2026.11.09]
+
+- Fixed a rescheduled invitation file not updating the event in an iCloud or CalDAV calendar; it now moves the event and syncs, and says why when it skips one
+- Fixed the import sheet hiding its `Add`/`Import` button; it now opens at full height with the buttons always in view
+- Changed alert times to read in days, hours and minutes, such as `5d 1h 10m`, and the event form lists each alert once (#378)
+- Fixed duplicating a device calendar event losing its alerts and colour
+- Changed the device calendar quick view to show the same details as other events
+- Fixed the year view not fitting the screen, and month names breaking at large font sizes; at a larger font the day numbers grow with it and the page scrolls
+- Fixed pull to refresh on an empty day in the month view and swipe-down closing on the color sheets
+
 ## [2026.11.04]
 
 - Fixed calendars that stopped syncing over one event; events with large attachments or HTML descriptions, up to about 2 MB, now sync and keep their attachment after an edit, and one bad event or failed upload no longer blocks the rest

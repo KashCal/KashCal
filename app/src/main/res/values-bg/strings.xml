@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">промени в това и следващите повторения не се поддържат</string>
     <string name="ics_import_reason_own_cancel">вие организирате тази среща, затова я отменете от събитието</string>
     <string name="ics_import_reason_on_another_calendar">вече е в друг календар на този акаунт</string>
+    <string name="ics_import_reason_calendar_keeps_copy">този календар пази собствено копие на събитието</string>
+    <string name="ics_import_reason_own_update">вие организирате тази среща, затова я променете от събитието</string>
+    <string name="ics_import_reason_change_waiting">събитието има промяна, която чака синхронизация; импортирайте отново след синхронизацията</string>
     <string name="ics_import_notice_unverified">Подателят на файл с покана не може да бъде потвърден. Проверете дали идва от организатора.</string>
     <string name="ics_import_notice_answer_notifies">Отговорът на тази покана може да уведоми организатора.</string>
     <string name="ics_import_notice_guests_again">Вие сте организаторът, затова гостите може да получат тази покана отново.</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d година</item>
         <item quantity="other">%1$d години</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d сек</item>
-        <item quantity="other">%1$d сек</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d минута преди</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">Без напомняне</string>
     <string name="reminder_at_time_of_event">В часа на събитието</string>
     <string name="reminder_time_before">%1$s преди</string>
-    <string name="reminder_time_after">%1$s след</string>
     <string name="reminder_day_of_event_12h">9 AM в деня на събитието</string>
     <string name="reminder_day_of_event_24h">09:00 в деня на събитието</string>
     <string name="reminder_day_of_event">В деня на събитието</string>

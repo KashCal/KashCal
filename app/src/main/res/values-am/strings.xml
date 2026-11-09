@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">በዚህ እና በኋላ ባሉ ድግግሞሾች ላይ የሚደረጉ ለውጦች አይደገፉም</string>
     <string name="ics_import_reason_own_cancel">ይህን ስብሰባ የሚያዘጋጁት እርስዎ ነዎት፣ ስለዚህ ከክስተቱ ይሰርዙት</string>
     <string name="ics_import_reason_on_another_calendar">አስቀድሞ በዚህ መለያ ሌላ ቀን መቁጠሪያ ውስጥ አለ</string>
+    <string name="ics_import_reason_calendar_keeps_copy">ይህ ቀን መቁጠሪያ የክስተቱን የራሱ ቅጂ ይይዛል</string>
+    <string name="ics_import_reason_own_update">ይህን ስብሰባ የሚያዘጋጁት እርስዎ ነዎት፣ ስለዚህ ከክስተቱ ይቀይሩት</string>
+    <string name="ics_import_reason_change_waiting">ክስተቱ ለማመሳሰል የሚጠብቅ ለውጥ አለው፤ ከተመሳሰለ በኋላ እንደገና ያስገቡ</string>
     <string name="ics_import_notice_unverified">የግብዣ ፋይል ላኪን ማረጋገጥ አይቻልም። ከአዘጋጁ መምጣቱን ያረጋግጡ።</string>
     <string name="ics_import_notice_answer_notifies">ለዚህ ግብዣ መመለስ ለአዘጋጁ ማሳወቂያ ሊልክ ይችላል።</string>
     <string name="ics_import_notice_guests_again">እርስዎ አዘጋጁ ነዎት፣ ስለዚህ እንግዶች ይህን ግብዣ እንደገና ሊቀበሉ ይችላሉ።</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d ዓመት</item>
         <item quantity="other">%1$d ዓመታት</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d ሰከ</item>
-        <item quantity="other">%1$d ሰከ</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d ደቂቃ በፊት</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">ምንም ማስታወሻ የለም</string>
     <string name="reminder_at_time_of_event">በክስተቱ ሰዓት</string>
     <string name="reminder_time_before">%1$s በፊት</string>
-    <string name="reminder_time_after">%1$s በኋላ</string>
     <string name="reminder_day_of_event_12h">9 AM የክስተቱ ቀን</string>
     <string name="reminder_day_of_event_24h">09:00 የክስተቱ ቀን</string>
     <string name="reminder_day_of_event">Day of event</string>

@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">οι αλλαγές σε αυτή και τις επόμενες επαναλήψεις δεν υποστηρίζονται</string>
     <string name="ics_import_reason_own_cancel">είστε ο διοργανωτής αυτής της σύσκεψης, οπότε ακυρώστε την από το συμβάν</string>
     <string name="ics_import_reason_on_another_calendar">υπάρχει ήδη σε άλλο ημερολόγιο αυτού του λογαριασμού</string>
+    <string name="ics_import_reason_calendar_keeps_copy">αυτό το ημερολόγιο διατηρεί δικό του αντίγραφο του συμβάντος</string>
+    <string name="ics_import_reason_own_update">είστε ο διοργανωτής αυτής της σύσκεψης, οπότε αλλάξτε την από το συμβάν</string>
+    <string name="ics_import_reason_change_waiting">το συμβάν έχει μια αλλαγή που περιμένει συγχρονισμό· κάντε ξανά εισαγωγή μετά τον συγχρονισμό</string>
     <string name="ics_import_notice_unverified">Ο αποστολέας ενός αρχείου πρόσκλησης δεν μπορεί να επαληθευτεί. Ελέγξτε ότι προέρχεται από τον διοργανωτή.</string>
     <string name="ics_import_notice_answer_notifies">Η απάντηση σε αυτή την πρόσκληση μπορεί να ειδοποιήσει τον διοργανωτή.</string>
     <string name="ics_import_notice_guests_again">Είστε ο διοργανωτής, οπότε οι προσκεκλημένοι ενδέχεται να λάβουν ξανά αυτή την πρόσκληση.</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d έτος</item>
         <item quantity="other">%1$d έτη</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d δευτ</item>
-        <item quantity="other">%1$d δευτ</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d λεπτό πριν</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">Χωρίς υπενθύμιση</string>
     <string name="reminder_at_time_of_event">Την ώρα του συμβάντος</string>
     <string name="reminder_time_before">%1$s πριν</string>
-    <string name="reminder_time_after">%1$s μετά</string>
     <string name="reminder_day_of_event_12h">9 AM την ημέρα του συμβάντος</string>
     <string name="reminder_day_of_event_24h">09:00 την ημέρα του συμβάντος</string>
     <string name="reminder_day_of_event">Την ημέρα του συμβάντος</string>

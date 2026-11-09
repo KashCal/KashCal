@@ -962,6 +962,9 @@
     <string name="ics_import_reason_this_and_future">ဤအကြိမ်နှင့် နောက်အကြိမ်များသို့ ပြောင်းလဲမှုများကို မပံ့ပိုးပါ</string>
     <string name="ics_import_reason_own_cancel">ဤအစည်းအဝေးကို သင်စီစဉ်သဖြင့် ပွဲထဲမှ ပယ်ဖျက်ပါ</string>
     <string name="ics_import_reason_on_another_calendar">ဤအကောင့်၏ အခြားပြက္ခဒိန်တွင် ရှိပြီးသားဖြစ်သည်</string>
+    <string name="ics_import_reason_calendar_keeps_copy">ဤပြက္ခဒိန်သည် ပွဲ၏ ကိုယ်ပိုင်မိတ္တူကို သိမ်းထားသည်</string>
+    <string name="ics_import_reason_own_update">ဤအစည်းအဝေးကို သင်စီစဉ်သဖြင့် ပွဲထဲမှ ပြောင်းလဲပါ</string>
+    <string name="ics_import_reason_change_waiting">ပွဲတွင် ချိန်ကိုက်ရန် စောင့်နေသော ပြောင်းလဲမှုရှိသည်; ချိန်ကိုက်ပြီးနောက် ထပ်မံ တင်သွင်းပါ</string>
     <string name="ics_import_notice_unverified">ဖိတ်စာဖိုင် ပေးပို့သူကို အတည်ပြု၍ မရပါ။ စီစဉ်သူထံမှ လာကြောင်း စစ်ဆေးပါ။</string>
     <string name="ics_import_notice_answer_notifies">ဤဖိတ်စာကို ဖြေကြားပါက စီစဉ်သူထံ အကြောင်းကြားနိုင်သည်။</string>
     <string name="ics_import_notice_guests_again">သင်သည် စီစဉ်သူဖြစ်သဖြင့် တက်ရောက်သူများ ဤဖိတ်စာကို ထပ်မံ ရရှိနိုင်သည်။</string>
@@ -1018,9 +1021,6 @@
     </plurals>
     <plurals name="time_years">
         <item quantity="other">%1$d နှစ်</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="other">%1$d စက္ကန့်</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="other">%1$d မိနစ် အလို</item>
@@ -1194,7 +1194,6 @@
     <string name="reminder_none">သတိပေးချက်မရှိ</string>
     <string name="reminder_at_time_of_event">ပွဲအချိန်တွင်</string>
     <string name="reminder_time_before">%1$s အလို</string>
-    <string name="reminder_time_after">%1$s အလွန်</string>
     <string name="reminder_day_of_event_12h">ပွဲနေ့ မနက် 9 နာရီ</string>
     <string name="reminder_day_of_event_24h">ပွဲနေ့ 09:00</string>
     <string name="reminder_day_of_event">ပွဲနေ့</string>

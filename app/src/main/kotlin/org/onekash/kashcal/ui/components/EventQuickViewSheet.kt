@@ -1,5 +1,6 @@
 package org.onekash.kashcal.ui.components
 
+import android.content.res.Resources
 import android.text.format.DateFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -54,6 +55,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.paneTitle
@@ -69,12 +71,12 @@ import org.onekash.kashcal.data.contacts.ContactEventType
 import org.onekash.kashcal.data.contacts.ContactEventUtils
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.rrule.RruleBuilder
+import org.onekash.kashcal.domain.rrule.RruleDisplayStrings
 import org.onekash.kashcal.ui.components.pickers.rememberRruleDisplayStrings
 import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.util.location.openInMaps
 import org.onekash.kashcal.util.text.containsUrl
 import org.onekash.kashcal.util.text.extractUrls
-import org.onekash.kashcal.util.text.formatRemindersForDisplay
 import org.onekash.kashcal.util.text.isValidUrl
 import org.onekash.kashcal.util.text.shouldOpenExternally
 import java.time.LocalDate
@@ -124,14 +126,6 @@ fun EventQuickViewSheet(
     val isCurrentUserOrganizer = you?.isOrganizer == true
     // A guest who isn't the organizer gets a read-only form, so Edit reads "Open".
     val canEditAsOrganizer = you == null || you.isOrganizer
-    // Decides whether the URL, notes and reminders section shows. Guests count, so a guest event
-    // with no description or URL still shows its reminders under the guest section.
-    val hasAttendees = attendees.isNotEmpty()
-    val hasExpandableContent = remember(event.description, event.url, hasAttendees) {
-        !event.description.isNullOrBlank() ||
-            !event.url.isNullOrBlank() ||
-            hasAttendees
-    }
 
     // Opens at its content height, up to the whole window, never at half height with the buttons
     // below the screen (#418). Material only offers half height to a sheet taller than half the
@@ -148,6 +142,9 @@ fun EventQuickViewSheet(
     val timePattern = remember(timeFormat, is24HourDevice) {
         DateTimeUtils.getTimePattern(timeFormat, is24HourDevice)
     }
+    // Decides whether the link and notes section shows: notes or a link open it. Guests have
+    // their own block above it, and alerts are seen and set in the event form.
+    val hasExpandableContent = !event.description.isNullOrBlank() || !event.url.isNullOrBlank()
 
     // A master (RRULE) and an exception (originalEventId) both get the repeat line.
     val isRecurring = event.isRecurring || event.isException
@@ -163,10 +160,6 @@ fun EventQuickViewSheet(
     val validEventUrl = remember(event.url) {
         event.url?.takeIf { isValidUrl(it) }
     }
-    val formattedReminders = remember(event.reminders) {
-        formatRemindersForDisplay(event.reminders, resources)
-    }
-
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -312,29 +305,16 @@ fun EventQuickViewSheet(
                                 }
                             }
 
-                            // Repeat info
                             if (isRecurring) {
                                 val rruleStrings = rememberRruleDisplayStrings()
-                                val repeatText = if (event.rrule != null) {
-                                    val (freq, endSuffix) = RruleBuilder.formatForDisplayParts(
-                                        event.rrule,
-                                        rruleStrings,
-                                        RruleBuilder.untilZoneFor(event.isAllDay, event.timezone),
+                                val repeatText = remember(event, rruleStrings, resources) {
+                                    recurrenceDisplayText(
+                                        rrule = event.rrule,
+                                        seriesStartDate = seriesStartDateFor(event),
+                                        rruleStrings = rruleStrings,
+                                        untilZone = RruleBuilder.untilZoneFor(event.isAllDay, event.timezone),
+                                        resources = resources,
                                     )
-                                    val isContactEvent = ContactEventType.fromCaldavUrl(event.caldavUrl) != null
-                                    val hasSyntheticStart = isContactEvent && ContactEventUtils.decodeEventYear(event.description) == null
-                                    val startDate = if (!hasSyntheticStart) formatSeriesStartDateStr(event.startTs, event.isAllDay) else null
-                                    if (endSuffix != null && startDate != null) {
-                                        stringResource(R.string.rrule_starting, freq, startDate, endSuffix)
-                                    } else if (endSuffix != null) {
-                                        "$freq$endSuffix"
-                                    } else if (startDate != null) {
-                                        stringResource(R.string.rrule_since, freq, startDate)
-                                    } else {
-                                        freq
-                                    }
-                                } else {
-                                    stringResource(R.string.cd_recurring)
                                 }
                                 Text(
                                     text = "\uD83D\uDD01 $repeatText",
@@ -378,12 +358,10 @@ fun EventQuickViewSheet(
                     )
                 }
 
-                // URL, notes and reminders.
                 if (hasExpandableContent) {
                     ExpandedContentSection(
-                        event = event,
+                        description = event.description,
                         validEventUrl = validEventUrl,
-                        formattedReminders = formattedReminders,
                         modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }
@@ -558,7 +536,7 @@ fun EventQuickViewSheet(
  * @see DateTimeUtils.formatEventDateShort
  * @see DateTimeUtils.formatEventTime
  */
-private fun formatEventDateTime(
+internal fun formatEventDateTime(
     startTs: Long,
     endTs: Long,
     isAllDay: Boolean,
@@ -588,6 +566,45 @@ private fun formatEventDateTime(
 }
 
 /**
+ * Returns the repeat line's text, shared by [EventQuickViewSheet] and [DeviceEventQuickViewSheet]:
+ * the rule with the series start when [seriesStartDate] is set ("Weekly on Mon · since Mar 6",
+ * "Daily starting Mar 6, 2023, 10 times"), or "Recurring" when there is no rule of its own (a
+ * changed occurrence) or it can't be read.
+ */
+internal fun recurrenceDisplayText(
+    rrule: String?,
+    seriesStartDate: String?,
+    rruleStrings: RruleDisplayStrings,
+    untilZone: ZoneId?,
+    resources: Resources,
+): String {
+    val recurring = resources.getString(R.string.cd_recurring)
+    if (rrule.isNullOrBlank()) return recurring
+    val (freq, endSuffix) = try {
+        RruleBuilder.formatForDisplayParts(rrule, rruleStrings, untilZone)
+    } catch (_: Exception) {
+        return recurring
+    }
+    return when {
+        endSuffix != null && seriesStartDate != null ->
+            resources.getString(R.string.rrule_starting, freq, seriesStartDate, endSuffix)
+        endSuffix != null -> "$freq$endSuffix"
+        seriesStartDate != null -> resources.getString(R.string.rrule_since, freq, seriesStartDate)
+        else -> freq
+    }
+}
+
+/**
+ * Returns a Room series' start date for the repeat line, or null for a contact birthday whose
+ * year is unknown, whose stored start is a placeholder.
+ */
+internal fun seriesStartDateFor(event: Event): String? {
+    val isContactEvent = ContactEventType.fromCaldavUrl(event.caldavUrl) != null
+    val hasSyntheticStart = isContactEvent && ContactEventUtils.decodeEventYear(event.description) == null
+    return if (hasSyntheticStart) null else formatSeriesStartDateStr(event.startTs, event.isAllDay)
+}
+
+/**
  * Formats a series' start date with no prefix: "Jan 15" in the current year, else
  * "Jan 15, 2023".
  */
@@ -602,12 +619,17 @@ internal fun formatSeriesStartDateStr(
     return DateTimeUtils.formatEventDate(seriesStartTs, isAllDay, pattern, localZone)
 }
 
-/** Shows the event's URL, notes and reminders in a scrolling section. */
+/** Test tag for [ExpandedContentSection]. */
+internal const val QUICK_VIEW_DETAILS_SECTION_TAG = "quick_view_details_section"
+
+/**
+ * Shows an event's link and notes in a scrolling section up to 300 dp tall, under a divider. Both
+ * quick views use it; [DeviceEventQuickViewSheet] passes no link (the platform calendar has none).
+ */
 @Composable
-private fun ExpandedContentSection(
-    event: Event,
+internal fun ExpandedContentSection(
+    description: String?,
     validEventUrl: String?,
-    formattedReminders: String?,
     modifier: Modifier = Modifier
 ) {
     val uriHandler = LocalUriHandler.current
@@ -618,7 +640,8 @@ private fun ExpandedContentSection(
             modifier = modifier
                 .fillMaxWidth()
                 .heightIn(max = 300.dp)
-                .verticalScroll(scrollState),
+                .verticalScroll(scrollState)
+                .testTag(QUICK_VIEW_DETAILS_SECTION_TAG),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             HorizontalDivider(
@@ -664,7 +687,7 @@ private fun ExpandedContentSection(
             }
 
             // Notes, with links made tappable.
-            if (!event.description.isNullOrBlank()) {
+            if (!description.isNullOrBlank()) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
@@ -674,27 +697,10 @@ private fun ExpandedContentSection(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     LinkifiedText(
-                        text = event.description,
+                        text = description,
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                    )
-                }
-            }
-
-            if (formattedReminders != null) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "\uD83D\uDD14",  // Bell emoji
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = formattedReminders,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }

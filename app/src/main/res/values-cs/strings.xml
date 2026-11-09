@@ -1052,6 +1052,9 @@
     <string name="ics_import_reason_this_and_future">změny tohoto a dalších výskytů nejsou podporovány</string>
     <string name="ics_import_reason_own_cancel">tuto schůzku organizuješ ty, takže ji zruš přímo v události</string>
     <string name="ics_import_reason_on_another_calendar">už je v jiném kalendáři tohoto účtu</string>
+    <string name="ics_import_reason_calendar_keeps_copy">tento kalendář si uchovává vlastní kopii události</string>
+    <string name="ics_import_reason_own_update">tuto schůzku organizuješ ty, takže ji změň přímo v události</string>
+    <string name="ics_import_reason_change_waiting">událost má změnu čekající na synchronizaci; po synchronizaci importuj znovu</string>
     <string name="ics_import_notice_unverified">Odesílatele souboru s pozvánkou nelze ověřit. Zkontroluj, že pochází od organizátora.</string>
     <string name="ics_import_notice_answer_notifies">Odpověď na tuto pozvánku může upozornit organizátora.</string>
     <string name="ics_import_notice_guests_again">Jsi organizátor, takže hosté můžou tuto pozvánku dostat znovu.</string>
@@ -1159,12 +1162,6 @@
         <item quantity="few">%1$d roky</item>
         <item quantity="many">%1$d let</item>
         <item quantity="other">%1$d let</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d sek</item>
-        <item quantity="few">%1$d sek</item>
-        <item quantity="many">%1$d sek</item>
-        <item quantity="other">%1$d sek</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d minuta předem</item>
@@ -1371,7 +1368,6 @@
     <string name="reminder_none">Bez připomínky</string>
     <string name="reminder_at_time_of_event">V době události</string>
     <string name="reminder_time_before">%1$s předem</string>
-    <string name="reminder_time_after">%1$s po</string>
     <string name="reminder_day_of_event_12h">9:00 v den události</string>
     <string name="reminder_day_of_event_24h">09:00 v den události</string>
     <string name="reminder_day_of_event">V den události</string>

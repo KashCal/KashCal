@@ -1,0 +1,64 @@
+BEGIN:VCALENDAR
+PRODID:-//Test Client//NONSGML Calendar 1.0//EN
+VERSION:2.0
+CALSCALE:GREGORIAN
+METHOD:REQUEST
+BEGIN:VTIMEZONE
+TZID:America/Chicago
+X-LIC-LOCATION:America/Chicago
+BEGIN:DAYLIGHT
+TZOFFSETFROM:-0600
+TZOFFSETTO:-0500
+TZNAME:CDT
+DTSTART:19700308T020000
+RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU
+END:DAYLIGHT
+BEGIN:STANDARD
+TZOFFSETFROM:-0500
+TZOFFSETTO:-0600
+TZNAME:CST
+DTSTART:19701101T020000
+RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+DTSTART;TZID=America/Chicago:20261109T130000
+DTEND;TZID=America/Chicago:20261109T133000
+DTSTAMP:20261106T200832Z
+ORGANIZER;CN=Olivia Organizer:mailto:organizer@example.test
+UID:0example0reschedule0uid00@example.test
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=TRUE
+ ;CN=Olivia Organizer;X-NUM-GUESTS=0:mailto:organizer@example.test
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=
+ TRUE;CN=attendee@example.test;X-NUM-GUESTS=0:mailto:attendee@example.test
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=
+ TRUE;CN=guest1@example.test;X-NUM-GUESTS=0:mailto:guest1@example.test
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=
+ TRUE;CN=guest2@example.test;X-NUM-GUESTS=0:mailto:guest2@example.test
+X-EXAMPLE-CONFERENCE:https://meet.example.test/abc-defg-hij
+X-EXAMPLE-OWNER-ID:-1000000001
+CREATED:20261105T225448Z
+DESCRIPTION:-::~:~::~::~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:
+ ~:~:~:~:~:~:~:~:~:~:~::~:~::-\nJoin the call: https://meet.example.test/ab
+ c-defg-hij\nOr dial: (US) +1 555-0100 PIN: 000000000#\nMore phone numbers:
+  https://tel.example.test/abc-defg-hij?pin=0000000000000&hs=7\n\nPlease do
+  not edit this section.\n-::~:~::~::~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:
+ ~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~::~:~::-
+LAST-MODIFIED:20261106T200825Z
+LOCATION:https://meet.example.test/abc-defg-hij
+SEQUENCE:1
+STATUS:CONFIRMED
+SUMMARY:Project review call
+TRANSP:OPAQUE
+ATTACH;FILENAME=Meeting notes.pdf;FMTTYPE=application/pdf:https://docs.exam
+ ple.test/notes/example-notes.pdf
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:This is an event reminder\nJoin the call: https://meet.example.
+ test/abc-defg-hij\nOr dial: (US) +1 555-0100 PIN: 000000000#\nMore phone n
+ umbers: https://tel.example.test/abc-defg-hij?pin=0000000000000&hs=7\n\nPl
+ ease do not edit this section.\nThis is an event reminder
+TRIGGER:-P0DT0H10M0S
+END:VALARM
+END:VEVENT
+END:VCALENDAR

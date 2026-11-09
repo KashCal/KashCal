@@ -962,6 +962,9 @@
     <string name="ics_import_reason_this_and_future">perubahan pada kejadian ini dan seterusnya tidak disokong</string>
     <string name="ics_import_reason_own_cancel">anda penganjur mesyuarat ini, jadi batalkannya daripada acara</string>
     <string name="ics_import_reason_on_another_calendar">ia sudah ada dalam kalendar lain akaun ini</string>
+    <string name="ics_import_reason_calendar_keeps_copy">kalendar ini menyimpan salinan acaranya sendiri</string>
+    <string name="ics_import_reason_own_update">anda penganjur mesyuarat ini, jadi ubahnya daripada acara</string>
+    <string name="ics_import_reason_change_waiting">acara ini ada perubahan yang menunggu untuk disegerakkan; import semula selepas ia disegerakkan</string>
     <string name="ics_import_notice_unverified">Penghantar fail jemputan tidak dapat disahkan. Pastikan ia datang daripada penganjur.</string>
     <string name="ics_import_notice_answer_notifies">Menjawab jemputan ini mungkin memaklumkan penganjur.</string>
     <string name="ics_import_notice_guests_again">Anda penganjur, jadi tetamu mungkin menerima jemputan ini sekali lagi.</string>
@@ -1018,9 +1021,6 @@
     </plurals>
     <plurals name="time_years">
         <item quantity="other">%1$d tahun</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="other">%1$d saat</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="other">%1$d minit sebelum</item>
@@ -1194,7 +1194,6 @@
     <string name="reminder_none">Tiada peringatan</string>
     <string name="reminder_at_time_of_event">Semasa acara bermula</string>
     <string name="reminder_time_before">%1$s sebelum</string>
-    <string name="reminder_time_after">%1$s selepas</string>
     <string name="reminder_day_of_event_12h">9 AM hari acara</string>
     <string name="reminder_day_of_event_24h">09:00 hari acara</string>
     <string name="reminder_day_of_event">Hari acara</string>

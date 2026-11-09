@@ -1052,6 +1052,9 @@
     <string name="ics_import_reason_this_and_future">змены гэтага і наступных паўтарэнняў не падтрымліваюцца</string>
     <string name="ics_import_reason_own_cancel">ты арганізатар гэтай сустрэчы, таму скасуй яе ў самой падзеі</string>
     <string name="ics_import_reason_on_another_calendar">яна ўжо ёсць у іншым календары гэтага ўліковага запісу</string>
+    <string name="ics_import_reason_calendar_keeps_copy">гэты каляндар захоўвае ўласную копію падзеі</string>
+    <string name="ics_import_reason_own_update">ты арганізатар гэтай сустрэчы, таму змяні яе ў самой падзеі</string>
+    <string name="ics_import_reason_change_waiting">змена падзеі яшчэ чакае сінхранізацыі; імпартуй зноў пасля сінхранізацыі</string>
     <string name="ics_import_notice_unverified">Адпраўніка файла запрашэння немагчыма праверыць. Пераканайся, што файл прыйшоў ад арганізатара.</string>
     <string name="ics_import_notice_answer_notifies">Адказ на гэта запрашэнне можа апавясціць арганізатара.</string>
     <string name="ics_import_notice_guests_again">Ты арганізатар, таму ўдзельнікі могуць зноў атрымаць гэта запрашэнне.</string>
@@ -1159,12 +1162,6 @@
         <item quantity="few">%1$d гады</item>
         <item quantity="many">%1$d гадоў</item>
         <item quantity="other">%1$d гадоў</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d сек</item>
-        <item quantity="few">%1$d сек</item>
-        <item quantity="many">%1$d сек</item>
-        <item quantity="other">%1$d сек</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">За %1$d хвіліну</item>
@@ -1371,7 +1368,6 @@
     <string name="reminder_none">Без напамінку</string>
     <string name="reminder_at_time_of_event">У час падзеі</string>
     <string name="reminder_time_before">За %1$s да</string>
-    <string name="reminder_time_after">Праз %1$s пасля</string>
     <string name="reminder_day_of_event_12h">9 AM у дзень падзеі</string>
     <string name="reminder_day_of_event_24h">09:00 у дзень падзеі</string>
     <string name="reminder_day_of_event">У дзень падзеі</string>

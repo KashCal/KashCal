@@ -502,6 +502,13 @@ class ContactEventUtilsTest {
     }
 
     @Test
+    fun `minutesToIsoDuration - a custom days, hours and minutes value stays hour-form`() {
+        // What the event form stores for the custom wheel's 5 days 1 hour 10 minutes; the form
+        // parses this text back into minutes when the event is opened again.
+        assertEquals("-PT121H10M", ContactEventUtils.minutesToIsoDuration(7270))
+    }
+
+    @Test
     fun `minutesToIsoDuration - negative minutes are after start (positive trigger)`() {
         // -540 (9 AM the day of, after midnight) must give PT9H, not collapse to PT0M.
         assertEquals("PT9H", ContactEventUtils.minutesToIsoDuration(-540))

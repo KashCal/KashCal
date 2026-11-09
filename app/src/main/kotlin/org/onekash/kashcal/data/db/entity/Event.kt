@@ -193,7 +193,10 @@ data class Event(
 
     /**
      * Number of alarms. A pull counts every alarm except END-relative and ACTION:NONE ones,
-     * before the cap of 5 on [reminders]; a local save counts the reminders it stores.
+     * before the cap of 5 on [reminders]; an import of a new event and an attendee-reminder save
+     * count the reminders they store. An import onto an existing event, a changed occurrence
+     * (which takes the series row's count) and the event form's saves don't recount it, and a
+     * create leaves 0.
      * ReminderScheduler re-reads [rawIcal] when this exceeds 3, except for a file's copy
      * ([holdsFileCopy]), and the event form reports the alarms beyond 5.
      */

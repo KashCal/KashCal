@@ -1112,6 +1112,9 @@
     <string name="ics_import_reason_this_and_future">dyw newidiadau i\'r achlysur hwn a rhai diweddarach ddim yn cael eu cefnogi</string>
     <string name="ics_import_reason_own_cancel">ti sy\'n trefnu\'r cyfarfod hwn, felly cansla fe o\'r digwyddiad</string>
     <string name="ics_import_reason_on_another_calendar">mae eisoes mewn calendr arall yn y cyfrif hwn</string>
+    <string name="ics_import_reason_calendar_keeps_copy">mae\'r calendr hwn yn cadw ei gopi ei hun o\'r digwyddiad</string>
+    <string name="ics_import_reason_own_update">ti sy\'n trefnu\'r cyfarfod hwn, felly newidia fe o\'r digwyddiad</string>
+    <string name="ics_import_reason_change_waiting">mae gan y digwyddiad newid sy\'n aros i gysoni; mewnforia eto ar ôl iddo gysoni</string>
     <string name="ics_import_notice_unverified">Does dim modd gwirio pwy anfonodd ffeil gwahoddiad. Gwiria ei bod wedi dod gan y trefnydd.</string>
     <string name="ics_import_notice_answer_notifies">Gall ateb y gwahoddiad hwn roi gwybod i\'r trefnydd.</string>
     <string name="ics_import_notice_guests_again">Ti yw\'r trefnydd, felly gall mynychwyr gael y gwahoddiad hwn eto.</string>
@@ -1253,14 +1256,6 @@
         <item quantity="few">%1$d blynedd</item>
         <item quantity="many">%1$d blynedd</item>
         <item quantity="other">%1$d mlynedd</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="zero">%1$d eil</item>
-        <item quantity="one">%1$d eil</item>
-        <item quantity="two">%1$d eil</item>
-        <item quantity="few">%1$d eil</item>
-        <item quantity="many">%1$d eil</item>
-        <item quantity="other">%1$d eil</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="zero">%1$d munud cyn</item>
@@ -1489,7 +1484,6 @@
     <string name="reminder_none">Dim atgoffa</string>
     <string name="reminder_at_time_of_event">Ar amser y digwyddiad</string>
     <string name="reminder_time_before">%1$s cyn</string>
-    <string name="reminder_time_after">%1$s ar ôl</string>
     <string name="reminder_day_of_event_12h">9 AM diwrnod y digwyddiad</string>
     <string name="reminder_day_of_event_24h">09:00 diwrnod y digwyddiad</string>
     <string name="reminder_day_of_event">Diwrnod y digwyddiad</string>

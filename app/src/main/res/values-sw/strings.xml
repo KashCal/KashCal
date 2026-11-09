@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">mabadiliko ya tukio hili na yanayofuata hayatumiki</string>
     <string name="ics_import_reason_own_cancel">wewe ndiye mratibu wa mkutano huu, kwa hivyo ughairi kutoka kwenye tukio</string>
     <string name="ics_import_reason_on_another_calendar">tayari liko kwenye kalenda nyingine ya akaunti hii</string>
+    <string name="ics_import_reason_calendar_keeps_copy">kalenda hii huhifadhi nakala yake ya tukio</string>
+    <string name="ics_import_reason_own_update">wewe ndiye mratibu wa mkutano huu, kwa hivyo ubadilishe kutoka kwenye tukio</string>
+    <string name="ics_import_reason_change_waiting">tukio lina badiliko linalosubiri kusawazishwa; ingiza tena baada ya kusawazishwa</string>
     <string name="ics_import_notice_unverified">Mtumaji wa faili ya mwaliko hawezi kuthibitishwa. Hakikisha imetoka kwa mratibu.</string>
     <string name="ics_import_notice_answer_notifies">Kujibu mwaliko huu kunaweza kumjulisha mratibu.</string>
     <string name="ics_import_notice_guests_again">Wewe ndiye mratibu, kwa hivyo washiriki wanaweza kupokea mwaliko huu tena.</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">Mwaka %1$d</item>
         <item quantity="other">Miaka %1$d</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">Sek %1$d</item>
-        <item quantity="other">Sek %1$d</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">Dakika %1$d kabla</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">Hakuna kikumbusho</string>
     <string name="reminder_at_time_of_event">Wakati wa tukio</string>
     <string name="reminder_time_before">%1$s kabla</string>
-    <string name="reminder_time_after">%1$s baadaye</string>
     <string name="reminder_day_of_event_12h">Saa 3 asubuhi siku ya tukio</string>
     <string name="reminder_day_of_event_24h">09:00 siku ya tukio</string>
     <string name="reminder_day_of_event">Siku ya tukio</string>

@@ -1052,6 +1052,9 @@
     <string name="ics_import_reason_this_and_future">chan eil taic ri atharraichean air an tachartas seo is an fheadhainn às a dhèidh</string>
     <string name="ics_import_reason_own_cancel">\'s tusa a tha a\' cur na coinneimh seo air dòigh, mar sin cuir dheth i on tachartas</string>
     <string name="ics_import_reason_on_another_calendar">tha e ann am mìosachan eile sa chunntas seo mu thràth</string>
+    <string name="ics_import_reason_calendar_keeps_copy">tha am mìosachan seo a\' cumail a lethbhreac fhèin dhen tachartas</string>
+    <string name="ics_import_reason_own_update">\'s tusa a tha a\' cur na coinneimh seo air dòigh, mar sin atharraich i on tachartas</string>
+    <string name="ics_import_reason_change_waiting">tha atharrachadh air an tachartas a\' feitheamh ri sioncronachadh; ion-phortaich a-rithist às dèidh dha sioncronachadh</string>
     <string name="ics_import_notice_unverified">Cha ghabh dearbhadh cò chuir faidhle cuiridh. Dèan cinnteach gun tàinig e on eagraiche.</string>
     <string name="ics_import_notice_answer_notifies">Dh\'fhaoidte gun cuir freagairt dhan chuireadh seo brath dhan eagraiche.</string>
     <string name="ics_import_notice_guests_again">\'S tusa an t-eagraiche, mar sin dh\'fhaoidte gum faigh an luchd-frithealaidh an cuireadh seo a-rithist.</string>
@@ -1159,12 +1162,6 @@
         <item quantity="two">%1$d bhliadhna</item>
         <item quantity="few">%1$d bliadhnaichean</item>
         <item quantity="other">%1$d bliadhna</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d diog</item>
-        <item quantity="two">%1$d dhiog</item>
-        <item quantity="few">%1$d diogan</item>
-        <item quantity="other">%1$d diog</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d mhionaid roimhe</item>
@@ -1371,7 +1368,6 @@
     <string name="reminder_none">Gun chuimhneachan</string>
     <string name="reminder_at_time_of_event">Aig àm an tachartais</string>
     <string name="reminder_time_before">%1$s ro làimh</string>
-    <string name="reminder_time_after">%1$s an dèidh</string>
     <string name="reminder_day_of_event_12h">9 AM là an tachartais</string>
     <string name="reminder_day_of_event_24h">09:00 là an tachartais</string>
     <string name="reminder_day_of_event">Là an tachartais</string>

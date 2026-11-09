@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">ഇതിലേക്കും തുടർന്നുള്ള ആവർത്തനങ്ങളിലേക്കുമുള്ള മാറ്റങ്ങൾ പിന്തുണയ്ക്കുന്നില്ല</string>
     <string name="ics_import_reason_own_cancel">ഈ മീറ്റിംഗിന്റെ സംഘാടകൻ നിങ്ങളാണ്, അതിനാൽ ഇവന്റിൽ നിന്നുതന്നെ ഇത് റദ്ദാക്കുക</string>
     <string name="ics_import_reason_on_another_calendar">ഇത് ഇതിനകം ഈ അക്കൗണ്ടിലെ മറ്റൊരു കലണ്ടറിൽ ഉണ്ട്</string>
+    <string name="ics_import_reason_calendar_keeps_copy">ഈ കലണ്ടർ ഇവന്റിന്റെ സ്വന്തം പകർപ്പ് സൂക്ഷിക്കുന്നു</string>
+    <string name="ics_import_reason_own_update">ഈ മീറ്റിംഗിന്റെ സംഘാടകൻ നിങ്ങളാണ്, അതിനാൽ ഇവന്റിൽ നിന്നുതന്നെ ഇത് മാറ്റുക</string>
+    <string name="ics_import_reason_change_waiting">ഇവന്റിൽ ഒരു മാറ്റം സിങ്ക് ചെയ്യാൻ കാത്തിരിക്കുന്നു; സിങ്ക് ചെയ്ത ശേഷം വീണ്ടും ഇമ്പോർട്ട് ചെയ്യുക</string>
     <string name="ics_import_notice_unverified">ക്ഷണ ഫയൽ അയച്ചയാളെ സ്ഥിരീകരിക്കാനാവില്ല. ഇത് സംഘാടകനിൽ നിന്നാണോ വന്നതെന്ന് പരിശോധിക്കുക.</string>
     <string name="ics_import_notice_answer_notifies">ഈ ക്ഷണത്തിന് മറുപടി നൽകിയാൽ സംഘാടകനെ അറിയിച്ചേക്കാം.</string>
     <string name="ics_import_notice_guests_again">നിങ്ങളാണ് സംഘാടകൻ, അതിനാൽ അതിഥികൾക്ക് ഈ ക്ഷണം വീണ്ടും ലഭിച്ചേക്കാം.</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d വർഷം</item>
         <item quantity="other">%1$d വർഷം</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d സെ.</item>
-        <item quantity="other">%1$d സെ.</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d മിനിറ്റ് മുമ്പ്</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">റിമൈൻഡർ ഇല്ല</string>
     <string name="reminder_at_time_of_event">ഇവന്റ് സമയത്ത്</string>
     <string name="reminder_time_before">%1$s മുമ്പ്</string>
-    <string name="reminder_time_after">%1$s ശേഷം</string>
     <string name="reminder_day_of_event_12h">ഇവന്റ് ദിവസം 9 AM</string>
     <string name="reminder_day_of_event_24h">ഇവന്റ് ദിവസം 09:00</string>
     <string name="reminder_day_of_event">ഇവന്റ് ദിവസം</string>

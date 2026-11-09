@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">bu ve sonraki tekrarlardaki değişiklikler desteklenmiyor</string>
     <string name="ics_import_reason_own_cancel">bu toplantının düzenleyeni sensin, iptal işlemini etkinlikten yap</string>
     <string name="ics_import_reason_on_another_calendar">bu hesabın başka bir takviminde zaten var</string>
+    <string name="ics_import_reason_calendar_keeps_copy">bu takvim etkinliğin kendi kopyasını tutuyor</string>
+    <string name="ics_import_reason_own_update">bu toplantının düzenleyeni sensin, değişikliği etkinlikten yap</string>
+    <string name="ics_import_reason_change_waiting">etkinliğin eşitlenmeyi bekleyen bir değişikliği var; eşitlendikten sonra yeniden içe aktar</string>
     <string name="ics_import_notice_unverified">Bir davet dosyasının göndereni doğrulanamaz. Düzenleyenden geldiğinden emin ol.</string>
     <string name="ics_import_notice_answer_notifies">Bu davete yanıt vermek düzenleyene bildirim gönderebilir.</string>
     <string name="ics_import_notice_guests_again">Düzenleyen sensin, bu yüzden konuklar bu daveti yeniden alabilir.</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d yıl</item>
         <item quantity="other">%1$d yıl</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d sn</item>
-        <item quantity="other">%1$d sn</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d dakika önce</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">Hatırlatıcı yok</string>
     <string name="reminder_at_time_of_event">Etkinlik saatinde</string>
     <string name="reminder_time_before">%1$s önce</string>
-    <string name="reminder_time_after">%1$s sonra</string>
     <string name="reminder_day_of_event_12h">Etkinlik günü 9 AM</string>
     <string name="reminder_day_of_event_24h">Etkinlik günü 09:00</string>
     <string name="reminder_day_of_event">Etkinlik günü</string>

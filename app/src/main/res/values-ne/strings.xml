@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">यो र पछिका घटनाहरूमा परिवर्तन समर्थित छैन</string>
     <string name="ics_import_reason_own_cancel">तपाईं यो बैठकको आयोजक हुनुहुन्छ, त्यसैले कार्यक्रमबाटै रद्द गर्नुहोस्</string>
     <string name="ics_import_reason_on_another_calendar">यो पहिले नै यस खाताको अर्को क्यालेन्डरमा छ</string>
+    <string name="ics_import_reason_calendar_keeps_copy">यो क्यालेन्डरले कार्यक्रमको आफ्नै प्रतिलिपि राख्छ</string>
+    <string name="ics_import_reason_own_update">तपाईं यो बैठकको आयोजक हुनुहुन्छ, त्यसैले कार्यक्रमबाटै परिवर्तन गर्नुहोस्</string>
+    <string name="ics_import_reason_change_waiting">कार्यक्रममा सिंक हुन बाँकी परिवर्तन छ; सिंक भएपछि फेरि आयात गर्नुहोस्</string>
     <string name="ics_import_notice_unverified">निमन्त्रणा फाइल पठाउने व्यक्ति प्रमाणित गर्न सकिँदैन। यो आयोजकबाट आएको हो भनी जाँच गर्नुहोस्।</string>
     <string name="ics_import_notice_answer_notifies">यो निमन्त्रणाको जवाफ दिँदा आयोजकलाई सूचना जान सक्छ।</string>
     <string name="ics_import_notice_guests_again">तपाईं आयोजक हुनुहुन्छ, त्यसैले उपस्थितहरूले यो निमन्त्रणा फेरि प्राप्त गर्न सक्छन्।</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d वर्ष</item>
         <item quantity="other">%1$d वर्ष</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d से</item>
-        <item quantity="other">%1$d से</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d मिनेट अगाडि</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">स्मरण छैन</string>
     <string name="reminder_at_time_of_event">कार्यक्रमको समयमा</string>
     <string name="reminder_time_before">%1$s अघि</string>
-    <string name="reminder_time_after">%1$s पछि</string>
     <string name="reminder_day_of_event_12h">कार्यक्रमको दिन बिहान 9 बजे</string>
     <string name="reminder_day_of_event_24h">कार्यक्रमको दिन 09:00</string>
     <string name="reminder_day_of_event">कार्यक्रमको दिन</string>

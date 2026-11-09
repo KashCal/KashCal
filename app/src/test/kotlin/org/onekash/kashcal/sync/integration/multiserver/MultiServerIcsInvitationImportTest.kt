@@ -37,6 +37,7 @@ import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.encodedPathSegment
 import org.onekash.kashcal.sync.strategy.PushResult
+import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.sync.strategy.PushStrategy
 import org.onekash.kashcal.testutil.TestDataStoreFactory
 import org.robolectric.ParameterizedRobolectricTestRunner
@@ -57,15 +58,20 @@ import java.util.UUID
  * [EventCoordinator.replyRsvp], and [PushStrategy]; the resource is then read back by its own
  * href. The server copy must keep the file's UID and ORGANIZER with the user at NEEDS-ACTION and
  * no METHOD; an answer must change only the user's PARTSTAT, also on a second answer after the
- * server stamped the copy (Cyrus); a re-import must queue nothing; the CANCEL must leave the copy
- * cancelled, or, where the server refuses an attendee's cancel, its own copy with a warning.
+ * server stamped the copy (Cyrus); an identical re-import must queue nothing; the CANCEL must
+ * leave the copy cancelled, or, where the server refuses an attendee's cancel, its own copy with a
+ * warning. A
+ * rescheduled version of the file (higher SEQUENCE, new time and title) must reach the server
+ * copy, with the account among the guests and without it, and a second import of it must read up
+ * to date.
  *
- * Writes only to a calendar the sharing check (UnsharedCalendarPicker) accepts. Nothing is
- * pulled: only this run's resource enters the database, every push first checks that only this
- * run's operations are queued, and the only resource updated or deleted is the URL this run's
- * own create returned, which carries its full UID. Skips a server without credentials, a
- * calendar-user address or an accepted calendar (Zoho reports no sharing properties); Fastmail
- * isn't covered.
+ * Writes only to a calendar the sharing check (UnsharedCalendarPicker) accepts, except that the
+ * reschedule tests fall back to any writable calendar (the accounts hold only test data). Nothing
+ * is pulled: only this run's resource enters the database, every push first checks that only this
+ * run's operations are queued, and the only resource updated or deleted is the URL this run's own
+ * create returned, which carries its full UID. Skips a server without credentials, a calendar-user
+ * address or an accepted calendar (Zoho reports no sharing properties, so only the reschedule tests
+ * reach it); Fastmail isn't covered.
  *
  * A create the server refuses because it already holds the UID runs on the local servers only.
  * The UID cases use plain files (no METHOD, organizer or guests), so they run on every server:
@@ -150,8 +156,9 @@ class MultiServerIcsInvitationImportTest(private val config: CalDavServerConfig)
         val calendar = localCalendar(calendarUrl, self)
         val coordinator = coordinator()
         val start = Instant.now().plus(20, ChronoUnit.DAYS).truncatedTo(ChronoUnit.HOURS)
+        val sent = Instant.now()
 
-        val created = import(coordinator, request(self, start, sequence = 0, stamp = Instant.now()), calendar)
+        val created = import(coordinator, request(self, start, sequence = 0, stamp = sent), calendar)
         assertEquals(FixtureRedactor.redact("${config.name}: $created"), 1, created.created)
         pushOrFail(calendar, "create")
         val event = ownEvent()
@@ -182,9 +189,12 @@ class MultiServerIcsInvitationImportTest(private val config: CalDavServerConfig)
             println(FixtureRedactor.redact("ICS364|${config.name}|answer $answer|receipt ${serverStatus ?: "none"}"))
         }
 
-        val again = import(coordinator, request(self, start, sequence = 0, stamp = Instant.now()), calendar)
+        // The same file again: same SEQUENCE and DTSTAMP, so it is up to date (a later DTSTAMP
+        // would be a newer version, RFC 5546 §2.1.5).
+        val again = import(coordinator, request(self, start, sequence = 0, stamp = sent), calendar)
         assertEquals(FixtureRedactor.redact("${config.name}: a re-import creates nothing: $again"), 0, again.created)
-        assertTrue("${config.name}: a re-import queues nothing", db.pendingOperationsDao().getAllOnce().none { it.status == PendingOperation.STATUS_PENDING })
+        assertEquals(FixtureRedactor.redact("${config.name}: an identical re-import is up to date: $again"), 1, again.upToDate)
+        assertTrue("${config.name}: an identical re-import queues nothing", db.pendingOperationsDao().getAllOnce().none { it.status == PendingOperation.STATUS_PENDING })
         assertEquals("${config.name}: one copy", 1, db.eventsDao().getByUid(uid).size)
 
         val cancel = import(coordinator, cancel(self, start, sequence = 1, stamp = Instant.now()), calendar)
@@ -199,6 +209,136 @@ class MultiServerIcsInvitationImportTest(private val config: CalDavServerConfig)
         } else {
             assertEquals(FixtureRedactor.redact("${config.name}: the server copy is cancelled: $after"), "CANCELLED", status)
         }
+    }
+
+    @Test
+    fun `a rescheduled invitation updates the server copy, with the account among the guests`() = runBlocking<Unit> {
+        val (calendarUrl, self) = target(anyWritable = true)
+        rescheduleRoundTrip(calendarUrl, self, guest = self)
+    }
+
+    @Test
+    fun `a rescheduled invitation updates the server copy when the account isn't among the guests`() = runBlocking<Unit> {
+        val (calendarUrl, self) = target(anyWritable = true)
+        rescheduleRoundTrip(calendarUrl, self, guest = "mailto:ics364-other-guest@example.test")
+    }
+
+    /**
+     * Imports the invitation with [guest] as its attendee, uploads it, imports a rescheduled
+     * version (SEQUENCE 1, a day later, new title), uploads that, and reads the server copy.
+     */
+    private suspend fun rescheduleRoundTrip(calendarUrl: String, self: String, guest: String) {
+        val calendar = localCalendar(calendarUrl, self)
+        val coordinator = coordinator()
+        val start = Instant.now().plus(20, ChronoUnit.DAYS).truncatedTo(ChronoUnit.HOURS)
+        val moved = start.plus(1, ChronoUnit.DAYS)
+
+        val created = import(coordinator, request(guest, start, sequence = 0, stamp = Instant.now().minusSeconds(60)), calendar)
+        assertEquals(FixtureRedactor.redact("${config.name}: $created"), 1, created.created)
+        pushOrFail(calendar, "create")
+        val url = ownEvent().caldavUrl
+        if (url != null && url.contains(uid)) cleanup += url
+        assertTrue("${config.name}: the create landed", url != null)
+
+        val newer = request(guest, moved, sequence = 1, stamp = Instant.now())
+            .replace("SUMMARY:Test invitation", "SUMMARY:Test invitation moved")
+        val updated = import(coordinator, newer, calendar)
+        assertEquals(FixtureRedactor.redact("${config.name}: the newer file updates: $updated"), 1, updated.updated)
+        assertEquals("${config.name}: one upload queued", 1, db.pendingOperationsDao().getAllOnce().count { it.status == PendingOperation.STATUS_PENDING })
+        val pushed = pushOrFail(calendar, "reschedule")
+        val after = fetch(url!!)
+        val serverStart = line(after, "DTSTART")
+        val serverSummary = line(after, "SUMMARY:")
+        val serverSequence = line(after, "SEQUENCE:")
+        println(FixtureRedactor.redact("ICS364|${config.name}|reschedule|guest ${if (guest == self) "self" else "other"}|$serverStart|$serverSummary|$serverSequence|warnings ${pushed.pushWarnings}"))
+        assertTrue("${config.name}: nothing left queued", db.pendingOperationsDao().getAllOnce().none { it.status == PendingOperation.STATUS_PENDING })
+        if (config.name == CalDavServerConfig.ZOHO.name) {
+            // Zoho answers a guest's PUT on the event's own URL with 201, no ETag and the etag
+            // unchanged, and keeps its copy (live 2026-11-08). The server copy is printed, not
+            // asserted; the row keeps the file's version until the event changes on the server.
+            assertEquals("${config.name}: the row holds the file's version", "Test invitation moved", ownEvent().title)
+            return
+        }
+        assertEquals(FixtureRedactor.redact("${config.name}: the new time reached the server: $after"), "DTSTART:${UTC.format(moved)}", serverStart)
+        assertEquals(FixtureRedactor.redact("${config.name}: the new title reached the server: $after"), "SUMMARY:Test invitation moved", serverSummary)
+
+        val again = import(coordinator, newer, calendar)
+        assertEquals(FixtureRedactor.redact("${config.name}: the same file again is up to date: $again"), 1, again.upToDate)
+        assertTrue("${config.name}: and queues nothing", db.pendingOperationsDao().getAllOnce().none { it.status == PendingOperation.STATUS_PENDING })
+    }
+
+    @Test
+    fun `a reschedule after two answers to an imported invitation still updates`() = runBlocking<Unit> {
+        val (calendarUrl, self) = target(anyWritable = true)
+        answerThenReschedule(calendarUrl, self, fromServer = false, answers = listOf("ACCEPTED", "TENTATIVE"))
+    }
+
+    @Test
+    fun `a reschedule after answering an invitation the calendar synced still updates`() = runBlocking<Unit> {
+        val (calendarUrl, self) = target(anyWritable = true)
+        answerThenReschedule(calendarUrl, self, fromServer = true, answers = listOf("ACCEPTED"))
+    }
+
+    /**
+     * Puts the invitation in the calendar (imported, or created on the server and pulled when
+     * [fromServer]), sends each of [answers], pulls, then imports a reschedule at SEQUENCE 1 with
+     * a later DTSTAMP. A server that raises SEQUENCE when it processes an answer leaves the row
+     * above the file's SEQUENCE after the pull.
+     */
+    private suspend fun answerThenReschedule(calendarUrl: String, self: String, fromServer: Boolean, answers: List<String>) {
+        val calendar = localCalendar(calendarUrl, self)
+        val coordinator = coordinator()
+        val start = Instant.now().plus(20, ChronoUnit.DAYS).truncatedTo(ChronoUnit.HOURS)
+        val moved = start.plus(1, ChronoUnit.DAYS)
+        val original = request(self, start, sequence = 0, stamp = Instant.now().minusSeconds(60))
+
+        if (fromServer) {
+            val body = original.replace(Regex("METHOD:REQUEST\r?\n"), "")
+            val created = client.createEvent(calendarUrl, uid, body).getOrNull()?.first
+            assumeTrue("${config.name}: setup create refused", created != null)
+            cleanup += created!!
+            pull(calendar)
+        } else {
+            assertEquals(1, import(coordinator, original, calendar).created)
+            pushOrFail(calendar, "create")
+            ownEvent().caldavUrl?.takeIf { it.contains(uid) }?.let { cleanup += it }
+        }
+        val url = requireNotNull(ownEvent().caldavUrl)
+        for (answer in answers) {
+            assertTrue("${config.name}: the app finds the user among the guests", coordinator.replyRsvp(ownEvent().id, answer))
+            pushOrFail(calendar, "answer $answer")
+        }
+        val serverSequence = line(fetch(url), "SEQUENCE:")
+        pull(calendar)
+        val row = ownEvent()
+        println(FixtureRedactor.redact("ICS364|${config.name}|answer then reschedule|from server $fromServer|answers ${answers.size}|server $serverSequence|row sequence ${row.sequence}|row itipDtstamp ${row.itipDtstamp != null}"))
+
+        val newer = request(self, moved, sequence = 1, stamp = Instant.now())
+            .replace("SUMMARY:Test invitation", "SUMMARY:Test invitation moved")
+        val result = import(coordinator, newer, calendar)
+        println(FixtureRedactor.redact("ICS364|${config.name}|answer then reschedule|from server $fromServer|import $result"))
+        assertEquals(FixtureRedactor.redact("${config.name}: the reschedule updates after ${answers.size} answer(s): $result"), 1, result.updated)
+    }
+
+    private suspend fun pull(calendar: Calendar) {
+        val dataStore = mockk<KashCalDataStore>(relaxed = true) {
+            // The relaxed default isn't a working Flow, and the pull fails. Int.MAX_VALUE is "All".
+            every { syncPastDays } returns flowOf(Int.MAX_VALUE)
+        }
+        val generator = OccurrenceGenerator(db, db.occurrencesDao(), db.eventsDao(), TestDataStoreFactory.createDefault())
+        val pulled = PullStrategy(
+            database = db,
+            calendarRepository = CalendarRepositoryImpl(db.calendarsDao()),
+            eventsDao = db.eventsDao(),
+            attendeesDao = db.attendeesDao(),
+            occurrenceGenerator = generator,
+            defaultQuirks = config.quirksFactory(creds.serverUrl),
+            dataStore = dataStore,
+            inviteNotifier = mockk(relaxed = true),
+            accountRepository = mockk(relaxed = true),
+            reminderScheduler = mockk(relaxed = true),
+        ).pull(db.calendarsDao().getById(calendar.id)!!, forceFullSync = true, client = client)
+        println("ICS364|${config.name}|pull ${pulled::class.simpleName}")
     }
 
     @Test
@@ -369,9 +509,15 @@ class MultiServerIcsInvitationImportTest(private val config: CalDavServerConfig)
 
     // ---- the server ----
 
-    /** Returns an unshared writable calendar and the account's own address, or skips. */
-    private suspend fun target(): Pair<String, String> {
-        val calendarUrl = UnsharedCalendarPicker(config, client, creds).find()
+    /**
+     * Returns an unshared writable calendar and the account's own address, or skips. With
+     * [anyWritable] a calendar the sharing check can't confirm also serves, since every account in
+     * this suite holds only test data (Zoho reports no sharing properties, so only that reaches
+     * it).
+     */
+    private suspend fun target(anyWritable: Boolean = false): Pair<String, String> {
+        val picker = UnsharedCalendarPicker(config, client, creds)
+        val calendarUrl = picker.find() ?: if (anyWritable) picker.findWritable() else null
         assumeTrue("${config.name}: no calendar the sharing check accepts", calendarUrl != null)
         val self = selfAddress()
         assumeTrue("${config.name}: no calendar-user address", self != null)

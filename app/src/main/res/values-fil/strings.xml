@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">hindi suportado ang mga pagbabago sa occurrence na ito at sa mga susunod</string>
     <string name="ics_import_reason_own_cancel">ikaw ang tagapag-organisa ng pulong na ito, kaya kanselahin ito mula sa event</string>
     <string name="ics_import_reason_on_another_calendar">nasa ibang kalendaryo na ito ng account na ito</string>
+    <string name="ics_import_reason_calendar_keeps_copy">may sariling kopya ng event ang kalendaryong ito</string>
+    <string name="ics_import_reason_own_update">ikaw ang tagapag-organisa ng pulong na ito, kaya baguhin ito mula sa event</string>
+    <string name="ics_import_reason_change_waiting">may pagbabago sa event na naghihintay ma-sync; mag-import muli kapag naka-sync na</string>
     <string name="ics_import_notice_unverified">Hindi ma-verify ang nagpadala ng file ng imbitasyon. Tiyaking galing ito sa tagapag-organisa.</string>
     <string name="ics_import_notice_answer_notifies">Maaaring maabisuhan ang tagapag-organisa kapag sinagot mo ang imbitasyong ito.</string>
     <string name="ics_import_notice_guests_again">Ikaw ang tagapag-organisa, kaya maaaring matanggap muli ng mga dadalo ang imbitasyong ito.</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d taon</item>
         <item quantity="other">%1$d taon</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d seg</item>
-        <item quantity="other">%1$d seg</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d minuto bago</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">Walang paalala</string>
     <string name="reminder_at_time_of_event">Sa oras ng kaganapan</string>
     <string name="reminder_time_before">%1$s bago</string>
-    <string name="reminder_time_after">%1$s pagkatapos</string>
     <string name="reminder_day_of_event_12h">9 AM araw ng kaganapan</string>
     <string name="reminder_day_of_event_24h">09:00 araw ng kaganapan</string>
     <string name="reminder_day_of_event">Araw ng kaganapan</string>

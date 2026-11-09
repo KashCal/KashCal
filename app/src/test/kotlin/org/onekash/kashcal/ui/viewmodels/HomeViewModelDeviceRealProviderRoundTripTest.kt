@@ -577,6 +577,27 @@ class HomeViewModelDeviceRealProviderRoundTripTest {
     }
 
     @Test
+    fun `duplicating an event copies its alerts and colour`() = runTest {
+        val id = create(f.draft(reminders = listOf(15, 1440), eventColor = 0xFF4CAF50.toInt()))
+        val source = DisplayEvent.Device(march().single { it.eventId == id })
+
+        val copyId = vm.saveDeviceEvent(duplicateForm(source)).getOrThrow()
+
+        assertEquals(listOf(15 to Reminders.METHOD_ALERT, 1440 to Reminders.METHOD_ALERT), f.provider.reminderRows(copyId))
+        assertEquals(0xFF4CAF50.toInt().toString(), f.eventRow(copyId)!![Events.EVENT_COLOR])
+    }
+
+    @Test
+    fun `duplicating an all-day event keeps its day-of alert`() = runTest {
+        val id = create(f.draft(isAllDay = true, startTs = DAY0, endTs = DAY0 + DAY, reminders = listOf(-540)))
+        val source = DisplayEvent.Device(march().single { it.eventId == id })
+
+        val copyId = vm.saveDeviceEvent(duplicateForm(source)).getOrThrow()
+
+        assertEquals(listOf(-540 to Reminders.METHOD_ALERT), f.provider.reminderRows(copyId))
+    }
+
+    @Test
     fun `duplicating a changed occurrence stores a one-off`() = runTest {
         val id = createSyncedSeries()
         f.writer.editSingleOccurrence(

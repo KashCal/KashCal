@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">ਇਸ ਅਤੇ ਬਾਅਦ ਦੀਆਂ ਘਟਨਾਵਾਂ ਵਿੱਚ ਤਬਦੀਲੀਆਂ ਸਮਰਥਿਤ ਨਹੀਂ ਹਨ</string>
     <string name="ics_import_reason_own_cancel">ਤੁਸੀਂ ਇਸ ਮੀਟਿੰਗ ਦੇ ਪ੍ਰਬੰਧਕ ਹੋ, ਇਸ ਲਈ ਇਸਨੂੰ ਘਟਨਾ ਤੋਂ ਰੱਦ ਕਰੋ</string>
     <string name="ics_import_reason_on_another_calendar">ਇਹ ਪਹਿਲਾਂ ਹੀ ਇਸ ਖਾਤੇ ਦੇ ਕਿਸੇ ਹੋਰ ਕੈਲੰਡਰ ਵਿੱਚ ਹੈ</string>
+    <string name="ics_import_reason_calendar_keeps_copy">ਇਹ ਕੈਲੰਡਰ ਘਟਨਾ ਦੀ ਆਪਣੀ ਕਾਪੀ ਰੱਖਦਾ ਹੈ</string>
+    <string name="ics_import_reason_own_update">ਤੁਸੀਂ ਇਸ ਮੀਟਿੰਗ ਦੇ ਪ੍ਰਬੰਧਕ ਹੋ, ਇਸ ਲਈ ਇਸਨੂੰ ਘਟਨਾ ਤੋਂ ਬਦਲੋ</string>
+    <string name="ics_import_reason_change_waiting">ਘਟਨਾ ਵਿੱਚ ਇੱਕ ਤਬਦੀਲੀ ਸਿੰਕ ਹੋਣ ਦੀ ਉਡੀਕ ਵਿੱਚ ਹੈ; ਸਿੰਕ ਹੋਣ ਤੋਂ ਬਾਅਦ ਦੁਬਾਰਾ ਇੰਪੋਰਟ ਕਰੋ</string>
     <string name="ics_import_notice_unverified">ਸੱਦਾ ਫ਼ਾਈਲ ਭੇਜਣ ਵਾਲੇ ਦੀ ਪੁਸ਼ਟੀ ਨਹੀਂ ਹੋ ਸਕਦੀ। ਜਾਂਚ ਕਰੋ ਕਿ ਇਹ ਪ੍ਰਬੰਧਕ ਵੱਲੋਂ ਆਈ ਹੈ।</string>
     <string name="ics_import_notice_answer_notifies">ਇਸ ਸੱਦੇ ਦਾ ਜਵਾਬ ਦੇਣ ਨਾਲ ਪ੍ਰਬੰਧਕ ਨੂੰ ਸੂਚਨਾ ਜਾ ਸਕਦੀ ਹੈ।</string>
     <string name="ics_import_notice_guests_again">ਤੁਸੀਂ ਪ੍ਰਬੰਧਕ ਹੋ, ਇਸ ਲਈ ਹਾਜ਼ਰੀਨ ਨੂੰ ਇਹ ਸੱਦਾ ਦੁਬਾਰਾ ਮਿਲ ਸਕਦਾ ਹੈ।</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d ਸਾਲ</item>
         <item quantity="other">%1$d ਸਾਲ</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d ਸਕਿੰ</item>
-        <item quantity="other">%1$d ਸਕਿੰ</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d ਮਿੰਟ ਪਹਿਲਾਂ</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">ਕੋਈ ਯਾਦ-ਦਹਾਨੀ ਨਹੀਂ</string>
     <string name="reminder_at_time_of_event">ਘਟਨਾ ਦੇ ਸਮੇਂ</string>
     <string name="reminder_time_before">%1$s ਪਹਿਲਾਂ</string>
-    <string name="reminder_time_after">%1$s ਬਾਅਦ</string>
     <string name="reminder_day_of_event_12h">ਘਟਨਾ ਦੇ ਦਿਨ ਸਵੇਰੇ 9 ਵਜੇ</string>
     <string name="reminder_day_of_event_24h">ਘਟਨਾ ਦੇ ਦਿਨ 09:00</string>
     <string name="reminder_day_of_event">ਘਟਨਾ ਦੇ ਦਿਨ</string>

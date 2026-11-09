@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">ŝanĝoj al ĉi tiu kaj postaj okazoj ne estas subtenataj</string>
     <string name="ics_import_reason_own_cancel">vi organizas ĉi tiun kunvenon, do nuligu ĝin el la evento</string>
     <string name="ics_import_reason_on_another_calendar">ĝi jam estas en alia kalendaro de ĉi tiu konto</string>
+    <string name="ics_import_reason_calendar_keeps_copy">ĉi tiu kalendaro konservas sian propran kopion de la evento</string>
+    <string name="ics_import_reason_own_update">vi organizas ĉi tiun kunvenon, do ŝanĝu ĝin el la evento</string>
+    <string name="ics_import_reason_change_waiting">la evento havas ŝanĝon, kiu atendas sinkronigon; importu denove post la sinkronigo</string>
     <string name="ics_import_notice_unverified">Ne eblas kontroli la sendinton de invita dosiero. Certigu, ke ĝi venis de la organizanto.</string>
     <string name="ics_import_notice_answer_notifies">Respondi al ĉi tiu invito eble sciigos la organizanton.</string>
     <string name="ics_import_notice_guests_again">Vi estas la organizanto, do ĉeestantoj eble ricevos ĉi tiun inviton denove.</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d jaro</item>
         <item quantity="other">%1$d jaroj</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d sek</item>
-        <item quantity="other">%1$d sek</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d minuto antaŭe</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">Sen rememorigo</string>
     <string name="reminder_at_time_of_event">Je la tempo de la evento</string>
     <string name="reminder_time_before">%1$s antaŭe</string>
-    <string name="reminder_time_after">%1$s poste</string>
     <string name="reminder_day_of_event_12h">9 AM tage de la evento</string>
     <string name="reminder_day_of_event_24h">09:00 tage de la evento</string>
     <string name="reminder_day_of_event">Tage de la evento</string>

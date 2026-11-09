@@ -992,6 +992,9 @@
     <string name="ics_import_reason_this_and_future">ଏହା ଏବଂ ପରବର୍ତ୍ତୀ ପୁନରାବୃତ୍ତିଗୁଡ଼ିକର ପରିବର୍ତ୍ତନ ସମର୍ଥିତ ନୁହେଁ</string>
     <string name="ics_import_reason_own_cancel">ଆପଣ ଏହି ମିଟିଂର ଆୟୋଜକ, ତେଣୁ ଇଭେଣ୍ଟରୁ ହିଁ ଏହାକୁ ବାତିଲ କରନ୍ତୁ</string>
     <string name="ics_import_reason_on_another_calendar">ଏହା ପୂର୍ବରୁ ଏହି ଆକାଉଣ୍ଟର ଅନ୍ୟ ଏକ କ୍ୟାଲେଣ୍ଡରରେ ଅଛି</string>
+    <string name="ics_import_reason_calendar_keeps_copy">ଏହି କ୍ୟାଲେଣ୍ଡର ଇଭେଣ୍ଟର ନିଜସ୍ୱ କପି ରଖେ</string>
+    <string name="ics_import_reason_own_update">ଆପଣ ଏହି ମିଟିଂର ଆୟୋଜକ, ତେଣୁ ଇଭେଣ୍ଟରୁ ହିଁ ଏହାକୁ ବଦଳାନ୍ତୁ</string>
+    <string name="ics_import_reason_change_waiting">ଇଭେଣ୍ଟରେ ଏକ ପରିବର୍ତ୍ତନ ସିଙ୍କ ହେବାକୁ ଅପେକ୍ଷା କରୁଛି; ସିଙ୍କ ହେବା ପରେ ପୁଣି ଆମଦାନୀ କରନ୍ତୁ</string>
     <string name="ics_import_notice_unverified">ନିମନ୍ତ୍ରଣ ଫାଇଲର ପ୍ରେରକଙ୍କୁ ଯାଞ୍ଚ କରାଯାଇପାରିବ ନାହିଁ। ଏହା ଆୟୋଜକଙ୍କଠାରୁ ଆସିଛି କି ନାହିଁ ଯାଞ୍ଚ କରନ୍ତୁ।</string>
     <string name="ics_import_notice_answer_notifies">ଏହି ନିମନ୍ତ୍ରଣର ଉତ୍ତର ଦେଲେ ଆୟୋଜକଙ୍କୁ ଜଣାଯାଇପାରେ।</string>
     <string name="ics_import_notice_guests_again">ଆପଣ ଆୟୋଜକ, ତେଣୁ ଅତିଥିମାନେ ଏହି ନିମନ୍ତ୍ରଣ ପୁଣି ପାଇପାରନ୍ତି।</string>
@@ -1065,10 +1068,6 @@
     <plurals name="time_years">
         <item quantity="one">%1$d ବର୍ଷ</item>
         <item quantity="other">%1$d ବର୍ଷ</item>
-    </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d ସେ.</item>
-        <item quantity="other">%1$d ସେ.</item>
     </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d ମିନିଟ ପୂର୍ବେ</item>
@@ -1253,7 +1252,6 @@
     <string name="reminder_none">କୌଣସି ରିମାଇଣ୍ଡର ନାହିଁ</string>
     <string name="reminder_at_time_of_event">ଇଭେଣ୍ଟ ସମୟରେ</string>
     <string name="reminder_time_before">%1$s ପୂର୍ବରୁ</string>
-    <string name="reminder_time_after">%1$s ପରେ</string>
     <string name="reminder_day_of_event_12h">ଇଭେଣ୍ଟ ଦିନରେ 9 AM</string>
     <string name="reminder_day_of_event_24h">ଇଭେଣ୍ଟ ଦିନରେ 09:00</string>
     <string name="reminder_day_of_event">ଇଭେଣ୍ଟ ଦିନ</string>
