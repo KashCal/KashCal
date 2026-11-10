@@ -21,12 +21,14 @@ import org.onekash.kashcal.data.db.entity.AddressBook
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.carddav.FakeAddressBook
 import org.onekash.kashcal.sync.carddav.FakeCardDavClient
+import org.onekash.kashcal.sync.carddav.CardDavClient
 import org.onekash.kashcal.sync.carddav.model.CardDavAddressBook
 import org.onekash.kashcal.sync.carddav.model.CardDavContactData
 import org.onekash.kashcal.sync.carddav.model.ContactDeleteResult
 import org.onekash.kashcal.sync.carddav.model.ContactSyncItem
 import org.onekash.kashcal.sync.carddav.model.ContactSyncReport
 import org.onekash.kashcal.sync.carddav.model.ContactUploadResult
+import org.onekash.kashcal.sync.carddav.model.ContactPrecondition
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.vcard.VCardParser
 import org.robolectric.RobolectricTestRunner
@@ -717,6 +719,43 @@ class ContactPullStrategyTest {
     // ---------- push (local edits and deletes) runs before the per-book pull ----------
 
     @Test
+    fun `the pull skips the acknowledged etag while a re-edit remains dirty`() = runTest {
+        val href = "$BOOK_PATH/edit.vcf"
+        val body = vcard("edit-uid", "Person")
+        val first = LocalContactEdit(
+            href = href, uid = "edit-uid", storedEtag = "v1",
+            contact = VCardParser().parse(body).single().copy(notes = listOf("first")),
+            localId = 100L, rawContactVersion = 7L,
+        )
+        provider.seed(ACCOUNT_NAME, href, "v1")
+        provider.pendingChanges = LocalContactChanges(listOf(first), emptyList())
+        val bk = book(
+            isReadOnly = false,
+            contacts = mutableListOf(CardDavContactData(href, "$BOOK_URL$href", "v1", body)),
+        )
+        val server = clientWith(bk, syncToken = null)
+        val client = object : CardDavClient by server {
+            override suspend fun putContact(resourceUrl: String, vcardBody: String, precondition: ContactPrecondition): ContactUploadResult {
+                provider.pendingChanges = LocalContactChanges(
+                    listOf(first.copy(contact = first.contact.copy(notes = listOf("second")), rawContactVersion = 8L)),
+                    emptyList(),
+                )
+                bk.contacts[0] = CardDavContactData(href, resourceUrl, "v2", vcardBody)
+                return ContactUploadResult.Success(etag = "v2")
+            }
+        }
+
+        val result = strategy.sync(account, SERVER_URL, client) as ContactPullResult.Success
+
+        assertEquals(0, result.replaced)
+        assertEquals(0, result.inserted)
+        assertEquals(1, result.skipped)
+        assertTrue(provider.replaceCalls.isEmpty())
+        assertEquals(listOf("second"), provider.pendingChanges.edited.single().contact.notes)
+        assertEquals("v2", provider.pendingChanges.edited.single().storedEtag)
+    }
+
+    @Test
     fun `push uploads the local edit before the per-book pull fetches new server contacts`() = runTest {
         // A local edit at /ab/default/edit.vcf (stored etag v1, unchanged on the server, so
         // the pull would skip it) and a net-new server contact /ab/default/new.vcf the pull
@@ -742,6 +781,7 @@ class ContactPullStrategyTest {
                 LocalContactEdit(
                     href = editHref, uid = "edit-uid", storedEtag = "v1",
                     contact = VCardParser().parse(editBody).single().copy(displayName = "Edited", rawVCard = ""),
+                    rawContactVersion = 7L,
                 ),
             ),
             deleted = emptyList(),
@@ -834,6 +874,7 @@ class ContactPullStrategyTest {
                 LocalContactEdit(
                     href = "", uid = "uid-new", storedEtag = null, localId = 100L,
                     contact = VCardParser().parse(vcard("uid-new", "New Person")).single().copy(rawVCard = ""),
+                    rawContactVersion = 7L,
                 ),
             ),
             deleted = emptyList(),
@@ -874,6 +915,7 @@ class ContactPullStrategyTest {
                 LocalContactEdit(
                     href = "", uid = "uid-new", storedEtag = null, localId = 100L,
                     contact = VCardParser().parse(vcard("uid-new", "New Person")).single().copy(rawVCard = ""),
+                    rawContactVersion = 7L,
                 ),
             ),
             deleted = emptyList(),

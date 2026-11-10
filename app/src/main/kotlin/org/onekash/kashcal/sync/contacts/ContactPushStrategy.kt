@@ -91,7 +91,7 @@ data class ContactPushOutcome(
  * names the resource `<uid>.vcf`. The RawContact `_ID` can't be the name: two devices can both
  * mint `_ID = 100`, collide on one resource and each adopt the other's copy, losing a contact.
  *
- * On success the new href is stamped onto SOURCE_ID and DIRTY cleared by the row's `_ID`
+ * On success the new href is stamped onto SOURCE_ID by the row's `_ID`
  * ([ContactsProviderRepository.markNewContactUploaded]), so the next pull matches the server
  * copy instead of mirroring it. Radicale, Baikal, Nextcloud and iCloud list a client-created
  * member by its request path, the form stamped here (verified live).
@@ -102,14 +102,13 @@ data class ContactPushOutcome(
  * cleanly, so the pull can insert a duplicate for one run; it clears once the adopt succeeds.
  * Which outcomes skip the pull is documented on [ContactPushOutcome].
  *
- * ## Known limitation: a re-edit during the push
+ * ## Re-edits during the push
  *
- * An edit made between this push reading a contact and clearing its DIRTY flag is lost to
- * server wins on a later pull. DIRTY is one bit with no version, so the write-back can't tell
- * the pushed version from a newer edit. Keeping it would need a version-conditioned write-back
- * and pull-side conflict handling (the pull replaces on any etag change and doesn't exempt
- * dirty rows). The window is one round trip per contact, and the result matches the
- * server-wins conflict policy.
+ * A write-back acknowledges only the version this push read
+ * ([ContactsProviderRepository.markContactUploaded]). A newer edit keeps DIRTY with the PUT's
+ * etag, so the same run's pull skips it and the next push uploads it. An independent server
+ * change, or a PUT reply without an etag, still follows the pull's server-wins policy: dirty
+ * rows are not exempt from replacement.
  *
  * One bad contact never aborts the push: each item's failure is logged and reported as not
  * clean, and only cancellation propagates. The credential-bearing [CardDavClient] is passed
@@ -268,7 +267,7 @@ class ContactPushStrategy @Inject constructor(
         }
         // A create the server redirected lives where it landed, not at the name we chose.
         val storedHref = (result as? ContactUploadResult.Success)?.finalUrl?.let { hrefFor(it, book.url) } ?: createdHref
-        return handleNewUploadResult(accountName, edit.localId, storedHref, result)
+        return handleNewUploadResult(accountName, edit.localId, storedHref, edit.rawContactVersion, result)
     }
 
     private suspend fun applyExistingUpload(
@@ -288,14 +287,14 @@ class ContactPushStrategy @Inject constructor(
         val storedEtag = edit.storedEtag
         if (storedEtag.isNullOrBlank()) {
             // The server never gave an etag: create-as-fresh with `If-None-Match: *`.
-            return putFresh(accountName, href, book, edit.contact, client)
+            return putFresh(accountName, edit, book, client)
         }
         return when (val read = reader.readContacts(book.url, listOf(href), book.vcardVersion)) {
             is CalDavResult.Error ->
                 // Collection gone (404/410): recreate as fresh. A deleted member isn't an
                 // error: it comes back in a 207 without the href, which the Success branch
                 // defers as base == null. Anything else: hold and retry.
-                if (read.code == 404 || read.code == 410) putFresh(accountName, href, book, edit.contact, client)
+                if (read.code == 404 || read.code == 410) putFresh(accountName, edit, book, client)
                 else false
             is CalDavResult.Success -> {
                 val base = read.data.contacts.firstOrNull { it.href == href }
@@ -311,35 +310,36 @@ class ContactPushStrategy @Inject constructor(
                         )
                         val result = client.putContact(url, body, ContactPrecondition.IfMatch(storedEtag))
                         // The If-Match target disappeared mid-flight: retry once as fresh.
-                        if (result is ContactUploadResult.Gone) putFresh(accountName, href, book, edit.contact, client)
-                        else handleUploadResult(accountName, href, book.url, result)
+                        if (result is ContactUploadResult.Gone) putFresh(accountName, edit, book, client)
+                        else handleUploadResult(accountName, edit, book.url, result)
                     }
                 }
             }
         }
     }
 
-    /** Upload [contact] to [href] as a brand-new resource (`If-None-Match: *`). */
+    /** Uploads [edit] as a brand-new resource (`If-None-Match: *`). */
     private suspend fun putFresh(
         accountName: String,
-        href: String,
+        edit: LocalContactEdit,
         book: CardDavAddressBook,
-        contact: org.onekash.vcard.model.Contact,
         client: CardDavClient,
     ): Boolean {
-        val url = resolveResourceUrl(href, book.url)
-        val body = writer.write(contact.copy(rawVCard = ""), book.vcardVersion)
-        return handleUploadResult(accountName, href, book.url, client.putContact(url, body, ContactPrecondition.IfAbsent))
+        val url = resolveResourceUrl(edit.href, book.url)
+        val body = writer.write(edit.contact.copy(rawVCard = ""), book.vcardVersion)
+        return handleUploadResult(accountName, edit, book.url, client.putContact(url, body, ContactPrecondition.IfAbsent))
     }
 
     private suspend fun handleUploadResult(
         accountName: String,
-        href: String,
+        edit: LocalContactEdit,
         bookUrl: String,
         result: ContactUploadResult,
     ): Boolean = onUploadOutcome(result) { success ->
         val movedTo = success.finalUrl?.let { hrefFor(it, bookUrl) }
-        contactsProvider.markContactUploaded(accountName, href, success.etag.orEmpty(), newHref = movedTo).isSuccess
+        contactsProvider.markContactUploaded(
+            accountName, edit.href, success.etag.orEmpty(), edit.rawContactVersion, newHref = movedTo,
+        ).isSuccess
     }
 
     /**
@@ -357,18 +357,22 @@ class ContactPushStrategy @Inject constructor(
     /**
      * [handleUploadResult] for a net-new create. The contact has no href yet, so success is
      * written back by the row's [localId] ([ContactsProviderRepository.markNewContactUploaded]),
-     * stamping [href] onto SOURCE_ID and clearing DIRTY. Returns a full [ContactPushOutcome]
-     * because pull safety depends on whether a resource may exist. A 412 never reaches here;
-     * [applyNewUpload] adopts it.
+     * stamping [href] onto SOURCE_ID and acknowledging [uploadedVersion]. Returns a full
+     * [ContactPushOutcome] because pull safety depends on whether a resource may exist.
+     * A 412 never reaches here; [applyNewUpload] adopts it.
      */
     private suspend fun handleNewUploadResult(
         accountName: String,
         localId: Long,
         href: String,
+        uploadedVersion: Long,
         result: ContactUploadResult,
     ): ContactPushOutcome = when (result) {
         is ContactUploadResult.Success ->
-            if (contactsProvider.markNewContactUploaded(accountName, localId, href, result.etag.orEmpty()).isSuccess) {
+            if (contactsProvider.markNewContactUploaded(
+                    accountName, localId, href, result.etag.orEmpty(), uploadedVersion,
+                ).isSuccess
+            ) {
                 ContactPushOutcome.CLEAN
             } else {
                 ContactPushOutcome.PULL_UNSAFE
@@ -387,7 +391,8 @@ class ContactPushStrategy @Inject constructor(
     /**
      * Adopts the resource a net-new create's `If-None-Match: *` hit at `<uid>.vcf`. When a GET
      * shows its UID equals [uid], stamps [createdHref] and its etag onto the row by `_ID`
-     * (clearing DIRTY) so the next pull matches it.
+     * so the next pull matches it. The row stays DIRTY: the adopted body may predate the
+     * device's fields, so the next run uploads them with `If-Match`.
      *
      * [uid] is the contact's own UID or the one persisted to SYNC1 before the first create, so
      * the match is never blank against blank and another device's contact can't pass it. A
@@ -410,7 +415,7 @@ class ContactPushStrategy @Inject constructor(
                 // Proven ours: stamp it. If the stamp fails the row is still unmatched, so
                 // this run is pull-unsafe.
                 return if (contactsProvider.markNewContactUploaded(
-                        accountName, edit.localId, createdHref, existing.etag.orEmpty(),
+                        accountName, edit.localId, createdHref, existing.etag.orEmpty(), uploadedVersion = null,
                     ).isSuccess
                 ) {
                     ContactPushOutcome.CLEAN

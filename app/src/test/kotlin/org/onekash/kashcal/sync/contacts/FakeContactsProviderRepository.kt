@@ -182,10 +182,8 @@ class FakeContactsProviderRepository : ContactsProviderRepository {
     }
 
     /**
-     * The device's pending set a run sees, seeded by the test (empty by default).
-     * [markContactUploaded], [markNewContactUploaded], [hardDeleteTombstone] and
-     * [restoreTombstone] prune the matching entry so a later read reflects the write, as the
-     * real provider clears `DIRTY`, hard-deletes the tombstone or clears `DELETED`.
+     * Models the pending set across runs. Upload acknowledgements retain newer versions;
+     * successful deletes and restores remove their tombstones.
      */
     var pendingChanges = LocalContactChanges(edited = emptyList(), deleted = emptyList())
 
@@ -230,6 +228,7 @@ class FakeContactsProviderRepository : ContactsProviderRepository {
         accountName: String,
         href: String,
         newEtag: String,
+        uploadedVersion: Long,
         newHref: String?,
     ): Result<Unit> {
         markUploadedCalls += Triple(accountName, href, newEtag)
@@ -238,7 +237,13 @@ class FakeContactsProviderRepository : ContactsProviderRepository {
         val book = store.getOrPut(accountName) { HashMap() }
         if (newHref != null) book.remove(href)
         book[newHref ?: href] = newEtag
-        pendingChanges = pendingChanges.copy(edited = pendingChanges.edited.filterNot { it.href == href })
+        pendingChanges = pendingChanges.copy(edited = pendingChanges.edited.mapNotNull {
+            when {
+                it.href != href -> it
+                it.rawContactVersion == uploadedVersion -> null
+                else -> it.copy(href = newHref ?: href, storedEtag = newEtag)
+            }
+        })
         return Result.success(Unit)
     }
 
@@ -265,14 +270,18 @@ class FakeContactsProviderRepository : ContactsProviderRepository {
         localId: Long,
         href: String,
         newEtag: String,
+        uploadedVersion: Long?,
     ): Result<Unit> {
         markNewUploadedCalls += MarkNewUploaded(accountName, localId, href, newEtag)
         if (markNewUploadedResult.isFailure) return markNewUploadedResult
-        // The originating row is now synced under its new server href, and its net-new pending
-        // edit (keyed by provider _ID, since its href was blank) is pruned, as the real
-        // provider stamps SOURCE_ID and clears DIRTY.
         store.getOrPut(accountName) { HashMap() }[href] = newEtag
-        pendingChanges = pendingChanges.copy(edited = pendingChanges.edited.filterNot { it.localId == localId })
+        pendingChanges = pendingChanges.copy(edited = pendingChanges.edited.mapNotNull {
+            when {
+                it.localId != localId -> it
+                it.rawContactVersion == uploadedVersion -> null
+                else -> it.copy(href = href, storedEtag = newEtag)
+            }
+        })
         return Result.success(Unit)
     }
 
