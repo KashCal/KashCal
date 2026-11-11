@@ -97,6 +97,10 @@ class MultiServerRecurringInviteReplyTest(private val config: CalDavServerConfig
         private val SECOND_USER = mapOf(
             "Nextcloud" to ("NEXTCLOUD_USERNAME_2" to "NEXTCLOUD_PASSWORD_2"),
             "SOGo" to ("SOGO_USERNAME_2" to "SOGO_PASSWORD_2"),
+            // DAViCal delivers a one-off invite to its second user (SCHEDULE-STATUS=1.2, copy in
+            // its .in/), but answers 500 to this test's series with a changed occurrence (its
+            // duplicate inbox row, live 2026-11-09), so the delivered-invite case skips there.
+            "DAViCal" to ("DAVICAL_USERNAME_2" to "DAVICAL_PASSWORD_2"),
         )
     }
 

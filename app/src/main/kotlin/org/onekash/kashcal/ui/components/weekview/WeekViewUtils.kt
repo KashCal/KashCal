@@ -9,6 +9,7 @@ import org.onekash.kashcal.ui.components.weekview.WeekViewUtils.START_HOUR
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils.positionEventsForDay
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils.resolveInitialScrollPx
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils.weekPageToStartDate
+import org.onekash.kashcal.ui.util.CalendarSpan
 import org.onekash.kashcal.util.DateTimeUtils
 import java.time.Instant
 import java.time.LocalDate
@@ -70,9 +71,9 @@ object WeekViewUtils {
     const val TOTAL_DAY_PAGES = Int.MAX_VALUE
     const val CENTER_DAY_PAGE = TOTAL_DAY_PAGES / 2
 
-    // Week pager (WEEK): one page per week, about 500 weeks each direction.
-    const val TOTAL_WEEK_PAGES = 1000
-    const val CENTER_WEEK_PAGE = TOTAL_WEEK_PAGES / 2
+    // Week pager (WEEK and the Planner): one page per week, covering the CalendarSpan.
+    const val TOTAL_WEEK_PAGES = CalendarSpan.WEEK_TOTAL_PAGES
+    const val CENTER_WEEK_PAGE = CalendarSpan.WEEK_CENTER_PAGE
 
     // ==================== Day Pager Functions ====================
 

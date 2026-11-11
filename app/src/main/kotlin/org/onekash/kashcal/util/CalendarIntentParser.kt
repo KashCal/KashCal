@@ -3,9 +3,12 @@ package org.onekash.kashcal.util
 import android.content.Intent
 import android.provider.CalendarContract
 import androidx.compose.runtime.Immutable
+import org.onekash.kashcal.ui.util.CalendarSpan
 import org.onekash.kashcal.ui.util.DayPagerUtils
 import org.onekash.kashcal.util.CalendarIntentParser.parse
 import org.onekash.kashcal.util.CalendarIntentParser.parseCalendarContractUri
+import java.time.Instant
+import java.time.ZoneId
 
 /**
  * Event fields that pre-fill a new event in the event form.
@@ -79,11 +82,6 @@ object CalendarIntentParser {
     /** Authority for Android's CalendarContract content provider. */
     private const val CALENDAR_AUTHORITY = "com.android.calendar"
 
-    /**
-     * Upper bound (year 2200) on millis from intent URIs, so an extreme value can't yield a
-     * nonsense day code.
-     */
-    private const val MAX_REASONABLE_MILLIS = 7258118400000L
 
     /**
      * Returns true for an ACTION_INSERT or ACTION_EDIT intent with an event MIME type (dir or
@@ -147,8 +145,9 @@ object CalendarIntentParser {
             pathSegments.size == 2 && pathSegments[0] == "time" -> {
                 val millis = pathSegments[1].toLongOrNull()
                 if (millis != null && millis > 0) {
-                    val boundedMillis = millis.coerceIn(1, MAX_REASONABLE_MILLIS)
-                    val dayCode = DayPagerUtils.msToDayCode(boundedMillis)
+                    // A day after the CalendarSpan opens on its last day.
+                    val day = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
+                    val dayCode = DayPagerUtils.localDateToDayCode(CalendarSpan.clamp(day))
                     CalendarContractAction.GoToDate(dayCode)
                 } else {
                     CalendarContractAction.OpenApp

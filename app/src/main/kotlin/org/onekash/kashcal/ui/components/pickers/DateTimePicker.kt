@@ -114,12 +114,14 @@ import org.onekash.kashcal.ui.shared.ALL_DAY_LENGTH_CHIPS_DAYS
 import org.onekash.kashcal.ui.shared.TIMED_LENGTH_CHIPS_MINUTES
 import org.onekash.kashcal.ui.shared.formatDuration
 import org.onekash.kashcal.ui.shared.formatDurationShort
+import org.onekash.kashcal.ui.util.CalendarSpan
+import org.onekash.kashcal.ui.util.SelectedDay
 import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.util.TimezoneUtils
-import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Calendar as JavaCalendar
-import java.util.Locale
 import kotlin.math.floor
 
 /** Names which date of a range, start or end, the user is editing. */
@@ -899,20 +901,25 @@ internal fun SheetChipsRow(chips: List<SheetChip>, onChip: (Int) -> Unit) {
  * Shows a month grid with swipe and arrow month navigation, and a month/year wheel behind the
  * header.
  *
+ * Days are read and written with java.time in the device zone ([SelectedDay]): the highlight is
+ * [selectedDateMillis]'s day, and a tap gives [onDateSelect] the tapped day at
+ * [selectedDateMillis]'s time of day, resolved by [SelectedDay.dateAtTimeOfDayMs].
+ *
+ * @param displayedMonth the month the grid shows; callers open it on [selectedDateMillis]'s month
  * @param showMonthYearPicker the wheel's visibility when the caller manages it with
  *   [onShowMonthYearPickerChange]; null keeps it internal.
  */
 @Composable
 fun InlineDatePickerContent(
     selectedDateMillis: Long,
-    displayedMonth: JavaCalendar,
+    displayedMonth: YearMonth,
     onDateSelect: (Long) -> Unit,
-    onMonthChange: (JavaCalendar) -> Unit,
+    onMonthChange: (YearMonth) -> Unit,
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
     showMonthYearPicker: Boolean? = null,
     onShowMonthYearPickerChange: ((Boolean) -> Unit)? = null
 ) {
-    val selectedCal = JavaCalendar.getInstance().apply { timeInMillis = selectedDateMillis }
+    val selectedDate = SelectedDay.localDate(selectedDateMillis)
     // Re-sample "today" whenever the screen resumes so the marker can't go stale
     // when the picker stays open across midnight or the app is backgrounded.
     var todayRefreshKey by remember { mutableIntStateOf(0) }
@@ -920,10 +927,10 @@ fun InlineDatePickerContent(
         todayRefreshKey++
         onPauseOrDispose { }
     }
-    val today = remember(todayRefreshKey) { JavaCalendar.getInstance() }
+    val today = remember(todayRefreshKey) { LocalDate.now() }
 
     var totalDrag by remember { mutableFloatStateOf(0f) }
-    val monthYearFormat = remember { SimpleDateFormat(DateTimeUtils.localizedPattern("yMMMM"), Locale.getDefault()) }
+    val monthYearFormat = remember { DateTimeUtils.localizedFormatter("yMMMM") }
     // Internal when the caller doesn't manage visibility (the RecurrencePicker "Until" date,
     // the home screen date pickers).
     var localShowMonthYearPicker by remember { mutableStateOf(false) }
@@ -936,24 +943,24 @@ fun InlineDatePickerContent(
     val cdPickMonthYear = stringResource(R.string.cd_pick_month_year)
     val cdPreviousMonth = stringResource(R.string.cd_previous_month)
     val cdNextMonth = stringResource(R.string.cd_next_month)
+    // The arrows and swipes stop at the CalendarSpan's ends; from a month outside it (an
+    // existing event's) they only move toward it.
+    val canGoBack = CalendarSpan.canStepMonth(displayedMonth, -1, today)
+    val canGoForward = CalendarSpan.canStepMonth(displayedMonth, 1, today)
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp, vertical = 4.dp)
             .then(
-                if (!effectiveShowMonthYearPicker) Modifier.pointerInput(displayedMonth) {
+                if (!effectiveShowMonthYearPicker) Modifier.pointerInput(displayedMonth, canGoBack, canGoForward) {
                     detectHorizontalDragGestures(
                         onDragStart = { totalDrag = 0f },
                         onDragEnd = {
-                            if (totalDrag > 100f) {
-                                val newMonth = displayedMonth.clone() as JavaCalendar
-                                newMonth.add(JavaCalendar.MONTH, -1)
-                                onMonthChange(newMonth)
-                            } else if (totalDrag < -100f) {
-                                val newMonth = displayedMonth.clone() as JavaCalendar
-                                newMonth.add(JavaCalendar.MONTH, 1)
-                                onMonthChange(newMonth)
+                            if (totalDrag > 100f && canGoBack) {
+                                onMonthChange(displayedMonth.minusMonths(1))
+                            } else if (totalDrag < -100f && canGoForward) {
+                                onMonthChange(displayedMonth.plusMonths(1))
                             }
                         },
                         onHorizontalDrag = { _, dragAmount ->
@@ -972,11 +979,8 @@ fun InlineDatePickerContent(
         ) {
             if (!effectiveShowMonthYearPicker) {
                 IconButton(
-                    onClick = {
-                        val newMonth = displayedMonth.clone() as JavaCalendar
-                        newMonth.add(JavaCalendar.MONTH, -1)
-                        onMonthChange(newMonth)
-                    },
+                    onClick = { onMonthChange(displayedMonth.minusMonths(1)) },
+                    enabled = canGoBack,
                     modifier = Modifier.size(32.dp)
                 ) {
                     Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, cdPreviousMonth, modifier = Modifier.size(20.dp))
@@ -999,7 +1003,7 @@ fun InlineDatePickerContent(
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = monthYearFormat.format(displayedMonth.time),
+                    text = displayedMonth.format(monthYearFormat),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium,
                     color = if (effectiveShowMonthYearPicker) MaterialTheme.colorScheme.primary
@@ -1017,11 +1021,8 @@ fun InlineDatePickerContent(
 
             if (!effectiveShowMonthYearPicker) {
                 IconButton(
-                    onClick = {
-                        val newMonth = displayedMonth.clone() as JavaCalendar
-                        newMonth.add(JavaCalendar.MONTH, 1)
-                        onMonthChange(newMonth)
-                    },
+                    onClick = { onMonthChange(displayedMonth.plusMonths(1)) },
+                    enabled = canGoForward,
                     modifier = Modifier.size(32.dp)
                 ) {
                     Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, cdNextMonth, modifier = Modifier.size(20.dp))
@@ -1039,15 +1040,11 @@ fun InlineDatePickerContent(
             ) { showWheels ->
                 if (showWheels) {
                     MonthYearWheelPicker(
-                        selectedYear = displayedMonth.get(JavaCalendar.YEAR),
-                        selectedMonth = displayedMonth.get(JavaCalendar.MONTH),
-                        onMonthYearSelected = { year, month ->
-                            val newMonth = displayedMonth.clone() as JavaCalendar
-                            newMonth.set(JavaCalendar.YEAR, year)
-                            newMonth.set(JavaCalendar.MONTH, month)
-                            newMonth.set(JavaCalendar.DAY_OF_MONTH, 1)
-                            onMonthChange(newMonth)
-                        },
+                        selectedYear = displayedMonth.year,
+                        // The wheel's months are 0-based.
+                        selectedMonth = displayedMonth.monthValue - 1,
+                        onMonthYearSelected = { year, month -> onMonthChange(YearMonth.of(year, month + 1)) },
+                        yearRange = CalendarSpan.yearRange(today),
                         modifier = Modifier.fillMaxWidth()
                     )
                 } else {
@@ -1073,10 +1070,8 @@ fun InlineDatePickerContent(
 
                         Spacer(modifier = Modifier.height(4.dp))
 
-                        val firstDayOfMonth = displayedMonth.clone() as JavaCalendar
-                        firstDayOfMonth.set(JavaCalendar.DAY_OF_MONTH, 1)
-                        val gridOffset = DateTimeUtils.getFirstDayOffset(firstDayOfMonth, firstDayOfWeek)
-                        val daysInMonth = displayedMonth.getActualMaximum(JavaCalendar.DAY_OF_MONTH)
+                        val gridOffset = DateTimeUtils.getDayOfWeekOffset(displayedMonth.atDay(1), firstDayOfWeek)
+                        val daysInMonth = displayedMonth.lengthOfMonth()
                         val weeks = ((gridOffset + daysInMonth + 6) / 7)
 
                         for (week in 0 until weeks) {
@@ -1088,13 +1083,9 @@ fun InlineDatePickerContent(
                                     val dayIndex = week * 7 + dayOfWeekIdx - gridOffset + 1
 
                                     if (dayIndex in 1..daysInMonth) {
-                                        val dayCal = displayedMonth.clone() as JavaCalendar
-                                        dayCal.set(JavaCalendar.DAY_OF_MONTH, dayIndex)
-
-                                        val isSelected = selectedCal.get(JavaCalendar.YEAR) == dayCal.get(JavaCalendar.YEAR) &&
-                                            selectedCal.get(JavaCalendar.MONTH) == dayCal.get(JavaCalendar.MONTH) &&
-                                            selectedCal.get(JavaCalendar.DAY_OF_MONTH) == dayIndex
-                                        val isToday = isSameCalendarDay(today, dayCal)
+                                        val date = displayedMonth.atDay(dayIndex)
+                                        val isSelected = date == selectedDate
+                                        val isToday = date == today
                                         val cellStyle = dayCellStyle(isToday = isToday, isSelected = isSelected)
 
                                         Box(
@@ -1123,11 +1114,7 @@ fun InlineDatePickerContent(
                                                 // TalkBack hears which day is selected.
                                                 .semantics { selected = isSelected }
                                                 .clickable {
-                                                    val selectedTime = dayCal.clone() as JavaCalendar
-                                                    val origCal = JavaCalendar.getInstance().apply { timeInMillis = selectedDateMillis }
-                                                    selectedTime.set(JavaCalendar.HOUR_OF_DAY, origCal.get(JavaCalendar.HOUR_OF_DAY))
-                                                    selectedTime.set(JavaCalendar.MINUTE, origCal.get(JavaCalendar.MINUTE))
-                                                    onDateSelect(selectedTime.timeInMillis)
+                                                    onDateSelect(SelectedDay.dateAtTimeOfDayMs(date, selectedDateMillis))
                                                 },
                                             contentAlignment = Alignment.Center
                                         ) {
@@ -1224,14 +1211,6 @@ fun ExactTimeDialog(
         }
     )
 }
-
-/**
- * Returns whether two calendars fall on the same civil day (year and day of year), so a
- * "today" sampled at 11:59 PM doesn't match tomorrow's grid cell.
- */
-fun isSameCalendarDay(a: JavaCalendar, b: JavaCalendar): Boolean =
-    a.get(JavaCalendar.YEAR) == b.get(JavaCalendar.YEAR) &&
-        a.get(JavaCalendar.DAY_OF_YEAR) == b.get(JavaCalendar.DAY_OF_YEAR)
 
 /** Returns whether the end time is earlier in the day than the start, crossing midnight. */
 fun isMidnightCrossing(

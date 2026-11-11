@@ -10,9 +10,13 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.onekash.kashcal.ui.util.CalendarSpan
 import org.onekash.kashcal.ui.util.DayPagerUtils
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.time.LocalDate
+import java.time.ZoneId
+import java.util.TimeZone
 
 /**
  * Tests [CalendarIntentParser]:
@@ -688,8 +692,8 @@ class CalendarIntentParserTest {
     }
 
     @Test
-    fun `parseCalendarContractUri clamps extreme millis to reasonable range`() {
-        // Long.MAX_VALUE is in year 292278994; it is clamped to 2200-01-01 00:00 UTC.
+    fun `parseCalendarContractUri clamps extreme millis to the span's last day`() {
+        // Long.MAX_VALUE is in year 292278994.
         val extremeMillis = Long.MAX_VALUE
         val intent = Intent(Intent.ACTION_VIEW).apply {
             data = Uri.parse("content://com.android.calendar/time/$extremeMillis")
@@ -697,11 +701,40 @@ class CalendarIntentParserTest {
 
         val result = CalendarIntentParser.parseCalendarContractUri(intent)
 
-        assertTrue(result is CalendarContractAction.GoToDate)
-        val dayCode = (result as CalendarContractAction.GoToDate).dayCode
-        // 21991231 or 22000101, depending on the host timezone.
-        assertTrue("dayCode $dayCode should be clamped to reasonable range", dayCode < 22010000)
+        assertEquals(CalendarContractAction.GoToDate(spanLastDayCode()), result)
     }
+
+    @Test
+    fun `parseCalendarContractUri sends a link after the span to the span's last day`() {
+        val after = LocalDate.of(LocalDate.now().year + 164, 6, 1)
+        val millis = after.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("content://com.android.calendar/time/$millis")
+        }
+
+        assertEquals(CalendarContractAction.GoToDate(spanLastDayCode()), CalendarIntentParser.parseCalendarContractUri(intent))
+    }
+
+    @Test
+    fun `parseCalendarContractUri keeps the span's last day in every host zone`() {
+        val saved = TimeZone.getDefault()
+        try {
+            for (id in listOf("Pacific/Kiritimati", "Asia/Tokyo", "UTC", "America/New_York", "Pacific/Pago_Pago")) {
+                TimeZone.setDefault(TimeZone.getTimeZone(id))
+                val lastDay = CalendarSpan.lastDay()
+                val lateMs = lastDay.atTime(23, 30).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                val intent = Intent(Intent.ACTION_VIEW).apply {
+                    data = Uri.parse("content://com.android.calendar/time/$lateMs")
+                }
+                assertEquals(id, CalendarContractAction.GoToDate(spanLastDayCode()), CalendarIntentParser.parseCalendarContractUri(intent))
+            }
+        } finally {
+            TimeZone.setDefault(saved)
+        }
+    }
+
+    private fun spanLastDayCode(): Int =
+        DayPagerUtils.localDateToDayCode(CalendarSpan.lastDay())
 
     // ==================== parseCalendarContractUri - CreateEvent Tests ====================
 

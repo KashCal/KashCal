@@ -337,22 +337,6 @@ class EventReader @Inject constructor(
         return occurrencesDao.getInRangeOnce(startTs, endTs)
     }
 
-    /**
-     * Returns the IDs of recurring masters whose latest occurrence starts before [targetTs], for
-     * on-demand expansion when the user navigates far into the future.
-     */
-    suspend fun getRecurringEventsNeedingExtension(targetTs: Long): List<Long> {
-        return occurrencesDao.getRecurringEventsNeedingExtension(targetTs)
-    }
-
-    /**
-     * Returns the IDs of recurring masters whose earliest occurrence starts after [targetTs] and
-     * after their DTSTART, for on-demand expansion when the user navigates far into the past.
-     */
-    suspend fun getRecurringEventsNeedingPastExtension(targetTs: Long): List<Long> {
-        return occurrencesDao.getRecurringEventsNeedingPastExtension(targetTs)
-    }
-
     /** Returns the IDs of recurring masters, not PENDING_DELETE, with no occurrence rows. */
     suspend fun getRecurringEventsWithNoOccurrences(): List<Long> {
         return occurrencesDao.getRecurringEventsWithNoOccurrences()

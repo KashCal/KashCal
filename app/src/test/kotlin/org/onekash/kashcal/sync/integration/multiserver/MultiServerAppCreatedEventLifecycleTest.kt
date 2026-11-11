@@ -121,13 +121,18 @@ class MultiServerAppCreatedEventLifecycleTest(private val config: CalDavServerCo
     fun tearDown() = runBlocking {
         val c = client
         if (c != null) {
-            for (url in listOfNotNull(calendarUrl, otherCalendarUrl)) {
-                for (href in serverHrefsFor(createdUids, url)) {
-                    try {
-                        val resource = resolve(url, href)
-                        c.deleteEvent(resource, c.fetchEtag(resource).getOrNull() ?: "")
-                    } catch (_: Exception) { /* best effort */ }
-                }
+            // The URLs the push stored come first: a server whose range listing misses the
+            // event (DAViCal reads an open-ended range as two years) would otherwise keep it.
+            val stored = if (::db.isInitialized) {
+                createdUids.flatMap { db.eventsDao().getByUid(it) }.mapNotNull { it.caldavUrl }
+            } else emptyList()
+            val listed = listOfNotNull(calendarUrl, otherCalendarUrl).flatMap { url ->
+                serverHrefsFor(createdUids, url).map { resolve(url, it) }
+            }
+            for (resource in (stored + listed).distinct()) {
+                try {
+                    c.deleteEvent(resource, c.fetchEtag(resource).getOrNull() ?: "")
+                } catch (_: Exception) { /* best effort */ }
             }
         }
         if (::db.isInitialized) db.close()

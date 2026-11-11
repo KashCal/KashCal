@@ -20,9 +20,10 @@ import java.time.LocalDateTime
  *
  * Test-only: the oracle the parity and fuzz tests compare the production [IcalDavRRuleEngine]
  * against, which [OccurrenceGenerator] calls. Its quirks are lettered (a) to (i) below, with no
- * (f). The production engine keeps (a), (b), (e), (g) and (h) under the same letters; (c), (d)
- * and (i) work around lib-recur itself. Each quirk fixes a failure on real data; changing one
- * without its test reintroduces the failure.
+ * (f). The production engine keeps (a), (b), (e), (g) and (h) under the same letters, (e) with
+ * its own starting point (see [IcalDavRRuleEngine]); (c), (d) and (i) work around lib-recur
+ * itself. Each quirk fixes a failure on real data; changing one without its test reintroduces
+ * the failure.
  */
 object LibRecurEngine {
 

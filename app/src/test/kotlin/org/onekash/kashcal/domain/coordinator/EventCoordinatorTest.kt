@@ -1,6 +1,7 @@
 package org.onekash.kashcal.domain.coordinator
 
 import io.mockk.coEvery
+import io.mockk.coJustRun
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -603,73 +604,26 @@ class EventCoordinatorTest {
     }
 
     @Test
-    fun `extendOccurrences extends range`() = runTest {
-        val extendTo = 1735689600000L // Jan 1, 2025
-        coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
-        coEvery { occurrenceGenerator.extendOccurrences(recurringEvent, extendTo) } returns 26
+    fun `ensureOccurrencesCover asks the generator to cover the range both ways`() = runTest {
+        coJustRun { occurrenceGenerator.ensureCovered(any(), any(), any(), any(), any()) }
 
-        val count = coordinator.extendOccurrences(recurringEvent.id, extendTo)
+        coordinator.ensureOccurrencesCover(1_000L, 2_000L)
 
-        assertEquals(26, count)
+        coVerify(exactly = 1) { occurrenceGenerator.ensureCovered(1_000L, 2_000L, true, any(), any()) }
     }
 
     @Test
-    fun `extendPastOccurrences extends past range`() = runTest {
-        val extendTo = 1672531200000L // Jan 1, 2023
-        coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
-        coEvery { occurrenceGenerator.extendPastOccurrences(recurringEvent, extendTo) } returns 15
+    fun `ensureOccurrenceHorizon renews series ending within a year to the window ahead, forward only`() = runTest {
+        coJustRun { occurrenceGenerator.ensureCovered(any(), any(), any(), any(), any()) }
 
-        val count = coordinator.extendPastOccurrences(recurringEvent.id, extendTo)
+        coordinator.ensureOccurrenceHorizon(5_000L)
 
-        assertEquals(15, count)
-        coVerify { occurrenceGenerator.extendPastOccurrences(recurringEvent, extendTo) }
-    }
-
-    @Test
-    fun `extendPastOccurrencesIfNeeded finds and extends events`() = runTest {
-        val targetMs = 1672531200000L // Jan 1, 2023
-        val bufferMs = 6 * 30L * 24 * 60 * 60 * 1000
-        val extendToMs = targetMs - bufferMs
-
-        coEvery { eventReader.getRecurringEventsNeedingPastExtension(extendToMs) } returns listOf(recurringEvent.id)
-        coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
-        coEvery { occurrenceGenerator.extendPastOccurrences(recurringEvent, extendToMs) } returns 20
-
-        val count = coordinator.extendPastOccurrencesIfNeeded(targetMs)
-
-        assertEquals(20, count)
-        coVerify { eventReader.getRecurringEventsNeedingPastExtension(extendToMs) }
-        coVerify { occurrenceGenerator.extendPastOccurrences(recurringEvent, extendToMs) }
-    }
-
-    @Test
-    fun `extendPastOccurrencesIfNeeded returns 0 when no events need extension`() = runTest {
-        val targetMs = 1672531200000L
-        val bufferMs = 6 * 30L * 24 * 60 * 60 * 1000
-        val extendToMs = targetMs - bufferMs
-
-        coEvery { eventReader.getRecurringEventsNeedingPastExtension(extendToMs) } returns emptyList()
-
-        val count = coordinator.extendPastOccurrencesIfNeeded(targetMs)
-
-        assertEquals(0, count)
-    }
-
-    @Test
-    fun `extendOccurrencesIfNeeded finds and extends events`() = runTest {
-        val targetMs = 1767225600000L // Jan 1, 2026
-        val bufferMs = 6 * 30L * 24 * 60 * 60 * 1000
-        val extendToMs = targetMs + bufferMs
-
-        coEvery { eventReader.getRecurringEventsNeedingExtension(extendToMs) } returns listOf(recurringEvent.id)
-        coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
-        coEvery { occurrenceGenerator.extendOccurrences(recurringEvent, extendToMs) } returns 30
-
-        val count = coordinator.extendOccurrencesIfNeeded(targetMs)
-
-        assertEquals(30, count)
-        coVerify { eventReader.getRecurringEventsNeedingExtension(extendToMs) }
-        coVerify { occurrenceGenerator.extendOccurrences(recurringEvent, extendToMs) }
+        coVerify(exactly = 1) {
+            occurrenceGenerator.ensureCovered(
+                5_000L, 5_000L + 365L * 24 * 60 * 60 * 1000, false,
+                5_000L + OccurrenceGenerator.EXPANSION_WINDOW_MS, any(),
+            )
+        }
     }
 
     @Test

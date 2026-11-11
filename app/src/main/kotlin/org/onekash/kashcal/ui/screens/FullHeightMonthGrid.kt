@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -71,6 +72,7 @@ import org.onekash.kashcal.ui.shared.ClippedTitle
 import org.onekash.kashcal.ui.shared.Zoomed
 import org.onekash.kashcal.ui.shared.pinchZoom
 import org.onekash.kashcal.ui.util.DayPagerUtils
+import org.onekash.kashcal.ui.util.SelectedDay
 import org.onekash.kashcal.util.DateTimeUtils
 import java.util.Calendar as JavaCalendar
 
@@ -90,7 +92,7 @@ internal fun MonthFullPage(
     month: Int,
     selectedDate: Long,
     monthEventsMap: ImmutableMap<Int, ImmutableList<DisplayEvent>>,
-    onDateSelected: (Long) -> Unit,
+    onDayTap: (dayCode: Int, tapTimeMs: Long) -> Unit,
     firstDayOfWeek: Int,
     showWeekNumbers: Boolean,
     showEventEmojis: Boolean,
@@ -114,7 +116,7 @@ internal fun MonthFullPage(
             month = month,
             selectedDate = selectedDate,
             monthEventsMap = monthEventsMap,
-            onDateSelected = onDateSelected,
+            onDayTap = onDayTap,
             firstDayOfWeekPref = firstDayOfWeek,
             showWeekNumbers = showWeekNumbers,
             showEventEmojis = showEventEmojis,
@@ -139,7 +141,8 @@ internal fun MonthFullPage(
  * selected day's.
  *
  * @param monthEventsMap events keyed by dayCode (YYYYMMDD), from HomeViewModel.monthEvents.
- * @param onDateSelected called with the day as epoch millis when any part of its cell is tapped.
+ * @param onDayTap called when any part of a cell is tapped, with the cell's day code (the day to
+ *   select) and [tapTimeMsForCell]'s value (the day sheet's).
  * @param nowMs the clock reading past events are judged against.
  * @param todayDayCode today's day code, for the today strip and past days.
  * @param zoom scale of everything drawn in a cell; the week-number column doesn't scale.
@@ -150,7 +153,7 @@ internal fun FullHeightMonthGrid(
     month: Int,
     selectedDate: Long,
     monthEventsMap: ImmutableMap<Int, ImmutableList<DisplayEvent>>,
-    onDateSelected: (Long) -> Unit,
+    onDayTap: (dayCode: Int, tapTimeMs: Long) -> Unit,
     firstDayOfWeekPref: Int,
     showWeekNumbers: Boolean,
     showEventEmojis: Boolean,
@@ -163,12 +166,8 @@ internal fun FullHeightMonthGrid(
         MonthGrid.compute(year, month, firstDayOfWeekPref)
     }
 
-    val selectedCal = remember(selectedDate) {
-        JavaCalendar.getInstance().apply { timeInMillis = selectedDate }
-    }
-    val selectedDay = selectedCal.get(JavaCalendar.DAY_OF_MONTH)
-    val selectedInThisMonth = selectedCal.get(JavaCalendar.MONTH) == month &&
-        selectedCal.get(JavaCalendar.YEAR) == year
+    // selectedDate is a device-zone midnight that HomeViewModel moves on a zone change.
+    val selectedDayCode = remember(selectedDate) { DayPagerUtils.msToDayCode(selectedDate) }
 
     val visibleWeeks = remember(monthGrid) {
         monthGrid.weeks.filter { row ->
@@ -203,13 +202,10 @@ internal fun FullHeightMonthGrid(
                     monthEventsMap = monthEventsMap,
                     nowMs = nowMs,
                     todayDayCode = todayDayCode,
-                    isSelected = { cell ->
-                        cell.position == MonthGrid.DayPosition.MonthDate && selectedInThisMonth &&
-                            cell.dayOfMonth == selectedDay
-                    },
+                    selectedDayCode = selectedDayCode,
                     showEventEmojis = showEventEmojis,
                     zoom = zoom,
-                    onDateSelected = onDateSelected,
+                    onDayTap = onDayTap,
                     modifier = Modifier.weight(1f).fillMaxHeight(),
                 )
             }
@@ -230,10 +226,10 @@ private fun WeekRow(
     monthEventsMap: ImmutableMap<Int, ImmutableList<DisplayEvent>>,
     nowMs: Long,
     todayDayCode: Int,
-    isSelected: (MonthGrid.DayCell) -> Boolean,
+    selectedDayCode: Int,
     showEventEmojis: Boolean,
     zoom: Float,
-    onDateSelected: (Long) -> Unit,
+    onDayTap: (dayCode: Int, tapTimeMs: Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val showDayLabel = stringResource(R.string.cd_planner_show_day_events)
@@ -254,6 +250,7 @@ private fun WeekRow(
             }
             val isInMonth = { col: Int -> row[col].position == MonthGrid.DayPosition.MonthDate }
             val isToday = { col: Int -> isInMonth(col) && weekDayCodes[col] == todayDayCode }
+            val isSelected = { col: Int -> SelectedDay.isSelectedCell(row[col].position, weekDayCodes[col], selectedDayCode) }
             val descriptions = rememberDayDescriptions(render, row, weekDayCodes, monthEventsMap, todayDayCode, showEventEmojis)
 
             // The tap targets, drawn first, under rows that have no pointer input: every tap
@@ -265,9 +262,13 @@ private fun WeekRow(
                             .weight(1f)
                             .fillMaxHeight()
                             .testTag("month_cell_${weekDayCodes[col]}")
-                            .semantics { contentDescription = descriptions[col] }
+                            .semantics {
+                                contentDescription = descriptions[col]
+                                // Only this month's days can be selected; padding days say nothing.
+                                if (isInMonth(col)) selected = isSelected(col)
+                            }
                             .clickable(onClickLabel = showDayLabel) {
-                                onDateSelected(timeMsForCell(cell, year, month))
+                                onDayTap(weekDayCodes[col], tapTimeMsForCell(cell, year, month))
                             },
                     )
                 }
@@ -286,7 +287,7 @@ private fun WeekRow(
                             DayHeaderCell(
                                 cell = cell,
                                 isToday = isToday(col),
-                                isSelected = isSelected(cell),
+                                isSelected = isSelected(col),
                                 isInOutDate = !isInMonth(col),
                                 isPastDay = isInMonth(col) && weekDayCodes[col] < todayDayCode,
                                 modifier = Modifier.weight(1f).fillMaxHeight(),
@@ -650,7 +651,13 @@ private fun EventSnippetSlot(
     }
 }
 
-private fun timeMsForCell(cell: MonthGrid.DayCell, gridYear: Int, gridMonth: Int): Long {
+/**
+ * Returns [cell]'s day at the current time of day, built with java.util.Calendar: the day sheet
+ * shows it and its "+" passes it to the event form, which reads the start hour with Calendar, so
+ * this value and that read change together. The selection takes the cell's day code instead
+ * ([SelectedDay]).
+ */
+private fun tapTimeMsForCell(cell: MonthGrid.DayCell, gridYear: Int, gridMonth: Int): Long {
     val (clickYear, clickMonth) = when (cell.position) {
         MonthGrid.DayPosition.MonthDate -> gridYear to gridMonth
         MonthGrid.DayPosition.InDate ->

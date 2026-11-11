@@ -282,6 +282,30 @@ class RruleShiftTest {
     }
 
     @Test
+    fun `an occurrence of a daily series from 1998 can move this and future when only an earlier one is deleted`() {
+        val start = at("1998-01-05", "09:00")
+        val deleted = at("2010-06-01", "09:00")
+        val master = series("FREQ=DAILY", exdate = deleted.toString()).copy(startTs = start, endTs = start + 3_600_000)
+        val occurrence = at("2026-11-10", "09:00")
+
+        val result = RruleShift.dragAvailability(master, emptyList(), occurrence, localPlusDays(occurrence, 1))
+
+        assertEquals(DragMoveAvailability(allEvents = false, thisAndFuture = true), result)
+    }
+
+    @Test
+    fun `an occurrence a spring-forward gap moved can still be dragged`() {
+        val start = at("2024-03-01", "02:30")
+        val master = series("FREQ=DAILY").copy(startTs = start, endTs = start + 3_600_000)
+        // 02:30 doesn't exist in New York on 10 March 2024; the occurrence starts at 03:30 EDT.
+        val occurrence = at("2024-03-10", "03:30")
+
+        val result = RruleShift.dragAvailability(master, emptyList(), occurrence, localPlusDays(occurrence, 1))
+
+        assertTrue("this and future is offered", result.thisAndFuture)
+    }
+
+    @Test
     fun `an edited occurrence blocks all events and blocks this and future only when it lies ahead`() {
         val earlier = RruleShift.dragAvailability(series(weekly), listOf(exceptionAt(mondayN(2))), mondayN(3), localPlusDays(mondayN(3), 1))
         assertEquals(DragMoveAvailability(allEvents = false, thisAndFuture = true), earlier)

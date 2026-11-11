@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.components.VerticalWheelPicker
+import org.onekash.kashcal.ui.util.CalendarSpan
 import java.text.DateFormatSymbols
 
 /**
@@ -42,7 +43,7 @@ fun MonthYearWheelPicker(
     selectedMonth: Int,
     onMonthYearSelected: (year: Int, month: Int) -> Unit,
     modifier: Modifier = Modifier,
-    yearRange: IntRange = 1900..2200,
+    yearRange: IntRange = CalendarSpan.yearRange(),
     visibleItems: Int = 5,
     itemHeight: Dp = 44.dp
 ) {
@@ -73,6 +74,9 @@ fun MonthYearWheelPicker(
                 val newMonth = monthNames.indexOf(name).coerceAtLeast(0)
                 if (newMonth != currentMonth) {
                     currentMonth = newMonth
+                    // A year outside the range (an existing event's) shows as the nearest end of
+                    // the year wheel, and a month pick lands there.
+                    currentYear = currentYear.coerceIn(yearRange)
                     onMonthYearSelected(currentYear, currentMonth)
                 }
             },
@@ -91,8 +95,8 @@ fun MonthYearWheelPicker(
             )
         }
 
-        // Circular too: with the default range the wrap point is more than a century from any
-        // current year (126 years back, 174 ahead from 2026).
+        // Circular too: with the default range, the CalendarSpan's years, the wrap point is 150
+        // years from the current year.
         VerticalWheelPicker(
             items = yearList,
             selectedItem = currentYear.coerceIn(yearRange),

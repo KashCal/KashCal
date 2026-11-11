@@ -1754,8 +1754,8 @@ class OccurrenceGeneratorTest {
     @Test
     fun `regenerateOccurrences generates current occurrences for old daily event`() = runTest {
         // Daily event that started 10 years ago (3650+ days). With the "All events" lookback
-        // the range starts at DTSTART, so a cap counted from DTSTART must not stop expansion
-        // before today.
+        // the range starts at DTSTART, and one engine call (10,000 dates from the range start)
+        // must still reach today.
         val tenYearsAgo = System.currentTimeMillis() - (10L * 365 * 24 * 60 * 60 * 1000)
         val event = createAndInsertEvent(
             startTs = tenYearsAgo,
@@ -1778,8 +1778,8 @@ class OccurrenceGeneratorTest {
     @Test
     fun `regenerateOccurrences handles high frequency within expansion window`() = runTest {
         // Hourly event started 1 year ago: 365 days x 24 hours = 8,760 occurrences to today.
-        // The engine's 10,000 cap, counted from DTSTART, still reaches the present. The asserts
-        // check more than 1000 and some in the last 30 days.
+        // One engine call's 10,000 dates from the range start still reach the present. The
+        // asserts check more than 1000 and some in the last 30 days.
         val oneYearAgo = System.currentTimeMillis() - (365L * 24 * 60 * 60 * 1000)
         val event = createAndInsertEvent(
             startTs = oneYearAgo,

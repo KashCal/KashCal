@@ -14,6 +14,7 @@ import java.time.ZonedDateTime
 import java.time.chrono.IsoChronology
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
+import java.time.format.DecimalStyle
 import java.time.format.FormatStyle
 import java.time.temporal.ChronoUnit
 import java.time.temporal.WeekFields
@@ -35,6 +36,15 @@ object DateTimeUtils {
 
     fun localizedPattern(skeleton: String, locale: Locale = Locale.getDefault()): String =
         DateFormat.getBestDateTimePattern(locale, skeleton)
+
+    /**
+     * Returns a formatter for [skeleton]'s [localizedPattern] in [locale] that writes the locale's
+     * own digits (Bengali, Burmese, Nepali, Persian and others), as java.text.SimpleDateFormat
+     * does; a plain DateTimeFormatter writes ASCII digits.
+     */
+    fun localizedFormatter(skeleton: String, locale: Locale = Locale.getDefault()): DateTimeFormatter =
+        DateTimeFormatter.ofPattern(localizedPattern(skeleton, locale), locale)
+            .withDecimalStyle(DecimalStyle.of(locale))
 
     /**
      * Returns true if [locale] orders day before month in its short date pattern from

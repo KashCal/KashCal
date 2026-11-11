@@ -110,11 +110,13 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.SpanStyle
@@ -185,6 +187,7 @@ import org.onekash.kashcal.ui.util.plannerShownWeekStart
 import org.onekash.kashcal.ui.screens.insights.InsightsViewModel
 import org.onekash.kashcal.ui.util.DayPagerUtils
 import org.onekash.kashcal.ui.util.MonthPagerUtils
+import org.onekash.kashcal.ui.util.SelectedDay
 import org.onekash.kashcal.ui.util.rememberDayPagerSyncCoordinator
 import org.onekash.kashcal.ui.viewmodels.DateFilter
 import org.onekash.kashcal.ui.viewmodels.EditScope
@@ -333,7 +336,7 @@ fun HomeScreen(
     dayAttendees: Map<Long, List<org.onekash.kashcal.ui.components.attendees.AttendeeUiModel>> = emptyMap(),
     onSetVisibleEventIds: (List<Long>) -> Unit = {},
 ) {
-    // Month pager, about 100 years each direction
+    // Month pager, covering the CalendarSpan
     val initialPage = MonthPagerUtils.INITIAL_PAGE
     val pagerState = rememberPagerState(initialPage = initialPage) { MonthPagerUtils.TOTAL_PAGES }
     val coroutineScope = rememberCoroutineScope()
@@ -479,13 +482,7 @@ fun HomeScreen(
 
     // Report the settled month page to the ViewModel
     LaunchedEffect(pagerState.settledPage) {
-        val monthOffset = pagerState.settledPage - initialPage
-        val targetCal = JavaCalendar.getInstance().apply {
-            set(todayYear, todayMonth, 1)
-            add(JavaCalendar.MONTH, monthOffset)
-        }
-        val targetYear = targetCal.get(JavaCalendar.YEAR)
-        val targetMonth = targetCal.get(JavaCalendar.MONTH)
+        val (targetYear, targetMonth) = MonthPagerUtils.pageToYearMonth(pagerState.settledPage, todayYear, todayMonth)
         if (targetYear != uiState.viewingYear || targetMonth != uiState.viewingMonth) {
             onSetViewingMonth(targetYear, targetMonth)
         }
@@ -511,9 +508,7 @@ fun HomeScreen(
     // Month picked in the year overlay
     LaunchedEffect(uiState.pendingNavigateToMonth) {
         uiState.pendingNavigateToMonth?.let { (targetYear, targetMonth) ->
-            val monthsDiff = (targetYear - todayYear) * 12 + (targetMonth - todayMonth)
-            val targetPage = initialPage + monthsDiff
-            pagerState.scrollToPage(targetPage)
+            pagerState.scrollToPage(MonthPagerUtils.yearMonthToPage(targetYear, targetMonth, todayYear, todayMonth))
             onClearNavigateToMonth()
         }
     }
@@ -705,8 +700,7 @@ fun HomeScreen(
                                 onMonthClick = { year, month ->
                                     // Set selectedDate before switching view: the switch to MONTH
                                     // moves the pager to selectedDate's month.
-                                    val cal = JavaCalendar.getInstance().apply { set(year, month, 1) }
-                                    onDateSelected(cal.timeInMillis)
+                                    onDateSelected(SelectedDay.monthStartMs(year, month))
                                     onViewSelect(ViewMode.MONTH)
                                 },
                                 onYearChanged = onEnsureDotsForYear,
@@ -932,22 +926,16 @@ fun HomeScreen(
                                 verticalAlignment = Alignment.Top,
                                 userScrollEnabled = true
                             ) { page ->
-                                val monthOffset = page - initialPage
-                                val pageCal = JavaCalendar.getInstance().apply {
-                                    set(todayYear, todayMonth, 1)
-                                    add(JavaCalendar.MONTH, monthOffset)
-                                }
-                                val pageYear = pageCal.get(JavaCalendar.YEAR)
-                                val pageMonth = pageCal.get(JavaCalendar.MONTH)
+                                val (pageYear, pageMonth) = MonthPagerUtils.pageToYearMonth(page, todayYear, todayMonth)
 
                                 MonthFullPage(
                                     year = pageYear,
                                     month = pageMonth,
                                     selectedDate = uiState.selectedDate,
                                     monthEventsMap = monthEvents,
-                                    onDateSelected = { dateMs ->
-                                        onDateSelected(dateMs)
-                                        onShowDayDetail(dateMs)
+                                    onDayTap = { dayCode, tapTimeMs ->
+                                        onDateSelected(DayPagerUtils.dayCodeToMs(dayCode))
+                                        onShowDayDetail(tapTimeMs)
                                     },
                                     firstDayOfWeek = uiState.firstDayOfWeek,
                                     showWeekNumbers = uiState.showWeekNumbers,
@@ -1026,12 +1014,8 @@ fun HomeScreen(
                                         verticalAlignment = Alignment.Top,
                                         userScrollEnabled = true
                                     ) { page ->
-                                        val monthOffset = page - initialPage
-                                        val pageCal = JavaCalendar.getInstance().apply {
-                                            set(todayYear, todayMonth, 1)
-                                            add(JavaCalendar.MONTH, monthOffset)
-                                        }
-                                        monthPagerContent(pageCal.get(JavaCalendar.YEAR), pageCal.get(JavaCalendar.MONTH))
+                                        val (pageYear, pageMonth) = MonthPagerUtils.pageToYearMonth(page, todayYear, todayMonth)
+                                        monthPagerContent(pageYear, pageMonth)
                                     }
                                     // Day events sheet, set off from the grid by tone and corner
                                     // radius
@@ -1051,7 +1035,6 @@ fun HomeScreen(
                                                 dayPagerState = dayPagerState,
                                                 dayPagerTodayMs = dayPagerTodayMs,
                                                 monthPagerState = pagerState,
-                                                monthPagerInitialPage = initialPage,
                                                 todayYear = todayYear,
                                                 todayMonth = todayMonth,
                                                 timePattern = timePattern,
@@ -1081,12 +1064,8 @@ fun HomeScreen(
                                         verticalAlignment = Alignment.Top,
                                         userScrollEnabled = true
                                     ) { page ->
-                                        val monthOffset = page - initialPage
-                                        val pageCal = JavaCalendar.getInstance().apply {
-                                            set(todayYear, todayMonth, 1)
-                                            add(JavaCalendar.MONTH, monthOffset)
-                                        }
-                                        monthPagerContent(pageCal.get(JavaCalendar.YEAR), pageCal.get(JavaCalendar.MONTH))
+                                        val (pageYear, pageMonth) = MonthPagerUtils.pageToYearMonth(page, todayYear, todayMonth)
+                                        monthPagerContent(pageYear, pageMonth)
                                     }
                                     // Day events sheet, set off from the grid by tone and corner
                                     // radius
@@ -1106,7 +1085,6 @@ fun HomeScreen(
                                                 dayPagerState = dayPagerState,
                                                 dayPagerTodayMs = dayPagerTodayMs,
                                                 monthPagerState = pagerState,
-                                                monthPagerInitialPage = initialPage,
                                                 todayYear = todayYear,
                                                 todayMonth = todayMonth,
                                                 timePattern = timePattern,
@@ -1678,8 +1656,12 @@ internal fun DayOfWeekHeaders(firstDayOfWeek: Int, showWeekNumbers: Boolean = fa
     }
 }
 
+/**
+ * Draws the Month view's grid of [month] (0-based) with event dots. Each cell is tagged
+ * `month_cell_<dayCode>`, and the selected day reports it to screen readers.
+ */
 @Composable
-private fun CalendarGrid(
+internal fun CalendarGrid(
     year: Int,
     month: Int,
     selectedDate: Long,
@@ -1699,9 +1681,8 @@ private fun CalendarGrid(
     val monthDots = remember(eventDots, monthKey) { eventDots[monthKey].orEmpty() }
 
     val today = remember(refreshKey, LocalDisplayZone.current) { JavaCalendar.getInstance() }
-    val selectedCal = JavaCalendar.getInstance().apply { timeInMillis = selectedDate }
-    val selectedInThisMonth = selectedCal.get(JavaCalendar.MONTH) == month &&
-                               selectedCal.get(JavaCalendar.YEAR) == year
+    // selectedDate is a device-zone midnight that HomeViewModel moves on a zone change.
+    val selectedDayCode = remember(selectedDate) { DayPagerUtils.msToDayCode(selectedDate) }
 
     Column(modifier = Modifier.padding(horizontal = 8.dp).animateContentSize()) {
         monthGrid.weeks.forEach { row ->
@@ -1720,6 +1701,7 @@ private fun CalendarGrid(
                     }
                 }
                 row.forEach { cell ->
+                    val dayCode = MonthGrid.computeDayCodeForCell(cell, year, month)
                     when (cell.position) {
                         MonthGrid.DayPosition.InDate, MonthGrid.DayPosition.OutDate -> {
                             Box(
@@ -1728,19 +1710,8 @@ private fun CalendarGrid(
                                     .height(cellHeight)
                                     .padding(2.dp)
                                     .clip(RoundedCornerShape(8.dp))
-                                    .clickable {
-                                        val (adjYear, adjMonth) = when (cell.position) {
-                                            MonthGrid.DayPosition.InDate ->
-                                                if (month == 0) (year - 1) to 11 else year to (month - 1)
-                                            MonthGrid.DayPosition.OutDate ->
-                                                if (month == 11) (year + 1) to 0 else year to (month + 1)
-                                            else -> return@clickable
-                                        }
-                                        val clickedCal = JavaCalendar.getInstance().apply {
-                                            set(adjYear, adjMonth, cell.dayOfMonth)
-                                        }
-                                        onDateSelected(clickedCal.timeInMillis)
-                                    },
+                                    .testTag("month_cell_$dayCode")
+                                    .clickable { onDateSelected(DayPagerUtils.dayCodeToMs(dayCode)) },
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
@@ -1756,7 +1727,7 @@ private fun CalendarGrid(
                             val isToday = day == today.get(JavaCalendar.DAY_OF_MONTH) &&
                                 month == today.get(JavaCalendar.MONTH) &&
                                 year == today.get(JavaCalendar.YEAR)
-                            val isSelected = selectedInThisMonth && day == selectedCal.get(JavaCalendar.DAY_OF_MONTH)
+                            val isSelected = SelectedDay.isSelectedCell(cell.position, dayCode, selectedDayCode)
                             val dayColors = monthDots[day].orEmpty()
 
                             Box(
@@ -1782,10 +1753,10 @@ private fun CalendarGrid(
                                             Modifier
                                         }
                                     )
-                                    .clickable {
-                                        val clickedCal = JavaCalendar.getInstance().apply { set(year, month, day) }
-                                        onDateSelected(clickedCal.timeInMillis)
-                                    },
+                                    .testTag("month_cell_$dayCode")
+                                    // TalkBack hears which day is selected.
+                                    .semantics { selected = isSelected }
+                                    .clickable { onDateSelected(DayPagerUtils.dayCodeToMs(dayCode)) },
                                 contentAlignment = Alignment.Center
                             ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -1833,7 +1804,6 @@ private fun ColumnScope.DayEventsPager(
     dayPagerState: PagerState,
     dayPagerTodayMs: Long,
     monthPagerState: PagerState,
-    monthPagerInitialPage: Int,
     todayYear: Int,
     todayMonth: Int,
     timePattern: String = "h:mm a",
@@ -1872,13 +1842,10 @@ private fun ColumnScope.DayEventsPager(
         }
 
         // Move the month pager when the day crossed into another month
-        val newCal = JavaCalendar.getInstance().apply { timeInMillis = newDateMs }
-        val newYear = newCal.get(JavaCalendar.YEAR)
-        val newMonth = newCal.get(JavaCalendar.MONTH)
+        val (newYear, newMonth) = SelectedDay.yearMonth0(newDateMs)
 
         if (newYear != uiState.viewingYear || newMonth != uiState.viewingMonth) {
-            val monthsDiff = (newYear - todayYear) * 12 + (newMonth - todayMonth)
-            monthPagerState.scrollToPage(monthPagerInitialPage + monthsDiff)
+            monthPagerState.scrollToPage(MonthPagerUtils.yearMonthToPage(newYear, newMonth, todayYear, todayMonth))
         }
     }
 
@@ -1916,11 +1883,8 @@ private fun ColumnScope.DayEventsPager(
     }
 
     // Whether the selected date is in the viewing month; if not, show the pick-a-day message
-    val selectedCal = remember(uiState.selectedDate) {
-        JavaCalendar.getInstance().apply { timeInMillis = uiState.selectedDate }
-    }
-    val isSelectedInViewingMonth = selectedCal.get(JavaCalendar.MONTH) == uiState.viewingMonth &&
-        selectedCal.get(JavaCalendar.YEAR) == uiState.viewingYear
+    val isSelectedInViewingMonth =
+        SelectedDay.isInMonth(uiState.selectedDate, uiState.viewingYear, uiState.viewingMonth)
 
     if (!isSelectedInViewingMonth) {
         // For example after swiping the month pager without picking a day
@@ -2661,11 +2625,7 @@ private fun SearchDatePickerSheet(
 
     // Displayed month; opens on the selected date's month, or the current month
     var displayedMonth by remember {
-        mutableStateOf(
-            JavaCalendar.getInstance().apply {
-                timeInMillis = selectedDateMs ?: System.currentTimeMillis()
-            }
-        )
+        mutableStateOf(SelectedDay.yearMonth(selectedDateMs ?: System.currentTimeMillis()))
     }
 
     ModalBottomSheet(
@@ -2736,11 +2696,7 @@ private fun WeekViewDatePickerSheet(
 
     // Displayed month; opens on the shown date's month
     var displayedMonth by remember {
-        mutableStateOf(
-            JavaCalendar.getInstance().apply {
-                timeInMillis = stableCurrentDate
-            }
-        )
+        mutableStateOf(SelectedDay.yearMonth(stableCurrentDate))
     }
 
     ModalBottomSheet(

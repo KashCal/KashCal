@@ -105,7 +105,9 @@ import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
 import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.model.localizedDisplayName
 import org.onekash.kashcal.ui.shared.deduplicateAndSortReminders
+import org.onekash.kashcal.ui.util.CalendarSpan
 import org.onekash.kashcal.ui.util.DayPagerUtils
+import org.onekash.kashcal.ui.util.SelectedDay
 import org.onekash.kashcal.domain.whatsnew.ALL_RELEASE_NOTES
 import org.onekash.kashcal.domain.whatsnew.WhatsNewGate
 import org.onekash.kashcal.domain.whatsnew.WhatsNewSeeder
@@ -116,12 +118,11 @@ import org.onekash.kashcal.KashCalApplication
 import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.util.TimezoneUtils
 import org.onekash.kashcal.util.ZoneSource
-import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.ZoneId
 import java.util.Calendar
-import java.util.Locale
 import javax.inject.Inject
 
 private const val TAG = "HomeViewModel"
@@ -886,8 +887,8 @@ class HomeViewModel(
     // On-demand month dots load; cancelled by the next one on a fast swipe.
     private var loadDotsJob: Job? = null
 
-    // Debounced occurrence extension; cancelled by the next one on a rapid swipe.
-    private var extensionJob: Job? = null
+    // Debounced missing-occurrence repair; cancelled by the next one on a rapid swipe.
+    private var repairJob: Job? = null
     private var occurrenceRepairDone = false
 
     // Day pager cache collection; cancelled when the cache is reloaded.
@@ -2086,9 +2087,11 @@ class HomeViewModel(
     /**
      * Moves the month pager to [date]'s month and selects [date]. MainActivity calls it for a
      * GoToDate pending action (a widget's go-to-date), after a Quick Add save, and to land on a
-     * device event's start date when its occurrence doesn't resolve.
+     * device event's start date when its occurrence doesn't resolve. A date outside the
+     * [CalendarSpan] lands on its nearest end, a day the month pager can show.
      */
-    fun navigateToDate(date: LocalDate) {
+    fun navigateToDate(requested: LocalDate) {
+        val date = CalendarSpan.clamp(requested)
         _uiState.update {
             it.copy(
                 viewingYear = date.year,
@@ -2108,8 +2111,14 @@ class HomeViewModel(
         _uiState.update { it.copy(pendingScrollAgendaToTop = false) }
     }
 
-    /** Moves the month pager to a month, closes the year overlay and loads its dots if needed. */
-    fun navigateToMonth(year: Int, month: Int) {
+    /**
+     * Moves the month pager to a month (0-based), closes the year overlay and loads its dots if
+     * needed. A month outside the [CalendarSpan] lands on its nearest end month.
+     */
+    fun navigateToMonth(requestedYear: Int, requestedMonth: Int) {
+        val target = CalendarSpan.clamp(YearMonth.of(requestedYear, requestedMonth + 1))
+        val year = target.year
+        val month = target.monthValue - 1
         _uiState.update {
             it.copy(
                 viewingYear = year,
@@ -2146,45 +2155,32 @@ class HomeViewModel(
             setMonthGridKey(MonthKey(year, month))
         }
 
-        triggerOccurrenceExtension(year, month)
+        triggerOccurrenceRepair(year, month)
     }
 
     /**
-     * Extends recurring events' occurrences to reach the navigated month, forward or back, 500 ms
-     * after the last swipe. Each run also repairs events missing occurrences, until a run repairs
-     * nothing (reset after each successful sync). Reloads the month's dots when anything
-     * changed.
+     * Regenerates the series that have no occurrence rows, 500 ms after the last month swipe,
+     * until a run repairs nothing (reset after each successful sync), and reloads the month's
+     * dots when it repaired any. Extending series to the month the user reaches is the read's
+     * own job: each [DisplayEventRepository] range read expands its range first.
      */
-    private fun triggerOccurrenceExtension(year: Int, month: Int) {
-        extensionJob?.cancel()
-        extensionJob = viewModelScope.launch {
+    private fun triggerOccurrenceRepair(year: Int, month: Int) {
+        if (occurrenceRepairDone) return
+        repairJob?.cancel()
+        repairJob = viewModelScope.launch {
             delay(500L)
 
             try {
-                val targetMs = Calendar.getInstance().apply {
-                    set(Calendar.YEAR, year)
-                    set(Calendar.MONTH, month)
-                    set(Calendar.DAY_OF_MONTH, 1)
-                }.timeInMillis
-
-                val (forwardExtended, pastExtended, repaired) = withContext(ioDispatcher) {
-                    val forward = eventCoordinator.extendOccurrencesIfNeeded(targetMs)
-                    val past = eventCoordinator.extendPastOccurrencesIfNeeded(targetMs)
-                    val repair = if (!occurrenceRepairDone) {
-                        eventCoordinator.repairMissingOccurrences()
-                    } else 0
-                    Triple(forward, past, repair)
-                }
-
+                val repaired = withContext(ioDispatcher) { eventCoordinator.repairMissingOccurrences() }
                 if (repaired == 0) occurrenceRepairDone = true
-                if (forwardExtended > 0 || pastExtended > 0 || repaired > 0) {
-                    Log.d(TAG, "Extended occurrences: $forwardExtended forward, $pastExtended past, $repaired repaired (navigated to $year-${month + 1})")
+                if (repaired > 0) {
+                    Log.d(TAG, "Repaired occurrences of $repaired series (navigated to $year-${month + 1})")
                     loadDotsForMonth(year, month)
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.w(TAG, "Failed to extend occurrences: ${e.message}")
+                Log.w(TAG, "Failed to repair occurrences: ${e.message}")
             }
         }
     }
@@ -2375,7 +2371,11 @@ class HomeViewModel(
         _uiState.update { it.copy(showWeekViewDatePicker = false) }
     }
 
-    /** Closes the time grid's date picker and moves the pager to the picked date. */
+    /**
+     * Closes the time grid's date picker and moves the pager to the picked date. In Week view and
+     * the Planner a date outside the [CalendarSpan] lands on its nearest end; the Day and 3-day
+     * pagers have no end.
+     */
     fun onWeekViewDateSelected(dateMs: Long) {
         hideWeekViewDatePicker()
 
@@ -2385,7 +2385,7 @@ class HomeViewModel(
             return
         }
         val targetPage = if (_uiState.value.viewMode == ViewMode.WEEK)
-            WeekViewUtils.dateToWeekPage(date, _uiState.value.firstDayOfWeek)
+            WeekViewUtils.dateToWeekPage(CalendarSpan.clamp(date), _uiState.value.firstDayOfWeek)
         else WeekViewUtils.dateToPage(date)
 
         currentLoadedRange = null
@@ -2472,10 +2472,14 @@ class HomeViewModel(
         if (_uiState.value.viewMode == ViewMode.PLANNER) keyPlannerWeek(_uiState.value.plannerWeekPagerPosition)
     }
 
-    /** Moves the Planner to the week holding [date]. */
+    /**
+     * Moves the Planner to the week holding [date], or to the [CalendarSpan]'s nearest end when
+     * the date is outside it. The page is kept on the pager too, in case the anchor is old.
+     */
     private fun navigatePlannerToDate(date: LocalDate) {
         val anchor = _uiState.value.plannerAnchorDayCode ?: thisWeekStartDayCode()
-        val page = plannerPageForDate(anchor, date, _uiState.value.firstDayOfWeek)
+        val page = plannerPageForDate(anchor, CalendarSpan.clamp(date), _uiState.value.firstDayOfWeek)
+            .coerceIn(0, WeekViewUtils.TOTAL_WEEK_PAGES - 1)
         _uiState.update {
             it.copy(plannerAnchorDayCode = anchor, plannerWeekPagerPosition = page, pendingPlannerPagerPosition = page)
         }
@@ -2552,15 +2556,14 @@ class HomeViewModel(
      * event start). It's normalized to that day's local midnight so every selectedDate writer
      * agrees: the day pager's page math, month sync and dot highlighting key off the day, and a
      * time-bearing value would force a redundant rewrite when those midnight-based paths echo
-     * back. 0L, "no selection", is kept as is.
+     * back. A day outside the [CalendarSpan] (an imported file's first event, say) becomes its
+     * nearest end. 0L, "no selection", is kept as is.
      */
     fun selectDate(dateMillis: Long) {
         val normalized = if (dateMillis == 0L) {
             0L
         } else {
-            Instant.ofEpochMilli(dateMillis)
-                .atZone(ZoneId.systemDefault())
-                .toLocalDate()
+            CalendarSpan.clamp(Instant.ofEpochMilli(dateMillis).atZone(ZoneId.systemDefault()).toLocalDate())
                 .atStartOfDay(ZoneId.systemDefault())
                 .toInstant()
                 .toEpochMilli()
@@ -2642,11 +2645,12 @@ class HomeViewModel(
         return distanceFromCenter > DayPagerUtils.DAY_MS
     }
 
-    /** Formats a date in the locale's long form, e.g. "December 17, 2024" in English. */
-    private fun formatDateLabel(dateMillis: Long): String {
-        val format = SimpleDateFormat(DateTimeUtils.localizedPattern("yMMMMd"), Locale.getDefault())
-        return format.format(dateMillis)
-    }
+    /**
+     * Formats [dateMillis]'s day in the device zone in the locale's long form, e.g. "December 17,
+     * 2024" in English, with the locale's digits.
+     */
+    private fun formatDateLabel(dateMillis: Long): String =
+        SelectedDay.localDate(dateMillis).format(DateTimeUtils.localizedFormatter("yMMMMd"))
 
     // ==================== Search ====================
 
@@ -2817,7 +2821,11 @@ class HomeViewModel(
                 // Room FTS search, each result shown at its next occurrence (or its own start).
                 val roomSearcher: suspend (String) -> List<SearchResult> = { q ->
                     val ewnoResults = when {
-                        timeRange != null -> eventReader.searchEventsInRangeWithNextOccurrence(q, timeRange.first, timeRange.second)
+                        timeRange != null -> {
+                            // The range filter reads occurrence rows, which may not reach it yet.
+                            eventCoordinator.ensureOccurrencesCover(timeRange.first, timeRange.second)
+                            eventReader.searchEventsInRangeWithNextOccurrence(q, timeRange.first, timeRange.second)
+                        }
                         dateFilter is DateFilter.AnyTime -> eventReader.searchEventsWithNextOccurrence(q)
                         else -> eventReader.searchEventsExcludingPastWithNextOccurrence(q)
                     }
@@ -3176,9 +3184,7 @@ class HomeViewModel(
         // selectedDate is 0L until a day is picked (the Agenda view never sets it). With no
         // selection, stay on the viewing month; syncing to 0L would show December 1969.
         if (state.selectedDate == 0L) return
-        val selectedCal = Calendar.getInstance().apply { timeInMillis = state.selectedDate }
-        val year = selectedCal.get(Calendar.YEAR)
-        val month = selectedCal.get(Calendar.MONTH)
+        val (year, month) = SelectedDay.yearMonth0(state.selectedDate)
         if (year != state.viewingYear || month != state.viewingMonth) {
             navigateToMonth(year, month)
         }

@@ -20,6 +20,7 @@ import org.onekash.kashcal.data.credential.CredentialMigration
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.di.ApplicationScope
+import org.onekash.kashcal.domain.initializer.OccurrenceHorizonInitializer
 import org.onekash.kashcal.domain.initializer.UtcSeriesZoneRepair
 import org.onekash.kashcal.network.NetworkMonitor
 import org.onekash.kashcal.reminder.notification.InviteNotificationChannels
@@ -132,6 +133,9 @@ class KashCalApplication : Application(), Configuration.Provider {
     lateinit var utcSeriesZoneRepair: UtcSeriesZoneRepair
 
     @Inject
+    lateinit var occurrenceHorizonInitializer: OccurrenceHorizonInitializer
+
+    @Inject
     lateinit var calendarBackupReconciler: CalendarBackupReconciler
 
     @Inject
@@ -239,6 +243,13 @@ class KashCalApplication : Application(), Configuration.Provider {
             // No try/catch: the repair catches and logs.
             applicationScope.launch {
                 utcSeriesZoneRepair.run()
+            }
+
+            // Repeating series stay expanded ahead of today even when the daily reminder
+            // refresh was held back (OccurrenceHorizonInitializer). No try/catch: the pass
+            // catches and logs.
+            applicationScope.launch {
+                occurrenceHorizonInitializer.run()
             }
 
             // Re-arm automatic calendar backup from its settings: a periodic job lost to a

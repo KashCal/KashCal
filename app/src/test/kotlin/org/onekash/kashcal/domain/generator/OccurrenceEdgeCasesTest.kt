@@ -35,7 +35,7 @@ import java.util.TimeZone
  * - RDATE, EXDATE and both together, range start and end bounds, the 60-second match
  *   tolerance, a cross-midnight, a monthly and a year-boundary series
  * - [OccurrenceGenerator.extendOccurrences] and [OccurrenceGenerator.extendPastOccurrences],
- *   and the DAO queries behind past extension (`getMinStartTs`,
+ *   and the DAO queries behind past extension (`getEarliestRuleStartTs`,
  *   `getRecurringEventsNeedingPastExtension`)
  * - a past series expanded over PullStrategy's range, and a far-past yearly series (#152)
  */
@@ -934,7 +934,7 @@ class OccurrenceEdgeCasesTest {
     // ==================== Past Extension DAO Tests ====================
 
     @Test
-    fun `getMinStartTs returns earliest occurrence time`() = runTest {
+    fun `getEarliestRuleStartTs returns earliest occurrence time`() = runTest {
         val startTs = 1704067200000L // Jan 1, 2024 00:00 UTC
 
         val event = Event(
@@ -956,17 +956,17 @@ class OccurrenceEdgeCasesTest {
             startTs + 20 * 86400000L
         )
 
-        val minTs = database.occurrencesDao().getMinStartTs(eventId)
+        val minTs = database.occurrencesDao().getEarliestRuleStartTs(eventId)
         assertNotNull(minTs)
         assertEquals(startTs, minTs)
     }
 
     @Test
-    fun `getMinStartTs returns null for event with no occurrences`() = runTest {
+    fun `getEarliestRuleStartTs returns null for event with no occurrences`() = runTest {
         val event = createRecurringEvent("No Occs", "FREQ=DAILY")
         val eventId = database.eventsDao().insert(event)
 
-        val minTs = database.occurrencesDao().getMinStartTs(eventId)
+        val minTs = database.occurrencesDao().getEarliestRuleStartTs(eventId)
         assertNull(minTs)
     }
 
@@ -1171,7 +1171,7 @@ class OccurrenceEdgeCasesTest {
         occurrenceGenerator.generateOccurrences(savedEvent, junStart, junStart + 60 * DAY)
 
         val initialCount = database.occurrencesDao().getForEvent(eventId).size
-        val initialMinTs = database.occurrencesDao().getMinStartTs(eventId)!!
+        val initialMinTs = database.occurrencesDao().getEarliestRuleStartTs(eventId)!!
 
         // Extend back to March 2024.
         val marchStart = startTs + 59 * DAY // Feb 29, 2024
@@ -1181,7 +1181,7 @@ class OccurrenceEdgeCasesTest {
         val newCount = database.occurrencesDao().getForEvent(eventId).size
         assertTrue("Total count should increase", newCount > initialCount)
 
-        val newMinTs = database.occurrencesDao().getMinStartTs(eventId)!!
+        val newMinTs = database.occurrencesDao().getEarliestRuleStartTs(eventId)!!
         assertTrue("Min occurrence should be earlier", newMinTs < initialMinTs)
         assertTrue("Min occurrence should be >= marchStart", newMinTs >= marchStart)
     }
@@ -1232,7 +1232,7 @@ class OccurrenceEdgeCasesTest {
         occurrenceGenerator.extendPastOccurrences(savedEvent, janStart)
 
         // The earliest occurrence is not before DTSTART.
-        val minTs = database.occurrencesDao().getMinStartTs(eventId)!!
+        val minTs = database.occurrencesDao().getEarliestRuleStartTs(eventId)!!
         assertTrue("Earliest occurrence should be >= event startTs", minTs >= startTs)
     }
 
@@ -1286,7 +1286,7 @@ class OccurrenceEdgeCasesTest {
         occurrenceGenerator.generateOccurrences(savedEvent, marStart, marStart + 60 * DAY)
 
         // Extend to the current earliest occurrence.
-        val minTs = database.occurrencesDao().getMinStartTs(eventId)!!
+        val minTs = database.occurrencesDao().getEarliestRuleStartTs(eventId)!!
         val extended = occurrenceGenerator.extendPastOccurrences(savedEvent, minTs)
         assertEquals("Should return 0 when extending to exact current boundary", 0, extended)
     }
@@ -1541,10 +1541,10 @@ class OccurrenceEdgeCasesTest {
 
     @Test
     fun `needingPastExtension finds yearly event when targetTs is after buffer subtraction`() = runTest {
-        // #152: a FREQ=YEARLY event starting April 13, 2008. Navigating to April 2008,
-        // extendPastOccurrencesIfNeeded subtracts its 6-month buffer, so targetTs is October
-        // 2007, before DTSTART. The query compares DTSTART with the earliest occurrence, not
-        // with targetTs, so the event is still found.
+        // #152: a FREQ=YEARLY event starting April 13, 2008. A read of April 2008 widens the
+        // range by its 6-month buffer (OccurrenceGenerator.ensureCovered), so targetTs is
+        // October 2007, before DTSTART. The query compares DTSTART with the earliest
+        // occurrence, not with targetTs, so the event is still found.
         val april2008 = 1208044800000L // April 13, 2008 00:00 UTC
         val oct2007 = april2008 - (6 * 30L * 24 * 60 * 60 * 1000) // ~October 2007 (6-month buffer)
 
@@ -1613,7 +1613,7 @@ class OccurrenceEdgeCasesTest {
         assertTrue("Should have extended occurrences back to DTSTART", extended > 0)
 
         // The earliest occurrence is within a day of DTSTART, April 2008.
-        val minTs = database.occurrencesDao().getMinStartTs(eventId)!!
+        val minTs = database.occurrencesDao().getEarliestRuleStartTs(eventId)!!
         val diffFromDtstart = minTs - april2008
         assertTrue(
             "Earliest occurrence should be at DTSTART (April 2008), diff=$diffFromDtstart ms",

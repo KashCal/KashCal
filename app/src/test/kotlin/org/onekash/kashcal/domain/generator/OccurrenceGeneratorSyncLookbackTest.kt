@@ -312,8 +312,8 @@ class OccurrenceGeneratorSyncLookbackTest {
 
     @Test
     fun `extendPastOccurrences extends beyond initial window regardless of syncPastDays`() = runTest {
-        // syncPastDays limits the regeneration window, not extension. Extension runs on month
-        // navigation and expands locally, so it costs no network.
+        // syncPastDays limits the regeneration window, not extension. Extension runs when a view
+        // reads a range and expands locally, so it costs no network.
         every { dataStore.syncPastDays } returns flowOf(90)
 
         // Create daily recurring event starting 2 years ago

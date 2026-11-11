@@ -45,8 +45,8 @@ class MultiServerSchedulingDiscoveryTest(
         /**
          * Whether each server advertises a schedule-outbox-URL on its principal, verified live
          * 2026-06-09 through the app's discovery: the Sabre-based servers, Stalwart, Zoho, Mailbox,
-         * SOGo and Fastmail do; bare Radicale doesn't. The per-user-partitioned iCloud principal
-         * doesn't either, but iCloud has no entry and skips.
+         * SOGo, Fastmail and DAViCal (2026-11-09) do; bare Radicale doesn't. The
+         * per-user-partitioned iCloud principal doesn't either, but iCloud has no entry and skips.
          *
          * SOGo's schedule-outbox-URL points at the calendar collection itself (e.g.
          * `/SOGo/dav/<user>/Calendar/personal/`), not a dedicated `/outbox/`. The href sits inside
@@ -64,14 +64,15 @@ class MultiServerSchedulingDiscoveryTest(
             "SOGo" to true,
             "Fastmail" to true,
             "Radicale" to false,
+            "DAViCal" to true,
         )
 
         /**
          * Whether the calendar collection advertises calendar-auto-schedule via OPTIONS, verified
          * live 2026-06-09 through the app's discovery: Baikal, BaikalDigest, Nextcloud, Stalwart,
-         * SOGo and Fastmail do; bare Radicale doesn't. iCloud and Zoho are left out on purpose:
-         * their delivery is classified from the read-back, not this flag. Servers without an
-         * entry skip.
+         * SOGo, Fastmail and DAViCal (2026-11-09) do; bare Radicale doesn't. iCloud and Zoho are
+         * left out on purpose: their delivery is classified from the read-back, not this flag.
+         * Servers without an entry skip.
          *
          * SOGo's authenticated OPTIONS DAV header includes calendar-auto-schedule (with
          * calendar-schedule), but that alone doesn't mean SOGo delivers on a plain PUT;
@@ -85,6 +86,7 @@ class MultiServerSchedulingDiscoveryTest(
             "SOGo" to true,
             "Fastmail" to true,
             "Radicale" to false,
+            "DAViCal" to true,
         )
     }
 

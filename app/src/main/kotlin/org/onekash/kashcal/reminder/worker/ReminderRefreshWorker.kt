@@ -16,12 +16,14 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import java.util.concurrent.TimeUnit
 
 /**
- * Arms every reminder due within the scheduler's window
+ * Extends the repeating series ahead of today ([EventCoordinator.ensureOccurrenceHorizon]),
+ * arms every reminder due within the scheduler's window
  * ([ReminderScheduler.scheduleUpcomingReminders]), then schedules the next device calendar
  * reminder.
  *
@@ -29,6 +31,7 @@ import java.util.concurrent.TimeUnit
  * - Came into the window since the last check
  * - Were left without an alarm by a reboot (only rows inside the window are re-armed)
  * - Were missed because the refill after a fired reminder did not run
+ * - Belong to a repeating series whose stored occurrences had run out
  *
  * The periodic run ([schedule]) runs daily, needs no network and waits while the battery is low.
  */
@@ -38,7 +41,8 @@ class ReminderRefreshWorker @AssistedInject constructor(
     @Assisted params: WorkerParameters,
     private val reminderScheduler: ReminderScheduler,
     private val deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler,
-    private val dataStore: KashCalDataStore
+    private val dataStore: KashCalDataStore,
+    private val eventCoordinator: EventCoordinator,
 ) : CoroutineWorker(context, params) {
 
     companion object {
@@ -118,6 +122,10 @@ class ReminderRefreshWorker @AssistedInject constructor(
                 reminderScheduler.rescheduleAllPending()
                 dataStore.setReminderMigrationVersion(MIGRATION_VERSION_TZ_FIX)
             }
+
+            // Repeating series' rows end where their last expansion stopped; extend them first,
+            // or a series past its window arms nothing even with the app never opened.
+            eventCoordinator.ensureOccurrenceHorizon(System.currentTimeMillis())
 
             val scheduled = reminderScheduler.scheduleUpcomingReminders()
 

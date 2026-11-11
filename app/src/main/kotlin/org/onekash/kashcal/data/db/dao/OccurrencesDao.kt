@@ -230,42 +230,64 @@ interface OccurrencesDao {
     @Query("SELECT COUNT(*) FROM occurrences WHERE event_id = :eventId")
     suspend fun getCountForEvent(eventId: Long): Int
 
-    /** Returns [eventId]'s latest occurrence start, the boundary for forward extension. */
-    @Query("SELECT MAX(start_ts) FROM occurrences WHERE event_id = :eventId")
-    suspend fun getMaxStartTs(eventId: Long): Long?
-
-    /** Returns [eventId]'s earliest occurrence start, the boundary for past extension. */
-    @Query("SELECT MIN(start_ts) FROM occurrences WHERE event_id = :eventId")
-    suspend fun getMinStartTs(eventId: Long): Long?
-
     /**
-     * Returns the recurring masters whose latest occurrence starts before [targetTs], for
-     * on-demand extension when the user navigates far into the future.
+     * Returns the start of [eventId]'s latest rule row, the boundary for forward extension.
+     *
+     * Rows linked to an exception are left out: one holds a moved occurrence's new time, which
+     * can lie far past the rule rows (an override linked beyond the materialized window), and
+     * extending from it would skip every instance in between. Cancelled rows are left out for
+     * the same reason: deleting a moved occurrence leaves its row cancelled and unlinked
+     * (EventWriter.deleteSingleOccurrence), and the series' EXDATE already removes the instance.
      */
     @Query("""
-        SELECT DISTINCT o.event_id FROM occurrences o
+        SELECT MAX(start_ts) FROM occurrences
+        WHERE event_id = :eventId AND exception_event_id IS NULL AND is_cancelled = 0
+    """)
+    suspend fun getLatestRuleStartTs(eventId: Long): Long?
+
+    /**
+     * Returns the start of [eventId]'s earliest rule row, the boundary for past extension; rows
+     * are left out as in [getLatestRuleStartTs].
+     */
+    @Query("""
+        SELECT MIN(start_ts) FROM occurrences
+        WHERE event_id = :eventId AND exception_event_id IS NULL AND is_cancelled = 0
+    """)
+    suspend fun getEarliestRuleStartTs(eventId: Long): Long?
+
+    /** Returns the starts of [eventId]'s rows in [fromMs] (inclusive) to [toMs] (exclusive). */
+    @Query("SELECT start_ts FROM occurrences WHERE event_id = :eventId AND start_ts >= :fromMs AND start_ts < :toMs")
+    suspend fun getStartTsInRange(eventId: Long, fromMs: Long, toMs: Long): List<Long>
+
+    /**
+     * Returns the recurring masters with rows whose latest rule row ([getLatestRuleStartTs])
+     * starts before [targetTs], or that hold only exception-linked rows (counted from DTSTART).
+     */
+    @Query("""
+        SELECT o.event_id FROM occurrences o
         INNER JOIN events e ON o.event_id = e.id
         WHERE e.rrule IS NOT NULL
         AND e.original_event_id IS NULL
         GROUP BY o.event_id
-        HAVING MAX(o.start_ts) < :targetTs
+        HAVING COALESCE(MAX(CASE WHEN o.exception_event_id IS NULL AND o.is_cancelled = 0 THEN o.start_ts END), e.start_ts - 1) < :targetTs
     """)
     suspend fun getRecurringEventsNeedingExtension(targetTs: Long): List<Long>
 
     /**
-     * Returns the recurring masters whose earliest occurrence starts after [targetTs] and
-     * after their DTSTART, for on-demand extension when the user navigates far into the past.
+     * Returns the recurring masters whose earliest rule row ([getEarliestRuleStartTs]) starts
+     * after both [targetTs] and their DTSTART.
      *
-     * A master whose DTSTART is already materialized has nothing earlier to expand.
+     * A master whose DTSTART is already materialized has nothing earlier to expand; one with
+     * only exception-linked rows is left to forward extension, which starts at DTSTART.
      */
     @Query("""
-        SELECT DISTINCT o.event_id FROM occurrences o
+        SELECT o.event_id FROM occurrences o
         INNER JOIN events e ON o.event_id = e.id
         WHERE e.rrule IS NOT NULL
         AND e.original_event_id IS NULL
         GROUP BY o.event_id
-        HAVING MIN(o.start_ts) > :targetTs
-        AND e.start_ts < MIN(o.start_ts)
+        HAVING MIN(CASE WHEN o.exception_event_id IS NULL AND o.is_cancelled = 0 THEN o.start_ts END) > :targetTs
+        AND e.start_ts < MIN(CASE WHEN o.exception_event_id IS NULL AND o.is_cancelled = 0 THEN o.start_ts END)
     """)
     suspend fun getRecurringEventsNeedingPastExtension(targetTs: Long): List<Long>
 

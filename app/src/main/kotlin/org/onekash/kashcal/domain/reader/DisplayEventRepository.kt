@@ -8,8 +8,10 @@ import kotlinx.collections.immutable.toPersistentList
 import kotlinx.collections.immutable.toPersistentMap
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderManager
@@ -21,6 +23,7 @@ import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.TitleSuggestion
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.model.SearchResult
 import org.onekash.kashcal.domain.model.overlapsWindow
@@ -34,6 +37,10 @@ import javax.inject.Singleton
  * Merges Room events ([EventReader]) and device-calendar events so ViewModels and widgets
  * only see [DisplayEvent].
  *
+ * Each range read first has the repeating series expanded to its range
+ * ([OccurrenceGenerator.ensureCovered]), which writes occurrence rows; [searchDisplayEvents]
+ * leaves its Room range to the caller's searcher, which covers it.
+ *
  * A CalendarProvider [SecurityException] is caught and falls back to Room-only results.
  */
 @Singleton
@@ -43,7 +50,8 @@ class DisplayEventRepository @Inject constructor(
     private val calendarProviderManager: CalendarProviderManager,
     private val dataStore: KashCalDataStore,
     private val attendeesDao: AttendeesDao,
-    private val accountsDao: AccountsDao
+    private val accountsDao: AccountsDao,
+    private val occurrenceGenerator: OccurrenceGenerator,
 ) {
     companion object {
         private const val TAG = "DisplayEventRepo"
@@ -55,6 +63,20 @@ class DisplayEventRepository @Inject constructor(
      * CalendarProviderManager.
      */
     val deviceCalendarChangeSignal: StateFlow<Int> get() = calendarProviderManager.changeSignal
+
+    /**
+     * Emits the visible Room occurrences in [startMs]..[endMs] at once and, on each emission,
+     * expands the repeating series to that range alongside ([OccurrenceGenerator.ensureCovered],
+     * in memory when nothing changed), so a series rewritten while the view is open is expanded
+     * again; Room emits again when the new rows land.
+     */
+    private fun coveredRoomRange(startMs: Long, endMs: Long): Flow<List<EventReader.OccurrenceWithEvent>> = channelFlow {
+        launch { occurrenceGenerator.ensureCovered(startMs, endMs) }
+        eventReader.getVisibleOccurrencesWithEventsInRangeFlow(startMs, endMs).collect { rows ->
+            send(rows)
+            launch { occurrenceGenerator.ensureCovered(startMs, endMs) }
+        }
+    }
 
     /**
      * Emits the day pager's events, from 3 days before [centerDateMs] to 4 days after, grouped
@@ -75,7 +97,7 @@ class DisplayEventRepository @Inject constructor(
         val endDayCode = DayPagerUtils.msToDayCode(rangeEnd)
 
         return combine(
-            eventReader.getVisibleOccurrencesWithEventsInRangeFlow(rangeStart, rangeEnd),
+            coveredRoomRange(rangeStart, rangeEnd),
             calendarProviderManager.changeSignal,
             dataStore.showDeclinedEvents,
             attendeesDao.attendeesChangeSignal(),
@@ -100,7 +122,7 @@ class DisplayEventRepository @Inject constructor(
         val endDayCode = DayPagerUtils.msToDayCode(endMs)
 
         return combine(
-            eventReader.getVisibleOccurrencesWithEventsInRangeFlow(startMs, endMs),
+            coveredRoomRange(startMs, endMs),
             calendarProviderManager.changeSignal,
             dataStore.showDeclinedEvents,
             attendeesDao.attendeesChangeSignal(),
@@ -127,7 +149,7 @@ class DisplayEventRepository @Inject constructor(
         val endMs = dayCodeToEndOfDayMs(endDayCode)
 
         return combine(
-            eventReader.getVisibleOccurrencesWithEventsInRangeFlow(startMs, endMs),
+            coveredRoomRange(startMs, endMs),
             calendarProviderManager.changeSignal,
             dataStore.showDeclinedEvents,
             attendeesDao.attendeesChangeSignal(),
@@ -191,6 +213,7 @@ class DisplayEventRepository @Inject constructor(
         val startMs = dayCodeToStartOfDayMs(startDayCode)
         val endMs = dayCodeToEndOfDayMs(endDayCode)
 
+        occurrenceGenerator.ensureCovered(startMs, endMs)
         val roomOccurrences = eventReader
             .getVisibleOccurrencesWithEventsInRangeFlow(startMs, endMs)
             .first()
@@ -225,6 +248,7 @@ class DisplayEventRepository @Inject constructor(
         val roomEvents = if (roomCalendarIds.isEmpty()) {
             emptyList()
         } else {
+            occurrenceGenerator.ensureCovered(startMs, endMs)
             val rows = eventReader.getOccurrencesWithEventsInRange(startMs, endMs)
                 .filter { it.occurrence.calendarId in roomCalendarIds }
             applyDeclinedPolicy(rows, showDeclined)

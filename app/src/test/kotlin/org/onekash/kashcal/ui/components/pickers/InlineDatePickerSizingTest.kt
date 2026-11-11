@@ -22,10 +22,10 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.ZoneId
 import java.util.Locale
 import java.util.TimeZone
-import java.util.Calendar as JavaCalendar
 
 /**
  * Compose tests that [InlineDatePickerContent], the month grid of the home-screen, search and
@@ -58,13 +58,9 @@ class InlineDatePickerSizingTest {
 
     private fun millis(date: LocalDate) = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
-    private fun month(y: Int, m: Int) = JavaCalendar.getInstance().apply {
-        clear(); set(y, m - 1, 1)
-    }
-
     private fun render(
         selected: LocalDate = LocalDate.of(2026, 10, 27),
-        shown: JavaCalendar = month(2026, 10),
+        shown: YearMonth = YearMonth.of(2026, 10),
     ) {
         rule.setContent {
             MaterialTheme {

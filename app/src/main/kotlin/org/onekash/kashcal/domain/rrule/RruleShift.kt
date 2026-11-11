@@ -35,6 +35,7 @@ object RruleShift {
     /** Occurrences compared for a rule with no COUNT or UNTIL. */
     private const val COMPARE_COUNT = 500
     private const val SECOND_MS = 1_000L
+    private const val DAY_MS = 86_400_000L
 
     /** Far enough ahead for any bounded or capped expansion to finish. */
     private val YEARS_AHEAD: Long = 1_000L * 366 * 24 * 60 * 60 * 1_000
@@ -265,25 +266,34 @@ object RruleShift {
         return (ms / SECOND_MS) * SECOND_MS
     }
 
-    /** Returns true when the series' rule, from its start, still generates [occurrenceMs]. */
+    /**
+     * Returns true when the series' rule, from its start, still generates [occurrenceMs]. The
+     * range starts two days before the occurrence, not at DTSTART: one engine call reads a
+     * limited number of dates from the range start ([IcalDavRRuleEngine]), so a range from
+     * DTSTART would miss an occurrence decades on. The two days cover a start a zone change
+     * moved: ical4j picks dates by wall time, and a 02:30 in a spring-forward gap starts at
+     * 03:30, after the wall time a narrower range would begin at.
+     */
     private fun isOccurrence(master: Event, rule: String, occurrenceMs: Long): Boolean {
         val target = (occurrenceMs / SECOND_MS) * SECOND_MS
         return IcalDavRRuleEngine.expandToTimestamps(
-            rule, master.startTs, master.startTs - SECOND_MS, occurrenceMs + SECOND_MS, master.timezone, master.isAllDay, null, null,
+            rule, master.startTs, target - 2 * DAY_MS, target + SECOND_MS, master.timezone, master.isAllDay, null, null,
         ).any { it == target }
     }
 
     /**
-     * True when the series' EXDATE or RDATE changes what it generates from
-     * [fromMs] on: those recorded dates would no longer match moved slots.
+     * True when the series' EXDATE or RDATE changes what it generates from [fromMs] on: those
+     * recorded dates would no longer match moved slots. It compares the instances from [fromMs]
+     * that one engine call returns ([IcalDavRRuleEngine]; about 27 years of a daily series), so
+     * a date further ahead isn't seen.
      */
     private fun extraDatesReachFrom(master: Event, fromMs: Long): Boolean {
         if (master.exdate.isNullOrBlank() && master.rdate.isNullOrBlank()) return false
         val rule = master.rrule ?: return false
         val end = master.startTs + YEARS_AHEAD
         fun expandWith(rdate: String?, exdate: String?) = IcalDavRRuleEngine.expandToTimestamps(
-            rule, master.startTs, master.startTs - SECOND_MS, end, master.timezone, master.isAllDay, rdate, exdate,
-        ).filter { it >= fromMs }
+            rule, master.startTs, fromMs, end, master.timezone, master.isAllDay, rdate, exdate,
+        )
         val plain = expandWith(null, null)
         val withExtras = expandWith(master.rdate, master.exdate)
         return plain.isEmpty() || plain != withExtras

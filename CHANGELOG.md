@@ -1,3 +1,8 @@
+## [2026.11.10]
+
+- Fixed repeating events missing on far-off dates; views and date pickers now reach 150 years either side of today
+- Fixed the wrong day being selected in some years after 2038 (#435)
+
 ## [2026.11.09]
 
 - Fixed a rescheduled invitation file not updating the event in an iCloud or CalDAV calendar; it now moves the event and syncs, and says why when it skips one

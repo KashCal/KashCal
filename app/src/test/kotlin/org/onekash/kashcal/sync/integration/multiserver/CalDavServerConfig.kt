@@ -200,6 +200,27 @@ data class CalDavServerConfig(
             supportsCtag = true
         )
 
+        // DAViCal, its own PHP engine on PostgreSQL (not sabre/dav), local container
+        // fintechstudios/davical:1.1.12 under /caldav.php/; well-known 301s there with the port
+        // kept. Live, 2026-11-09: the principal, calendar-home-set and addressbook-home-set are
+        // one URL (/caldav.php/<user>/), and a Depth-1 listing of that home also returns the
+        // calendar-proxy-read/-write principals as collections. DAViCal creates no home
+        // collections over DAV, so the test account's /calendar/ and /calendar2/ are fixture setup.
+        // It is kept out of [allServers]: DAViCal reads a calendar-query time-range with no end as
+        // start + 730 days (RFC 4791 §9.9 says no end), so every test that lists or pulls from
+        // 1970 sees an empty calendar. The baselines other tests hold for it apply once it is back.
+        val DAVICAL = CalDavServerConfig(
+            name = "DAViCal",
+            serverKey = "DAVICAL_SERVER",
+            usernameKey = "DAVICAL_USERNAME",
+            passwordKey = "DAVICAL_PASSWORD",
+            defaultServerUrl = "http://localhost:8086",
+            davEndpointSuffix = "/caldav.php/",
+            quirksFactory = { url -> DefaultQuirks(url) },
+            usesWellKnownDiscovery = true,
+            supportsCtag = true
+        )
+
         // The local Radicale behind a local TLS proxy, included only when KASHCAL_TLS_PROXY=1.
         // Each entry is a server setup the redirect and cleartext rules must handle:
         // - RadicaleTLS, https://localhost:9443: a plain https proxy in front of Radicale.

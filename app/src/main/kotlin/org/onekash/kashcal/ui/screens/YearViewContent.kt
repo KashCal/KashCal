@@ -51,15 +51,13 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.coroutines.launch
 import org.onekash.kashcal.ui.model.MonthGrid
+import org.onekash.kashcal.ui.util.YearPagerUtils
 import java.time.DayOfWeek
 import java.time.format.TextStyle
 import java.util.Calendar
 import java.util.Locale
 import kotlin.math.ceil
 import kotlin.math.floor
-
-private const val YEAR_PAGER_TOTAL = 200
-private const val YEAR_PAGER_CENTER = 100
 
 private fun getLocalizedMonthNames(): List<String> {
     val locale = Locale.getDefault()
@@ -84,32 +82,28 @@ fun YearViewContent(
     val currentYear = remember { today.get(Calendar.YEAR) }
 
     val pagerState = rememberPagerState(
-        initialPage = YEAR_PAGER_CENTER,
-        pageCount = { YEAR_PAGER_TOTAL }
+        initialPage = YearPagerUtils.CENTER_PAGE,
+        pageCount = { YearPagerUtils.TOTAL_PAGES }
     )
     val scope = rememberCoroutineScope()
 
-    // Page YEAR_PAGER_CENTER is the current year.
+    // Page YearPagerUtils.CENTER_PAGE is the current year.
     val displayedYear by remember {
-        derivedStateOf {
-            val page = pagerState.currentPage
-            currentYear + (page - YEAR_PAGER_CENTER)
-        }
+        derivedStateOf { YearPagerUtils.pageToYear(pagerState.currentPage, currentYear) }
     }
 
     // Reports each current page's year so the host loads that year's event dots.
     LaunchedEffect(Unit) {
         snapshotFlow { pagerState.currentPage }
             .collect { page ->
-                val year = currentYear + (page - YEAR_PAGER_CENTER)
-                onYearChanged(year)
+                onYearChanged(YearPagerUtils.pageToYear(page, currentYear))
             }
     }
 
     // Scrolls back to the current year, then consumes the request.
     LaunchedEffect(pendingNavigateToToday) {
         if (pendingNavigateToToday) {
-            pagerState.animateScrollToPage(YEAR_PAGER_CENTER)
+            pagerState.animateScrollToPage(YearPagerUtils.CENTER_PAGE)
             onNavigateToTodayConsumed()
         }
     }
@@ -120,11 +114,10 @@ fun YearViewContent(
     Column(modifier = modifier.fillMaxSize()) {
         YearHeaderStrip(
             displayedYear = displayedYear,
-            startYear = currentYear - YEAR_PAGER_CENTER,
-            totalYears = YEAR_PAGER_TOTAL,
+            startYear = YearPagerUtils.pageToYear(0, currentYear),
+            totalYears = YearPagerUtils.TOTAL_PAGES,
             onYearClick = { year ->
-                val page = YEAR_PAGER_CENTER + (year - currentYear)
-                scope.launch { pagerState.animateScrollToPage(page) }
+                scope.launch { pagerState.animateScrollToPage(YearPagerUtils.yearToPage(year, currentYear)) }
             }
         )
 
@@ -133,7 +126,7 @@ fun YearViewContent(
             modifier = Modifier.fillMaxSize(),
             verticalAlignment = Alignment.Top
         ) { page ->
-            val pageYear = currentYear + (page - YEAR_PAGER_CENTER)
+            val pageYear = YearPagerUtils.pageToYear(page, currentYear)
             YearPage(
                 year = pageYear,
                 eventDots = eventDots,

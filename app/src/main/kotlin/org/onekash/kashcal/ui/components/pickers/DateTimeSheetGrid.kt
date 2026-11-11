@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import org.onekash.kashcal.R
+import org.onekash.kashcal.ui.util.CalendarSpan
 import org.onekash.kashcal.util.DateTimeUtils
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -169,18 +170,22 @@ internal fun DateTimeSheetGrid(
     // The swipe handler keeps running across recompositions, so it reads the latest callback.
     val currentOnMonth by rememberUpdatedState(onMonth)
     var totalDrag by remember { mutableFloatStateOf(0f) }
+    // The arrows and swipes stop at the CalendarSpan's ends; from a month outside it (an
+    // existing event's) they only move toward it.
+    val canGoBack = CalendarSpan.canStepMonth(displayedMonth, -1, today)
+    val canGoForward = CalendarSpan.canStepMonth(displayedMonth, 1, today)
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp)
             .then(
-                if (!showMonthYearPicker) Modifier.pointerInput(displayedMonth) {
+                if (!showMonthYearPicker) Modifier.pointerInput(displayedMonth, canGoBack, canGoForward) {
                     detectHorizontalDragGestures(
                         onDragStart = { totalDrag = 0f },
                         onDragEnd = {
-                            if (totalDrag > 100f) currentOnMonth(displayedMonth.minusMonths(1))
-                            else if (totalDrag < -100f) currentOnMonth(displayedMonth.plusMonths(1))
+                            if (totalDrag > 100f && canGoBack) currentOnMonth(displayedMonth.minusMonths(1))
+                            else if (totalDrag < -100f && canGoForward) currentOnMonth(displayedMonth.plusMonths(1))
                         },
                         onHorizontalDrag = { _, dragAmount -> totalDrag += dragAmount }
                     )
@@ -190,6 +195,8 @@ internal fun DateTimeSheetGrid(
         SheetMonthHeader(
             displayedMonth = displayedMonth,
             showMonthYearPicker = showMonthYearPicker,
+            canGoBack = canGoBack,
+            canGoForward = canGoForward,
             onShowMonthYearPickerChange = onShowMonthYearPickerChange,
             onMonth = onMonth,
         )
@@ -204,6 +211,7 @@ internal fun DateTimeSheetGrid(
                         selectedYear = displayedMonth.year,
                         selectedMonth = displayedMonth.monthValue - 1,
                         onMonthYearSelected = { year, month -> onMonth(YearMonth.of(year, month + 1)) },
+                        yearRange = CalendarSpan.yearRange(today),
                         modifier = Modifier.fillMaxWidth()
                     )
                 } else {
@@ -230,6 +238,8 @@ internal fun DateTimeSheetGrid(
 private fun SheetMonthHeader(
     displayedMonth: YearMonth,
     showMonthYearPicker: Boolean,
+    canGoBack: Boolean,
+    canGoForward: Boolean,
     onShowMonthYearPickerChange: (Boolean) -> Unit,
     onMonth: (YearMonth) -> Unit,
 ) {
@@ -247,7 +257,7 @@ private fun SheetMonthHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (!showMonthYearPicker) {
-            IconButton(onClick = { onMonth(displayedMonth.minusMonths(1)) }) {
+            IconButton(onClick = { onMonth(displayedMonth.minusMonths(1)) }, enabled = canGoBack) {
                 Icon(
                     Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                     stringResource(R.string.cd_previous_month),
@@ -294,7 +304,7 @@ private fun SheetMonthHeader(
             }
         }
         if (!showMonthYearPicker) {
-            IconButton(onClick = { onMonth(displayedMonth.plusMonths(1)) }) {
+            IconButton(onClick = { onMonth(displayedMonth.plusMonths(1)) }, enabled = canGoForward) {
                 Icon(
                     Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     stringResource(R.string.cd_next_month),

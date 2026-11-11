@@ -53,7 +53,8 @@ class ExceptionAttendeeDeliveryProbeTest(
 
         /**
          * SCHEDULE-STATUS is stamped on the exception's invitee, or the invitee was routed out
-         * of the stored exception: the exception-only attendee was delivered.
+         * of the stored exception: the server handles the exception-only invite (any code
+         * counts, as in [ServerSideSchedulingProbeTest]).
          */
         SERVER_SCHEDULES,
 
@@ -97,7 +98,7 @@ class ExceptionAttendeeDeliveryProbeTest(
          * records and passes; an entry fails the probe on any change.
          *
          * - SERVER_SCHEDULES, a SCHEDULE-STATUS receipt on the exception's invitee: iCloud
-         *   (5.1), Fastmail (1.1). Per-occurrence invites are delivered implicitly.
+         *   (5.1), Fastmail (1.1), DAViCal (3.7). Per-occurrence invites are handled implicitly.
          * - NEEDS_CLIENT_ITIP, the invitee stored verbatim with no receipt, so a bundled PUT
          *   sends nothing for the per-instance add: Stalwart, Baikal, BaikalDigest, Nextcloud,
          *   SOGo, Mailbox.
@@ -108,11 +109,11 @@ class ExceptionAttendeeDeliveryProbeTest(
          * Against the master probe ([ServerSideSchedulingProbeTest]): Baikal, BaikalDigest and
          * Nextcloud schedule at the master level but need client iTIP for an exception-only
          * attendee, so implicit delivery covers a whole-series attendee change but not a
-         * per-occurrence add. Zoho goes from CLIENT_MUST_DELIVER to DROPPED. Only iCloud and
-         * Fastmail deliver an exception-only invite implicitly. So implicit-PUT delivery alone
-         * can't carry per-occurrence invites: every NEEDS_CLIENT_ITIP or CLIENT_MUST_DELIVER
-         * server needs the client-side outbox iTIP, and a DROPPED server (Zoho) can't hold
-         * per-occurrence attendees without a different representation.
+         * per-occurrence add. Zoho goes from CLIENT_MUST_DELIVER to DROPPED. Only iCloud,
+         * Fastmail and DAViCal handle an exception-only invite on the server. So implicit-PUT
+         * delivery alone can't carry per-occurrence invites: every NEEDS_CLIENT_ITIP or
+         * CLIENT_MUST_DELIVER server needs the client-side outbox iTIP, and a DROPPED server (Zoho)
+         * can't hold per-occurrence attendees without a different representation.
          */
         private val EXPECTED: Map<String, Disposition> = mapOf(
             "iCloud" to Disposition.SERVER_SCHEDULES,
@@ -125,6 +126,7 @@ class ExceptionAttendeeDeliveryProbeTest(
             "SOGo" to Disposition.NEEDS_CLIENT_ITIP,
             "Mailbox" to Disposition.NEEDS_CLIENT_ITIP,
             "Fastmail" to Disposition.SERVER_SCHEDULES,
+            "DAViCal" to Disposition.SERVER_SCHEDULES,
         )
     }
 

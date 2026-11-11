@@ -1,0 +1,2 @@
+• Repeating events show on every date, up to 150 years either side of today
+• Fixed the wrong day being selected after 2038 (#435)

@@ -2,6 +2,8 @@ package org.onekash.kashcal.ui.viewmodels
 
 import app.cash.turbine.test
 import io.mockk.coEvery
+import io.mockk.coVerifyOrder
+import io.mockk.coJustRun
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -70,7 +72,8 @@ import java.util.Calendar as JavaCalendar
  * sync, banner, spinner, partial errors), network state, sheets and snackbars, event saves and
  * deletes at each scope, month dots, pending actions, the week and day pagers, time-grid scroll
  * and zoom restore, date pickers, the time-grid FAB seed, the view picker and the reactive week
- * and month grids, occurrence extension, the device calendar picker filter and avatar initials.
+ * and month grids, the missing-occurrence repair and the search range's occurrence coverage, the
+ * device calendar picker filter and avatar initials.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -5301,39 +5304,64 @@ class HomeViewModelTest {
         assertEquals(ViewMode.AGENDA, viewModel.uiState.value.viewMode)
     }
 
-    // ==================== Occurrence Extension Tests ====================
+    // ==================== Occurrence Repair and Coverage Tests ====================
 
     @Test
-    fun `setViewingMonth calls both forward and past extension`() = runTest {
+    fun `setViewingMonth runs the missing-occurrence repair and no extension`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Both extensions extend nothing.
-        coEvery { eventCoordinator.extendOccurrencesIfNeeded(any()) } returns 0
-        coEvery { eventCoordinator.extendPastOccurrencesIfNeeded(any()) } returns 0
-
-        // A past month.
-        viewModel.setViewingMonth(2020, 2) // March 2020
-        advanceUntilIdle()
-
-        // Both the forward and the past extension run.
-        coVerify { eventCoordinator.extendOccurrencesIfNeeded(any()) }
-        coVerify { eventCoordinator.extendPastOccurrencesIfNeeded(any()) }
-    }
-
-    @Test
-    fun `setViewingMonth calls repairMissingOccurrences alongside extension`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        coEvery { eventCoordinator.extendOccurrencesIfNeeded(any()) } returns 0
-        coEvery { eventCoordinator.extendPastOccurrencesIfNeeded(any()) } returns 0
         coEvery { eventCoordinator.repairMissingOccurrences() } returns 2
 
         viewModel.setViewingMonth(2020, 2)
         advanceUntilIdle()
 
         coVerify { eventCoordinator.repairMissingOccurrences() }
+        coVerify(exactly = 0) { eventCoordinator.ensureOccurrencesCover(any(), any()) }
+    }
+
+    /** Makes the mocked search run the ViewModel's Room searcher, as the real one does. */
+    private fun runRoomSearcher() {
+        coEvery { displayEventRepository.searchDisplayEvents(any(), any(), any(), any()) } coAnswers {
+            arg<suspend (String) -> List<org.onekash.kashcal.domain.model.SearchResult>>(3).invoke(firstArg())
+        }
+    }
+
+    @Test
+    fun `a range-filtered search covers the range's occurrences before searching it`() = runTest {
+        runRoomSearcher()
+        coJustRun { eventCoordinator.ensureOccurrencesCover(any(), any()) }
+        coEvery { eventReader.searchEventsInRangeWithNextOccurrence(any(), any(), any()) } returns emptyList()
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        val start = 1_900_000_000_000L
+        val end = start + 7 * 24 * 3_600_000L
+
+        viewModel.activateSearch()
+        viewModel.setSearchDateFilter(DateFilter.CustomRange(start, end))
+        viewModel.updateSearchQuery("test")
+        advanceUntilIdle()
+
+        val range = DateFilter.CustomRange(start, end).getTimeRange(java.time.ZoneId.systemDefault(), viewModel.uiState.value.firstDayOfWeek)!!
+        coVerifyOrder {
+            eventCoordinator.ensureOccurrencesCover(range.first, range.second)
+            eventReader.searchEventsInRangeWithNextOccurrence("test", range.first, range.second)
+        }
+    }
+
+    @Test
+    fun `an Any time search needs no occurrence coverage`() = runTest {
+        runRoomSearcher()
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.activateSearch()
+        viewModel.setSearchDateFilter(DateFilter.AnyTime)
+        viewModel.updateSearchQuery("test")
+        advanceUntilIdle()
+
+        coVerify { eventReader.searchEventsWithNextOccurrence("test") }
+        coVerify(exactly = 0) { eventCoordinator.ensureOccurrencesCover(any(), any()) }
     }
 
     // ==================== Helper Functions ====================

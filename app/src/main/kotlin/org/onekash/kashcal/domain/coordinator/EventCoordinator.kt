@@ -839,64 +839,39 @@ class EventCoordinator @Inject constructor(
         return occurrenceGenerator.regenerateOccurrences(event)
     }
 
-    /** Expands event [eventId]'s occurrences forward to [extendToMs]; returns the count added. */
-    suspend fun extendOccurrences(eventId: Long, extendToMs: Long): Int {
-        val event = requireNotNull(eventReader.getEventById(eventId)) {
-            "Event not found: $eventId"
-        }
-        return occurrenceGenerator.extendOccurrences(event, extendToMs)
+    /**
+     * Makes every repeating series' occurrences cover [startMs] to [endMs], for a read the
+     * occurrence table doesn't serve yet; the rules are on [OccurrenceGenerator.ensureCovered].
+     */
+    suspend fun ensureOccurrencesCover(startMs: Long, endMs: Long) {
+        occurrenceGenerator.ensureCovered(startMs, endMs)
     }
 
     /**
-     * Expands every recurring event whose last occurrence starts before [targetDateMs] plus
-     * [bufferMonths] 30-day months; called on month navigation.
-     *
-     * @return the number of occurrences added across all events.
+     * Keeps every repeating series expanded ahead of [nowMs], forward only, for the readers that
+     * work near today (reminders, Insights, share availability): a series whose rows end within
+     * HORIZON_RENEW_MS is extended to [OccurrenceGenerator.EXPANSION_WINDOW_MS] ahead, so a
+     * series written in the last year needs no work. The daily reminder refresh and each
+     * process start call it.
      */
-    suspend fun extendOccurrencesIfNeeded(targetDateMs: Long, bufferMonths: Int = 6): Int {
-        val extendToMs = targetDateMs + (bufferMonths * 30L * 24 * 60 * 60 * 1000)
-        val eventIds = eventReader.getRecurringEventsNeedingExtension(extendToMs)
-
-        var totalExtended = 0
-        for (eventId in eventIds) {
-            totalExtended += extendOccurrences(eventId, extendToMs)
-        }
-        return totalExtended
+    suspend fun ensureOccurrenceHorizon(nowMs: Long) {
+        occurrenceGenerator.ensureCovered(
+            startMs = nowMs,
+            endMs = nowMs + HORIZON_RENEW_MS,
+            backward = false,
+            extendToMs = nowMs + OccurrenceGenerator.EXPANSION_WINDOW_MS,
+        )
     }
 
-    /** Expands event [eventId]'s occurrences back to [extendToMs]; returns the count added. */
-    suspend fun extendPastOccurrences(eventId: Long, extendToMs: Long): Int {
-        val event = requireNotNull(eventReader.getEventById(eventId)) {
-            "Event not found: $eventId"
-        }
-        return occurrenceGenerator.extendPastOccurrences(event, extendToMs)
-    }
-
-    /**
-     * Expands back every recurring event whose first occurrence starts after both its DTSTART
-     * and [targetDateMs] minus [bufferMonths] 30-day months; called on month navigation.
-     *
-     * @return the number of occurrences added across all events.
-     */
-    suspend fun extendPastOccurrencesIfNeeded(targetDateMs: Long, bufferMonths: Int = 6): Int {
-        val extendToMs = targetDateMs - (bufferMonths * 30L * 24 * 60 * 60 * 1000)
-        val eventIds = eventReader.getRecurringEventsNeedingPastExtension(extendToMs)
-
-        var totalExtended = 0
-        for (eventId in eventIds) {
-            totalExtended += extendPastOccurrences(eventId, extendToMs)
-        }
-        return totalExtended
-    }
-
-    /** Regenerates every recurring event that has no occurrences; returns the count repaired. */
+    /** Regenerates every recurring event that has no occurrences; returns how many got rows. */
     suspend fun repairMissingOccurrences(): Int {
         val eventIds = eventReader.getRecurringEventsWithNoOccurrences()
         var repaired = 0
         for (eventId in eventIds) {
             try {
-                regenerateOccurrences(eventId)
-                repaired++
+                // A rule with nothing in the window writes no rows: not a repair, or the month
+                // swipe would retry it on every swipe.
+                if (regenerateOccurrences(eventId) > 0) repaired++
             } catch (_: IllegalArgumentException) {
                 // Deleted between the query and the regeneration.
             }
@@ -1598,5 +1573,8 @@ class EventCoordinator @Inject constructor(
 
     companion object {
         private const val TAG = "EventCoordinator"
+
+        /** How close to running out a series' rows may get before the daily band extends them. */
+        private const val HORIZON_RENEW_MS = 365L * 24 * 60 * 60 * 1000
     }
 }

@@ -89,8 +89,8 @@ import java.util.concurrent.TimeUnit
  * over a real DataStore (so the lookback the occurrence generator and the pull read changes the
  * way the setting does), a real in-memory Room, the real EventCoordinator, EventWriter,
  * OccurrenceGenerator, PullStrategy, PushStrategy and IcsSubscriptionRepository, and a CalDAV
- * server that keeps its resources ([FakeDavCalendar]). Scrolling back runs the past extension and
- * the occurrence repair that HomeViewModel runs on month navigation.
+ * server that keeps its resources ([FakeDavCalendar]). Scrolling back runs the coverage pass a
+ * view's read runs and the occurrence repair HomeViewModel runs on a month swipe.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -397,11 +397,11 @@ class AccountSettingsLookbackNarrowTest {
     }
 
     /**
-     * Month navigation back to [daysAgo] days before today: the past extension and the repair
-     * HomeViewModel runs (it also extends forward, which a past cutoff doesn't touch).
+     * A view read back to [daysAgo] days before today: the coverage pass the read runs and the
+     * repair HomeViewModel runs on a month swipe.
      */
     private suspend fun scrollBackTo(daysAgo: Int) {
-        coordinator.extendPastOccurrencesIfNeeded(now - daysAgo * day)
+        coordinator.ensureOccurrencesCover(now - daysAgo * day, now - daysAgo * day + day)
         coordinator.repairMissingOccurrences()
     }
 

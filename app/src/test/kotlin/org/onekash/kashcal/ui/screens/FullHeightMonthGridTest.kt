@@ -146,7 +146,7 @@ class FullHeightMonthGridTest {
                             month = month0,
                             selectedDate = 0L,
                             monthEventsMap = mapOf(holder?.value ?: events, year, month0),
-                            onDateSelected = { ms -> opened += Instant.ofEpochMilli(ms).atZone(zone).toLocalDate() },
+                            onDayTap = { _, ms -> opened += Instant.ofEpochMilli(ms).atZone(zone).toLocalDate() },
                             firstDayOfWeekPref = JavaCalendar.SUNDAY,
                             showWeekNumbers = false,
                             showEventEmojis = false,

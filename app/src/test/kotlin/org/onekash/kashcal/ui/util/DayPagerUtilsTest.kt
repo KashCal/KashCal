@@ -20,16 +20,13 @@ class DayPagerUtilsTest {
     // ==================== Constants Tests ====================
 
     @Test
-    fun `INITIAL_PAGE is reasonable value for today`() {
-        assertEquals(36500, DayPagerUtils.INITIAL_PAGE)
+    fun `INITIAL_PAGE is 151 years of 366 days, the span plus a spare year`() {
+        assertEquals(55266, DayPagerUtils.INITIAL_PAGE)
     }
 
     @Test
-    fun `TOTAL_PAGES allows ~100 years each direction`() {
-        assertEquals(73000, DayPagerUtils.TOTAL_PAGES)
-        // 36500 days is about 100 years.
-        val yearsEachDirection = DayPagerUtils.INITIAL_PAGE / 365
-        assertTrue(yearsEachDirection >= 99) // ~100 years
+    fun `TOTAL_PAGES is INITIAL_PAGE each side of today`() {
+        assertEquals(2 * DayPagerUtils.INITIAL_PAGE + 1, DayPagerUtils.TOTAL_PAGES)
     }
 
     @Test
@@ -190,21 +187,17 @@ class DayPagerUtilsTest {
     }
 
     @Test
-    fun `page range covers at least 100 years in each direction`() {
+    fun `page range reaches the span's first and last day`() {
         val todayMs = getFixedTodayMs()
+        val today = DayPagerUtils.dayCodeToLocalDate(DayPagerUtils.msToDayCode(todayMs))
 
-        // 100 years ago (page 0)
-        val page0Ms = DayPagerUtils.pageToDateMs(0, todayMs)
-        val page0DayCode = DayPagerUtils.msToDayCode(page0Ms)
+        val page0 = DayPagerUtils.dayCodeToLocalDate(DayPagerUtils.msToDayCode(DayPagerUtils.pageToDateMs(0, todayMs)))
+        val lastPage = DayPagerUtils.dayCodeToLocalDate(
+            DayPagerUtils.msToDayCode(DayPagerUtils.pageToDateMs(DayPagerUtils.TOTAL_PAGES - 1, todayMs))
+        )
 
-        // 100 years from now (page 72999)
-        val lastPageMs = DayPagerUtils.pageToDateMs(DayPagerUtils.TOTAL_PAGES - 1, todayMs)
-        val lastPageDayCode = DayPagerUtils.msToDayCode(lastPageMs)
-
-        // Verify significant year range
-        val startYear = page0DayCode / 10000
-        val endYear = lastPageDayCode / 10000
-        assertTrue("Year range should span at least 100 years", endYear - startYear >= 100)
+        assertTrue("page 0 is $page0", !page0.isAfter(CalendarSpan.firstDay(today)))
+        assertTrue("last page is $lastPage", !lastPage.isBefore(CalendarSpan.lastDay(today)))
     }
 
     // ==================== Negative partial days and DST days ====================

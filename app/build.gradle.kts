@@ -228,6 +228,15 @@ android {
                         it.systemProperty(key, project.property(key).toString())
                     }
                 }
+                // Property tests (PropertyRuns): -Pkashcal.propertySeed=<seed>|random replays a
+                // printed seed or draws a new one, -Pkashcal.propertyIterations=<n> multiplies the
+                // iterations. Never up to date while set, so a repeated random run draws again.
+                listOf("kashcal.propertySeed", "kashcal.propertyIterations").forEach { key ->
+                    if (project.hasProperty(key)) {
+                        it.systemProperty(key, project.property(key).toString())
+                        it.outputs.upToDateWhen { false }
+                    }
+                }
             }
         }
     }
@@ -344,6 +353,20 @@ dependencies {
     // to the AGP variant API on this bleeding-edge toolchain.
     testImplementation(libs.roborazzi)
     testImplementation(libs.roborazzi.compose)
+
+    // Property tests (checkAll, generators, shrinking), run from JUnit 4 tests through
+    // PropertyRuns. The excluded modules aren't needed by checkAll: a bytecode agent with native
+    // access (kotlinx-coroutines-debug pulls byte-buddy and jna), classpath scanning
+    // (classgraph), an XML serialization stack (xmlutil), regex-driven generators (rgxgen, for
+    // Arb.stringPattern) and assertion diffs (java-diff-utils, for Kotest's matchers).
+    testImplementation(libs.kotest.property) {
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-debug")
+        exclude(group = "io.github.pdvrieze.xmlutil")
+        exclude(group = "io.github.classgraph")
+        exclude(group = "com.github.curious-odd-man")
+        exclude(group = "community.flock.kotlinx.rgxgen")
+        exclude(group = "io.github.java-diff-utils")
+    }
 
     // Testing - Instrumented
     androidTestImplementation(libs.androidx.junit)

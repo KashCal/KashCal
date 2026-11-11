@@ -32,9 +32,10 @@ import java.util.UUID
  *  - SCHEDULE-AGENT=CLIENT on the stored ATTENDEE (RFC 6638 §7.1) -> the server explicitly
  *    declines; the client must send the iTIP. (Zoho.)
  *  - SCHEDULE-STATUS=N.N stamped on the stored ATTENDEE (RFC 6638 §7.3) -> the server took
- *    ownership and reported a delivery result (1.x = sent/queued, 5.x = it tried but the
- *    recipient was undeliverable, which is expected for the @example.test recipient). Positive
- *    signal.
+ *    ownership and reported a delivery result (1.x = sent/queued, 3.x = it refused the
+ *    recipient, 5.x = it tried but the recipient was undeliverable; 3.x and 5.x are expected for
+ *    the @example.test recipient). Any code counts, a refusal included: the server owns delivery
+ *    even when nothing leaves it. Positive signal.
  *  - The ATTENDEE was routed out of the stored resource (the invitee line is gone although the
  *    organizer self-attendee may remain) -> the server's scheduling pipeline took it. Positive
  *    signal. (iCloud-class behavior.)
@@ -74,7 +75,8 @@ class ServerSideSchedulingProbeTest(
 
         /**
          * Positive delivery signal: SCHEDULE-STATUS stamped, or the invitee ATTENDEE was routed
-         * out of the stored resource. A plain PUT invites the attendee.
+         * out of the stored resource. The server, not the client, handles the invite on a plain
+         * PUT, whether or not it reaches the recipient.
          */
         SERVER_SCHEDULES,
 
@@ -104,10 +106,10 @@ class ServerSideSchedulingProbeTest(
         /**
          * Observed disposition per server, probed live 2026-06-07 under the "positive delivery
          * signal required" rule (keeping the ATTENDEE line isn't proof of delivery). Nextcloud,
-         * Fastmail and Cyrus were probed later; see their entries.
+         * Fastmail, Cyrus and DAViCal were probed later; see their entries.
          *
          * SERVER_SCHEDULES: stamped a SCHEDULE-STATUS receipt: iCloud (5.1), Baikal (1.1),
-         *   BaikalDigest (1.1) on 2026-06-07; Nextcloud, Fastmail and Cyrus since.
+         *   BaikalDigest (1.1) on 2026-06-07; Nextcloud, Fastmail, Cyrus and DAViCal (3.7) since.
          * NEEDS_CLIENT_ITIP: stored the attendee verbatim with no receipt, so a plain PUT sends
          *   nothing; delivery needs a client-side iTIP outbox POST: Stalwart, SOGo, Mailbox/OX
          *   (the last advertises a schedule-outbox-URL but does nothing implicitly).
@@ -139,6 +141,10 @@ class ServerSideSchedulingProbeTest(
             // SCHEDULE-STATUS=1.1 on the invitee, the same server-side scheduling as hosted
             // Fastmail; verified live against the kashcal-cyrus container.
             "Cyrus" to Disposition.SERVER_SCHEDULES,
+            // DAViCal schedules on a plain PUT, live 2026-11-09: an invitee on the same server
+            // gets SCHEDULE-STATUS=1.2 and the invite in its .in/ inbox; an address outside it
+            // (this probe's invitee) gets SCHEDULE-STATUS=3.7, so nothing leaves the server.
+            "DAViCal" to Disposition.SERVER_SCHEDULES,
         )
     }
 

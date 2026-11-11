@@ -43,6 +43,10 @@ class RRuleExpander {
      *   alone, whatever the range
      * @param overrides exceptions, each carrying a RECURRENCE-ID, that replace the occurrence
      *   they anchor to
+     * @param limit the most RRULE dates to read, counted from [rangeStart] and including those
+     *   an EXDATE removes; null reads them all. When the limit is reached the result ends at the
+     *   last date read: RDATEs after it are left out too, so a caller asking again from that
+     *   date gets them then. A caller that reads one range only doesn't see them.
      * @return each occurrence as a copy of the master with its own start and end and no
      *   recurrence properties, or the matching override itself
      */
@@ -50,7 +54,8 @@ class RRuleExpander {
         masterEvent: ICalEvent,
         rangeStart: Instant,
         rangeEnd: Instant,
-        overrides: List<ICalEvent> = emptyList()
+        overrides: List<ICalEvent> = emptyList(),
+        limit: Int? = null,
     ): List<ICalEvent> {
         val rrule = masterEvent.rrule
 
@@ -109,6 +114,9 @@ class RRuleExpander {
             return null
         }
 
+        // The instant of the last RRULE date read when [limit] cut the expansion.
+        var cutMs: Long? = null
+
         // ========== RRULE Expansion ==========
         if (rrule != null) {
             val recur = buildRecur(rrule, eventZone, masterEvent.isAllDay)
@@ -137,8 +145,12 @@ class RRuleExpander {
                 periodEnd.toLocalDateTime()
             }
 
-            // ical4j 4.x: getDates accepts LocalDateTime, returns List<LocalDateTime>
-            val dates: List<LocalDateTime> = recur.getDates(seed, rangeStartLdt, rangeEndLdt)
+            // ical4j reads the range period by period, stops at maxCount dates (-1: none) and
+            // sorts what it read.
+            val dates: List<LocalDateTime> = recur.getDates(seed, rangeStartLdt, rangeEndLdt, limit ?: -1)
+            if (limit != null && dates.size >= limit) {
+                cutMs = dates.last().atZone(eventZone).toInstant().toEpochMilli()
+            }
 
             for (date in dates) {
                 val occurrenceZdt = date.atZone(eventZone)
@@ -189,6 +201,7 @@ class RRuleExpander {
         for (rdate in masterEvent.rdates) {
             if (rdate.timestamp < rangeStart.toEpochMilli() ||
                 rdate.timestamp >= rangeEnd.toEpochMilli()) continue
+            if (cutMs != null && rdate.timestamp > cutMs) continue
 
             val rdateDayCode = rdate.toDayCode()
 

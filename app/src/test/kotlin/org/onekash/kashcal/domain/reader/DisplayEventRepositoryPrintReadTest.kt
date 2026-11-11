@@ -98,7 +98,7 @@ class DisplayEventRepositoryPrintReadTest {
         val manager: CalendarProviderManager = mockk()
         display = DisplayEventRepository(
             EventReader(database), f.repository, manager, dataStore,
-            database.attendeesDao(), database.accountsDao(),
+            database.attendeesDao(), database.accountsDao(), generator,
         )
     }
 
@@ -287,7 +287,7 @@ class DisplayEventRepositoryPrintReadTest {
             coEvery { getEnabledDeviceCalendarIds() } returns setOf(SYNCED_CAL)
         }
         val repository = DisplayEventRepository(
-            EventReader(database), failing, mockk(), dataStore, database.attendeesDao(), database.accountsDao(),
+            EventReader(database), failing, mockk(), dataStore, database.attendeesDao(), database.accountsDao(), generator,
         )
 
         val events = repository.getDisplayEventsForPrint(startMs, endMs, setOf(workId), setOf(SYNCED_CAL))

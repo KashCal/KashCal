@@ -4,12 +4,11 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.util.Calendar as JavaCalendar
 
 /**
- * Unit tests for the date picker helpers [isMidnightCrossing], [dayCellStyle], [rangePart],
- * [isOnWheelGrid] and [isSameCalendarDay], and the members of the enums [DateSelectionMode]
- * and [ActiveDateTimeSheet].
+ * Unit tests for the date picker helpers [isMidnightCrossing], [dayCellStyle], [rangePart]
+ * and [isOnWheelGrid], and the members of the enums [DateSelectionMode] and
+ * [ActiveDateTimeSheet].
  */
 class DateTimePickerTest {
 
@@ -158,35 +157,5 @@ class DateTimePickerTest {
         for (m in 0..59) {
             assertEquals("minute $m", m % 5 == 0, isOnWheelGrid(m))
         }
-    }
-
-    // ==================== isSameCalendarDay Tests ====================
-
-    private fun dayMillis(year: Int, month: Int, day: Int, hour: Int = 0, minute: Int = 0): Long =
-        JavaCalendar.getInstance().apply {
-            set(year, month, day, hour, minute, 0)
-            set(JavaCalendar.MILLISECOND, 0)
-        }.timeInMillis
-
-    @Test
-    fun `isSameCalendarDay is true for two instants on the same day`() {
-        val a = JavaCalendar.getInstance().apply { timeInMillis = dayMillis(2026, JavaCalendar.JUNE, 26, 0, 1) }
-        val b = JavaCalendar.getInstance().apply { timeInMillis = dayMillis(2026, JavaCalendar.JUNE, 26, 23, 59) }
-        assertTrue(isSameCalendarDay(a, b))
-    }
-
-    @Test
-    fun `isSameCalendarDay is false across midnight`() {
-        // Today sampled at 11:59 PM must not match tomorrow's cell.
-        val lateToday = JavaCalendar.getInstance().apply { timeInMillis = dayMillis(2026, JavaCalendar.JUNE, 26, 23, 59) }
-        val tomorrow = JavaCalendar.getInstance().apply { timeInMillis = dayMillis(2026, JavaCalendar.JUNE, 27, 0, 0) }
-        assertFalse(isSameCalendarDay(lateToday, tomorrow))
-    }
-
-    @Test
-    fun `isSameCalendarDay is false for same day-of-year in different years`() {
-        val a = JavaCalendar.getInstance().apply { timeInMillis = dayMillis(2026, JavaCalendar.MARCH, 1) }
-        val b = JavaCalendar.getInstance().apply { timeInMillis = dayMillis(2025, JavaCalendar.MARCH, 1) }
-        assertFalse(isSameCalendarDay(a, b))
     }
 }

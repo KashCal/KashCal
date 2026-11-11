@@ -3,6 +3,8 @@ package org.onekash.kashcal.ui.components.pickers
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onekash.kashcal.ui.util.CalendarSpan
+import java.time.LocalDate
 
 /**
  * Unit tests for the [MonthYearWheelPicker] helpers [getLocalizedMonthNames], [monthIndexToName]
@@ -65,7 +67,7 @@ class MonthYearWheelPickerTest {
     // ==================== yearToIndex ====================
 
     @Test
-    fun `year 2025 maps to index 125 in default range`() {
+    fun `year 2025 maps to index 125 in 1900 to 2200`() {
         assertEquals(125, yearToIndex(2025, 1900..2200))
     }
 
@@ -105,9 +107,11 @@ class MonthYearWheelPickerTest {
     // ==================== Default Range Properties ====================
 
     @Test
-    fun `default range 1900-2200 has 301 items`() {
-        val range = 1900..2200
+    fun `default range, the span's years, has 301 items around today's year`() {
+        val today = LocalDate.of(2026, 11, 10)
+        val range = CalendarSpan.yearRange(today)
         assertEquals(301, range.toList().size)
+        assertEquals(1876..2176, range)
     }
 
     // ==================== require guard ====================

@@ -9,21 +9,21 @@ import java.time.temporal.ChronoUnit
 /**
  * Converts between day pager pages and dates.
  *
- * The pager has [TOTAL_PAGES] (73,000) pages, about 100 years in each direction. Pages are
- * composed lazily, so the range costs no memory.
+ * The pager has [TOTAL_PAGES] pages, enough to reach every day of the [CalendarSpan] from any
+ * today. Pages are composed lazily, so the range costs no memory.
  *
  * A page index is relative to the `todayMs` reference the caller passes, taken once from
  * [getTodayMidnightMs]:
- * - Page 36500 = today
- * - Page 36501 = tomorrow
- * - Page 36499 = yesterday
+ * - Page [INITIAL_PAGE] = today
+ * - Page [INITIAL_PAGE] + 1 = tomorrow
+ * - Page [INITIAL_PAGE] - 1 = yesterday
  */
 object DayPagerUtils {
     /** Page index of the `todayMs` reference day. */
-    const val INITIAL_PAGE = 36500
+    const val INITIAL_PAGE = CalendarSpan.DAY_INITIAL_PAGE
 
-    /** Total page count, about 100 years in each direction. */
-    const val TOTAL_PAGES = 73000
+    /** Total page count, covering the [CalendarSpan]. */
+    const val TOTAL_PAGES = CalendarSpan.DAY_TOTAL_PAGES
 
     /** Milliseconds in a 24-hour day; not a calendar day across a DST change. */
     const val DAY_MS = 24 * 60 * 60 * 1000L

@@ -86,7 +86,7 @@ class DisplayEventRepositoryZoneChangeTest {
         val provider: CalendarProviderRepository = mockk()
         display = DisplayEventRepository(
             EventReader(database), provider, manager, dataStore,
-            database.attendeesDao(), database.accountsDao(),
+            database.attendeesDao(), database.accountsDao(), generator,
         )
     }
 

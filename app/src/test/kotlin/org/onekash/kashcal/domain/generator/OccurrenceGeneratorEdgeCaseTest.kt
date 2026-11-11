@@ -393,7 +393,7 @@ class OccurrenceGeneratorEdgeCaseTest {
     }
 
     @Test
-    fun `long range query with infinite recurrence respects MAX_ITERATIONS`() = runTest {
+    fun `one generation of an open-ended daily series over 75 years stores its first 10,000 instances`() = runTest {
         // FREQ=DAILY without COUNT or UNTIL is unbounded.
         val startTs = parseDate("2025-01-01 10:00")
         val event = createAndInsertEvent(
@@ -408,9 +408,9 @@ class OccurrenceGeneratorEdgeCaseTest {
             parseDate("2100-12-31 23:59") // 75+ years
         )
 
-        // The engine gives a rule with neither COUNT nor UNTIL a COUNT of 10,000
-        // ([IcalDavRRuleEngine]), so the count is at most that.
-        assertTrue("Expected at most 10000 due to MAX_ITERATIONS", count <= 10000)
+        // One engine call returns the first 10,000 dates from the range start
+        // ([IcalDavRRuleEngine]); reads extend the rows from there.
+        assertEquals(10_000, count)
     }
 
     // ==================== Helper Functions ====================

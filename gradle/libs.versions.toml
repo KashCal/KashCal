@@ -71,6 +71,7 @@ archCoreTesting = "2.2.0"
 robolectric = "4.16.1"
 roborazzi = "1.74.0"
 androidxTestCore = "1.7.0"
+kotest = "6.2.6"
 
 [libraries]
 # AndroidX Core
@@ -154,6 +155,7 @@ robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "
 roborazzi = { group = "io.github.takahirom.roborazzi", name = "roborazzi", version.ref = "roborazzi" }
 roborazzi-compose = { group = "io.github.takahirom.roborazzi", name = "roborazzi-compose", version.ref = "roborazzi" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
+kotest-property = { group = "io.kotest", name = "kotest-property-jvm", version.ref = "kotest" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

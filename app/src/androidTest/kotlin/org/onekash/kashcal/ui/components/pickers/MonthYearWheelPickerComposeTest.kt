@@ -23,6 +23,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.text.DateFormatSymbols
+import java.time.Instant
+import java.time.YearMonth
+import java.time.ZoneId
 import java.util.Calendar as JavaCalendar
 
 /**
@@ -46,13 +49,13 @@ class MonthYearWheelPickerComposeTest {
     private fun setUpDatePicker(
         initialDateMillis: Long = System.currentTimeMillis(),
         onDateSelect: (Long) -> Unit = {},
-        onMonthChange: (JavaCalendar) -> Unit = {}
+        onMonthChange: (YearMonth) -> Unit = {}
     ) {
         composeTestRule.setContent {
             MaterialTheme {
                 var selectedDate by remember { mutableLongStateOf(initialDateMillis) }
                 var displayedMonth by remember {
-                    mutableStateOf(JavaCalendar.getInstance().apply { timeInMillis = initialDateMillis })
+                    mutableStateOf(YearMonth.from(Instant.ofEpochMilli(initialDateMillis).atZone(ZoneId.systemDefault())))
                 }
 
                 InlineDatePickerContent(
@@ -62,9 +65,9 @@ class MonthYearWheelPickerComposeTest {
                         selectedDate = millis
                         onDateSelect(millis)
                     },
-                    onMonthChange = { cal ->
-                        displayedMonth = cal
-                        onMonthChange(cal)
+                    onMonthChange = { month ->
+                        displayedMonth = month
+                        onMonthChange(month)
                     }
                 )
             }
@@ -130,7 +133,7 @@ class MonthYearWheelPickerComposeTest {
             MaterialTheme {
                 var selectedDate by remember { mutableLongStateOf(initialDate) }
                 var displayedMonth by remember {
-                    mutableStateOf(JavaCalendar.getInstance().apply { timeInMillis = initialDate })
+                    mutableStateOf(YearMonth.from(Instant.ofEpochMilli(initialDate).atZone(ZoneId.systemDefault())))
                 }
 
                 InlineDatePickerContent(
@@ -220,7 +223,7 @@ class MonthYearWheelPickerComposeTest {
         composeTestRule.setContent {
             MaterialTheme {
                 var selectedDate by remember { mutableLongStateOf(cal.timeInMillis) }
-                var displayedMonth by remember { mutableStateOf(cal.clone() as JavaCalendar) }
+                var displayedMonth by remember { mutableStateOf(YearMonth.of(2025, 1)) }
 
                 InlineDatePickerContent(
                     selectedDateMillis = selectedDate,
@@ -229,7 +232,8 @@ class MonthYearWheelPickerComposeTest {
                     onMonthChange = {
                         displayedMonth = it
                         monthChangeCount++
-                        lastChangedMonth = it.get(JavaCalendar.MONTH)
+                        // 0-based, like JavaCalendar.JANUARY below.
+                        lastChangedMonth = it.monthValue - 1
                     }
                 )
             }

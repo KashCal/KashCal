@@ -358,7 +358,7 @@ class OccurrencesDaoTest {
     }
 
     @Test
-    fun `getMaxStartTs returns latest occurrence time`() = runTest {
+    fun `getLatestRuleStartTs returns latest occurrence time`() = runTest {
         val latestTs = parseDate("2025-01-29 10:00")
         occurrencesDao.insertAll(listOf(
             createOccurrence(startTs = parseDate("2025-01-15 10:00"), startDay = 20250115),
@@ -366,7 +366,7 @@ class OccurrencesDaoTest {
             createOccurrence(startTs = parseDate("2025-01-22 10:00"), startDay = 20250122)
         ))
 
-        val maxTs = occurrencesDao.getMaxStartTs(eventId)
+        val maxTs = occurrencesDao.getLatestRuleStartTs(eventId)
 
         assertEquals(latestTs, maxTs)
     }
