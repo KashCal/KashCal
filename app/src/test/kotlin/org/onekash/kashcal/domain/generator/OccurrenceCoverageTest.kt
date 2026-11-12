@@ -7,9 +7,12 @@ import androidx.test.core.app.ApplicationProvider
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -23,6 +26,9 @@ import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.domain.rrule.RruleBuilder
+import org.onekash.kashcal.domain.search.SearchQuery
+import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.testutil.TestDataStoreFactory
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -30,7 +36,8 @@ import org.robolectric.annotation.Config
 /**
  * [OccurrenceGenerator.ensureCovered]: a covered range costs no database work, a rewritten
  * series is rechecked alone, a failed expansion doesn't throw, a call inside a transaction is
- * refused instead of deadlocking, and the pass writes only occurrence rows.
+ * refused instead of deadlocking, and the pass writes only occurrence rows. Also
+ * [OccurrenceGenerator.ensureCoveredFor], which expands only the series a search matched.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -302,11 +309,180 @@ class OccurrenceCoverageTest {
         val reader = org.onekash.kashcal.domain.reader.EventReader(database)
         val from = now + 5 * year
         val to = from + 14 * day
-        assertTrue("not found before", reader.searchEventsInRangeWithNextOccurrence("Standup", from, to).none { it.event.id == a.id })
+        suspend fun inRange() = reader.observeSearchMatches(SearchQuery.of("Standup"), now, 0, from..to).first()
+            .single { it.event.id == a.id }.inRange
+        assertNull("not found before", inRange())
 
         generator.ensureCovered(from, to)
 
-        assertTrue("found after", reader.searchEventsInRangeWithNextOccurrence("Standup", from, to).any { it.event.id == a.id })
+        assertNotNull("found after", inRange())
+    }
+
+    // ---- ensureCoveredFor: the series a search matched, from their DTSTART or forward only ----
+
+    /** A weekly series for 5 years that ended 3 years ago, saved with no rows (see above). */
+    private suspend fun endedSeries(title: String): Event {
+        val start = now - 8 * year
+        val id = database.eventsDao().insert(
+            Event(
+                uid = "uid-$title", calendarId = calendarId, title = title, startTs = start, endTs = start + hour,
+                dtstamp = 0L, rrule = RruleBuilder.withUntil("FREQ=WEEKLY", now - 3 * year), timezone = "UTC",
+                syncStatus = SyncStatus.SYNCED,
+            )
+        )
+        val series = database.eventsDao().getById(id)!!
+        generator.regenerateOccurrences(series)
+        return series
+    }
+
+    @Test
+    fun `covering a matched series fills it from its DTSTART to the end date`(): Unit = runBlocking {
+        val ended = endedSeries("Ended")
+        val ongoing = weekly("Ongoing")
+        assertEquals(0, database.occurrencesDao().getForEvent(ended.id).size)
+
+        assertEquals(2, generator.ensureCoveredFor(listOf(ended.id, ongoing.id), now + 2 * year))
+
+        val endedRows = database.occurrencesDao().getForEvent(ended.id)
+        assertEquals(ended.startTs, endedRows.first().startTs)
+        assertTrue("about five years of weeks: ${endedRows.size}", endedRows.size in 250..262)
+        assertTrue("ongoing reaches the end date", rowsAfter(ongoing.id, now + 2 * year - 8 * day) > 0)
+    }
+
+    /**
+     * Saves a series started 5 years ago whose stored rows ran from [rowsFrom] to [rowsTo], both
+     * in the past.
+     */
+    private suspend fun seriesWithPastRows(
+        title: String,
+        rrule: String = "FREQ=WEEKLY",
+        rowsFrom: Long = now - year,
+        rowsTo: Long = now - 30 * day,
+    ): Event {
+        val start = now - 5 * year
+        val id = database.eventsDao().insert(
+            Event(
+                uid = "uid-$title", calendarId = calendarId, title = title, startTs = start, endTs = start + hour,
+                dtstamp = 0L, rrule = rrule, timezone = "UTC", syncStatus = SyncStatus.SYNCED,
+            )
+        )
+        val series = database.eventsDao().getById(id)!!
+        generator.generateOccurrences(series, rowsFrom, rowsTo)
+        return series
+    }
+
+    @Test
+    fun `a forward-only cover adds rows only after the latest stored row`(): Unit = runBlocking {
+        val series = seriesWithPastRows("Choir")
+        val before = database.occurrencesDao().getForEvent(series.id)
+        val earliest = before.minOf { it.startTs }
+        val latest = before.maxOf { it.startTs }
+
+        assertEquals(1, generator.ensureCoveredFor(emptyList(), now + 2 * year, forwardOnly = listOf(series.id)))
+
+        val after = database.occurrencesDao().getForEvent(series.id)
+        assertEquals("nothing written before the stored rows", earliest, after.minOf { it.startTs })
+        assertTrue("rows after the latest stored one", after.any { it.startTs > latest })
+        assertTrue("reaches the end date", rowsAfter(series.id, now + 2 * year - 8 * day) > 0)
+    }
+
+    @Test
+    fun `a forward-only cover does not stop a later fill back to DTSTART`(): Unit = runBlocking {
+        val series = seriesWithPastRows("Choir")
+        generator.ensureCoveredFor(emptyList(), now + 2 * year, forwardOnly = listOf(series.id))
+
+        assertEquals(1, generator.ensureCoveredFor(listOf(series.id), now + 2 * year))
+
+        assertEquals(series.startTs, database.occurrencesDao().getForEvent(series.id).minOf { it.startTs })
+    }
+
+    @Test
+    fun `a delete of this and future from the earliest stored row leaves the rest to fill back`(): Unit = runBlocking {
+        val series = seriesWithPastRows("Choir")
+        generator.ensureCoveredFor(emptyList(), now + 2 * year, forwardOnly = listOf(series.id))
+        val earliest = database.occurrencesDao().getForEvent(series.id).minOf { it.startTs }
+        EventWriter(database, generator).deleteThisAndFuture(series.id, earliest, isLocal = true)
+        assertEquals("the delete removed every stored row", 0, database.occurrencesDao().getForEvent(series.id).size)
+
+        generator.ensureCoveredFor(listOf(series.id), now + 2 * year)
+
+        val rows = database.occurrencesDao().getForEvent(series.id)
+        assertTrue("rows refilled from DTSTART: ${rows.size}", rows.isNotEmpty())
+        assertEquals(series.startTs, rows.minOf { it.startTs })
+        assertTrue("none at or after the delete", rows.all { it.startTs < earliest })
+    }
+
+    @Test
+    fun `a capped forward-only cover is not repeated`(): Unit = runBlocking {
+        // Every minute for two years is far past the row limit, so the step stops early.
+        val series = seriesWithPastRows("Ticker", rrule = "FREQ=MINUTELY", rowsFrom = now - 2 * day, rowsTo = now - day)
+        generator.ensureCoveredFor(emptyList(), now + 2 * year, forwardOnly = listOf(series.id))
+        val rows = database.occurrencesDao().getForEvent(series.id).size
+        var inserts = 0
+        onInsertAll = { inserts++ }
+
+        assertEquals(0, generator.ensureCoveredFor(emptyList(), now + 2 * year, forwardOnly = listOf(series.id)))
+
+        assertEquals(0, inserts)
+        assertEquals(rows, database.occurrencesDao().getForEvent(series.id).size)
+    }
+
+    @Test
+    fun `covering the same series to the same date again does no work`(): Unit = runBlocking {
+        val ended = endedSeries("Ended")
+        generator.ensureCoveredFor(listOf(ended.id), now + 2 * year)
+        val rows = database.occurrencesDao().getForEvent(ended.id).size
+        var inserts = 0
+        onInsertAll = { inserts++ }
+
+        assertEquals(0, generator.ensureCoveredFor(listOf(ended.id), now + 2 * year))
+        assertEquals(0, inserts)
+        assertEquals(rows, database.occurrencesDao().getForEvent(ended.id).size)
+    }
+
+    @Test
+    fun `covering matched series leaves every other series alone`(): Unit = runBlocking {
+        val matched = endedSeries("Matched")
+        val dailyStart = now - 10 * year
+        val dailyId = database.eventsDao().insert(
+            Event(
+                uid = "uid-daily", calendarId = calendarId, title = "Daily", startTs = dailyStart,
+                endTs = dailyStart + hour, dtstamp = 0L, rrule = "FREQ=DAILY", timezone = "UTC",
+                syncStatus = SyncStatus.SYNCED,
+            )
+        )
+        generator.generateOccurrences(database.eventsDao().getById(dailyId)!!, now - day, now + 30 * day)
+        val dailyRows = database.occurrencesDao().getForEvent(dailyId).size
+
+        generator.ensureCoveredFor(listOf(matched.id), now + 2 * year)
+
+        assertEquals(dailyRows, database.occurrencesDao().getForEvent(dailyId).size)
+        assertTrue("the matched series gained rows", database.occurrencesDao().getForEvent(matched.id).isNotEmpty())
+    }
+
+    @Test
+    fun `covering a one-off or nothing writes no rows`(): Unit = runBlocking {
+        val oneOff = database.eventsDao().insert(
+            Event(uid = "uid-one", calendarId = calendarId, title = "One", startTs = now, endTs = now + hour, dtstamp = 0L)
+        )
+        var inserts = 0
+        onInsertAll = { inserts++ }
+
+        generator.ensureCoveredFor(emptyList(), now + 2 * year)
+        generator.ensureCoveredFor(listOf(oneOff), now + 2 * year)
+
+        assertEquals(0, inserts)
+    }
+
+    @Test
+    fun `covering matched series records no range for ensureCovered`(): Unit = runBlocking {
+        val ended = endedSeries("Ended")
+        generator.ensureCoveredFor(listOf(ended.id), now + 2 * year)
+        calls.clear()
+
+        generator.ensureCovered(now, now + 7 * day)
+
+        assertTrue("a later read still runs its own pass: $calls", calls.contains("forward"))
     }
 
     @Test

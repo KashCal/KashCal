@@ -255,6 +255,22 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         return instances.filter { it.calendarId in enabledCalendarIds }
     }
 
+    /** One [searchInstances] call, recorded for tests to count and inspect. */
+    data class SearchCall(
+        val query: String,
+        val startDayCode: Int,
+        val endDayCode: Int,
+        val calendarIds: Set<Long>,
+        val hideDeclined: Boolean = false,
+    )
+
+    val searchCalls = mutableListOf<SearchCall>()
+
+    /**
+     * Splits [query] into words as the platform does (quoted phrases whole) and keeps instances
+     * in [enabledCalendarIds] and the day range where every word is in the title, description
+     * or location or a guest's name or email ([deviceAttendees]), ignoring case.
+     */
     override suspend fun searchInstances(
         query: String,
         startDayCode: Int,
@@ -262,14 +278,21 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         enabledCalendarIds: Set<Long>,
         hideDeclined: Boolean
     ): List<DeviceCalendarInstance> {
+        searchCalls += SearchCall(query, startDayCode, endDayCode, enabledCalendarIds, hideDeclined)
         if (shouldThrowSecurityException) throw SecurityException("Calendar permission revoked")
-        if (query.isBlank()) return emptyList()
-        val lowerQuery = query.lowercase()
+        val words = SqliteCalendarProvider.tokenizeSearchQuery(query).map { it.lowercase() }
+        if (words.isEmpty()) return emptyList()
         return instances.filter { instance ->
             instance.calendarId in enabledCalendarIds &&
-                (instance.title.lowercase().contains(lowerQuery) ||
-                    instance.description.lowercase().contains(lowerQuery) ||
-                    instance.location.lowercase().contains(lowerQuery))
+                instance.endDay >= startDayCode && instance.startDay <= endDayCode &&
+                words.all { word ->
+                    instance.title.lowercase().contains(word) ||
+                        instance.description.lowercase().contains(word) ||
+                        instance.location.lowercase().contains(word) ||
+                        deviceAttendees[instance.eventId].orEmpty().any { guest ->
+                            guest.name.orEmpty().lowercase().contains(word) || guest.email.orEmpty().lowercase().contains(word)
+                        }
+                }
         }
     }
 
@@ -750,6 +773,11 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
     override suspend fun getAttendees(eventId: Long): List<DeviceAttendee> {
         if (shouldThrowSecurityException) return emptyList()
         return deviceAttendees[eventId] ?: emptyList()
+    }
+
+    override suspend fun getAttendeesForEvents(eventIds: Collection<Long>): Map<Long, List<DeviceAttendee>> {
+        if (shouldThrowSecurityException) return emptyMap()
+        return eventIds.mapNotNull { id -> deviceAttendees[id]?.takeIf { it.isNotEmpty() }?.let { id to it } }.toMap()
     }
 
     /** Records each updateSelfAttendeeStatus call for assertions. */

@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Nhập 6 ký tự hex (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Tất cả</string>
     <string name="view_week">Tuần</string>
     <string name="view_month">Tháng</string>
     <string name="label_all_day">Cả ngày</string>
@@ -515,7 +514,6 @@
     <string name="option_saturday">Thứ bảy</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Không tìm thấy sự kiện</string>
     <string name="empty_no_upcoming_events">Không có sự kiện sắp tới</string>
     <string name="empty_no_calendars">Không có lịch nào</string>
 
@@ -814,6 +812,8 @@
     <string name="cd_pick_month_year">Chọn tháng và năm</string>
     <string name="cd_previous_month">Tháng trước</string>
     <string name="cd_next_month">Tháng sau</string>
+    <string name="cd_previous_day">Ngày trước</string>
+    <string name="cd_next_day">Ngày sau</string>
     <string name="cd_month_year_picker">Bộ chọn tháng và năm</string>
     <string name="cd_remove_alert">Xóa nhắc nhở</string>
     <string name="cd_warning">Cảnh báo</string>
@@ -1104,6 +1104,57 @@
     <string name="empty_no_events_day_4">Trạng thái lịch: trống trải một cách tuyệt vời.</string>
     <string name="empty_no_events_day_5">Không có gì để làm. Tận hưởng sự yên bình nhé.</string>
     <string name="filter_date">Ngày</string>
+    <string name="search_tab_upcoming">Sắp tới</string>
+    <string name="search_tab_past">Đã qua</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="other">%1$s, %2$d sự kiện</item>
+    </plurals>
+    <string name="search_date_this_week">Tuần này</string>
+    <string name="search_date_this_month">Tháng này</string>
+    <string name="search_date_pick">Chọn ngày…</string>
+    <string name="search_next">Lần tới: %1$s</string>
+    <string name="search_last">Lần trước: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Địa điểm:</string>
+    <string name="search_reason_notes">Ghi chú:</string>
+    <string name="search_reason_guest">Khách:</string>
+    <string name="search_keep_typing">Nhập tiếp để tìm kiếm</string>
+    <string name="search_no_matches">Không có sự kiện nào khớp với “%1$s”</string>
+    <string name="search_lookback_line">Khoảng đồng bộ ngược: %1$s</string>
+    <string name="search_sync_settings">Cài đặt đồng bộ</string>
+    <string name="cd_search_sync_settings">Mở cài đặt khoảng đồng bộ ngược</string>
+    <plurals name="search_show_past">
+        <item quantity="other">Hiện %d sự kiện đã qua</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="other">Thêm %d trong lịch bị ẩn</item>
+    </plurals>
+    <string name="search_show">Hiện</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="other">Hiện %d kết quả trong lịch bị ẩn</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="other">Hiện %d trong lịch bị ẩn</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="other">Gồm %d lịch bị ẩn</item>
+    </plurals>
+    <string name="search_leave_out">Bỏ qua</string>
+    <string name="cd_search_leave_out">Bỏ qua lịch bị ẩn</string>
+    <string name="search_hidden_calendar">%1$s · đã ẩn</string>
+    <string name="cd_search_date_this_week">Hiện kết quả tuần này</string>
+    <string name="cd_search_date_this_month">Hiện kết quả tháng này</string>
+    <string name="cd_search_date_pick">Chọn ngày để tìm kiếm</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="other">%d sắp tới</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="other">%d đã qua</item>
+    </plurals>
+    <string name="search_no_past_events">Không có sự kiện đã qua</string>
+    <string name="search_no_events_in_dates">Không có sự kiện vào những ngày này</string>
     <string name="label_select_date">Chọn ngày</string>
     <string name="hint_tap_date_range">Nhấn cùng ngày cho một ngày, hoặc nhấn ngày khác cho khoảng thời gian</string>
     <string name="cd_clear">Xóa</string>

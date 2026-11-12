@@ -13,7 +13,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.domain.changes.RecentChangeItem
 import org.onekash.kashcal.domain.model.DisplayEvent
-import org.onekash.kashcal.domain.model.SearchResult
+import org.onekash.kashcal.domain.search.SearchOutcome
 import org.onekash.kashcal.error.ErrorPresentation
 import org.onekash.kashcal.ui.components.SyncBannerState
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
@@ -115,13 +115,16 @@ data class HomeUiState(
     val isSearchActive: Boolean = false,
     /** Current search query. */
     val searchQuery: String = "",
-    /** Search results, Room and device events, each with its display timestamp. */
-    val searchResults: ImmutableList<SearchResult> = persistentListOf(),
-    /**
-     * Date filter for search. [DateFilter.Upcoming], the default with no chip selected, skips
-     * past events; [DateFilter.AnyTime] includes them.
-     */
-    val searchDateFilter: DateFilter = DateFilter.Upcoming,
+    /** What the search results area shows for [searchQuery]. */
+    val searchState: SearchResultsState = SearchResultsState.Idle,
+    /** The Upcoming or Past list; a picked [searchDateFilter] shows its own list instead. */
+    val searchTab: SearchTab = SearchTab.UPCOMING,
+    /** The date range search narrows to, or null for none; the Date chip is selected while set. */
+    val searchDateFilter: DateFilter? = null,
+    /** Whether search lists matches in calendars hidden in the app, for this search only. */
+    val searchIncludeHidden: Boolean = false,
+    /** Whether the Date chip's menu (This week, This month, Pick dates) is open. */
+    val showSearchDateMenu: Boolean = false,
     /** Whether the search date picker sheet shows. */
     val showSearchDatePicker: Boolean = false,
     /**
@@ -170,7 +173,7 @@ data class HomeUiState(
      */
     val monthFullZoom: Float = 1f,
 
-    // === DAY DETAIL SHEET (full-height month view) ===
+    // === DAY DETAIL SHEET (full-height month view and Planner) ===
     /** Whether the day events sheet shows. */
     val showDayDetailSheet: Boolean = false,
     /** Date of the day events sheet in epoch millis. */
@@ -301,6 +304,9 @@ data class HomeUiState(
     /** User's avatar initials, up to 2 letters; empty shows the generic glyph. */
     val userInitials: String = ""
 ) {
+    /** Whether the day events sheet shows a day. */
+    val isDayDetailOpen: Boolean get() = showDayDetailSheet && dayDetailDate != 0L
+
     /** Returns the viewed month and year as a localized label. */
     fun getMonthYearLabel(): String {
         val cal = java.util.Calendar.getInstance().apply {
@@ -600,3 +606,34 @@ data class RecentChangeTarget(
     /** The occurrence to show; null opens the event at its own start. */
     val occurrenceTs: Long?
 )
+
+/**
+ * Holds the day sheet's shown day and that day's events, read together so the sheet never pairs
+ * a date with another day's events.
+ *
+ * @property dayCode the shown day as YYYYMMDD
+ * @property dateMs the shown day at the tapped time of day, which seeds New event's start
+ * @property canGoBack whether the sheet may step to the previous day, within
+ *   [org.onekash.kashcal.ui.util.CalendarSpan]
+ * @property canGoForward whether the sheet may step to the next day
+ */
+@Immutable
+data class DayDetailState(
+    val dayCode: Int,
+    val dateMs: Long,
+    val events: ImmutableList<DisplayEvent>,
+    val canGoBack: Boolean,
+    val canGoForward: Boolean,
+)
+
+/** The list search shows when no date range is picked. */
+enum class SearchTab { UPCOMING, PAST }
+
+/** The search results area: no query, a query too short to run, a search running, or results. */
+@Immutable
+sealed interface SearchResultsState {
+    data object Idle : SearchResultsState
+    data object TooShort : SearchResultsState
+    data object Loading : SearchResultsState
+    data class Loaded(val outcome: SearchOutcome) : SearchResultsState
+}

@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Maglagay ng 6 hex character (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Lahat</string>
     <string name="view_week">Linggo</string>
     <string name="view_month">Buwan</string>
     <string name="label_all_day">Buong araw</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">Sabado</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Walang nahanap na event</string>
     <string name="empty_no_upcoming_events">Walang paparating na event</string>
     <string name="empty_no_calendars">Walang available na kalendaryo</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">Pumili ng buwan at taon</string>
     <string name="cd_previous_month">Nakaraang buwan</string>
     <string name="cd_next_month">Susunod na buwan</string>
+    <string name="cd_previous_day">Nakaraang araw</string>
+    <string name="cd_next_day">Susunod na araw</string>
     <string name="cd_month_year_picker">Tagapili ng buwan at taon</string>
     <string name="cd_remove_alert">Alisin ang alerto</string>
     <string name="cd_warning">Babala</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">Status ng kalendaryo: maluwalhating walang laman.</string>
     <string name="empty_no_events_day_5">Walang nakaplanong gawain. Tamasahin ang katahimikan.</string>
     <string name="filter_date">Petsa</string>
+    <string name="search_tab_upcoming">Darating</string>
+    <string name="search_tab_past">Lumipas</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d event</item>
+        <item quantity="other">%1$s, %2$d event</item>
+    </plurals>
+    <string name="search_date_this_week">Ngayong linggo</string>
+    <string name="search_date_this_month">Ngayong buwan</string>
+    <string name="search_date_pick">Pumili ng petsa…</string>
+    <string name="search_next">Susunod: %1$s</string>
+    <string name="search_last">Huli: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Lokasyon:</string>
+    <string name="search_reason_notes">Mga Tala:</string>
+    <string name="search_reason_guest">Bisita:</string>
+    <string name="search_keep_typing">Mag-type pa para maghanap</string>
+    <string name="search_no_matches">Walang event na tugma sa “%1$s”</string>
+    <string name="search_lookback_line">Saklaw ng Sync Lookback: %1$s</string>
+    <string name="search_sync_settings">Mga setting ng sync</string>
+    <string name="cd_search_sync_settings">Buksan ang setting ng sync lookback</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Ipakita ang %d lumipas na event</item>
+        <item quantity="other">Ipakita ang %d lumipas na event</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">%d pa sa nakatagong kalendaryo</item>
+        <item quantity="other">%d pa sa mga nakatagong kalendaryo</item>
+    </plurals>
+    <string name="search_show">Ipakita</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Ipakita ang %d tugma sa nakatagong kalendaryo</item>
+        <item quantity="other">Ipakita ang %d tugma sa mga nakatagong kalendaryo</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Ipakita ang %d sa nakatagong kalendaryo</item>
+        <item quantity="other">Ipakita ang %d sa mga nakatagong kalendaryo</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Kasama ang %d nakatagong kalendaryo</item>
+        <item quantity="other">Kasama ang %d nakatagong kalendaryo</item>
+    </plurals>
+    <string name="search_leave_out">Huwag isama</string>
+    <string name="cd_search_leave_out">Huwag isama ang mga nakatagong kalendaryo</string>
+    <string name="search_hidden_calendar">%1$s · nakatago</string>
+    <string name="cd_search_date_this_week">Ipakita ang mga tugma ngayong linggo</string>
+    <string name="cd_search_date_this_month">Ipakita ang mga tugma ngayong buwan</string>
+    <string name="cd_search_date_pick">Pumili ng petsa para maghanap</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d darating</item>
+        <item quantity="other">%d darating</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d lumipas</item>
+        <item quantity="other">%d lumipas</item>
+    </plurals>
+    <string name="search_no_past_events">Walang lumipas na event</string>
+    <string name="search_no_events_in_dates">Walang event sa mga petsang ito</string>
     <string name="label_select_date">Pumili ng petsa</string>
     <string name="hint_tap_date_range">I-tap ang parehong petsa para sa isang araw, o ibang petsa para sa saklaw</string>
     <string name="cd_clear">I-clear</string>

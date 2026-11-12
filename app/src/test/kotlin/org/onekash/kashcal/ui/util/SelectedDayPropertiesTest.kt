@@ -278,7 +278,7 @@ class SelectedDayPropertiesTest {
                         viewModel.onSearchDateSelected(tapMs)
                         val filter = viewModel.uiState.value.searchDateFilter
                         assertTrue("single-day filter, $zone", filter is DateFilter.SingleDay)
-                        val range = filter.getTimeRange(ZoneId.systemDefault(), Calendar.SUNDAY)!!
+                        val range = filter!!.getTimeRange(ZoneId.systemDefault(), Calendar.SUNDAY)
                         assertEquals("search day, $zone", tapped, SelectedDay.localDate(range.first))
                     }
                 }
@@ -387,7 +387,7 @@ class SelectedDayPropertiesTest {
                         viewModel.onSearchDateSelected(tapMs)
                         val filter = viewModel.uiState.value.searchDateFilter
                         assertTrue("single-day filter, $zone", filter is DateFilter.SingleDay)
-                        val range = filter.getTimeRange(zoneId, Calendar.SUNDAY)!!
+                        val range = filter!!.getTimeRange(zoneId, Calendar.SUNDAY)
                         assertEquals("search day, $zone", tapped, SelectedDay.localDate(range.first))
                     }
                 }

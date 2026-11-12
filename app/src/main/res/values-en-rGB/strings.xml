@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Enter 6 hex characters (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">All</string>
     <string name="view_week">Week</string>
     <string name="view_month">Month</string>
     <string name="label_all_day">All day</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">Saturday</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">No events found</string>
     <string name="empty_no_upcoming_events">No upcoming events</string>
     <string name="empty_no_calendars">No calendars available</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">Pick month and year</string>
     <string name="cd_previous_month">Previous month</string>
     <string name="cd_next_month">Next month</string>
+    <string name="cd_previous_day">Previous day</string>
+    <string name="cd_next_day">Next day</string>
     <string name="cd_month_year_picker">Month and year picker</string>
     <string name="cd_remove_alert">Remove alert</string>
     <string name="cd_warning">Warning</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">Calendar status: gloriously empty.</string>
     <string name="empty_no_events_day_5">Nothing planned. Enjoy the calm.</string>
     <string name="filter_date">Date</string>
+    <string name="search_tab_upcoming">Upcoming</string>
+    <string name="search_tab_past">Past</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d event</item>
+        <item quantity="other">%1$s, %2$d events</item>
+    </plurals>
+    <string name="search_date_this_week">This week</string>
+    <string name="search_date_this_month">This month</string>
+    <string name="search_date_pick">Pick dates…</string>
+    <string name="search_next">Next: %1$s</string>
+    <string name="search_last">Last: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Location:</string>
+    <string name="search_reason_notes">Notes:</string>
+    <string name="search_reason_guest">Guest:</string>
+    <string name="search_keep_typing">Keep typing to search</string>
+    <string name="search_no_matches">No events match “%1$s”</string>
+    <string name="search_lookback_line">Sync Lookback: %1$s</string>
+    <string name="search_sync_settings">Sync settings</string>
+    <string name="cd_search_sync_settings">Open the sync lookback setting</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Show %d past event</item>
+        <item quantity="other">Show %d past events</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">%d more in a hidden calendar</item>
+        <item quantity="other">%d more in hidden calendars</item>
+    </plurals>
+    <string name="search_show">Show</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Show %d match in a hidden calendar</item>
+        <item quantity="other">Show %d matches in hidden calendars</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Show %d in a hidden calendar</item>
+        <item quantity="other">Show %d in hidden calendars</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Including %d hidden calendar</item>
+        <item quantity="other">Including %d hidden calendars</item>
+    </plurals>
+    <string name="search_leave_out">Leave out</string>
+    <string name="cd_search_leave_out">Leave out hidden calendars</string>
+    <string name="search_hidden_calendar">%1$s · hidden</string>
+    <string name="cd_search_date_this_week">Show matches this week</string>
+    <string name="cd_search_date_this_month">Show matches this month</string>
+    <string name="cd_search_date_pick">Pick dates to search</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d upcoming</item>
+        <item quantity="other">%d upcoming</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d past</item>
+        <item quantity="other">%d past</item>
+    </plurals>
+    <string name="search_no_past_events">No past events</string>
+    <string name="search_no_events_in_dates">No events on these dates</string>
     <string name="label_select_date">Select a date</string>
     <string name="hint_tap_date_range">Tap same date for single day, or another date for range</string>
     <string name="cd_clear">Clear</string>

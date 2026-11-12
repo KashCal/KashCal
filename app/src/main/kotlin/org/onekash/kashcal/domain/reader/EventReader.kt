@@ -8,8 +8,9 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import org.onekash.kashcal.data.db.KashCalDatabase
-import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
+import org.onekash.kashcal.data.db.dao.EventSearchSql
 import org.onekash.kashcal.data.db.dao.EventWithOccurrenceAndColor
 import org.onekash.kashcal.data.db.dao.OccurrencesDao
 import org.onekash.kashcal.data.db.dao.ScheduledRemindersDao
@@ -23,6 +24,8 @@ import org.onekash.kashcal.domain.changes.RecentChangeItem
 import org.onekash.kashcal.domain.changes.RecentChangesRecorder
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.model.LocalCalendarSummary
+import org.onekash.kashcal.domain.search.RoomSearchMatch
+import org.onekash.kashcal.domain.search.SearchQuery
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -52,6 +55,12 @@ class EventReader @Inject constructor(
     companion object {
         /** Cap on tag suggestions so the autocomplete popup stays scannable. */
         const val MAX_CATEGORY_SUGGESTIONS = 20
+
+        /** Ids per occurrence lookup, under SQLite's bound-variable limit. */
+        private const val OCCURRENCE_ID_BATCH = 500
+
+        /** Quiet time after a Room change before search reads its rows again. */
+        private const val SEARCH_DEBOUNCE_MS = 50L
     }
 
     // ========== Event Lookups ==========
@@ -416,8 +425,7 @@ class EventReader @Inject constructor(
 
     /**
      * Pairs an occurrence with an event and its calendar. The range and day readers load the
-     * exception for a changed occurrence; [searchEventsWithOccurrences] pairs each occurrence
-     * with the matched event.
+     * exception for a changed occurrence.
      */
     data class OccurrenceWithEvent(
         val occurrence: Occurrence,
@@ -583,115 +591,36 @@ class EventReader @Inject constructor(
     // ========== Search ==========
 
     /**
-     * Searches events with FTS4, returning up to 1000 by start time, without PENDING_DELETE
-     * rows or synthetic masters.
-     *
-     * Every search method here turns each whitespace-separated word of [query] into a prefix
-     * term (`meet` matches "meeting"), and an event must match every word.
+     * Emits the Room events matching [query] by [EventSearchSql]'s rule, each with its next,
+     * last and in-[range] occurrence rows ([EventSearchSql.nextAndLast]), again whenever events,
+     * occurrences or attendees change, 50 ms after the last change. [now] and [todayDayCode]
+     * decide which rows have ended.
      */
-    suspend fun searchEvents(query: String): List<Event> {
-        if (query.isBlank()) return emptyList()
-        val ftsQuery = query.trim().split("\\s+".toRegex())
-            .joinToString(" ") { "$it*" }
-        return eventsDao.search(ftsQuery)
-    }
-
-    /**
-     * Searches with [searchEvents]' terms, keeping events with a non-cancelled occurrence that
-     * hasn't ended. The occurrences table decides this, since `Event.endTs` is only the first
-     * occurrence's end.
-     */
-    suspend fun searchEventsExcludingPast(query: String): List<Event> {
-        if (query.isBlank()) return emptyList()
-        val ftsQuery = query.trim().split("\\s+".toRegex())
-            .joinToString(" ") { "$it*" }
-        return eventsDao.searchFuture(ftsQuery, System.currentTimeMillis())
-    }
-
-    /**
-     * Searches with [searchEvents]' terms, keeping events with a non-cancelled occurrence
-     * overlapping [rangeStart]..[rangeEnd] (inclusive).
-     */
-    suspend fun searchEventsInRange(query: String, rangeStart: Long, rangeEnd: Long): List<Event> {
-        if (query.isBlank()) return emptyList()
-        val ftsQuery = query.trim().split("\\s+".toRegex())
-            .joinToString(" ") { "$it*" }
-        return eventsDao.searchInRange(ftsQuery, rangeStart, rangeEnd)
-    }
-
-    // ========== Search with Next Occurrence ==========
-
-    /**
-     * Searches masters and one-off events, past ones included, for the "All" filter.
-     * `nextOccurrenceTs` is the event's own start; results are ordered by distance from now.
-     */
-    suspend fun searchEventsWithNextOccurrence(query: String): List<EventWithNextOccurrence> {
-        if (query.isBlank()) return emptyList()
-        val ftsQuery = query.trim().split("\\s+".toRegex())
-            .joinToString(" ") { "$it*" }
-        return eventsDao.searchWithOccurrence(ftsQuery, System.currentTimeMillis())
-    }
-
-    /**
-     * Searches events with a non-cancelled occurrence not yet ended, for the default search.
-     * `nextOccurrenceTs` is the earliest such occurrence's start, and results are ordered by it.
-     */
-    suspend fun searchEventsExcludingPastWithNextOccurrence(query: String): List<EventWithNextOccurrence> {
-        if (query.isBlank()) return emptyList()
-        val ftsQuery = query.trim().split("\\s+".toRegex())
-            .joinToString(" ") { "$it*" }
-        return eventsDao.searchFutureWithOccurrence(ftsQuery, System.currentTimeMillis())
-    }
-
-    /**
-     * Searches events with a non-cancelled occurrence overlapping [rangeStart]..[rangeEnd]
-     * (inclusive), for the Week, Month and custom-date filters. `nextOccurrenceTs` is the
-     * earliest such occurrence's start.
-     */
-    suspend fun searchEventsInRangeWithNextOccurrence(
-        query: String,
-        rangeStart: Long,
-        rangeEnd: Long
-    ): List<EventWithNextOccurrence> {
-        if (query.isBlank()) return emptyList()
-        val ftsQuery = query.trim().split("\\s+".toRegex())
-            .joinToString(" ") { "$it*" }
-        return eventsDao.searchInRangeWithOccurrence(ftsQuery, rangeStart, rangeEnd)
-    }
-
-    /**
-     * Searches like [searchEvents] and returns up to 5 non-cancelled occurrences per event, by
-     * start time, in three queries. With [futureOnly], only occurrences starting at or after now.
-     */
-    suspend fun searchEventsWithOccurrences(
-        query: String,
-        futureOnly: Boolean = true
-    ): List<OccurrenceWithEvent> {
-        val events = searchEvents(query)
-        if (events.isEmpty()) return emptyList()
-
-        val now = if (futureOnly) System.currentTimeMillis() else 0L
-
-        val eventIds = events.map { it.id }
-        val allOccurrences = occurrencesDao.getForEvents(eventIds)
-            .filter { it.startTs >= now && !it.isCancelled }
-
-        val occurrencesByEvent = allOccurrences.groupBy { it.eventId }
-        val limitedOccurrences = occurrencesByEvent.flatMap { (_, occs) -> occs.take(5) }
-
-        if (limitedOccurrences.isEmpty()) return emptyList()
-
-        val eventsMap = events.associateBy { it.id }
-
-        val calendarIds = limitedOccurrences.map { it.calendarId }.distinct()
-        val calendarsMap = calendarsDao.getByIds(calendarIds).associateBy { it.id }
-
-        return limitedOccurrences.mapNotNull { occ ->
-            val event = eventsMap[occ.eventId] ?: return@mapNotNull null
-            val calendar = calendarsMap[occ.calendarId]
-            OccurrenceWithEvent(occ, event, calendar)
-        }.sortedBy { it.occurrence.startTs }
-    }
+    @OptIn(kotlinx.coroutines.FlowPreview::class)
+    fun observeSearchMatches(
+        query: SearchQuery,
+        now: Long,
+        todayDayCode: Int,
+        range: LongRange? = null,
+    ): Flow<List<RoomSearchMatch>> =
+        eventsDao.observeSearchMatches(EventSearchSql.nextAndLast(query, now, todayDayCode, range))
+            // A sync writes in bursts; read the occurrence rows once the burst settles.
+            .debounce(SEARCH_DEBOUNCE_MS)
+            .mapNotNull { rows ->
+            val ids = rows.flatMap { listOfNotNull(it.nextOccurrenceId, it.lastOccurrenceId, it.rangeOccurrenceId) }.distinct()
+            val byId = ids.chunked(OCCURRENCE_ID_BATCH).flatMap { occurrencesDao.getByIds(it) }.associateBy { it.id }
+            // A row rewritten between the two reads: Room emits again once the rewrite commits.
+            if (byId.size < ids.size) return@mapNotNull null
+            rows.map { row ->
+                RoomSearchMatch(
+                    event = row.event,
+                    next = row.nextOccurrenceId?.let(byId::get),
+                    last = row.lastOccurrenceId?.let(byId::get),
+                    inRange = row.rangeOccurrenceId?.let(byId::get),
+                    hasOccurrences = row.hasOccurrences,
+                )
+            }
+        }
 
     // ========== Sync-Related Queries ==========
 

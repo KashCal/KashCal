@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Ingresa 6 caracteres hex (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Todos</string>
     <string name="view_week">Semana</string>
     <string name="view_month">Mes</string>
     <string name="label_all_day">Todo el día</string>
@@ -517,7 +516,6 @@
     <string name="option_saturday">Sábado</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">No se encontraron eventos</string>
     <string name="empty_no_upcoming_events">No hay próximos eventos</string>
     <string name="empty_no_calendars">No hay calendarios disponibles</string>
 
@@ -828,6 +826,8 @@
     <string name="cd_pick_month_year">Elegir mes y año</string>
     <string name="cd_previous_month">Mes anterior</string>
     <string name="cd_next_month">Mes siguiente</string>
+    <string name="cd_previous_day">Día anterior</string>
+    <string name="cd_next_day">Día siguiente</string>
     <string name="cd_month_year_picker">Selector de mes y año</string>
     <string name="cd_remove_alert">Eliminar alerta</string>
     <string name="cd_warning">Advertencia</string>
@@ -1192,6 +1192,65 @@
     <string name="empty_no_events_day_4">Estado del calendario: gloriosamente vacío.</string>
     <string name="empty_no_events_day_5">Nada agendado. Disfruta la calma.</string>
     <string name="filter_date">Fecha</string>
+    <string name="search_tab_upcoming">Próximos</string>
+    <string name="search_tab_past">Pasados</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d evento</item>
+        <item quantity="other">%1$s, %2$d eventos</item>
+    </plurals>
+    <string name="search_date_this_week">Esta semana</string>
+    <string name="search_date_this_month">Este mes</string>
+    <string name="search_date_pick">Seleccionar fechas…</string>
+    <string name="search_next">Próximo: %1$s</string>
+    <string name="search_last">Último: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Ubicación:</string>
+    <string name="search_reason_notes">Notas:</string>
+    <string name="search_reason_guest">Invitado:</string>
+    <string name="search_keep_typing">Sigue escribiendo para buscar</string>
+    <string name="search_no_matches">Ningún evento coincide con «%1$s»</string>
+    <string name="search_lookback_line">Periodo de sincronización hacia atrás: %1$s</string>
+    <string name="search_sync_settings">Configuración de sincronización</string>
+    <string name="cd_search_sync_settings">Abrir el periodo de sincronización hacia atrás</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Mostrar %d evento pasado</item>
+        <item quantity="other">Mostrar %d eventos pasados</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">%d más en un calendario oculto</item>
+        <item quantity="other">%d más en calendarios ocultos</item>
+    </plurals>
+    <string name="search_show">Mostrar</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Mostrar %d coincidencia en un calendario oculto</item>
+        <item quantity="other">Mostrar %d coincidencias en calendarios ocultos</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Mostrar %d en un calendario oculto</item>
+        <item quantity="other">Mostrar %d en calendarios ocultos</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Incluye %d calendario oculto</item>
+        <item quantity="other">Incluye %d calendarios ocultos</item>
+    </plurals>
+    <string name="search_leave_out">Excluir</string>
+    <string name="cd_search_leave_out">Excluir calendarios ocultos</string>
+    <string name="search_hidden_calendar">%1$s · oculto</string>
+    <string name="cd_search_date_this_week">Mostrar coincidencias de esta semana</string>
+    <string name="cd_search_date_this_month">Mostrar coincidencias de este mes</string>
+    <string name="cd_search_date_pick">Seleccionar fechas para buscar</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d próximo</item>
+        <item quantity="other">%d próximos</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d pasado</item>
+        <item quantity="other">%d pasados</item>
+    </plurals>
+    <string name="search_no_past_events">No hay eventos pasados</string>
+    <string name="search_no_events_in_dates">No hay eventos en estas fechas</string>
     <string name="label_select_date">Seleccionar fecha</string>
     <string name="hint_tap_date_range">Toca la misma fecha para un día, u otra para un rango</string>
     <string name="cd_clear">Borrar</string>

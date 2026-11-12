@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Cuir a-steach 6 caractaran hex (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Na h-Uile</string>
     <string name="view_week">Seachdain</string>
     <string name="view_month">Mìos</string>
     <string name="label_all_day">Fad an latha</string>
@@ -518,7 +517,6 @@
     <string name="option_saturday">Disathairne</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Cha deach tachartasan a lorg</string>
     <string name="empty_no_upcoming_events">Gun tachartasan a\' tighinn</string>
     <string name="empty_no_calendars">Chan eil mìosachain ri fhaighinn</string>
 
@@ -847,6 +845,8 @@
     <string name="cd_pick_month_year">Tagh mìos is bliadhna</string>
     <string name="cd_previous_month">Am mìos roimhe</string>
     <string name="cd_next_month">An ath mhìos</string>
+    <string name="cd_previous_day">An latha roimhe</string>
+    <string name="cd_next_day">An ath latha</string>
     <string name="cd_month_year_picker">Roghadair mìosa is bliadhna</string>
     <string name="cd_remove_alert">Thoir rabhadh air falbh</string>
     <string name="cd_warning">Rabhadh</string>
@@ -1275,6 +1275,81 @@
     <string name="empty_no_events_day_4">Inbhe a\' mhìosachain: àlainn falamh.</string>
     <string name="empty_no_events_day_5">Chan eil dad air a phlanadh. Gabh tlachd às an t-sàmhchair.</string>
     <string name="filter_date">Ceann-là</string>
+    <string name="search_tab_upcoming">Ri thighinn</string>
+    <string name="search_tab_past">Seachad</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d thachartas</item>
+        <item quantity="two">%1$s, %2$d thachartas</item>
+        <item quantity="few">%1$s, %2$d tachartasan</item>
+        <item quantity="other">%1$s, %2$d tachartas</item>
+    </plurals>
+    <string name="search_date_this_week">An t-seachdain seo</string>
+    <string name="search_date_this_month">Am mìos seo</string>
+    <string name="search_date_pick">Tagh cinn-latha…</string>
+    <string name="search_next">An ath thuras: %1$s</string>
+    <string name="search_last">Mu dheireadh: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Àite:</string>
+    <string name="search_reason_notes">Notaichean:</string>
+    <string name="search_reason_guest">Aoigh:</string>
+    <string name="search_keep_typing">Cùm ort a\' sgrìobhadh gus lorg</string>
+    <string name="search_no_matches">Chan eil tachartas a\' freagairt ri “%1$s”</string>
+    <string name="search_lookback_line">Coimhead Air Ais Sioncronachaidh: %1$s</string>
+    <string name="search_sync_settings">Roghainnean sioncronachaidh</string>
+    <string name="cd_search_sync_settings">Fosgail roghainn coimhead air ais sioncronachaidh</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Seall %d thachartas a chaidh seachad</item>
+        <item quantity="two">Seall %d thachartas a chaidh seachad</item>
+        <item quantity="few">Seall %d tachartasan a chaidh seachad</item>
+        <item quantity="other">Seall %d tachartas a chaidh seachad</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">%d eile ann am mìosachan falaichte</item>
+        <item quantity="two">%d eile ann am mìosachain fhalaichte</item>
+        <item quantity="few">%d eile ann am mìosachain fhalaichte</item>
+        <item quantity="other">%d eile ann am mìosachain fhalaichte</item>
+    </plurals>
+    <string name="search_show">Seall</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Seall %d toradh ann am mìosachan falaichte</item>
+        <item quantity="two">Seall %d thoradh ann am mìosachain fhalaichte</item>
+        <item quantity="few">Seall %d toraidhean ann am mìosachain fhalaichte</item>
+        <item quantity="other">Seall %d toradh ann am mìosachain fhalaichte</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Seall %d ann am mìosachan falaichte</item>
+        <item quantity="two">Seall %d ann am mìosachain fhalaichte</item>
+        <item quantity="few">Seall %d ann am mìosachain fhalaichte</item>
+        <item quantity="other">Seall %d ann am mìosachain fhalaichte</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">A\' gabhail a-steach %d mhìosachan falaichte</item>
+        <item quantity="two">A\' gabhail a-steach %d mhìosachan fhalaichte</item>
+        <item quantity="few">A\' gabhail a-steach %d mìosachain fhalaichte</item>
+        <item quantity="other">A\' gabhail a-steach %d mìosachan falaichte</item>
+    </plurals>
+    <string name="search_leave_out">Fàg às</string>
+    <string name="cd_search_leave_out">Fàg às mìosachain fhalaichte</string>
+    <string name="search_hidden_calendar">%1$s · falaichte</string>
+    <string name="cd_search_date_this_week">Seall toraidhean na seachdain seo</string>
+    <string name="cd_search_date_this_month">Seall toraidhean a\' mhìos seo</string>
+    <string name="cd_search_date_pick">Tagh cinn-latha airson lorg</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d ri thighinn</item>
+        <item quantity="two">%d ri thighinn</item>
+        <item quantity="few">%d ri thighinn</item>
+        <item quantity="other">%d ri thighinn</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d seachad</item>
+        <item quantity="two">%d seachad</item>
+        <item quantity="few">%d seachad</item>
+        <item quantity="other">%d seachad</item>
+    </plurals>
+    <string name="search_no_past_events">Chan eil tachartas seachad ann</string>
+    <string name="search_no_events_in_dates">Chan eil tachartas air na cinn-latha seo</string>
     <string name="label_select_date">Tagh ceann-là</string>
     <string name="hint_tap_date_range">Thoir gnogag air an aon cheann-là airson aon là, no ceann-là eile airson raon</string>
     <string name="cd_clear">Glan</string>

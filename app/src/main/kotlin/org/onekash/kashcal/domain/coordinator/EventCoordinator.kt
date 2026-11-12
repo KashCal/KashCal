@@ -806,17 +806,6 @@ class EventCoordinator @Inject constructor(
         return eventReader.getDaysWithEventsInMonth(year, month)
     }
 
-    suspend fun searchEvents(query: String): List<Event> {
-        return eventReader.searchEvents(query)
-    }
-
-    suspend fun searchEventsWithOccurrences(
-        query: String,
-        futureOnly: Boolean = true
-    ): List<OccurrenceWithEvent> {
-        return eventReader.searchEventsWithOccurrences(query, futureOnly)
-    }
-
     fun getPendingOperationCount(): Flow<Int> {
         return eventReader.getPendingOperationCount()
     }
@@ -839,13 +828,6 @@ class EventCoordinator @Inject constructor(
         return occurrenceGenerator.regenerateOccurrences(event)
     }
 
-    /**
-     * Makes every repeating series' occurrences cover [startMs] to [endMs], for a read the
-     * occurrence table doesn't serve yet; the rules are on [OccurrenceGenerator.ensureCovered].
-     */
-    suspend fun ensureOccurrencesCover(startMs: Long, endMs: Long) {
-        occurrenceGenerator.ensureCovered(startMs, endMs)
-    }
 
     /**
      * Keeps every repeating series expanded ahead of [nowMs], forward only, for the readers that

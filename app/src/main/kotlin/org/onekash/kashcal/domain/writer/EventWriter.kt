@@ -987,6 +987,7 @@ class EventWriter @Inject constructor(
             eventsDao.updateRrule(masterEventId, truncatedRrule, now)
 
             occurrencesDao.deleteForEventAfter(masterEventId, splitTimeMs)
+            occurrenceGenerator.forgetCoverage(masterEventId)
 
             deleteFutureExceptions(masterEventId, splitTimeMs)
 
@@ -1199,6 +1200,7 @@ class EventWriter @Inject constructor(
             eventsDao.updateRrule(masterEventId, truncatedRrule, now)
 
             occurrencesDao.deleteForEventAfter(masterEventId, fromTimeMs)
+            occurrenceGenerator.forgetCoverage(masterEventId)
 
             deleteFutureExceptions(masterEventId, fromTimeMs)
 

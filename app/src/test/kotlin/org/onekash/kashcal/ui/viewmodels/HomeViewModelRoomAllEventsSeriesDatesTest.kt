@@ -61,6 +61,8 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.util.TimeZone
+import kotlinx.coroutines.flow.first
+import org.onekash.kashcal.domain.search.SearchQuery
 
 /**
  * Tests an "All events" save made from a form opened on a later occurrence of a
@@ -545,13 +547,13 @@ class HomeViewModelRoomAllEventsSeriesDatesTest {
         assertTrue(viewModel.saveEvent(moved, EditScope.THIS_EVENT).isSuccess)
         val movedStart = newYork(LocalDate.of(2024, 3, 20), 10, 0)
 
-        // Search pairs the series row with its next occurrence's start, here the moved one.
-        val hit = reader.searchEventsInRangeWithNextOccurrence(
-            "Standup", occurrence(2) + HOUR_MS + 1, occurrence(4) + HOUR_MS,
-        ).single { it.event.id == id }
-        assertEquals(movedStart, hit.nextOccurrenceTs)
+        // Search lists the moved occurrence as its own event, dated by the row linked to it.
+        val hit = reader.observeSearchMatches(
+            SearchQuery.of("Standup"), now = 0L, todayDayCode = 0, range = (occurrence(2) + HOUR_MS + 1)..(occurrence(4) + HOUR_MS),
+        ).first().single { it.event.originalEventId == id }
+        assertEquals(movedStart, hit.inRange!!.startTs)
 
-        val source = viewModel.duplicateSourceFor(hit.event, hit.nextOccurrenceTs)
+        val source = viewModel.duplicateSourceFor(hit.event, hit.inRange!!.startTs)
 
         assertNull(source.rrule)
         assertEquals(movedStart, source.startTs)

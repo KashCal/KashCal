@@ -232,7 +232,7 @@ object DateTimeUtils {
 
     /**
      * Returns how many days [date] is past the start of its week: 0 on the first day, 6 on the
-     * last. Used for week starts, such as DateFilter's "This Week" and "Next Week".
+     * last. Search's This week filter starts its week here.
      *
      * @param firstDayOfWeek a Calendar constant or 0 for the locale default
      */

@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Sisesta 6 hex-märki (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Kõik</string>
     <string name="view_week">Nädal</string>
     <string name="view_month">Kuu</string>
     <string name="label_all_day">Terve päev</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">Laupäev</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Sündmusi ei leitud</string>
     <string name="empty_no_upcoming_events">Eelseisvaid sündmusi pole</string>
     <string name="empty_no_calendars">Kalendreid pole saadaval</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">Vali kuu ja aasta</string>
     <string name="cd_previous_month">Eelmine kuu</string>
     <string name="cd_next_month">Järgmine kuu</string>
+    <string name="cd_previous_day">Eelmine päev</string>
+    <string name="cd_next_day">Järgmine päev</string>
     <string name="cd_month_year_picker">Kuu ja aasta valija</string>
     <string name="cd_remove_alert">Eemalda meeldetuletus</string>
     <string name="cd_warning">Hoiatus</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">Kalendri seis: imeliselt tühi.</string>
     <string name="empty_no_events_day_5">Midagi pole plaanis. Naudi rahu.</string>
     <string name="filter_date">Kuupäev</string>
+    <string name="search_tab_upcoming">Tulevased</string>
+    <string name="search_tab_past">Möödunud</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d sündmus</item>
+        <item quantity="other">%1$s, %2$d sündmust</item>
+    </plurals>
+    <string name="search_date_this_week">See nädal</string>
+    <string name="search_date_this_month">See kuu</string>
+    <string name="search_date_pick">Vali kuupäevad…</string>
+    <string name="search_next">Järgmine: %1$s</string>
+    <string name="search_last">Viimane: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Koht:</string>
+    <string name="search_reason_notes">Märkmed:</string>
+    <string name="search_reason_guest">Külaline:</string>
+    <string name="search_keep_typing">Jätka otsimiseks tippimist</string>
+    <string name="search_no_matches">Ükski sündmus ei vasta päringule „%1$s“</string>
+    <string name="search_lookback_line">Sünkroonimise tagasivaade: %1$s</string>
+    <string name="search_sync_settings">Sünkroonimise seaded</string>
+    <string name="cd_search_sync_settings">Ava sünkroonimise tagasivaate seade</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Näita %d möödunud sündmus</item>
+        <item quantity="other">Näita %d möödunud sündmust</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">Veel %d peidetud kalendris</item>
+        <item quantity="other">Veel %d peidetud kalendrites</item>
+    </plurals>
+    <string name="search_show">Näita</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Näita %d vaste peidetud kalendris</item>
+        <item quantity="other">Näita %d vastet peidetud kalendrites</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Näita %d peidetud kalendris</item>
+        <item quantity="other">Näita %d peidetud kalendrites</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Kaasa arvatud %d peidetud kalender</item>
+        <item quantity="other">Kaasa arvatud %d peidetud kalendrit</item>
+    </plurals>
+    <string name="search_leave_out">Jäta välja</string>
+    <string name="cd_search_leave_out">Jäta peidetud kalendrid välja</string>
+    <string name="search_hidden_calendar">%1$s · peidetud</string>
+    <string name="cd_search_date_this_week">Näita selle nädala vasteid</string>
+    <string name="cd_search_date_this_month">Näita selle kuu vasteid</string>
+    <string name="cd_search_date_pick">Vali otsingu kuupäevad</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d tulevane</item>
+        <item quantity="other">%d tulevast</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d möödunud</item>
+        <item quantity="other">%d möödunud</item>
+    </plurals>
+    <string name="search_no_past_events">Möödunud sündmusi pole</string>
+    <string name="search_no_events_in_dates">Nendel kuupäevadel sündmusi pole</string>
     <string name="label_select_date">Vali kuupäev</string>
     <string name="hint_tap_date_range">Puudutage sama kuupäeva ühe päeva jaoks või teist kuupäeva vahemiku jaoks</string>
     <string name="cd_clear">Tühjenda</string>

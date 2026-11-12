@@ -22,6 +22,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.domain.search.SearchQuery
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import kotlin.time.Duration.Companion.seconds
@@ -687,13 +688,19 @@ class EventsDaoTest {
 
     // ==================== Search Tests ====================
 
+    private suspend fun search(text: String) = eventsDao.searchMatches(
+        System.currentTimeMillis().let { now ->
+            EventSearchSql.nextAndLast(SearchQuery.of(text), now, Occurrence.toDayFormat(now, false))
+        }
+    ).map { it.event }
+
     @Test
     fun `search finds events by title`() = runTest {
         eventsDao.insert(createTestEvent(title = "Team Meeting"))
         eventsDao.insert(createTestEvent(title = "Personal Appointment"))
         eventsDao.insert(createTestEvent(title = "Project Review Meeting"))
 
-        val results = eventsDao.search("meeting*")
+        val results = search("meeting")
 
         assertEquals(2, results.size)
     }
@@ -703,7 +710,7 @@ class EventsDaoTest {
         eventsDao.insert(createTestEvent(title = "Event", description = "Discuss budget matters"))
         eventsDao.insert(createTestEvent(title = "Other", description = "No relevance"))
 
-        val results = eventsDao.search("budget*")
+        val results = search("budget")
 
         assertEquals(1, results.size)
     }
@@ -713,7 +720,7 @@ class EventsDaoTest {
         eventsDao.insert(createTestEvent(title = "Active Meeting"))
         eventsDao.insert(createTestEvent(title = "Deleted Meeting", syncStatus = SyncStatus.PENDING_DELETE))
 
-        val results = eventsDao.search("meeting*")
+        val results = search("meeting")
 
         assertEquals(1, results.size)
         assertEquals("Active Meeting", results[0].title)

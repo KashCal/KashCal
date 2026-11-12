@@ -9,6 +9,7 @@ import android.content.Context
 import android.database.Cursor
 import android.database.MatrixCursor
 import android.database.sqlite.SQLiteDatabase
+import android.icu.lang.UCharacter
 import android.net.Uri
 import android.provider.BaseColumns
 import android.provider.CalendarContract
@@ -113,8 +114,9 @@ import org.robolectric.Robolectric
  *     ends inclusive, as the platform does;
  *   - search splits the query into words (quoted phrases kept whole) and
  *     keeps occurrences where every word matches the title, description,
- *     location, or a guest's email or name, folding case for ASCII letters
- *     only, as SQLite LIKE does;
+ *     location, or a guest's email or name, folding case for every letter but
+ *     not accents, as the ICU LIKE of the API 37 provider does ("ärzte" finds
+ *     "Ärzte", "cafe" does not find "Café");
  *   - HAS_ALARM is 1 when the event has reminder rows.
  *
  * Not modelled: RDATE and EXDATE (a series with only an RDATE shows as a
@@ -766,7 +768,7 @@ class SqliteCalendarProvider : ContentProvider() {
             guests.mapNotNull { it.first }.joinToString(",").ifEmpty { null },
             guests.mapNotNull { it.second }.joinToString(",").ifEmpty { null },
         )
-        return tokens.all { token -> columns.any { it != null && asciiLower(it).contains(asciiLower(token)) } }
+        return tokens.all { token -> columns.any { it != null && foldCase(it).contains(foldCase(token)) } }
     }
 
     // ---- test helpers: seed and read rows directly ----
@@ -1243,9 +1245,13 @@ class SqliteCalendarProvider : ContentProvider() {
             }
         }
 
-        /** Lower-case ASCII letters only, the way SQLite LIKE folds case. */
-        private fun asciiLower(value: String): String =
-            buildString(value.length) { value.forEach { append(if (it in 'A'..'Z') it + 32 else it) } }
+        /**
+         * Simple case folding per code point, the folding ICU's LIKE applies. Unlike
+         * `contains(ignoreCase = true)` it keeps dotless "ı" and "İ" apart from "i".
+         */
+        private fun foldCase(value: String): String = buildString(value.length) {
+            value.codePoints().forEach { appendCodePoint(UCharacter.foldCase(it, UCharacter.FOLD_CASE_DEFAULT)) }
+        }
 
         private val SEARCH_TOKEN = Regex("[^\\s\"'.?!,]+|\"([^\"]*)\"")
 

@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Внесете 6 hex знаци (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Сите</string>
     <string name="view_week">Недела</string>
     <string name="view_month">Месец</string>
     <string name="label_all_day">Цел ден</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">Сабота</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Не се пронајдени настани</string>
     <string name="empty_no_upcoming_events">Нема претстојни настани</string>
     <string name="empty_no_calendars">Нема достапни календари</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">Избери месец и година</string>
     <string name="cd_previous_month">Претходен месец</string>
     <string name="cd_next_month">Следен месец</string>
+    <string name="cd_previous_day">Претходен ден</string>
+    <string name="cd_next_day">Следен ден</string>
     <string name="cd_month_year_picker">Избирач на месец и година</string>
     <string name="cd_remove_alert">Отстрани известување</string>
     <string name="cd_warning">Предупредување</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">Состојба на календарот: прекрасно празен.</string>
     <string name="empty_no_events_day_5">Ништо планирано. Уживајте во спокојот.</string>
     <string name="filter_date">Датум</string>
+    <string name="search_tab_upcoming">Претстојни</string>
+    <string name="search_tab_past">Минати</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d настан</item>
+        <item quantity="other">%1$s, %2$d настани</item>
+    </plurals>
+    <string name="search_date_this_week">Оваа недела</string>
+    <string name="search_date_this_month">Овој месец</string>
+    <string name="search_date_pick">Избери датуми…</string>
+    <string name="search_next">Следно: %1$s</string>
+    <string name="search_last">Последно: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Локација:</string>
+    <string name="search_reason_notes">Белешки:</string>
+    <string name="search_reason_guest">Гостин:</string>
+    <string name="search_keep_typing">Продолжете да пишувате за да пребарувате</string>
+    <string name="search_no_matches">Нема настани што одговараат на „%1$s“</string>
+    <string name="search_lookback_line">Период за синхронизација наназад: %1$s</string>
+    <string name="search_sync_settings">Поставки за синхронизација</string>
+    <string name="cd_search_sync_settings">Отвори ја поставката за период за синхронизација наназад</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Прикажи %d минат настан</item>
+        <item quantity="other">Прикажи %d минати настани</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">Уште %d во скриен календар</item>
+        <item quantity="other">Уште %d во скриени календари</item>
+    </plurals>
+    <string name="search_show">Прикажи</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Прикажи %d совпаѓање во скриен календар</item>
+        <item quantity="other">Прикажи %d совпаѓања во скриени календари</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Прикажи %d во скриен календар</item>
+        <item quantity="other">Прикажи %d во скриени календари</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Вклучувајќи %d скриен календар</item>
+        <item quantity="other">Вклучувајќи %d скриени календари</item>
+    </plurals>
+    <string name="search_leave_out">Исклучи</string>
+    <string name="cd_search_leave_out">Исклучи ги скриените календари</string>
+    <string name="search_hidden_calendar">%1$s · скриен</string>
+    <string name="cd_search_date_this_week">Прикажи совпаѓања од оваа недела</string>
+    <string name="cd_search_date_this_month">Прикажи совпаѓања од овој месец</string>
+    <string name="cd_search_date_pick">Избери датуми за пребарување</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d претстоен</item>
+        <item quantity="other">%d претстојни</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d минат</item>
+        <item quantity="other">%d минати</item>
+    </plurals>
+    <string name="search_no_past_events">Нема минати настани</string>
+    <string name="search_no_events_in_dates">Нема настани на овие датуми</string>
     <string name="label_select_date">Изберете датум</string>
     <string name="hint_tap_date_range">Допрете ист датум за еден ден или друг за период</string>
     <string name="cd_clear">Исчисти</string>

@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Skriv inn 6 hex-teikn (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Alle</string>
     <string name="view_week">Veke</string>
     <string name="view_month">Månad</string>
     <string name="label_all_day">Heile dagen</string>
@@ -515,7 +514,6 @@
     <string name="option_saturday">Laurdag</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Ingen hendingar funne</string>
     <string name="empty_no_upcoming_events">Ingen komande hendingar</string>
     <string name="empty_no_calendars">Ingen kalendrar tilgjengelege</string>
 
@@ -824,6 +822,8 @@
     <string name="cd_pick_month_year">Vel månad og år</string>
     <string name="cd_previous_month">Førre månad</string>
     <string name="cd_next_month">Neste månad</string>
+    <string name="cd_previous_day">Førre dag</string>
+    <string name="cd_next_day">Neste dag</string>
     <string name="cd_month_year_picker">Månads- og årsveljar</string>
     <string name="cd_remove_alert">Fjern påminning</string>
     <string name="cd_warning">Åtvaring</string>
@@ -1160,6 +1160,65 @@
     <string name="empty_no_events_day_4">Kalenderstatus: herleg tom.</string>
     <string name="empty_no_events_day_5">Ingenting planlagt. Nyt roen.</string>
     <string name="filter_date">Dato</string>
+    <string name="search_tab_upcoming">Komande</string>
+    <string name="search_tab_past">Tidlegare</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d hending</item>
+        <item quantity="other">%1$s, %2$d hendingar</item>
+    </plurals>
+    <string name="search_date_this_week">Denne veka</string>
+    <string name="search_date_this_month">Denne månaden</string>
+    <string name="search_date_pick">Vel datoar…</string>
+    <string name="search_next">Neste: %1$s</string>
+    <string name="search_last">Siste: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Stad:</string>
+    <string name="search_reason_notes">Notat:</string>
+    <string name="search_reason_guest">Gjest:</string>
+    <string name="search_keep_typing">Skriv vidare for å søkje</string>
+    <string name="search_no_matches">Ingen hendingar samsvarer med «%1$s»</string>
+    <string name="search_lookback_line">Synkroniseringsperiode bakover: %1$s</string>
+    <string name="search_sync_settings">Synkroniseringsinnstillingar</string>
+    <string name="cd_search_sync_settings">Opne innstillinga for synkroniseringsperiode bakover</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Vis %d tidlegare hending</item>
+        <item quantity="other">Vis %d tidlegare hendingar</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">%d til i ein skjult kalender</item>
+        <item quantity="other">%d til i skjulte kalendrar</item>
+    </plurals>
+    <string name="search_show">Vis</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Vis %d treff i ein skjult kalender</item>
+        <item quantity="other">Vis %d treff i skjulte kalendrar</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Vis %d i ein skjult kalender</item>
+        <item quantity="other">Vis %d i skjulte kalendrar</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Inkludert %d skjult kalender</item>
+        <item quantity="other">Inkludert %d skjulte kalendrar</item>
+    </plurals>
+    <string name="search_leave_out">Utelat</string>
+    <string name="cd_search_leave_out">Utelat skjulte kalendrar</string>
+    <string name="search_hidden_calendar">%1$s · skjult</string>
+    <string name="cd_search_date_this_week">Vis treff denne veka</string>
+    <string name="cd_search_date_this_month">Vis treff denne månaden</string>
+    <string name="cd_search_date_pick">Vel datoar å søkje i</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d komande</item>
+        <item quantity="other">%d komande</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d tidlegare</item>
+        <item quantity="other">%d tidlegare</item>
+    </plurals>
+    <string name="search_no_past_events">Ingen tidlegare hendingar</string>
+    <string name="search_no_events_in_dates">Ingen hendingar på desse datoane</string>
     <string name="label_select_date">Vel ein dato</string>
     <string name="hint_tap_date_range">Trykk same dato for ein dag, eller ein annan dato for eit intervall</string>
     <string name="cd_clear">Tøm</string>

@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Увядзіце 6 hex-сімвалаў (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Усе</string>
     <string name="view_week">Тыдзень</string>
     <string name="view_month">Месяц</string>
     <string name="label_all_day">Увесь дзень</string>
@@ -518,7 +517,6 @@
     <string name="option_saturday">Субота</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Падзей не знойдзена</string>
     <string name="empty_no_upcoming_events">Няма будучых падзей</string>
     <string name="empty_no_calendars">Няма даступных календароў</string>
 
@@ -847,6 +845,8 @@
     <string name="cd_pick_month_year">Выбраць месяц і год</string>
     <string name="cd_previous_month">Папярэдні месяц</string>
     <string name="cd_next_month">Наступны месяц</string>
+    <string name="cd_previous_day">Папярэдні дзень</string>
+    <string name="cd_next_day">Наступны дзень</string>
     <string name="cd_month_year_picker">Выбар месяца і года</string>
     <string name="cd_remove_alert">Выдаліць напамінанне</string>
     <string name="cd_warning">Папярэджанне</string>
@@ -1275,6 +1275,81 @@
     <string name="empty_no_events_day_4">Статус календара: цудоўна пуста.</string>
     <string name="empty_no_events_day_5">Нічога не запланавана. Атрымлівай асалоду ад спакою.</string>
     <string name="filter_date">Дата</string>
+    <string name="search_tab_upcoming">Будучыя</string>
+    <string name="search_tab_past">Мінулыя</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d падзея</item>
+        <item quantity="few">%1$s, %2$d падзеі</item>
+        <item quantity="many">%1$s, %2$d падзей</item>
+        <item quantity="other">%1$s, %2$d падзеі</item>
+    </plurals>
+    <string name="search_date_this_week">Гэты тыдзень</string>
+    <string name="search_date_this_month">Гэты месяц</string>
+    <string name="search_date_pick">Выбраць даты…</string>
+    <string name="search_next">Наступная: %1$s</string>
+    <string name="search_last">Апошняя: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Месца:</string>
+    <string name="search_reason_notes">Нататкі:</string>
+    <string name="search_reason_guest">Госць:</string>
+    <string name="search_keep_typing">Працягвай уводзіць, каб пачаць пошук</string>
+    <string name="search_no_matches">Няма падзей па запыце «%1$s»</string>
+    <string name="search_lookback_line">Глыбіня сінхранізацыі: %1$s</string>
+    <string name="search_sync_settings">Налады сінхранізацыі</string>
+    <string name="cd_search_sync_settings">Адкрыць наладу глыбіні сінхранізацыі</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Паказаць %d мінулую падзею</item>
+        <item quantity="few">Паказаць %d мінулыя падзеі</item>
+        <item quantity="many">Паказаць %d мінулых падзей</item>
+        <item quantity="other">Паказаць %d мінулай падзеі</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">Яшчэ %d у схаваным календары</item>
+        <item quantity="few">Яшчэ %d у схаваных календарах</item>
+        <item quantity="many">Яшчэ %d у схаваных календарах</item>
+        <item quantity="other">Яшчэ %d у схаваных календарах</item>
+    </plurals>
+    <string name="search_show">Паказаць</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Паказаць %d супадзенне ў схаваным календары</item>
+        <item quantity="few">Паказаць %d супадзенні ў схаваных календарах</item>
+        <item quantity="many">Паказаць %d супадзенняў у схаваных календарах</item>
+        <item quantity="other">Паказаць %d супадзення ў схаваных календарах</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Паказаць %d у схаваным календары</item>
+        <item quantity="few">Паказаць %d у схаваных календарах</item>
+        <item quantity="many">Паказаць %d у схаваных календарах</item>
+        <item quantity="other">Паказаць %d у схаваных календарах</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Разам з %d схаваным календаром</item>
+        <item quantity="few">Разам з %d схаванымі календарамі</item>
+        <item quantity="many">Разам з %d схаванымі календарамі</item>
+        <item quantity="other">Разам з %d схаванымі календарамі</item>
+    </plurals>
+    <string name="search_leave_out">Прыбраць</string>
+    <string name="cd_search_leave_out">Прыбраць схаваныя календары</string>
+    <string name="search_hidden_calendar">%1$s · схаваны</string>
+    <string name="cd_search_date_this_week">Паказаць супадзенні за гэты тыдзень</string>
+    <string name="cd_search_date_this_month">Паказаць супадзенні за гэты месяц</string>
+    <string name="cd_search_date_pick">Выбраць даты для пошуку</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d будучая</item>
+        <item quantity="few">%d будучыя</item>
+        <item quantity="many">%d будучых</item>
+        <item quantity="other">%d будучай</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d мінулая</item>
+        <item quantity="few">%d мінулыя</item>
+        <item quantity="many">%d мінулых</item>
+        <item quantity="other">%d мінулай</item>
+    </plurals>
+    <string name="search_no_past_events">Няма мінулых падзей</string>
+    <string name="search_no_events_in_dates">Няма падзей у гэтыя даты</string>
     <string name="label_select_date">Выбраць дату</string>
     <string name="hint_tap_date_range">Націсніце на тую ж дату для аднаго дня або на іншую для дыяпазону</string>
     <string name="cd_clear">Ачысціць</string>

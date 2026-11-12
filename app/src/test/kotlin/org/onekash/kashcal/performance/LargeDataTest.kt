@@ -14,12 +14,14 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.KashCalDatabase
+import org.onekash.kashcal.data.db.dao.EventSearchSql
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.domain.search.SearchQuery
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
@@ -27,7 +29,7 @@ import java.util.UUID
 import kotlin.system.measureTimeMillis
 
 /**
- * Times inserts, day and range queries, FTS search, deletes and a Flow's first emission over
+ * Times inserts, day and range queries, event search, deletes and a Flow's first emission over
  * 50 to 1000 events or occurrences in an in-memory Room database. Each test asserts a time
  * ceiling; the queries, the search and the calendar cascade delete also assert a result count.
  *
@@ -220,7 +222,7 @@ class LargeDataTest {
     }
 
     @Test
-    fun `FTS search across 500 events returns in reasonable time`() = runTest {
+    fun `search across 500 events returns in reasonable time`() = runTest {
         val calendar = insertCalendar()
 
         // Create 500 events with searchable content
@@ -234,13 +236,16 @@ class LargeDataTest {
         }
         events.forEach { database.eventsDao().insert(it) }
 
+        val now = System.currentTimeMillis()
         val elapsed = measureTimeMillis {
-            val results = database.eventsDao().search("Meeting")
+            val results = database.eventsDao().searchMatches(
+                EventSearchSql.nextAndLast(SearchQuery.of("Meeting"), now, Occurrence.toDayFormat(now, false))
+            )
             // 50 titles are "Meeting with Team Alpha"; the assert only requires 40.
             assertTrue("Should find matching events", results.size >= 40)
         }
 
-        assertTrue("FTS search should complete in < 1s, took ${elapsed}ms", elapsed < 1000)
+        assertTrue("Search should complete in < 1s, took ${elapsed}ms", elapsed < 1000)
     }
 
     // ==================== Delete Performance Tests ====================

@@ -243,8 +243,6 @@
     <string name="label_enter_hex">Enter 6 hex characters (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <!-- Tab/filter: show all calendars (not "everything") -->
-    <string name="view_all">All</string>
     <string name="view_week">Week</string>
     <string name="view_month">Month</string>
     <!-- Event property: spans entire day, no specific start/end time -->
@@ -799,7 +797,6 @@
     <string name="option_saturday">Saturday</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">No events found</string>
     <string name="empty_no_upcoming_events">No upcoming events</string>
     <string name="empty_no_calendars">No calendars available</string>
 
@@ -1217,6 +1214,8 @@
     <string name="cd_pick_month_year">Pick month and year</string>
     <string name="cd_previous_month">Previous month</string>
     <string name="cd_next_month">Next month</string>
+    <string name="cd_previous_day">Previous day</string>
+    <string name="cd_next_day">Next day</string>
     <string name="cd_month_year_picker">Month and year picker</string>
     <string name="cd_remove_alert">Remove alert</string>
     <string name="cd_warning">Warning</string>
@@ -1659,6 +1658,103 @@
     <string name="empty_no_events_day_5">Nothing planned. Enjoy the calm.</string>
     <!-- Search filter chip: filter by date (noun, not verb) -->
     <string name="filter_date">Date</string>
+    <!-- Search chip: events not yet over. The three search chips share one row at equal width, so
+         use the shortest common word (one word if possible). -->
+    <string name="search_tab_upcoming">Upcoming</string>
+    <!-- Search chip: events already over. Shares a narrow chip with Upcoming and Date; use the
+         shortest common word. -->
+    <string name="search_tab_past">Past</string>
+    <!-- Shown in place of a search chip's count before the results arrive -->
+    <string name="search_count_pending" translatable="false">–</string>
+    <!-- Search chip count when there are more than 99 results; %1$s is 99 in the phone's digits -->
+    <string name="search_count_max">%1$s+</string>
+    <!-- Screen reader label of a search chip: %1$s is the chip name (Upcoming or Past), %2$d the
+         number of results, e.g. "Past, 14 events" -->
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d event</item>
+        <item quantity="other">%1$s, %2$d events</item>
+    </plurals>
+    <!-- Search Date menu item: narrow results to the current week -->
+    <string name="search_date_this_week">This week</string>
+    <!-- Search Date menu item: narrow results to the current month -->
+    <string name="search_date_this_month">This month</string>
+    <!-- Search Date menu item: opens the calendar to pick one day or a range -->
+    <string name="search_date_pick">Pick dates…</string>
+    <!-- Search result date of a repeating event under Upcoming: %1$s is its next date -->
+    <string name="search_next">Next: %1$s</string>
+    <!-- Search result date of a repeating event under Past: %1$s is its most recent date -->
+    <string name="search_last">Last: %1$s</string>
+    <!-- Search result date line: %1$s is the date, %2$s how far it is from today ("in 3 weeks",
+         "2 months ago"). Reorder for right-to-left scripts if needed. -->
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <!-- Search result: the words matched in the event's location; followed by the location -->
+    <string name="search_reason_location">Location:</string>
+    <!-- Search result: the words matched in the event's notes; followed by the notes around them -->
+    <string name="search_reason_notes">Notes:</string>
+    <!-- Search result: the words matched a guest; followed by the guest's name or email -->
+    <string name="search_reason_guest">Guest:</string>
+    <!-- Search: one Latin letter (or only spaces) typed; the search starts at two letters -->
+    <string name="search_keep_typing">Keep typing to search</string>
+    <!-- Search: nothing matched at all; %1$s is what the user typed -->
+    <string name="search_no_matches">No events match “%1$s”</string>
+    <!-- Search, under "No events match": the Sync lookback setting's name and %1$s its value in
+         the Settings wording, e.g. "3 months" or "1 year" -->
+    <string name="search_lookback_line">Sync lookback: %1$s</string>
+    <!-- Search: link that opens the Sync lookback setting -->
+    <string name="search_sync_settings">Sync settings</string>
+    <!-- Screen reader label of the Sync settings link in search -->
+    <string name="cd_search_sync_settings">Open the sync lookback setting</string>
+    <!-- Search: chip under "No upcoming events" that switches to the Past list -->
+    <plurals name="search_show_past">
+        <item quantity="one">Show %d past event</item>
+        <item quantity="other">Show %d past events</item>
+    </plurals>
+    <!-- Search: row under the results; matches in calendars hidden in the app, followed by Show -->
+    <plurals name="search_more_hidden">
+        <item quantity="one">%d more in a hidden calendar</item>
+        <item quantity="other">%d more in hidden calendars</item>
+    </plurals>
+    <!-- Search: button that lists the matches in hidden calendars, for this search only -->
+    <string name="search_show">Show</string>
+    <!-- Screen reader label of the Show button and chip for hidden calendars -->
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Show %d match in a hidden calendar</item>
+        <item quantity="other">Show %d matches in hidden calendars</item>
+    </plurals>
+    <!-- Search: chip in the empty state when every match is in a hidden calendar -->
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Show %d in a hidden calendar</item>
+        <item quantity="other">Show %d in hidden calendars</item>
+    </plurals>
+    <!-- Search: footer while matches in hidden calendars are listed, followed by Leave out -->
+    <plurals name="search_including_hidden">
+        <item quantity="one">Including %d hidden calendar</item>
+        <item quantity="other">Including %d hidden calendars</item>
+    </plurals>
+    <!-- Search: button that stops listing matches in hidden calendars -->
+    <string name="search_leave_out">Leave out</string>
+    <!-- Screen reader label of the Leave out button -->
+    <string name="cd_search_leave_out">Leave out hidden calendars</string>
+    <!-- Search result: the calendar of a match in a hidden calendar; %1$s is the calendar name -->
+    <string name="search_hidden_calendar">%1$s · hidden</string>
+    <!-- Screen reader labels of the Date menu items -->
+    <string name="cd_search_date_this_week">Show matches this week</string>
+    <string name="cd_search_date_this_month">Show matches this month</string>
+    <string name="cd_search_date_pick">Pick dates to search</string>
+    <!-- Announced to screen readers when search results change: %1$s and %2$s are the two counts -->
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d upcoming</item>
+        <item quantity="other">%d upcoming</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d past</item>
+        <item quantity="other">%d past</item>
+    </plurals>
+    <!-- Search: the Past list is empty -->
+    <string name="search_no_past_events">No past events</string>
+    <!-- Search: no match has an occurrence in the picked dates -->
+    <string name="search_no_events_in_dates">No events on these dates</string>
     <string name="label_select_date">Select a date</string>
     <string name="hint_tap_date_range">Tap same date for single day, or another date for range</string>
 

@@ -3,13 +3,16 @@ package org.onekash.kashcal.data.db.migration
 import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
 import androidx.room.Room
+import androidx.room.testing.MigrationTestHelper
 import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.sqlite.db.SupportSQLiteOpenHelper
 import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
+import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.KashCalDatabase
@@ -20,8 +23,9 @@ import org.robolectric.annotation.Config
 
 /**
  * Tests migration 6 to 7 on a v6 database: it runs without errors, adds the new columns and
- * indexes, keeps existing data, copies uid into import_id and sets alarm_count to 0. The last test
- * opens a full v6 database with Room, which runs every migration to the current version.
+ * indexes, keeps existing data, copies uid into import_id and sets alarm_count to 0. One test
+ * opens a full v6 database with Room, which runs every migration to the current version; another
+ * opens a seeded v27 database, whose search index the upgrade drops.
  *
  * Runs on SQLite through Robolectric, so no instrumented test is needed.
  */
@@ -30,6 +34,14 @@ import org.robolectric.annotation.Config
 class MigrationGoldenTest {
 
     private lateinit var db: SupportSQLiteDatabase
+
+    @get:Rule
+    val helper: MigrationTestHelper = MigrationTestHelper(
+        InstrumentationRegistry.getInstrumentation(),
+        KashCalDatabase::class.java,
+        emptyList(),
+        FrameworkSQLiteOpenHelperFactory()
+    )
 
     @Before
     fun setup() {
@@ -345,6 +357,64 @@ class MigrationGoldenTest {
             RuntimeEnvironment.getApplication().deleteDatabase("migration-compat-test")
         }
     }
+
+    /**
+     * Opens a seeded v27 database with Room, as an upgrade from the v27 release does. The search
+     * index and its triggers go; events, attendees and occurrences stay as they were, and events
+     * can still be inserted, updated and deleted (each write fired the dropped triggers in v27).
+     */
+    @Test
+    fun `upgrading a v27 database drops the search index and keeps events writable`() {
+        val name = "migration-golden-v27"
+        val tables = listOf("events", "attendees", "occurrences")
+        val before = helper.createDatabase(name, 27).use { v27 ->
+            v27.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'ICLOUD', 'a@example.test', 0)")
+            v27.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://x/', 'C', 0)")
+            v27.execSQL(
+                "INSERT INTO events (id, uid, calendar_id, title, location, description, start_ts, end_ts, timezone, " +
+                    "dtstamp, created_at, updated_at) VALUES (1, 'golden', 1, 'Dentist', 'Clinic', 'notes', 100, 200, " +
+                    "'UTC', 0, 0, 0)"
+            )
+            v27.execSQL("INSERT INTO attendees (id, event_id, address, display_name) VALUES (1, 1, 'mailto:amara@example.test', 'Amara')")
+            v27.execSQL(
+                "INSERT INTO occurrences (id, event_id, calendar_id, start_ts, end_ts, start_day, end_day) " +
+                    "VALUES (1, 1, 1, 100, 200, 19700101, 19700101)"
+            )
+            assertTrue(searchIndexObjects(v27) > 0)
+            tables.map { rows(v27, it) }
+        }
+
+        val room = Room.databaseBuilder(RuntimeEnvironment.getApplication(), KashCalDatabase::class.java, name)
+            .addMigrations(*Migrations.ALL_MIGRATIONS)
+            .allowMainThreadQueries()
+            .build()
+        try {
+            val upgraded = room.openHelper.writableDatabase
+            assertEquals(0L, searchIndexObjects(upgraded))
+            assertEquals(before, tables.map { rows(upgraded, it) })
+            kotlinx.coroutines.runBlocking {
+                val dao = room.eventsDao()
+                val kept = dao.getByUid("golden").single()
+                dao.update(kept.copy(title = "Dentist moved"))
+                val newId = dao.insert(kept.copy(id = 0, uid = "golden-2", title = "Second"))
+                dao.deleteById(newId)
+                assertEquals(listOf("Dentist moved"), dao.getByUid("golden").map { it.title })
+                assertTrue(dao.getByUid("golden-2").isEmpty())
+            }
+        } finally {
+            room.close()
+            RuntimeEnvironment.getApplication().deleteDatabase(name)
+        }
+    }
+
+    private fun searchIndexObjects(db: SupportSQLiteDatabase): Long =
+        db.query("SELECT COUNT(*) FROM sqlite_master WHERE name LIKE '%events_fts%' OR sql LIKE '%events_fts%'")
+            .use { it.moveToFirst(); it.getLong(0) }
+
+    private fun rows(db: SupportSQLiteDatabase, table: String): List<List<String?>> =
+        db.query("SELECT * FROM $table ORDER BY rowid").use { c ->
+            buildList { while (c.moveToNext()) add((0 until c.columnCount).map { c.getString(it) }) }
+        }
 
     private fun triggerSql(db: SupportSQLiteDatabase): String? =
         db.query(

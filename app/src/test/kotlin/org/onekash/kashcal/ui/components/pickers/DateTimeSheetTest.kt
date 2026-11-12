@@ -424,8 +424,7 @@ class DateTimeSheetTest {
         rule.onNodeWithText("27").assertIsNotSelected()
     }
 
-    // The grid's swipe handler outlives recompositions, so it must not apply a month change to
-    // the state from before the tap.
+    // A month change after a day tap applies to the state the tap left, not the one before it.
     @Test
     fun `a month swipe after a day tap keeps the tapped day`() {
         val host = render()

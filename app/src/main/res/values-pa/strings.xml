@@ -149,7 +149,6 @@
     <string name="label_enter_hex">6 hex ਅੱਖਰ ਦਾਖ਼ਲ ਕਰੋ (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">ਸਭ</string>
     <string name="view_week">ਹਫ਼ਤਾ</string>
     <string name="view_month">ਮਹੀਨਾ</string>
     <string name="label_all_day">ਸਾਰਾ ਦਿਨ</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">ਸ਼ਨੀਵਾਰ</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">ਕੋਈ ਘਟਨਾ ਨਹੀਂ ਮਿਲੀ</string>
     <string name="empty_no_upcoming_events">ਕੋਈ ਆਉਣ ਵਾਲੀ ਘਟਨਾ ਨਹੀਂ</string>
     <string name="empty_no_calendars">ਕੋਈ ਕੈਲੰਡਰ ਉਪਲਬਧ ਨਹੀਂ</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">ਮਹੀਨਾ ਅਤੇ ਸਾਲ ਚੁਣੋ</string>
     <string name="cd_previous_month">ਪਿਛਲਾ ਮਹੀਨਾ</string>
     <string name="cd_next_month">ਅਗਲਾ ਮਹੀਨਾ</string>
+    <string name="cd_previous_day">ਪਿਛਲਾ ਦਿਨ</string>
+    <string name="cd_next_day">ਅਗਲਾ ਦਿਨ</string>
     <string name="cd_month_year_picker">ਮਹੀਨਾ ਅਤੇ ਸਾਲ ਚੋਣਕਾਰ</string>
     <string name="cd_remove_alert">ਚੇਤਾਵਨੀ ਹਟਾਓ</string>
     <string name="cd_warning">ਚੇਤਾਵਨੀ</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">ਕੈਲੰਡਰ ਦੀ ਹਾਲਤ: ਸ਼ਾਨਦਾਰ ਢੰਗ ਨਾਲ ਖਾਲੀ।</string>
     <string name="empty_no_events_day_5">ਕੁਝ ਵੀ ਯੋਜਨਾਬੱਧ ਨਹੀਂ। ਸ਼ਾਂਤੀ ਦਾ ਆਨੰਦ ਲਓ।</string>
     <string name="filter_date">ਮਿਤੀ</string>
+    <string name="search_tab_upcoming">ਆਗਾਮੀ</string>
+    <string name="search_tab_past">ਪਿਛਲੇ</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d ਘਟਨਾ</item>
+        <item quantity="other">%1$s, %2$d ਘਟਨਾਵਾਂ</item>
+    </plurals>
+    <string name="search_date_this_week">ਇਸ ਹਫ਼ਤੇ</string>
+    <string name="search_date_this_month">ਇਸ ਮਹੀਨੇ</string>
+    <string name="search_date_pick">ਮਿਤੀਆਂ ਚੁਣੋ…</string>
+    <string name="search_next">ਅਗਲੀ: %1$s</string>
+    <string name="search_last">ਪਿਛਲੀ: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">ਟਿਕਾਣਾ:</string>
+    <string name="search_reason_notes">ਨੋਟਸ:</string>
+    <string name="search_reason_guest">ਮਹਿਮਾਨ:</string>
+    <string name="search_keep_typing">ਖੋਜਣ ਲਈ ਟਾਈਪ ਕਰਦੇ ਰਹੋ</string>
+    <string name="search_no_matches">“%1$s” ਨਾਲ ਕੋਈ ਘਟਨਾ ਮੇਲ ਨਹੀਂ ਖਾਂਦੀ</string>
+    <string name="search_lookback_line">ਸਿੰਕ ਲੁੱਕਬੈਕ: %1$s</string>
+    <string name="search_sync_settings">ਸਿੰਕ ਸੈਟਿੰਗਾਂ</string>
+    <string name="cd_search_sync_settings">ਸਿੰਕ ਲੁੱਕਬੈਕ ਸੈਟਿੰਗ ਖੋਲ੍ਹੋ</string>
+    <plurals name="search_show_past">
+        <item quantity="one">%d ਪਿਛਲੀ ਘਟਨਾ ਦਿਖਾਓ</item>
+        <item quantity="other">%d ਪਿਛਲੀਆਂ ਘਟਨਾਵਾਂ ਦਿਖਾਓ</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">ਲੁਕੇ ਕੈਲੰਡਰ ਵਿੱਚ %d ਹੋਰ</item>
+        <item quantity="other">ਲੁਕੇ ਕੈਲੰਡਰਾਂ ਵਿੱਚ %d ਹੋਰ</item>
+    </plurals>
+    <string name="search_show">ਦਿਖਾਓ</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">ਲੁਕੇ ਕੈਲੰਡਰ ਵਿੱਚ %d ਮੇਲ ਦਿਖਾਓ</item>
+        <item quantity="other">ਲੁਕੇ ਕੈਲੰਡਰਾਂ ਵਿੱਚ %d ਮੇਲ ਦਿਖਾਓ</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">ਲੁਕੇ ਕੈਲੰਡਰ ਵਿੱਚ %d ਦਿਖਾਓ</item>
+        <item quantity="other">ਲੁਕੇ ਕੈਲੰਡਰਾਂ ਵਿੱਚ %d ਦਿਖਾਓ</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">%d ਲੁਕੇ ਕੈਲੰਡਰ ਸਮੇਤ</item>
+        <item quantity="other">%d ਲੁਕੇ ਕੈਲੰਡਰਾਂ ਸਮੇਤ</item>
+    </plurals>
+    <string name="search_leave_out">ਛੱਡੋ</string>
+    <string name="cd_search_leave_out">ਲੁਕੇ ਕੈਲੰਡਰ ਛੱਡੋ</string>
+    <string name="search_hidden_calendar">%1$s · ਲੁਕਿਆ</string>
+    <string name="cd_search_date_this_week">ਇਸ ਹਫ਼ਤੇ ਦੇ ਮੇਲ ਦਿਖਾਓ</string>
+    <string name="cd_search_date_this_month">ਇਸ ਮਹੀਨੇ ਦੇ ਮੇਲ ਦਿਖਾਓ</string>
+    <string name="cd_search_date_pick">ਖੋਜਣ ਲਈ ਮਿਤੀਆਂ ਚੁਣੋ</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d ਆਗਾਮੀ</item>
+        <item quantity="other">%d ਆਗਾਮੀ</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d ਪਿਛਲੀ</item>
+        <item quantity="other">%d ਪਿਛਲੀਆਂ</item>
+    </plurals>
+    <string name="search_no_past_events">ਕੋਈ ਪਿਛਲੀ ਘਟਨਾ ਨਹੀਂ</string>
+    <string name="search_no_events_in_dates">ਇਨ੍ਹਾਂ ਮਿਤੀਆਂ ’ਤੇ ਕੋਈ ਘਟਨਾ ਨਹੀਂ</string>
     <string name="label_select_date">ਮਿਤੀ ਚੁਣੋ</string>
     <string name="hint_tap_date_range">ਇੱਕ ਦਿਨ ਲਈ ਉਹੀ ਮਿਤੀ ਟੈਪ ਕਰੋ, ਜਾਂ ਸੀਮਾ ਲਈ ਹੋਰ ਮਿਤੀ</string>
     <string name="cd_clear">ਸਾਫ਼</string>

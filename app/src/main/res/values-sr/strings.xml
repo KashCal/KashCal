@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Unesite 6 hex znakova (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Sve</string>
     <string name="view_week">Nedelja</string>
     <string name="view_month">Mesec</string>
     <string name="label_all_day">Ceo dan</string>
@@ -517,7 +516,6 @@
     <string name="option_saturday">Subota</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Nema pronađenih događaja</string>
     <string name="empty_no_upcoming_events">Nema predstojećih događaja</string>
     <string name="empty_no_calendars">Nema dostupnih kalendara</string>
 
@@ -836,6 +834,8 @@
     <string name="cd_pick_month_year">Izaberi mesec i godinu</string>
     <string name="cd_previous_month">Prethodni mesec</string>
     <string name="cd_next_month">Sledeći mesec</string>
+    <string name="cd_previous_day">Prethodni dan</string>
+    <string name="cd_next_day">Sledeći dan</string>
     <string name="cd_month_year_picker">Izbor meseca i godine</string>
     <string name="cd_remove_alert">Ukloni podsetnik</string>
     <string name="cd_warning">Upozorenje</string>
@@ -1218,6 +1218,73 @@
     <string name="empty_no_events_day_4">Stanje kalendara: predivno prazno.</string>
     <string name="empty_no_events_day_5">Ništa u planu. Uživaj u miru.</string>
     <string name="filter_date">Datum</string>
+    <string name="search_tab_upcoming">Budući</string>
+    <string name="search_tab_past">Prošli</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d događaj</item>
+        <item quantity="few">%1$s, %2$d događaja</item>
+        <item quantity="other">%1$s, %2$d događaja</item>
+    </plurals>
+    <string name="search_date_this_week">Ova nedelja</string>
+    <string name="search_date_this_month">Ovaj mesec</string>
+    <string name="search_date_pick">Izaberi datume…</string>
+    <string name="search_next">Sledeće: %1$s</string>
+    <string name="search_last">Poslednje: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Lokacija:</string>
+    <string name="search_reason_notes">Beleške:</string>
+    <string name="search_reason_guest">Gost:</string>
+    <string name="search_keep_typing">Nastavite da kucate za pretragu</string>
+    <string name="search_no_matches">Nema događaja za „%1$s“</string>
+    <string name="search_lookback_line">Raspon sinhronizacije unazad: %1$s</string>
+    <string name="search_sync_settings">Podešavanja sinhronizacije</string>
+    <string name="cd_search_sync_settings">Otvori raspon sinhronizacije unazad</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Prikaži %d prošli događaj</item>
+        <item quantity="few">Prikaži %d prošla događaja</item>
+        <item quantity="other">Prikaži %d prošlih događaja</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">Još %d u skrivenom kalendaru</item>
+        <item quantity="few">Još %d u skrivenim kalendarima</item>
+        <item quantity="other">Još %d u skrivenim kalendarima</item>
+    </plurals>
+    <string name="search_show">Prikaži</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Prikaži %d rezultat u skrivenom kalendaru</item>
+        <item quantity="few">Prikaži %d rezultata u skrivenim kalendarima</item>
+        <item quantity="other">Prikaži %d rezultata u skrivenim kalendarima</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Prikaži %d u skrivenom kalendaru</item>
+        <item quantity="few">Prikaži %d u skrivenim kalendarima</item>
+        <item quantity="other">Prikaži %d u skrivenim kalendarima</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Uključujući %d skriveni kalendar</item>
+        <item quantity="few">Uključujući %d skrivena kalendara</item>
+        <item quantity="other">Uključujući %d skrivenih kalendara</item>
+    </plurals>
+    <string name="search_leave_out">Izostavi</string>
+    <string name="cd_search_leave_out">Izostavi skrivene kalendare</string>
+    <string name="search_hidden_calendar">%1$s · skriven</string>
+    <string name="cd_search_date_this_week">Prikaži rezultate ove nedelje</string>
+    <string name="cd_search_date_this_month">Prikaži rezultate ovog meseca</string>
+    <string name="cd_search_date_pick">Izaberi datume za pretragu</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d budući</item>
+        <item quantity="few">%d buduća</item>
+        <item quantity="other">%d budućih</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d prošli</item>
+        <item quantity="few">%d prošla</item>
+        <item quantity="other">%d prošlih</item>
+    </plurals>
+    <string name="search_no_past_events">Nema prošlih događaja</string>
+    <string name="search_no_events_in_dates">Nema događaja na ove datume</string>
     <string name="label_select_date">Izaberi datum</string>
     <string name="hint_tap_date_range">Dodirni isti datum za jedan dan ili drugi za raspon</string>
     <string name="cd_clear">Obriši</string>

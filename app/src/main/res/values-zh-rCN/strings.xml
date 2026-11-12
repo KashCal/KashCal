@@ -149,7 +149,6 @@
     <string name="label_enter_hex">输入6位十六进制字符 (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">全部</string>
     <string name="view_week">周</string>
     <string name="view_month">月</string>
     <string name="label_all_day">全天</string>
@@ -515,7 +514,6 @@
     <string name="option_saturday">星期六</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">未找到事件</string>
     <string name="empty_no_upcoming_events">没有即将到来的事件</string>
     <string name="empty_no_calendars">没有可用的日历</string>
 
@@ -814,6 +812,8 @@
     <string name="cd_pick_month_year">选择月和年</string>
     <string name="cd_previous_month">上个月</string>
     <string name="cd_next_month">下个月</string>
+    <string name="cd_previous_day">前一天</string>
+    <string name="cd_next_day">后一天</string>
     <string name="cd_month_year_picker">月和年选择器</string>
     <string name="cd_remove_alert">移除提醒</string>
     <string name="cd_warning">警告</string>
@@ -1104,6 +1104,57 @@
     <string name="empty_no_events_day_4">日历状态：空得妙不可言。</string>
     <string name="empty_no_events_day_5">没有安排，享受这份宁静吧。</string>
     <string name="filter_date">日期</string>
+    <string name="search_tab_upcoming">未来</string>
+    <string name="search_tab_past">过去</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="other">%1$s，%2$d 个事件</item>
+    </plurals>
+    <string name="search_date_this_week">本周</string>
+    <string name="search_date_this_month">本月</string>
+    <string name="search_date_pick">选择日期…</string>
+    <string name="search_next">下次：%1$s</string>
+    <string name="search_last">上次：%1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">地点：</string>
+    <string name="search_reason_notes">备注：</string>
+    <string name="search_reason_guest">嘉宾：</string>
+    <string name="search_keep_typing">继续输入以搜索</string>
+    <string name="search_no_matches">没有与“%1$s”匹配的事件</string>
+    <string name="search_lookback_line">同步回溯范围：%1$s</string>
+    <string name="search_sync_settings">同步设置</string>
+    <string name="cd_search_sync_settings">打开同步回溯范围设置</string>
+    <plurals name="search_show_past">
+        <item quantity="other">显示 %d 个过去的事件</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="other">隐藏的日历中还有 %d 个</item>
+    </plurals>
+    <string name="search_show">显示</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="other">显示隐藏日历中的 %d 个匹配项</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="other">显示隐藏日历中的 %d 个</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="other">包括 %d 个隐藏的日历</item>
+    </plurals>
+    <string name="search_leave_out">排除</string>
+    <string name="cd_search_leave_out">排除隐藏的日历</string>
+    <string name="search_hidden_calendar">%1$s · 已隐藏</string>
+    <string name="cd_search_date_this_week">显示本周的匹配项</string>
+    <string name="cd_search_date_this_month">显示本月的匹配项</string>
+    <string name="cd_search_date_pick">选择要搜索的日期</string>
+    <string name="search_announce">%1$s，%2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="other">未来 %d 个</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="other">过去 %d 个</item>
+    </plurals>
+    <string name="search_no_past_events">没有过去的事件</string>
+    <string name="search_no_events_in_dates">这些日期没有事件</string>
     <string name="label_select_date">选择日期</string>
     <string name="hint_tap_date_range">点击同一日期选择单天，或点击另一日期选择范围</string>
     <string name="cd_clear">清除</string>

@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Rhowch 6 nod hex (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Popeth</string>
     <string name="view_week">Wythnos</string>
     <string name="view_month">Mis</string>
     <string name="label_all_day">Drwy\'r dydd</string>
@@ -520,7 +519,6 @@
     <string name="option_saturday">Dydd Sadwrn</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Dim digwyddiadau wedi\'u canfod</string>
     <string name="empty_no_upcoming_events">Dim digwyddiadau ar y gweill</string>
     <string name="empty_no_calendars">Dim calendrau ar gael</string>
 
@@ -869,6 +867,8 @@
     <string name="cd_pick_month_year">Dewis mis a blwyddyn</string>
     <string name="cd_previous_month">Mis blaenorol</string>
     <string name="cd_next_month">Mis nesaf</string>
+    <string name="cd_previous_day">Diwrnod blaenorol</string>
+    <string name="cd_next_day">Diwrnod nesaf</string>
     <string name="cd_month_year_picker">Dewisydd mis a blwyddyn</string>
     <string name="cd_remove_alert">Tynnu rhybudd</string>
     <string name="cd_warning">Rhybudd</string>
@@ -1389,6 +1389,97 @@
     <string name="empty_no_events_day_4">Statws y calendr: hyfryd o wag.</string>
     <string name="empty_no_events_day_5">Dim byd wedi\'i gynllunio. Mwynhewch y llonydd.</string>
     <string name="filter_date">Dyddiad</string>
+    <string name="search_tab_upcoming">I ddod</string>
+    <string name="search_tab_past">Blaenorol</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="zero">%1$s, %2$d digwyddiad</item>
+        <item quantity="one">%1$s, %2$d digwyddiad</item>
+        <item quantity="two">%1$s, %2$d ddigwyddiad</item>
+        <item quantity="few">%1$s, %2$d digwyddiad</item>
+        <item quantity="many">%1$s, %2$d digwyddiad</item>
+        <item quantity="other">%1$s, %2$d digwyddiad</item>
+    </plurals>
+    <string name="search_date_this_week">Yr wythnos hon</string>
+    <string name="search_date_this_month">Y mis hwn</string>
+    <string name="search_date_pick">Dewis dyddiadau…</string>
+    <string name="search_next">Nesaf: %1$s</string>
+    <string name="search_last">Diwethaf: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Lleoliad:</string>
+    <string name="search_reason_notes">Nodiadau:</string>
+    <string name="search_reason_guest">Gwestai:</string>
+    <string name="search_keep_typing">Dal ati i deipio i chwilio</string>
+    <string name="search_no_matches">Dim digwyddiadau\'n cyfateb i “%1$s”</string>
+    <string name="search_lookback_line">Edrych yn Ôl Cysoni: %1$s</string>
+    <string name="search_sync_settings">Gosodiadau cysoni</string>
+    <string name="cd_search_sync_settings">Agor y gosodiad edrych yn ôl cysoni</string>
+    <plurals name="search_show_past">
+        <item quantity="zero">Dangos %d digwyddiad blaenorol</item>
+        <item quantity="one">Dangos %d digwyddiad blaenorol</item>
+        <item quantity="two">Dangos %d ddigwyddiad blaenorol</item>
+        <item quantity="few">Dangos %d digwyddiad blaenorol</item>
+        <item quantity="many">Dangos %d digwyddiad blaenorol</item>
+        <item quantity="other">Dangos %d digwyddiad blaenorol</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="zero">%d arall mewn calendrau cudd</item>
+        <item quantity="one">%d arall mewn calendr cudd</item>
+        <item quantity="two">%d arall mewn calendrau cudd</item>
+        <item quantity="few">%d arall mewn calendrau cudd</item>
+        <item quantity="many">%d arall mewn calendrau cudd</item>
+        <item quantity="other">%d arall mewn calendrau cudd</item>
+    </plurals>
+    <string name="search_show">Dangos</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="zero">Dangos %d canlyniad mewn calendrau cudd</item>
+        <item quantity="one">Dangos %d canlyniad mewn calendr cudd</item>
+        <item quantity="two">Dangos %d ganlyniad mewn calendrau cudd</item>
+        <item quantity="few">Dangos %d chanlyniad mewn calendrau cudd</item>
+        <item quantity="many">Dangos %d chanlyniad mewn calendrau cudd</item>
+        <item quantity="other">Dangos %d canlyniad mewn calendrau cudd</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="zero">Dangos %d mewn calendrau cudd</item>
+        <item quantity="one">Dangos %d mewn calendr cudd</item>
+        <item quantity="two">Dangos %d mewn calendrau cudd</item>
+        <item quantity="few">Dangos %d mewn calendrau cudd</item>
+        <item quantity="many">Dangos %d mewn calendrau cudd</item>
+        <item quantity="other">Dangos %d mewn calendrau cudd</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="zero">Yn cynnwys %d calendr cudd</item>
+        <item quantity="one">Yn cynnwys %d calendr cudd</item>
+        <item quantity="two">Yn cynnwys %d galendr cudd</item>
+        <item quantity="few">Yn cynnwys %d chalendr cudd</item>
+        <item quantity="many">Yn cynnwys %d chalendr cudd</item>
+        <item quantity="other">Yn cynnwys %d calendr cudd</item>
+    </plurals>
+    <string name="search_leave_out">Gadael allan</string>
+    <string name="cd_search_leave_out">Gadael calendrau cudd allan</string>
+    <string name="search_hidden_calendar">%1$s · cudd</string>
+    <string name="cd_search_date_this_week">Dangos canlyniadau\'r wythnos hon</string>
+    <string name="cd_search_date_this_month">Dangos canlyniadau\'r mis hwn</string>
+    <string name="cd_search_date_pick">Dewis dyddiadau i chwilio</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="zero">%d i ddod</item>
+        <item quantity="one">%d i ddod</item>
+        <item quantity="two">%d i ddod</item>
+        <item quantity="few">%d i ddod</item>
+        <item quantity="many">%d i ddod</item>
+        <item quantity="other">%d i ddod</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="zero">%d blaenorol</item>
+        <item quantity="one">%d blaenorol</item>
+        <item quantity="two">%d blaenorol</item>
+        <item quantity="few">%d blaenorol</item>
+        <item quantity="many">%d blaenorol</item>
+        <item quantity="other">%d blaenorol</item>
+    </plurals>
+    <string name="search_no_past_events">Dim digwyddiadau blaenorol</string>
+    <string name="search_no_events_in_dates">Dim digwyddiadau ar y dyddiadau hyn</string>
     <string name="label_select_date">Dewiswch ddyddiad</string>
     <string name="hint_tap_date_range">Tapiwch yr un dyddiad am un diwrnod, neu ddyddiad arall am ystod</string>
     <string name="cd_clear">Clirio</string>

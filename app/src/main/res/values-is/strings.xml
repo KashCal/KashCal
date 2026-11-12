@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Sláðu inn 6 hex-stafi (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Allt</string>
     <string name="view_week">Vika</string>
     <string name="view_month">Mánuður</string>
     <string name="label_all_day">Allan daginn</string>
@@ -515,7 +514,6 @@
     <string name="option_saturday">Laugardagur</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Engir viðburðir fundust</string>
     <string name="empty_no_upcoming_events">Engir viðburðir framundan</string>
     <string name="empty_no_calendars">Engin dagatöl tiltæk</string>
 
@@ -824,6 +822,8 @@
     <string name="cd_pick_month_year">Velja mánuð og ár</string>
     <string name="cd_previous_month">Fyrri mánuður</string>
     <string name="cd_next_month">Næsti mánuður</string>
+    <string name="cd_previous_day">Fyrri dagur</string>
+    <string name="cd_next_day">Næsti dagur</string>
     <string name="cd_month_year_picker">Mánaðar- og ársveljar</string>
     <string name="cd_remove_alert">Fjarlægja áminningu</string>
     <string name="cd_warning">Viðvörun</string>
@@ -1160,6 +1160,65 @@
     <string name="empty_no_events_day_4">Staða dagatals: dásamlega auð.</string>
     <string name="empty_no_events_day_5">Ekkert á dagskrá. Njóttu kyrrðarinnar.</string>
     <string name="filter_date">Dagsetning</string>
+    <string name="search_tab_upcoming">Framundan</string>
+    <string name="search_tab_past">Liðið</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d viðburður</item>
+        <item quantity="other">%1$s, %2$d viðburðir</item>
+    </plurals>
+    <string name="search_date_this_week">Þessi vika</string>
+    <string name="search_date_this_month">Þessi mánuður</string>
+    <string name="search_date_pick">Velja dagsetningar…</string>
+    <string name="search_next">Næst: %1$s</string>
+    <string name="search_last">Síðast: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Staðsetning:</string>
+    <string name="search_reason_notes">Athugasemdir:</string>
+    <string name="search_reason_guest">Gestur:</string>
+    <string name="search_keep_typing">Haltu áfram að skrifa til að leita</string>
+    <string name="search_no_matches">Engir viðburðir passa við „%1$s“</string>
+    <string name="search_lookback_line">Samstillingarsvið aftur í tíma: %1$s</string>
+    <string name="search_sync_settings">Samstillingarstillingar</string>
+    <string name="cd_search_sync_settings">Opna stillingu fyrir samstillingarsvið aftur í tíma</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Sýna %d liðinn viðburð</item>
+        <item quantity="other">Sýna %d liðna viðburði</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">%d í viðbót í földu dagatali</item>
+        <item quantity="other">%d í viðbót í földum dagatölum</item>
+    </plurals>
+    <string name="search_show">Sýna</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Sýna %d niðurstöðu í földu dagatali</item>
+        <item quantity="other">Sýna %d niðurstöður í földum dagatölum</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Sýna %d í földu dagatali</item>
+        <item quantity="other">Sýna %d í földum dagatölum</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Að meðtöldu %d földu dagatali</item>
+        <item quantity="other">Að meðtöldum %d földum dagatölum</item>
+    </plurals>
+    <string name="search_leave_out">Sleppa</string>
+    <string name="cd_search_leave_out">Sleppa földum dagatölum</string>
+    <string name="search_hidden_calendar">%1$s · falið</string>
+    <string name="cd_search_date_this_week">Sýna niðurstöður í þessari viku</string>
+    <string name="cd_search_date_this_month">Sýna niðurstöður í þessum mánuði</string>
+    <string name="cd_search_date_pick">Velja dagsetningar til að leita í</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d framundan</item>
+        <item quantity="other">%d framundan</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d liðinn</item>
+        <item quantity="other">%d liðnir</item>
+    </plurals>
+    <string name="search_no_past_events">Engir liðnir viðburðir</string>
+    <string name="search_no_events_in_dates">Engir viðburðir á þessum dagsetningum</string>
     <string name="label_select_date">Velja dagsetningu</string>
     <string name="hint_tap_date_range">Ýttu á sömu dagsetningu fyrir einn dag, eða aðra dagsetningu fyrir tímabil</string>
     <string name="cd_clear">Hreinsa</string>

@@ -3,18 +3,16 @@ plugins {
 }
 
 dependencies {
-    // iCalendar parsing (RFC 5545). Keep at 4.0.7 or later, where ical4j PR #763 fixed a
-    // duplicate-class bug.
-    implementation("org.mnode.ical4j:ical4j:4.3.0")
+    // iCalendar parsing (RFC 5545)
+    implementation(libs.ical4j)
 
-    // Kotlin coroutines, kept at the version catalog's `coroutines` version
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
+    implementation(libs.kotlinx.coroutines.core)
 
     // Testing (JUnit Jupiter 6)
-    testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
+    testImplementation(libs.junit.jupiter)
     testImplementation(kotlin("test"))
-    testImplementation("io.mockk:mockk:1.14.11")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
 
 java {

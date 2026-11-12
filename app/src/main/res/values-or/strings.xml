@@ -149,7 +149,6 @@
     <string name="label_enter_hex">6 hex ଅକ୍ଷର ଲେଖନ୍ତୁ (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">ସମସ୍ତ</string>
     <string name="view_week">ସପ୍ତାହ</string>
     <string name="view_month">ମାସ</string>
     <string name="label_all_day">ସାରାଦିନ</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">ଶନିବାର</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">ଇଭେଣ୍ଟ ମିଳିଲା ନାହିଁ</string>
     <string name="empty_no_upcoming_events">ଆସନ୍ତା ଇଭେଣ୍ଟ ନାହିଁ</string>
     <string name="empty_no_calendars">କ୍ୟାଲେଣ୍ଡର ଉପଲବ୍ଧ ନାହିଁ</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">ମାସ ଏବଂ ବର୍ଷ ବାଛନ୍ତୁ</string>
     <string name="cd_previous_month">ଗତ ମାସ</string>
     <string name="cd_next_month">ଆଗାମୀ ମାସ</string>
+    <string name="cd_previous_day">ପୂର୍ବ ଦିନ</string>
+    <string name="cd_next_day">ପରବର୍ତ୍ତୀ ଦିନ</string>
     <string name="cd_month_year_picker">ମାସ ଏବଂ ବର୍ଷ ପିକର</string>
     <string name="cd_remove_alert">ସତର୍କତା ବାହାର କରନ୍ତୁ</string>
     <string name="cd_warning">ସତର୍କତା</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">କ୍ୟାଲେଣ୍ଡର ସ୍ଥିତି: ସୁନ୍ଦର ଭାବେ ଖାଲି।</string>
     <string name="empty_no_events_day_5">କିଛି ନିର୍ଧାରିତ ନାହିଁ। ଶାନ୍ତିକୁ ଉପଭୋଗ କରନ୍ତୁ।</string>
     <string name="filter_date">ତାରିଖ</string>
+    <string name="search_tab_upcoming">ଆଗାମୀ</string>
+    <string name="search_tab_past">ଅତୀତ</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d ଇଭେଣ୍ଟ</item>
+        <item quantity="other">%1$s, %2$d ଇଭେଣ୍ଟ</item>
+    </plurals>
+    <string name="search_date_this_week">ଏହି ସପ୍ତାହ</string>
+    <string name="search_date_this_month">ଏହି ମାସ</string>
+    <string name="search_date_pick">ତାରିଖ ବାଛନ୍ତୁ…</string>
+    <string name="search_next">ପରବର୍ତ୍ତୀ: %1$s</string>
+    <string name="search_last">ଶେଷ: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">ସ୍ଥାନ:</string>
+    <string name="search_reason_notes">ନୋଟସ:</string>
+    <string name="search_reason_guest">ଅତିଥି:</string>
+    <string name="search_keep_typing">ଖୋଜିବାକୁ ଟାଇପ୍ କରିଚାଲନ୍ତୁ</string>
+    <string name="search_no_matches">“%1$s” ସହ କୌଣସି ଇଭେଣ୍ଟ ମେଳ ଖାଉନାହିଁ</string>
+    <string name="search_lookback_line">ସିଙ୍କ ଲୁକବ୍ୟାକ: %1$s</string>
+    <string name="search_sync_settings">ସିଙ୍କ ସେଟିଂସ</string>
+    <string name="cd_search_sync_settings">ସିଙ୍କ ଲୁକବ୍ୟାକ ସେଟିଂ ଖୋଲନ୍ତୁ</string>
+    <plurals name="search_show_past">
+        <item quantity="one">%d ଅତୀତ ଇଭେଣ୍ଟ ଦେଖାନ୍ତୁ</item>
+        <item quantity="other">%d ଅତୀତ ଇଭେଣ୍ଟ ଦେଖାନ୍ତୁ</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">ଲୁଚାଯାଇଥିବା କ୍ୟାଲେଣ୍ଡରରେ ଆଉ %d</item>
+        <item quantity="other">ଲୁଚାଯାଇଥିବା କ୍ୟାଲେଣ୍ଡରଗୁଡ଼ିକରେ ଆଉ %d</item>
+    </plurals>
+    <string name="search_show">ଦେଖାନ୍ତୁ</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">ଲୁଚାଯାଇଥିବା କ୍ୟାଲେଣ୍ଡରରେ %d ମେଳ ଦେଖାନ୍ତୁ</item>
+        <item quantity="other">ଲୁଚାଯାଇଥିବା କ୍ୟାଲେଣ୍ଡରଗୁଡ଼ିକରେ %d ମେଳ ଦେଖାନ୍ତୁ</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">ଲୁଚାଯାଇଥିବା କ୍ୟାଲେଣ୍ଡରରେ %d ଦେଖାନ୍ତୁ</item>
+        <item quantity="other">ଲୁଚାଯାଇଥିବା କ୍ୟାଲେଣ୍ଡରଗୁଡ଼ିକରେ %d ଦେଖାନ୍ତୁ</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">%d ଲୁଚାଯାଇଥିବା କ୍ୟାଲେଣ୍ଡର ସହିତ</item>
+        <item quantity="other">%d ଲୁଚାଯାଇଥିବା କ୍ୟାଲେଣ୍ଡର ସହିତ</item>
+    </plurals>
+    <string name="search_leave_out">ବାଦ ଦିଅନ୍ତୁ</string>
+    <string name="cd_search_leave_out">ଲୁଚାଯାଇଥିବା କ୍ୟାଲେଣ୍ଡର ବାଦ ଦିଅନ୍ତୁ</string>
+    <string name="search_hidden_calendar">%1$s · ଲୁଚାଯାଇଛି</string>
+    <string name="cd_search_date_this_week">ଏହି ସପ୍ତାହର ମେଳ ଦେଖାନ୍ତୁ</string>
+    <string name="cd_search_date_this_month">ଏହି ମାସର ମେଳ ଦେଖାନ୍ତୁ</string>
+    <string name="cd_search_date_pick">ଖୋଜିବାକୁ ତାରିଖ ବାଛନ୍ତୁ</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d ଆଗାମୀ</item>
+        <item quantity="other">%d ଆଗାମୀ</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d ଅତୀତ</item>
+        <item quantity="other">%d ଅତୀତ</item>
+    </plurals>
+    <string name="search_no_past_events">କୌଣସି ଅତୀତ ଇଭେଣ୍ଟ ନାହିଁ</string>
+    <string name="search_no_events_in_dates">ଏହି ତାରିଖଗୁଡ଼ିକରେ କୌଣସି ଇଭେଣ୍ଟ ନାହିଁ</string>
     <string name="label_select_date">ତାରିଖ ବାଛନ୍ତୁ</string>
     <string name="hint_tap_date_range">ଏକ ଦିନ ପାଇଁ ସେହି ତାରିଖ ଟ୍ୟାପ କରନ୍ତୁ, ବା ପରିସର ପାଇଁ ଅନ୍ୟ ତାରିଖ</string>
     <string name="cd_clear">ସଫା</string>

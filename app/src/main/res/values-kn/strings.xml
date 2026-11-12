@@ -149,7 +149,6 @@
     <string name="label_enter_hex">6 hex ಅಕ್ಷರಗಳನ್ನು ನಮೂದಿಸಿ (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">ಎಲ್ಲಾ</string>
     <string name="view_week">ವಾರ</string>
     <string name="view_month">ತಿಂಗಳು</string>
     <string name="label_all_day">ದಿನವಿಡೀ</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">ಶನಿವಾರ</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">ಈವೆಂಟ್‌ಗಳು ಕಂಡುಬಂದಿಲ್ಲ</string>
     <string name="empty_no_upcoming_events">ಮುಂಬರುವ ಈವೆಂಟ್‌ಗಳಿಲ್ಲ</string>
     <string name="empty_no_calendars">ಕ್ಯಾಲೆಂಡರ್‌ಗಳು ಲಭ್ಯವಿಲ್ಲ</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">ತಿಂಗಳು ಮತ್ತು ವರ್ಷ ಆಯ್ಕೆಮಾಡಿ</string>
     <string name="cd_previous_month">ಹಿಂದಿನ ತಿಂಗಳು</string>
     <string name="cd_next_month">ಮುಂದಿನ ತಿಂಗಳು</string>
+    <string name="cd_previous_day">ಹಿಂದಿನ ದಿನ</string>
+    <string name="cd_next_day">ಮುಂದಿನ ದಿನ</string>
     <string name="cd_month_year_picker">ತಿಂಗಳು ಮತ್ತು ವರ್ಷ ಪಿಕರ್</string>
     <string name="cd_remove_alert">ಎಚ್ಚರಿಕೆ ತೆಗೆದುಹಾಕಿ</string>
     <string name="cd_warning">ಎಚ್ಚರಿಕೆ</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">ಕ್ಯಾಲೆಂಡರ್ ಸ್ಥಿತಿ: ಸೊಗಸಾಗಿ ಖಾಲಿ.</string>
     <string name="empty_no_events_day_5">ಏನೂ ನಿಗದಿಯಾಗಿಲ್ಲ. ನೆಮ್ಮದಿಯನ್ನು ಆನಂದಿಸಿ.</string>
     <string name="filter_date">ದಿನಾಂಕ</string>
+    <string name="search_tab_upcoming">ಮುಂಬರುವ</string>
+    <string name="search_tab_past">ಹಿಂದಿನ</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d ಈವೆಂಟ್</item>
+        <item quantity="other">%1$s, %2$d ಈವೆಂಟ್‌ಗಳು</item>
+    </plurals>
+    <string name="search_date_this_week">ಈ ವಾರ</string>
+    <string name="search_date_this_month">ಈ ತಿಂಗಳು</string>
+    <string name="search_date_pick">ದಿನಾಂಕಗಳನ್ನು ಆರಿಸಿ…</string>
+    <string name="search_next">ಮುಂದಿನದು: %1$s</string>
+    <string name="search_last">ಕೊನೆಯದು: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">ಸ್ಥಳ:</string>
+    <string name="search_reason_notes">ಟಿಪ್ಪಣಿಗಳು:</string>
+    <string name="search_reason_guest">ಅತಿಥಿ:</string>
+    <string name="search_keep_typing">ಹುಡುಕಲು ಟೈಪ್ ಮಾಡುತ್ತಿರಿ</string>
+    <string name="search_no_matches">“%1$s” ಗೆ ಹೊಂದುವ ಈವೆಂಟ್‌ಗಳಿಲ್ಲ</string>
+    <string name="search_lookback_line">ಸಿಂಕ್ ಲುಕ್‌ಬ್ಯಾಕ್: %1$s</string>
+    <string name="search_sync_settings">ಸಿಂಕ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳು</string>
+    <string name="cd_search_sync_settings">ಸಿಂಕ್ ಲುಕ್‌ಬ್ಯಾಕ್ ಸೆಟ್ಟಿಂಗ್ ತೆರೆಯಿರಿ</string>
+    <plurals name="search_show_past">
+        <item quantity="one">%d ಹಿಂದಿನ ಈವೆಂಟ್ ತೋರಿಸಿ</item>
+        <item quantity="other">%d ಹಿಂದಿನ ಈವೆಂಟ್‌ಗಳನ್ನು ತೋರಿಸಿ</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">ಮರೆಮಾಡಿದ ಕ್ಯಾಲೆಂಡರ್‌ನಲ್ಲಿ ಇನ್ನೂ %d</item>
+        <item quantity="other">ಮರೆಮಾಡಿದ ಕ್ಯಾಲೆಂಡರ್‌ಗಳಲ್ಲಿ ಇನ್ನೂ %d</item>
+    </plurals>
+    <string name="search_show">ತೋರಿಸಿ</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">ಮರೆಮಾಡಿದ ಕ್ಯಾಲೆಂಡರ್‌ನಲ್ಲಿನ %d ಹೊಂದಾಣಿಕೆ ತೋರಿಸಿ</item>
+        <item quantity="other">ಮರೆಮಾಡಿದ ಕ್ಯಾಲೆಂಡರ್‌ಗಳಲ್ಲಿನ %d ಹೊಂದಾಣಿಕೆಗಳನ್ನು ತೋರಿಸಿ</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">ಮರೆಮಾಡಿದ ಕ್ಯಾಲೆಂಡರ್‌ನಲ್ಲಿನ %d ತೋರಿಸಿ</item>
+        <item quantity="other">ಮರೆಮಾಡಿದ ಕ್ಯಾಲೆಂಡರ್‌ಗಳಲ್ಲಿನ %d ತೋರಿಸಿ</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">%d ಮರೆಮಾಡಿದ ಕ್ಯಾಲೆಂಡರ್ ಸೇರಿ</item>
+        <item quantity="other">%d ಮರೆಮಾಡಿದ ಕ್ಯಾಲೆಂಡರ್‌ಗಳು ಸೇರಿ</item>
+    </plurals>
+    <string name="search_leave_out">ಹೊರಗಿಡಿ</string>
+    <string name="cd_search_leave_out">ಮರೆಮಾಡಿದ ಕ್ಯಾಲೆಂಡರ್‌ಗಳನ್ನು ಹೊರಗಿಡಿ</string>
+    <string name="search_hidden_calendar">%1$s · ಮರೆಮಾಡಲಾಗಿದೆ</string>
+    <string name="cd_search_date_this_week">ಈ ವಾರದ ಹೊಂದಾಣಿಕೆಗಳನ್ನು ತೋರಿಸಿ</string>
+    <string name="cd_search_date_this_month">ಈ ತಿಂಗಳ ಹೊಂದಾಣಿಕೆಗಳನ್ನು ತೋರಿಸಿ</string>
+    <string name="cd_search_date_pick">ಹುಡುಕಲು ದಿನಾಂಕಗಳನ್ನು ಆರಿಸಿ</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d ಮುಂಬರುವ</item>
+        <item quantity="other">%d ಮುಂಬರುವ</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d ಹಿಂದಿನ</item>
+        <item quantity="other">%d ಹಿಂದಿನ</item>
+    </plurals>
+    <string name="search_no_past_events">ಹಿಂದಿನ ಈವೆಂಟ್‌ಗಳಿಲ್ಲ</string>
+    <string name="search_no_events_in_dates">ಈ ದಿನಾಂಕಗಳಲ್ಲಿ ಈವೆಂಟ್‌ಗಳಿಲ್ಲ</string>
     <string name="label_select_date">ದಿನಾಂಕ ಆಯ್ಕೆಮಾಡಿ</string>
     <string name="hint_tap_date_range">ಒಂದು ದಿನಕ್ಕೆ ಅದೇ ದಿನಾಂಕ ಟ್ಯಾಪ್ ಮಾಡಿ, ಅಥವಾ ವ್ಯಾಪ್ತಿಗೆ ಬೇರೆ ದಿನಾಂಕ</string>
     <string name="cd_clear">ತೆರವುಮಾಡಿ</string>

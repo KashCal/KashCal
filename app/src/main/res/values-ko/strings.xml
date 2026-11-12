@@ -149,7 +149,6 @@
     <string name="label_enter_hex">16진수 6자리 입력 (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">전체</string>
     <string name="view_week">주</string>
     <string name="view_month">월</string>
     <string name="label_all_day">종일</string>
@@ -515,7 +514,6 @@
     <string name="option_saturday">토요일</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">일정을 찾을 수 없어요</string>
     <string name="empty_no_upcoming_events">다가오는 일정이 없어요</string>
     <string name="empty_no_calendars">사용 가능한 캘린더가 없어요</string>
 
@@ -814,6 +812,8 @@
     <string name="cd_pick_month_year">월과 연도 선택</string>
     <string name="cd_previous_month">이전 달</string>
     <string name="cd_next_month">다음 달</string>
+    <string name="cd_previous_day">이전 날</string>
+    <string name="cd_next_day">다음 날</string>
     <string name="cd_month_year_picker">월 및 연도 선택기</string>
     <string name="cd_remove_alert">알림 제거</string>
     <string name="cd_warning">경고</string>
@@ -1104,6 +1104,57 @@
     <string name="empty_no_events_day_4">캘린더 상태: 완벽하게 비었어요.</string>
     <string name="empty_no_events_day_5">예정된 일이 없어요. 여유를 즐기세요.</string>
     <string name="filter_date">날짜</string>
+    <string name="search_tab_upcoming">예정</string>
+    <string name="search_tab_past">지난</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="other">%1$s, 일정 %2$d개</item>
+    </plurals>
+    <string name="search_date_this_week">이번 주</string>
+    <string name="search_date_this_month">이번 달</string>
+    <string name="search_date_pick">날짜 선택…</string>
+    <string name="search_next">다음: %1$s</string>
+    <string name="search_last">최근: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">장소:</string>
+    <string name="search_reason_notes">메모:</string>
+    <string name="search_reason_guest">게스트:</string>
+    <string name="search_keep_typing">검색하려면 계속 입력하세요</string>
+    <string name="search_no_matches">‘%1$s’와(과) 일치하는 일정이 없어요</string>
+    <string name="search_lookback_line">동기화 조회 기간: %1$s</string>
+    <string name="search_sync_settings">동기화 설정</string>
+    <string name="cd_search_sync_settings">동기화 조회 기간 설정 열기</string>
+    <plurals name="search_show_past">
+        <item quantity="other">지난 일정 %d개 보기</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="other">숨긴 캘린더에 %d개 더 있음</item>
+    </plurals>
+    <string name="search_show">보기</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="other">숨긴 캘린더의 일치 항목 %d개 보기</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="other">숨긴 캘린더의 %d개 보기</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="other">숨긴 캘린더 %d개 포함</item>
+    </plurals>
+    <string name="search_leave_out">제외</string>
+    <string name="cd_search_leave_out">숨긴 캘린더 제외</string>
+    <string name="search_hidden_calendar">%1$s · 숨김</string>
+    <string name="cd_search_date_this_week">이번 주 일치 항목 보기</string>
+    <string name="cd_search_date_this_month">이번 달 일치 항목 보기</string>
+    <string name="cd_search_date_pick">검색할 날짜 선택</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="other">예정 %d개</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="other">지난 %d개</item>
+    </plurals>
+    <string name="search_no_past_events">지난 일정이 없어요</string>
+    <string name="search_no_events_in_dates">이 날짜에 일정이 없어요</string>
     <string name="label_select_date">날짜 선택</string>
     <string name="hint_tap_date_range">같은 날짜를 탭하면 하루, 다른 날짜를 탭하면 범위 선택</string>
     <string name="cd_clear">지우기</string>

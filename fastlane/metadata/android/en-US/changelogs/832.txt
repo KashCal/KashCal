@@ -1,0 +1,3 @@
+• Search shows past events, with Upcoming and Past counts (#420)
+• Search matches any part of a word, in every calendar
+• Move the day sheet a day with arrows or a swipe (#433)

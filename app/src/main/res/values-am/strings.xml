@@ -149,7 +149,6 @@
     <string name="label_enter_hex">6 hex ቁምፊዎች ያስገቡ (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">ሁሉም</string>
     <string name="view_week">ሳምንት</string>
     <string name="view_month">ወር</string>
     <string name="label_all_day">ሙሉ ቀን</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">ቅዳሜ</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">ምንም ክስተቶች አልተገኙም</string>
     <string name="empty_no_upcoming_events">ምንም መጪ ክስተቶች የሉም</string>
     <string name="empty_no_calendars">ምንም ቀን መቁጠሪያዎች አይገኙም</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">ወር እና ዓመት ምረጥ</string>
     <string name="cd_previous_month">ያለፈው ወር</string>
     <string name="cd_next_month">ቀጣዩ ወር</string>
+    <string name="cd_previous_day">ያለፈው ቀን</string>
+    <string name="cd_next_day">ቀጣዩ ቀን</string>
     <string name="cd_month_year_picker">የወር እና ዓመት መምረጫ</string>
     <string name="cd_remove_alert">ማንቂያ አስወግድ</string>
     <string name="cd_warning">ማስጠንቀቂያ</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">የቀን መቁጠሪያ ሁኔታ፦ በሚያምር ሁኔታ ባዶ።</string>
     <string name="empty_no_events_day_5">ምንም አልታቀደም። መረጋጋቱን ይደሰቱበት።</string>
     <string name="filter_date">ቀን</string>
+    <string name="search_tab_upcoming">መጪ</string>
+    <string name="search_tab_past">ያለፈ</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s፣ %2$d ክስተት</item>
+        <item quantity="other">%1$s፣ %2$d ክስተቶች</item>
+    </plurals>
+    <string name="search_date_this_week">በዚህ ሳምንት</string>
+    <string name="search_date_this_month">በዚህ ወር</string>
+    <string name="search_date_pick">ቀኖችን ይምረጡ…</string>
+    <string name="search_next">ቀጣይ: %1$s</string>
+    <string name="search_last">የመጨረሻ: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">ስፍራ:</string>
+    <string name="search_reason_notes">ማስታወሻዎች:</string>
+    <string name="search_reason_guest">እንግዳ:</string>
+    <string name="search_keep_typing">ለመፈለግ መተየብዎን ይቀጥሉ</string>
+    <string name="search_no_matches">ከ“%1$s” ጋር የሚዛመድ ክስተት የለም</string>
+    <string name="search_lookback_line">የማመሳሰል ወደ ኋላ መመልከት: %1$s</string>
+    <string name="search_sync_settings">የማመሳሰል ቅንብሮች</string>
+    <string name="cd_search_sync_settings">የማመሳሰል ወደ ኋላ መመልከት ቅንብርን ክፈት</string>
+    <plurals name="search_show_past">
+        <item quantity="one">%d ያለፈ ክስተት አሳይ</item>
+        <item quantity="other">%d ያለፉ ክስተቶችን አሳይ</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">በተደበቀ የቀን መቁጠሪያ ውስጥ %d ተጨማሪ</item>
+        <item quantity="other">በተደበቁ የቀን መቁጠሪያዎች ውስጥ %d ተጨማሪ</item>
+    </plurals>
+    <string name="search_show">አሳይ</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">በተደበቀ የቀን መቁጠሪያ ውስጥ ያለ %d ተዛማጅ አሳይ</item>
+        <item quantity="other">በተደበቁ የቀን መቁጠሪያዎች ውስጥ ያሉ %d ተዛማጆችን አሳይ</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">በተደበቀ የቀን መቁጠሪያ ውስጥ %d አሳይ</item>
+        <item quantity="other">በተደበቁ የቀን መቁጠሪያዎች ውስጥ %d አሳይ</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">%d የተደበቀ የቀን መቁጠሪያን ጨምሮ</item>
+        <item quantity="other">%d የተደበቁ የቀን መቁጠሪያዎችን ጨምሮ</item>
+    </plurals>
+    <string name="search_leave_out">ተው</string>
+    <string name="cd_search_leave_out">የተደበቁ የቀን መቁጠሪያዎችን ተው</string>
+    <string name="search_hidden_calendar">%1$s · ተደብቋል</string>
+    <string name="cd_search_date_this_week">የዚህ ሳምንት ተዛማጆችን አሳይ</string>
+    <string name="cd_search_date_this_month">የዚህ ወር ተዛማጆችን አሳይ</string>
+    <string name="cd_search_date_pick">ለመፈለግ ቀኖችን ይምረጡ</string>
+    <string name="search_announce">%1$s፣ %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d መጪ</item>
+        <item quantity="other">%d መጪ</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d ያለፈ</item>
+        <item quantity="other">%d ያለፉ</item>
+    </plurals>
+    <string name="search_no_past_events">ምንም ያለፉ ክስተቶች የሉም</string>
+    <string name="search_no_events_in_dates">በእነዚህ ቀኖች ምንም ክስተቶች የሉም</string>
     <string name="label_select_date">ቀን ምረጥ</string>
     <string name="hint_tap_date_range">ለአንድ ቀን ተመሳሳይ ቀን ይንኩ፣ ወይም ለክልል ሌላ ቀን</string>
     <string name="cd_clear">አጽዳ</string>

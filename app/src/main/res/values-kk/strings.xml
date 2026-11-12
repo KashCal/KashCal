@@ -149,7 +149,6 @@
     <string name="label_enter_hex">6 hex таңба енгізіңіз (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Барлығы</string>
     <string name="view_week">Апта</string>
     <string name="view_month">Ай</string>
     <string name="label_all_day">Күні бойы</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">Сенбі</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Оқиғалар табылмады</string>
     <string name="empty_no_upcoming_events">Алдағы оқиғалар жоқ</string>
     <string name="empty_no_calendars">Қолжетімді күнтізбелер жоқ</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">Ай мен жылды таңдау</string>
     <string name="cd_previous_month">Алдыңғы ай</string>
     <string name="cd_next_month">Келесі ай</string>
+    <string name="cd_previous_day">Алдыңғы күн</string>
+    <string name="cd_next_day">Келесі күн</string>
     <string name="cd_month_year_picker">Ай мен жыл таңдағышы</string>
     <string name="cd_remove_alert">Ескертуді жою</string>
     <string name="cd_warning">Ескерту</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">Күнтізбе күйі: керемет бос.</string>
     <string name="empty_no_events_day_5">Ештеңе жоспарланбаған. Тыныштықтан ләззат алыңыз.</string>
     <string name="filter_date">Күн</string>
+    <string name="search_tab_upcoming">Алдағы</string>
+    <string name="search_tab_past">Өткен</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d оқиға</item>
+        <item quantity="other">%1$s, %2$d оқиға</item>
+    </plurals>
+    <string name="search_date_this_week">Осы апта</string>
+    <string name="search_date_this_month">Осы ай</string>
+    <string name="search_date_pick">Күндерді таңдау…</string>
+    <string name="search_next">Келесі: %1$s</string>
+    <string name="search_last">Соңғы: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Орын:</string>
+    <string name="search_reason_notes">Жазбалар:</string>
+    <string name="search_reason_guest">Қонақ:</string>
+    <string name="search_keep_typing">Іздеу үшін теруді жалғастырыңыз</string>
+    <string name="search_no_matches">“%1$s” сұрауына сәйкес оқиға жоқ</string>
+    <string name="search_lookback_line">Синхрондау кері кезеңі: %1$s</string>
+    <string name="search_sync_settings">Синхрондау параметрлері</string>
+    <string name="cd_search_sync_settings">Синхрондау кері кезеңі параметрін ашу</string>
+    <plurals name="search_show_past">
+        <item quantity="one">%d өткен оқиғаны көрсету</item>
+        <item quantity="other">%d өткен оқиғаны көрсету</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">Жасырылған күнтізбеде тағы %d</item>
+        <item quantity="other">Жасырылған күнтізбелерде тағы %d</item>
+    </plurals>
+    <string name="search_show">Көрсету</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Жасырылған күнтізбедегі %d сәйкестікті көрсету</item>
+        <item quantity="other">Жасырылған күнтізбелердегі %d сәйкестікті көрсету</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Жасырылған күнтізбеде %d көрсету</item>
+        <item quantity="other">Жасырылған күнтізбелерде %d көрсету</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">%d жасырылған күнтізбені қоса</item>
+        <item quantity="other">%d жасырылған күнтізбені қоса</item>
+    </plurals>
+    <string name="search_leave_out">Алып тастау</string>
+    <string name="cd_search_leave_out">Жасырылған күнтізбелерді алып тастау</string>
+    <string name="search_hidden_calendar">%1$s · жасырылған</string>
+    <string name="cd_search_date_this_week">Осы аптадағы сәйкестіктерді көрсету</string>
+    <string name="cd_search_date_this_month">Осы айдағы сәйкестіктерді көрсету</string>
+    <string name="cd_search_date_pick">Іздеу үшін күндерді таңдау</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d алдағы</item>
+        <item quantity="other">%d алдағы</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d өткен</item>
+        <item quantity="other">%d өткен</item>
+    </plurals>
+    <string name="search_no_past_events">Өткен оқиғалар жоқ</string>
+    <string name="search_no_events_in_dates">Бұл күндерде оқиға жоқ</string>
     <string name="label_select_date">Күн таңдаңыз</string>
     <string name="hint_tap_date_range">Бір күн үшін сол күнді, ауқым үшін басқа күнді түртіңіз</string>
     <string name="cd_clear">Тазалау</string>

@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Introdu 6 caractere hex (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Toate</string>
     <string name="view_week">Săptămână</string>
     <string name="view_month">Lună</string>
     <string name="label_all_day">Toată ziua</string>
@@ -517,7 +516,6 @@
     <string name="option_saturday">Sâmbătă</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Niciun eveniment găsit</string>
     <string name="empty_no_upcoming_events">Niciun eveniment viitor</string>
     <string name="empty_no_calendars">Niciun calendar disponibil</string>
 
@@ -836,6 +834,8 @@
     <string name="cd_pick_month_year">Alege luna și anul</string>
     <string name="cd_previous_month">Luna anterioară</string>
     <string name="cd_next_month">Luna viitoare</string>
+    <string name="cd_previous_day">Ziua anterioară</string>
+    <string name="cd_next_day">Ziua următoare</string>
     <string name="cd_month_year_picker">Selector lună și an</string>
     <string name="cd_remove_alert">Elimină alerta</string>
     <string name="cd_warning">Avertisment</string>
@@ -1218,6 +1218,73 @@
     <string name="empty_no_events_day_4">Starea calendarului: minunat de gol.</string>
     <string name="empty_no_events_day_5">Nimic planificat. Bucură-te de liniște.</string>
     <string name="filter_date">Dată</string>
+    <string name="search_tab_upcoming">Viitoare</string>
+    <string name="search_tab_past">Trecute</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d eveniment</item>
+        <item quantity="few">%1$s, %2$d evenimente</item>
+        <item quantity="other">%1$s, %2$d de evenimente</item>
+    </plurals>
+    <string name="search_date_this_week">Săptămâna asta</string>
+    <string name="search_date_this_month">Luna asta</string>
+    <string name="search_date_pick">Alege datele…</string>
+    <string name="search_next">Următorul: %1$s</string>
+    <string name="search_last">Ultimul: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Locație:</string>
+    <string name="search_reason_notes">Notițe:</string>
+    <string name="search_reason_guest">Invitat:</string>
+    <string name="search_keep_typing">Continuă să scrii pentru a căuta</string>
+    <string name="search_no_matches">Niciun eveniment nu corespunde cu „%1$s”</string>
+    <string name="search_lookback_line">Perioada de retrospectivă sincronizare: %1$s</string>
+    <string name="search_sync_settings">Setări sincronizare</string>
+    <string name="cd_search_sync_settings">Deschide setarea perioadei de retrospectivă sincronizare</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Arată %d eveniment trecut</item>
+        <item quantity="few">Arată %d evenimente trecute</item>
+        <item quantity="other">Arată %d de evenimente trecute</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">Încă %d într-un calendar ascuns</item>
+        <item quantity="few">Încă %d în calendare ascunse</item>
+        <item quantity="other">Încă %d în calendare ascunse</item>
+    </plurals>
+    <string name="search_show">Arată</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Arată %d rezultat dintr-un calendar ascuns</item>
+        <item quantity="few">Arată %d rezultate din calendare ascunse</item>
+        <item quantity="other">Arată %d de rezultate din calendare ascunse</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Arată %d dintr-un calendar ascuns</item>
+        <item quantity="few">Arată %d din calendare ascunse</item>
+        <item quantity="other">Arată %d din calendare ascunse</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Inclusiv %d calendar ascuns</item>
+        <item quantity="few">Inclusiv %d calendare ascunse</item>
+        <item quantity="other">Inclusiv %d de calendare ascunse</item>
+    </plurals>
+    <string name="search_leave_out">Exclude</string>
+    <string name="cd_search_leave_out">Exclude calendarele ascunse</string>
+    <string name="search_hidden_calendar">%1$s · ascuns</string>
+    <string name="cd_search_date_this_week">Arată rezultatele din săptămâna asta</string>
+    <string name="cd_search_date_this_month">Arată rezultatele din luna asta</string>
+    <string name="cd_search_date_pick">Alege datele pentru căutare</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d viitor</item>
+        <item quantity="few">%d viitoare</item>
+        <item quantity="other">%d de viitoare</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d trecut</item>
+        <item quantity="few">%d trecute</item>
+        <item quantity="other">%d de trecute</item>
+    </plurals>
+    <string name="search_no_past_events">Niciun eveniment trecut</string>
+    <string name="search_no_events_in_dates">Niciun eveniment în aceste date</string>
     <string name="label_select_date">Selectează o dată</string>
     <string name="hint_tap_date_range">Apasă aceeași dată pentru o singură zi, sau altă dată pentru interval</string>
     <string name="cd_clear">Șterge</string>

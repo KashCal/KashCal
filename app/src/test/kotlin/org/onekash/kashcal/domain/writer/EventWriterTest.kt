@@ -2056,7 +2056,7 @@ class EventWriterTest {
     fun `splitSeries with pastCount equal total falls back to ALL_EVENTS`() = runTest {
         // splitTimeMs after the last occurrence, so pastCount == total. Without the
         // degenerate-split check, RruleUtils.splitRruleAtTime would give the new series
-        // COUNT=0, which ical4j 4.3.0 expands as if the rule had no COUNT.
+        // COUNT=0, which ical4j expands as if the rule had no COUNT.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
             isLocal = true

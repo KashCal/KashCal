@@ -1608,6 +1608,57 @@ object Migrations {
         }
     }
 
+    private const val FTS_TABLE_V27 = "events_fts"
+
+    /** The shadow tables FTS4 keeps for [FTS_TABLE_V27]; dropping the virtual table drops them. */
+    private val FTS_SHADOW_TABLES_V27 = listOf("content", "segments", "segdir", "docsize", "stat").map { "${FTS_TABLE_V27}_$it" }
+
+    /**
+     * v27 to v28: drops the FTS4 search index, since search matches events with LIKE on the
+     * platform's rule ([org.onekash.kashcal.data.db.dao.EventSearchSql]).
+     *
+     * Drops every trigger whose SQL names `events_fts` (Room's four sync triggers and any other),
+     * then the virtual table, then any FTS4 shadow table left behind by a virtual table that was
+     * already gone. A database without the index is a valid start, so a re-run does nothing.
+     * Before committing it checks that nothing in sqlite_master names `events_fts` and that the
+     * events count is unchanged; it throws only then, and the rollback leaves v27 as it was.
+     */
+    val MIGRATION_27_28 = object : Migration(27, 28) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.beginTransaction()
+            try {
+                val eventsBefore = count(db, "SELECT COUNT(*) FROM events")
+                val triggers = mutableListOf<String>()
+                db.query(
+                    "SELECT name FROM sqlite_master WHERE type = 'trigger' AND instr(sql, ?) > 0",
+                    arrayOf(FTS_TABLE_V27)
+                ).use { c -> while (c.moveToNext()) triggers += c.getString(0) }
+                triggers.forEach { db.execSQL("DROP TRIGGER IF EXISTS `$it`") }
+                db.execSQL("DROP TABLE IF EXISTS `$FTS_TABLE_V27`")
+                FTS_SHADOW_TABLES_V27.forEach { db.execSQL("DROP TABLE IF EXISTS `$it`") }
+
+                val leftOver = count(
+                    db,
+                    // instr, not LIKE: '_' in the name would be a LIKE wildcard.
+                    "SELECT COUNT(*) FROM sqlite_master WHERE instr(name, '$FTS_TABLE_V27') > 0 " +
+                        "OR instr(sql, '$FTS_TABLE_V27') > 0"
+                )
+                val eventsNow = count(db, "SELECT COUNT(*) FROM events")
+                if (leftOver != 0L || eventsNow != eventsBefore) {
+                    throw IllegalStateException(
+                        "MIGRATION_27_28 post-migration validation failed: $leftOver objects still name " +
+                            "$FTS_TABLE_V27, events $eventsNow of $eventsBefore"
+                    )
+                }
+
+                Log.i(TAG, "MIGRATION_27_28 dropped the search index and ${triggers.size} triggers")
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
+        }
+    }
+
     private fun count(db: SupportSQLiteDatabase, sql: String): Long =
         db.query(sql).use { if (it.moveToFirst()) it.getLong(0) else 0L }
 
@@ -1637,6 +1688,7 @@ object Migrations {
         MIGRATION_23_24,
         MIGRATION_24_25,
         MIGRATION_25_26,
-        MIGRATION_26_27
+        MIGRATION_26_27,
+        MIGRATION_27_28
     )
 }

@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Syötä 6 hex-merkkiä (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Kaikki</string>
     <string name="view_week">Viikko</string>
     <string name="view_month">Kuukausi</string>
     <string name="label_all_day">Koko päivä</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">Lauantai</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Tapahtumia ei löytynyt</string>
     <string name="empty_no_upcoming_events">Ei tulevia tapahtumia</string>
     <string name="empty_no_calendars">Ei kalentereita saatavilla</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">Valitse kuukausi ja vuosi</string>
     <string name="cd_previous_month">Edellinen kuukausi</string>
     <string name="cd_next_month">Seuraava kuukausi</string>
+    <string name="cd_previous_day">Edellinen päivä</string>
+    <string name="cd_next_day">Seuraava päivä</string>
     <string name="cd_month_year_picker">Kuukauden ja vuoden valitsin</string>
     <string name="cd_remove_alert">Poista muistutus</string>
     <string name="cd_warning">Varoitus</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">Kalenterin tila: ihanan tyhjä.</string>
     <string name="empty_no_events_day_5">Mitään ei ole suunniteltu. Nauti rauhasta.</string>
     <string name="filter_date">Päivämäärä</string>
+    <string name="search_tab_upcoming">Tulevat</string>
+    <string name="search_tab_past">Menneet</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d tapahtuma</item>
+        <item quantity="other">%1$s, %2$d tapahtumaa</item>
+    </plurals>
+    <string name="search_date_this_week">Tämä viikko</string>
+    <string name="search_date_this_month">Tämä kuukausi</string>
+    <string name="search_date_pick">Valitse päivät…</string>
+    <string name="search_next">Seuraava: %1$s</string>
+    <string name="search_last">Viimeisin: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Paikka:</string>
+    <string name="search_reason_notes">Muistiinpanot:</string>
+    <string name="search_reason_guest">Vieras:</string>
+    <string name="search_keep_typing">Jatka kirjoittamista hakeaksesi</string>
+    <string name="search_no_matches">Mikään tapahtuma ei vastaa hakua ”%1$s”</string>
+    <string name="search_lookback_line">Synkronoinnin takaisinkatse: %1$s</string>
+    <string name="search_sync_settings">Synkronoinnin asetukset</string>
+    <string name="cd_search_sync_settings">Avaa synkronoinnin takaisinkatseen asetus</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Näytä %d mennyt tapahtuma</item>
+        <item quantity="other">Näytä %d mennyttä tapahtumaa</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">%d lisää piilotetussa kalenterissa</item>
+        <item quantity="other">%d lisää piilotetuissa kalentereissa</item>
+    </plurals>
+    <string name="search_show">Näytä</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Näytä %d osuma piilotetussa kalenterissa</item>
+        <item quantity="other">Näytä %d osumaa piilotetuissa kalentereissa</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Näytä %d piilotetussa kalenterissa</item>
+        <item quantity="other">Näytä %d piilotetuissa kalentereissa</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Mukana %d piilotettu kalenteri</item>
+        <item quantity="other">Mukana %d piilotettua kalenteria</item>
+    </plurals>
+    <string name="search_leave_out">Jätä pois</string>
+    <string name="cd_search_leave_out">Jätä piilotetut kalenterit pois</string>
+    <string name="search_hidden_calendar">%1$s · piilotettu</string>
+    <string name="cd_search_date_this_week">Näytä tämän viikon osumat</string>
+    <string name="cd_search_date_this_month">Näytä tämän kuukauden osumat</string>
+    <string name="cd_search_date_pick">Valitse hakupäivät</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d tuleva</item>
+        <item quantity="other">%d tulevaa</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d mennyt</item>
+        <item quantity="other">%d mennyttä</item>
+    </plurals>
+    <string name="search_no_past_events">Ei menneitä tapahtumia</string>
+    <string name="search_no_events_in_dates">Ei tapahtumia näinä päivinä</string>
     <string name="label_select_date">Valitse päivämäärä</string>
     <string name="hint_tap_date_range">Napauta samaa päivää yhden päivän valintaan tai toista päivää ajanjaksolle</string>
     <string name="cd_clear">Tyhjennä</string>

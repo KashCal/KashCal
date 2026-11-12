@@ -78,6 +78,9 @@ class OccurrenceGenerator @Inject constructor(
      *   range isn't expanded again;
      * - coveredFrom..coveredTo: the range an [ensureCovered] pass proved every series covers,
      *   empty while coveredTo < coveredFrom;
+     * - wholeSeriesCoveredTo: how far [ensureCoveredFor] expanded each series from its DTSTART;
+     * - forwardOnlyCoveredTo: how far [ensureCoveredFor] extended each series forward only, kept
+     *   apart so a later fill back to DTSTART still runs;
      * - rowsVersion: bumped by every [generateOccurrences], which also drops the series' entries
      *   and empties the range. An entry or range is recorded only after its rows commit and only
      *   if rowsVersion is the one read when the pass selected, so a rewrite or a rolled-back
@@ -86,6 +89,8 @@ class OccurrenceGenerator @Inject constructor(
     private val coverageLock = Any()
     private val forwardCoveredTo = HashMap<Long, Long>()
     private val pastCoveredFrom = HashMap<Long, Long>()
+    private val wholeSeriesCoveredTo = HashMap<Long, Long>()
+    private val forwardOnlyCoveredTo = HashMap<Long, Long>()
     private var coveredFrom = Long.MAX_VALUE
     private var coveredTo = Long.MIN_VALUE
     private var rowsVersion = 0L
@@ -93,11 +98,20 @@ class OccurrenceGenerator @Inject constructor(
 
     private fun rowsVersion(): Long = synchronized(coverageLock) { rowsVersion }
 
+    /**
+     * Voids the coverage records of [eventId] after its rows were cut outside
+     * [generateOccurrences] (a this-and-future split or delete), so the next read or search
+     * expands it again instead of trusting a record for rows that are gone.
+     */
+    fun forgetCoverage(eventId: Long) = rowsRewritten(eventId)
+
     /** Voids the coverage record for [eventId]'s rewrite; called inside its transaction. */
     private fun rowsRewritten(eventId: Long) = synchronized(coverageLock) {
         rowsVersion++
         forwardCoveredTo.remove(eventId)
         pastCoveredFrom.remove(eventId)
+        wholeSeriesCoveredTo.remove(eventId)
+        forwardOnlyCoveredTo.remove(eventId)
         coveredFrom = Long.MAX_VALUE
         coveredTo = Long.MIN_VALUE
     }
@@ -370,10 +384,11 @@ class OccurrenceGenerator @Inject constructor(
      * only when [backward] is false), the way the platform calendar provider expands its
      * instances on a read outside the range it already expanded.
      *
-     * Returns with no database work when an earlier pass proved the range and nothing was
-     * rewritten since. Otherwise it selects, inside a transaction (which waits for any open
-     * rewrite), the series whose rule rows stop short of the range, those with only
-     * exception-linked rows and those with no rows (not PENDING_DELETE); extends each to
+     * Returns with no database work when the range last recorded (one pass's, joined with the
+     * passes whose ranges met it) holds this one and nothing was rewritten since. Otherwise it
+     * selects, inside a transaction (which waits for any open rewrite), the series whose rule
+     * rows stop short of the range, those with only exception-linked rows and those with no
+     * rows (not PENDING_DELETE); extends each to
      * [extendToMs] (back to [extendFromMs]) in transactions of at most BATCH_SERIES series or
      * about BATCH_ROWS rows; and, once every batch committed with nothing rewritten meanwhile
      * and nothing cut short, records the range (a forward-only pass records none). The work
@@ -405,6 +420,81 @@ class OccurrenceGenerator @Inject constructor(
             throw e
         } catch (e: Exception) {
             android.util.Log.w(TAG, "ensureCovered failed: ${e.message}", e)
+        }
+    }
+
+    /**
+     * Expands each repeating series in [fromStart] from its DTSTART to [toMs], and extends each
+     * in [forwardOnly] to [toMs] after its latest rule row (from its DTSTART when it has none),
+     * so a search can date a series whose stored rows don't hold its last, first or next
+     * occurrence; returns how many series it worked on. A series in both sets is expanded from
+     * its DTSTART.
+     *
+     * A series' rows are stored without gaps: forward steps continue after the latest rule row,
+     * a backward step fills everything below the earliest one or nothing, and a this-and-future
+     * split or delete removes only a tail (then calls [forgetCoverage]). So a series' latest
+     * stored ended row is its last occurrence.
+     *
+     * Only these series are touched, and the range [ensureCovered] recorded stays as it was. A
+     * series already covered this way to [toMs] is skipped without database work, and a step
+     * stopped by the row limit is recorded too, so the database writes it causes, which make a
+     * search emit again, don't each add another step's rows. A forward-only cover keeps its own
+     * record, so it never stands in for a fill back to DTSTART. Steps run in the batches and
+     * under the lock [ensureCovered] uses, on the IO dispatcher, and like it this writes only
+     * occurrence rows, logs a failure instead of throwing and skips a call made inside a Room
+     * transaction.
+     */
+    suspend fun ensureCoveredFor(
+        fromStart: Collection<Long>,
+        toMs: Long,
+        forwardOnly: Collection<Long> = emptyList(),
+    ): Int {
+        val wholeIds = fromStart.toSet()
+        val forwardIds = forwardOnly.toSet() - wholeIds
+        fun pending() = synchronized(coverageLock) {
+            val whole = wholeIds.filter { (wholeSeriesCoveredTo[it] ?: Long.MIN_VALUE) < toMs }
+            val forward = forwardIds.filter { id ->
+                (wholeSeriesCoveredTo[id] ?: Long.MIN_VALUE) < toMs && (forwardOnlyCoveredTo[id] ?: Long.MIN_VALUE) < toMs
+            }
+            whole to forward
+        }
+        val (wholeNow, forwardNow) = pending()
+        if (wholeNow.isEmpty() && forwardNow.isEmpty()) return 0
+        if (database.inTransaction()) {
+            android.util.Log.w(TAG, "ensureCoveredFor called inside a transaction; skipped")
+            return 0
+        }
+        return try {
+            withContext(Dispatchers.IO) {
+                coverageMutex.withLock {
+                    val (whole, forward) = pending()
+                    val forwardSet = forward.toSet()
+                    val version = rowsVersion()
+                    inBatches(whole + forward, version) { id ->
+                        val step = extendForward(id, toMs, floorMs = Long.MIN_VALUE)
+                        if (id in forwardSet) return@inBatches step
+                        val back = extendBack(id, Long.MIN_VALUE)
+                        StepResult(
+                            added = (step?.added ?: 0) + (back?.added ?: 0),
+                            coveredTo = step?.coveredTo,
+                            coveredFrom = back?.coveredFrom,
+                            complete = (step?.complete ?: true) && (back?.complete ?: true),
+                        )
+                    }
+                    synchronized(coverageLock) {
+                        if (rowsVersion == version) {
+                            whole.forEach { wholeSeriesCoveredTo.merge(it, toMs, ::maxOf) }
+                            forward.forEach { forwardOnlyCoveredTo.merge(it, toMs, ::maxOf) }
+                        }
+                    }
+                    whole.size + forward.size
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            android.util.Log.w(TAG, "ensureCoveredFor failed: ${e.message}", e)
+            0
         }
     }
 

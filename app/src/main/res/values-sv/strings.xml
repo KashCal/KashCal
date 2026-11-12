@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Ange 6 hex-tecken (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Alla</string>
     <string name="view_week">Vecka</string>
     <string name="view_month">Månad</string>
     <string name="label_all_day">Heldag</string>
@@ -515,7 +514,6 @@
     <string name="option_saturday">Lördag</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Inga händelser hittades</string>
     <string name="empty_no_upcoming_events">Inga kommande händelser</string>
     <string name="empty_no_calendars">Inga kalendrar tillgängliga</string>
 
@@ -824,6 +822,8 @@
     <string name="cd_pick_month_year">Välj månad och år</string>
     <string name="cd_previous_month">Föregående månad</string>
     <string name="cd_next_month">Nästa månad</string>
+    <string name="cd_previous_day">Föregående dag</string>
+    <string name="cd_next_day">Nästa dag</string>
     <string name="cd_month_year_picker">Månad- och årsväljare</string>
     <string name="cd_remove_alert">Ta bort påminnelse</string>
     <string name="cd_warning">Varning</string>
@@ -1160,6 +1160,65 @@
     <string name="empty_no_events_day_4">Kalenderstatus: härligt tom.</string>
     <string name="empty_no_events_day_5">Inget planerat. Njut av lugnet.</string>
     <string name="filter_date">Datum</string>
+    <string name="search_tab_upcoming">Kommande</string>
+    <string name="search_tab_past">Tidigare</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d händelse</item>
+        <item quantity="other">%1$s, %2$d händelser</item>
+    </plurals>
+    <string name="search_date_this_week">Den här veckan</string>
+    <string name="search_date_this_month">Den här månaden</string>
+    <string name="search_date_pick">Välj datum…</string>
+    <string name="search_next">Nästa: %1$s</string>
+    <string name="search_last">Senaste: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Plats:</string>
+    <string name="search_reason_notes">Anteckningar:</string>
+    <string name="search_reason_guest">Gäst:</string>
+    <string name="search_keep_typing">Fortsätt skriva för att söka</string>
+    <string name="search_no_matches">Inga händelser matchar ”%1$s”</string>
+    <string name="search_lookback_line">Synk-tillbakablick: %1$s</string>
+    <string name="search_sync_settings">Synkinställningar</string>
+    <string name="cd_search_sync_settings">Öppna inställningen för synk-tillbakablick</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Visa %d tidigare händelse</item>
+        <item quantity="other">Visa %d tidigare händelser</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">%d till i en dold kalender</item>
+        <item quantity="other">%d till i dolda kalendrar</item>
+    </plurals>
+    <string name="search_show">Visa</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Visa %d träff i en dold kalender</item>
+        <item quantity="other">Visa %d träffar i dolda kalendrar</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Visa %d i en dold kalender</item>
+        <item quantity="other">Visa %d i dolda kalendrar</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Inklusive %d dold kalender</item>
+        <item quantity="other">Inklusive %d dolda kalendrar</item>
+    </plurals>
+    <string name="search_leave_out">Utelämna</string>
+    <string name="cd_search_leave_out">Utelämna dolda kalendrar</string>
+    <string name="search_hidden_calendar">%1$s · dold</string>
+    <string name="cd_search_date_this_week">Visa träffar den här veckan</string>
+    <string name="cd_search_date_this_month">Visa träffar den här månaden</string>
+    <string name="cd_search_date_pick">Välj datum att söka i</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d kommande</item>
+        <item quantity="other">%d kommande</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d tidigare</item>
+        <item quantity="other">%d tidigare</item>
+    </plurals>
+    <string name="search_no_past_events">Inga tidigare händelser</string>
+    <string name="search_no_events_in_dates">Inga händelser på dessa datum</string>
     <string name="label_select_date">Välj ett datum</string>
     <string name="hint_tap_date_range">Tryck samma datum för en dag, eller ett annat datum för ett intervall</string>
     <string name="cd_clear">Rensa</string>

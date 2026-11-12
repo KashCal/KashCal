@@ -109,7 +109,7 @@ class AttendeeBackfill @Inject constructor(
      * Rejects a blank address, a bare `mailto:` (an ATTENDEE with no value), a principal href,
      * and ical4j's `net.fortunal.ical4j.invalid:` marker, which its relaxed parsing gives an
      * ATTENDEE value that isn't a URI. `fortunal` is an upstream typo (`Uris.INVALID_SCHEME` in
-     * ical4j 4.3.0); the match must keep it, or it stops matching what ical4j emits.
+     * ical4j); the match must keep it, or it stops matching what ical4j emits.
      */
     private fun isUsableAddress(address: String): Boolean {
         if (address.isBlank()) return false

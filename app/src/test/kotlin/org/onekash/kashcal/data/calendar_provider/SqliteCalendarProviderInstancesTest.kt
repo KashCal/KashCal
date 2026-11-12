@@ -493,11 +493,65 @@ class SqliteCalendarProviderInstancesTest {
     }
 
     @Test
-    fun `search folds case for ASCII letters only, as SQLite does`() = runTest {
-        oneOff(title = "Überblick")
+    fun `search folds case for every letter, as the Android 17 provider does`() = runTest {
+        oneOff(title = "Ärzte-Termin")
+        oneOff(title = "Врач")
+        oneOff(title = "Other")
 
-        assertEquals(listOf("Überblick"), repo.searchInstances("berblick", DAY_START, DAY_END, setOf(CAL)).map { it.title })
-        assertTrue(repo.searchInstances("überblick", DAY_START, DAY_END, setOf(CAL)).isEmpty())
+        assertEquals(listOf("Ärzte-Termin"), repo.searchInstances("ärzte", DAY_START, DAY_END, setOf(CAL)).map { it.title })
+        assertEquals(listOf("Врач"), repo.searchInstances("врач", DAY_START, DAY_END, setOf(CAL)).map { it.title })
+        assertEquals(listOf("Врач"), repo.searchInstances("ВРАЧ", DAY_START, DAY_END, setOf(CAL)).map { it.title })
+    }
+
+    @Test
+    fun `search does not fold accents`() = runTest {
+        oneOff(title = "Café Nero")
+
+        assertTrue(repo.searchInstances("cafe", DAY_START, DAY_END, setOf(CAL)).isEmpty())
+        assertEquals(listOf("Café Nero"), repo.searchInstances("café", DAY_START, DAY_END, setOf(CAL)).map { it.title })
+        assertEquals(listOf("Café Nero"), repo.searchInstances("CAFÉ", DAY_START, DAY_END, setOf(CAL)).map { it.title })
+    }
+
+    @Test
+    fun `search treats the escape character literally`() = runTest {
+        oneOff(title = "Room #4")
+        oneOff(title = "Room 4")
+
+        assertEquals(listOf("Room #4"), repo.searchInstances("#4", DAY_START, DAY_END, setOf(CAL)).map { it.title })
+    }
+
+    @Test
+    fun `search uses simple case folding, so dotless i does not match i`() = runTest {
+        oneOff(title = "Kırmızı")
+        oneOff(title = "Kirmizi")
+
+        assertEquals(listOf("Kirmizi"), repo.searchInstances("kirmizi", DAY_START, DAY_END, setOf(CAL)).map { it.title })
+        assertEquals(listOf("Kırmızı"), repo.searchInstances("kırmızı", DAY_START, DAY_END, setOf(CAL)).map { it.title })
+    }
+
+    @Test
+    fun `search leaves out a calendar hidden in Android's own settings`() = runTest {
+        provider.seedCalendar(HIDDEN_CAL, accountName = OWNER, displayName = "Hidden", color = CAL_COLOR, visible = false)
+        oneOff(title = "Dentist shown")
+        oneOff(title = "Dentist hidden", calendar = HIDDEN_CAL)
+
+        assertEquals(listOf("Dentist shown"), repo.searchInstances("dentist", DAY_START, DAY_END, setOf(CAL, HIDDEN_CAL)).map { it.title })
+    }
+
+    @Test
+    fun `guests of several events are read in one batch by event`() = runTest {
+        val first = oneOff(title = "Review")
+        val second = oneOff(title = "Checkup")
+        val none = oneOff(title = "Alone")
+        provider.insertRow(SqliteCalendarProvider.ATTENDEES, Attendees.EVENT_ID to first, Attendees.ATTENDEE_EMAIL to "ana@example.test", Attendees.ATTENDEE_NAME to "Ana Lima")
+        provider.insertRow(SqliteCalendarProvider.ATTENDEES, Attendees.EVENT_ID to second, Attendees.ATTENDEE_EMAIL to "amara@example.test", Attendees.ATTENDEE_NAME to "Dr. Amara Lee")
+        provider.insertRow(SqliteCalendarProvider.ATTENDEES, Attendees.EVENT_ID to second, Attendees.ATTENDEE_EMAIL to "bo@example.test", Attendees.ATTENDEE_NAME to null)
+
+        val byEvent = repo.getAttendeesForEvents(listOf(first, second, none, first))
+
+        assertEquals(setOf(first, second), byEvent.keys)
+        assertEquals(listOf("Ana Lima"), byEvent.getValue(first).map { it.name })
+        assertEquals(listOf("amara@example.test", "bo@example.test"), byEvent.getValue(second).map { it.email })
     }
 
     @Test

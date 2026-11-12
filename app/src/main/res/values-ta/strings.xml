@@ -149,7 +149,6 @@
     <string name="label_enter_hex">6 hex எழுத்துகள் உள்ளிடவும் (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">அனைத்தும்</string>
     <string name="view_week">வாரம்</string>
     <string name="view_month">மாதம்</string>
     <string name="label_all_day">நாள் முழுவதும்</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">சனிக்கிழமை</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">நிகழ்வுகள் கிடைக்கவில்லை</string>
     <string name="empty_no_upcoming_events">வரவிருக்கும் நிகழ்வுகள் இல்லை</string>
     <string name="empty_no_calendars">நாட்காட்டிகள் இல்லை</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">மாதம் மற்றும் ஆண்டு தேர்வு</string>
     <string name="cd_previous_month">முந்தைய மாதம்</string>
     <string name="cd_next_month">அடுத்த மாதம்</string>
+    <string name="cd_previous_day">முந்தைய நாள்</string>
+    <string name="cd_next_day">அடுத்த நாள்</string>
     <string name="cd_month_year_picker">மாதம் மற்றும் ஆண்டு தேர்வி</string>
     <string name="cd_remove_alert">எச்சரிக்கையை நீக்கு</string>
     <string name="cd_warning">எச்சரிக்கை</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">காலெண்டர் நிலை: அற்புதமாக காலி.</string>
     <string name="empty_no_events_day_5">எதுவும் திட்டமிடப்படவில்லை. அமைதியை ரசியுங்கள்.</string>
     <string name="filter_date">தேதி</string>
+    <string name="search_tab_upcoming">வருபவை</string>
+    <string name="search_tab_past">கடந்தவை</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d நிகழ்வு</item>
+        <item quantity="other">%1$s, %2$d நிகழ்வுகள்</item>
+    </plurals>
+    <string name="search_date_this_week">இந்த வாரம்</string>
+    <string name="search_date_this_month">இந்த மாதம்</string>
+    <string name="search_date_pick">தேதிகளைத் தேர்ந்தெடு…</string>
+    <string name="search_next">அடுத்து: %1$s</string>
+    <string name="search_last">கடைசியாக: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">இடம்:</string>
+    <string name="search_reason_notes">குறிப்புகள்:</string>
+    <string name="search_reason_guest">விருந்தினர்:</string>
+    <string name="search_keep_typing">தேட தொடர்ந்து தட்டச்சு செய்யவும்</string>
+    <string name="search_no_matches">“%1$s” உடன் பொருந்தும் நிகழ்வுகள் இல்லை</string>
+    <string name="search_lookback_line">ஒத்திசைவு திரும்பப்பார்வை: %1$s</string>
+    <string name="search_sync_settings">ஒத்திசைவு அமைப்புகள்</string>
+    <string name="cd_search_sync_settings">ஒத்திசைவு திரும்பப்பார்வை அமைப்பைத் திற</string>
+    <plurals name="search_show_past">
+        <item quantity="one">%d கடந்த நிகழ்வைக் காட்டு</item>
+        <item quantity="other">%d கடந்த நிகழ்வுகளைக் காட்டு</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">மறைக்கப்பட்ட நாட்காட்டியில் மேலும் %d</item>
+        <item quantity="other">மறைக்கப்பட்ட நாட்காட்டிகளில் மேலும் %d</item>
+    </plurals>
+    <string name="search_show">காட்டு</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">மறைக்கப்பட்ட நாட்காட்டியில் %d பொருத்தத்தைக் காட்டு</item>
+        <item quantity="other">மறைக்கப்பட்ட நாட்காட்டிகளில் %d பொருத்தங்களைக் காட்டு</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">மறைக்கப்பட்ட நாட்காட்டியில் %d காட்டு</item>
+        <item quantity="other">மறைக்கப்பட்ட நாட்காட்டிகளில் %d காட்டு</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">%d மறைக்கப்பட்ட நாட்காட்டி உட்பட</item>
+        <item quantity="other">%d மறைக்கப்பட்ட நாட்காட்டிகள் உட்பட</item>
+    </plurals>
+    <string name="search_leave_out">விலக்கு</string>
+    <string name="cd_search_leave_out">மறைக்கப்பட்ட நாட்காட்டிகளை விலக்கு</string>
+    <string name="search_hidden_calendar">%1$s · மறைக்கப்பட்டது</string>
+    <string name="cd_search_date_this_week">இந்த வாரப் பொருத்தங்களைக் காட்டு</string>
+    <string name="cd_search_date_this_month">இந்த மாதப் பொருத்தங்களைக் காட்டு</string>
+    <string name="cd_search_date_pick">தேட தேதிகளைத் தேர்ந்தெடு</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d வருபவை</item>
+        <item quantity="other">%d வருபவை</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d கடந்தவை</item>
+        <item quantity="other">%d கடந்தவை</item>
+    </plurals>
+    <string name="search_no_past_events">கடந்த நிகழ்வுகள் இல்லை</string>
+    <string name="search_no_events_in_dates">இந்தத் தேதிகளில் நிகழ்வுகள் இல்லை</string>
     <string name="label_select_date">தேதி தேர்வுசெய்</string>
     <string name="hint_tap_date_range">ஒரு நாளுக்கு அதே தேதியைத் தட்டவும், அல்லது வரம்புக்கு வேறு தேதியைத் தட்டவும்</string>
     <string name="cd_clear">அழி</string>

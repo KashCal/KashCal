@@ -2,8 +2,6 @@ package org.onekash.kashcal.ui.viewmodels
 
 import app.cash.turbine.test
 import io.mockk.coEvery
-import io.mockk.coVerifyOrder
-import io.mockk.coJustRun
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -34,7 +32,6 @@ import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository
 import org.onekash.kashcal.data.calendar_provider.deviceEventReader
 import org.onekash.kashcal.data.calendar_provider.deviceEventWriter
-import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
@@ -44,10 +41,10 @@ import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.model.DisplayEvent
-import org.onekash.kashcal.domain.model.SearchResult
 import org.onekash.kashcal.domain.reader.DisplayEventRepository
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.domain.reader.EventReader.OccurrenceWithEvent
+import org.onekash.kashcal.domain.search.SearchOutcome
 import org.onekash.kashcal.error.ErrorPresentation
 import org.onekash.kashcal.network.NetworkMonitor
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
@@ -160,12 +157,6 @@ class HomeViewModelTest {
         )
     )
 
-    private val testEventsWithNextOccurrence by lazy {
-        testEvents.map { event ->
-            EventWithNextOccurrence(event = event, nextOccurrenceTs = event.startTs)
-        }
-    }
-
     private val testOccurrencesWithEvents by lazy {
         testOccurrences.mapIndexed { index, occurrence ->
             OccurrenceWithEvent(
@@ -238,20 +229,9 @@ class HomeViewModelTest {
                 eventReader.getEventById(id)?.let { id to it }
             }.toMap()
         }
-        coEvery { eventReader.searchEvents(any()) } returns testEvents
-        coEvery { eventReader.searchEventsExcludingPast(any()) } returns testEvents
-        coEvery { eventReader.searchEventsWithNextOccurrence(any()) } returns testEventsWithNextOccurrence
-        coEvery { eventReader.searchEventsExcludingPastWithNextOccurrence(any()) } returns testEventsWithNextOccurrence
         // Device calendar change signal: 0, no changes.
         every { displayEventRepository.deviceCalendarChangeSignal } returns MutableStateFlow(0)
-
-        // searchDisplayEvents runs its roomSearcher lambda, so the EventReader verifications
-        // still see the search calls.
-        coEvery { displayEventRepository.searchDisplayEvents(any(), any(), any(), any()) } coAnswers {
-            val query = firstArg<String>()
-            val roomSearcher = arg<suspend (String) -> List<SearchResult>>(3)
-            roomSearcher(query)
-        }
+        every { displayEventRepository.observeSearch(any(), any(), any(), any()) } returns flowOf(SearchOutcome())
         every { dataStore.defaultCalendarView } returns flowOf(KashCalDataStore.VIEW_MONTH)
         coEvery { dataStore.getDefaultCalendarView() } returns KashCalDataStore.VIEW_MONTH
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
@@ -1079,280 +1059,6 @@ class HomeViewModelTest {
         // The pre-1970 date reaches the state.
         assertEquals(dateMillis, viewModel.uiState.value.selectedDate)
         assertTrue(viewModel.uiState.value.selectedDayLabel.contains("1969"))
-    }
-
-    // ==================== Search Tests ====================
-
-    @Test
-    fun `activateSearch enables search mode`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        assertFalse(viewModel.uiState.value.isSearchActive)
-
-        viewModel.activateSearch()
-        advanceUntilIdle()
-
-        assertTrue(viewModel.uiState.value.isSearchActive)
-        assertEquals("", viewModel.uiState.value.searchQuery)
-    }
-
-    @Test
-    fun `deactivateSearch clears search state`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        viewModel.updateSearchQuery("test")
-        advanceUntilIdle()
-
-        viewModel.deactivateSearch()
-        advanceUntilIdle()
-
-        assertFalse(viewModel.uiState.value.isSearchActive)
-        assertEquals("", viewModel.uiState.value.searchQuery)
-        assertTrue(viewModel.uiState.value.searchResults.isEmpty())
-    }
-
-    @Test
-    fun `updateSearchQuery performs search when 2+ chars`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        advanceUntilIdle()
-
-        viewModel.updateSearchQuery("me")
-        advanceUntilIdle()
-
-        // The default filter is Upcoming, so it calls searchEventsExcludingPastWithNextOccurrence.
-        coVerify { eventReader.searchEventsExcludingPastWithNextOccurrence("me") }
-        assertTrue(viewModel.uiState.value.searchResults.size >= 0)
-    }
-
-    @Test
-    fun `updateSearchQuery does not search with 1 char`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        viewModel.updateSearchQuery("m")
-        advanceUntilIdle()
-
-        coVerify(exactly = 0) { eventReader.searchEventsExcludingPastWithNextOccurrence(any()) }
-        assertTrue(viewModel.uiState.value.searchResults.isEmpty())
-    }
-
-    @Test
-    fun `setSearchDateFilter AnyTime re-searches with include past`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        viewModel.updateSearchQuery("test")
-        advanceUntilIdle()
-
-        assertEquals(DateFilter.Upcoming, viewModel.uiState.value.searchDateFilter)
-        // The first search runs under the default Upcoming filter.
-        coVerify(exactly = 1) { eventReader.searchEventsExcludingPastWithNextOccurrence("test") }
-
-        viewModel.setSearchDateFilter(DateFilter.AnyTime)
-        advanceUntilIdle()
-
-        assertEquals(DateFilter.AnyTime, viewModel.uiState.value.searchDateFilter)
-        // AnyTime includes the past: searchEventsWithNextOccurrence.
-        coVerify(exactly = 1) { eventReader.searchEventsWithNextOccurrence("test") }
-    }
-
-    // ==================== Search Lookback Tests ====================
-
-    @Test
-    fun `search with syncPastDays 730 and AnyTime filter uses 730 day lookback`() = runTest {
-        every { dataStore.syncPastDays } returns flowOf(730)
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        viewModel.updateSearchQuery("test")
-        advanceUntilIdle()
-
-        // AnyTime includes the past.
-        viewModel.setSearchDateFilter(DateFilter.AnyTime)
-        advanceUntilIdle()
-
-        // startDayCode is 730 days back, within 1 of the expected day code to allow for
-        // midnight (one day either side, except across a month boundary).
-        val today = java.time.LocalDate.now()
-        val expectedDate = today.minusDays(730)
-        val expectedCode = expectedDate.year * 10000 + expectedDate.monthValue * 100 + expectedDate.dayOfMonth
-        coVerify {
-            displayEventRepository.searchDisplayEvents(
-                eq("test"),
-                match { startDayCode -> kotlin.math.abs(startDayCode - expectedCode) <= 1 },
-                any(),
-                any()
-            )
-        }
-    }
-
-    @Test
-    fun `search with syncPastDays MAX_VALUE and AnyTime filter uses 10 year lookback`() = runTest {
-        every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        viewModel.updateSearchQuery("test")
-        advanceUntilIdle()
-
-        // AnyTime includes the past.
-        viewModel.setSearchDateFilter(DateFilter.AnyTime)
-        advanceUntilIdle()
-
-        // startDayCode is 10 years back, within 1 of the expected day code.
-        val today = java.time.LocalDate.now()
-        val expectedDate = today.minusYears(10)
-        val expectedCode = expectedDate.year * 10000 + expectedDate.monthValue * 100 + expectedDate.dayOfMonth
-        coVerify {
-            displayEventRepository.searchDisplayEvents(
-                eq("test"),
-                match { startDayCode -> kotlin.math.abs(startDayCode - expectedCode) <= 1 },
-                any(),
-                any()
-            )
-        }
-    }
-
-    // ==================== Search Debouncing Tests ====================
-
-    @Test
-    fun `search debounces with 300ms delay`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        advanceUntilIdle()
-
-        // Type a query.
-        viewModel.updateSearchQuery("me")
-
-        // No search right after typing.
-        coVerify(exactly = 0) { eventReader.searchEventsExcludingPastWithNextOccurrence(any()) }
-
-        // 100 ms: still no search.
-        testScheduler.advanceTimeBy(100)
-        testScheduler.runCurrent()
-        coVerify(exactly = 0) { eventReader.searchEventsExcludingPastWithNextOccurrence(any()) }
-
-        // 300 ms in total: the search runs.
-        testScheduler.advanceTimeBy(200)
-        testScheduler.runCurrent()
-        coVerify(exactly = 1) { eventReader.searchEventsExcludingPastWithNextOccurrence("me") }
-    }
-
-    @Test
-    fun `search cancels previous query when new query arrives`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        advanceUntilIdle()
-
-        // First query.
-        viewModel.updateSearchQuery("me")
-
-        // 150 ms, half the debounce delay.
-        testScheduler.advanceTimeBy(150)
-        testScheduler.runCurrent()
-
-        // Second query before the first runs.
-        viewModel.updateSearchQuery("meet")
-
-        // The full 300 ms for the second query.
-        testScheduler.advanceTimeBy(300)
-        testScheduler.runCurrent()
-
-        // Only the second query runs, through the default
-        // searchEventsExcludingPastWithNextOccurrence.
-        coVerify(exactly = 0) { eventReader.searchEventsExcludingPastWithNextOccurrence("me") }
-        coVerify(exactly = 1) { eventReader.searchEventsExcludingPastWithNextOccurrence("meet") }
-    }
-
-    @Test
-    fun `search does not debounce for queries under 2 chars`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        viewModel.updateSearchQuery("m")
-        advanceUntilIdle()
-
-        // No search, and the results clear at once without the debounce.
-        coVerify(exactly = 0) { eventReader.searchEventsExcludingPastWithNextOccurrence(any()) }
-        assertTrue(viewModel.uiState.value.searchResults.isEmpty())
-    }
-
-    // ==================== Search Date Filter Tests ====================
-
-    @Test
-    fun `activateSearch defaults to Upcoming filter`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        advanceUntilIdle()
-
-        assertEquals(DateFilter.Upcoming, viewModel.uiState.value.searchDateFilter)
-    }
-
-    @Test
-    fun `setSearchDateFilter AnyTime uses include-past query`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        viewModel.updateSearchQuery("test")
-        advanceUntilIdle()
-
-        viewModel.setSearchDateFilter(DateFilter.AnyTime)
-        advanceUntilIdle()
-
-        assertEquals(DateFilter.AnyTime, viewModel.uiState.value.searchDateFilter)
-        coVerify { eventReader.searchEventsWithNextOccurrence("test") }
-    }
-
-    @Test
-    fun `setSearchDateFilter from AnyTime to ThisWeek switches to range query`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        viewModel.updateSearchQuery("test")
-        advanceUntilIdle()
-
-        viewModel.setSearchDateFilter(DateFilter.AnyTime)
-        advanceUntilIdle()
-
-        viewModel.setSearchDateFilter(DateFilter.ThisWeek)
-        advanceUntilIdle()
-
-        assertEquals(DateFilter.ThisWeek, viewModel.uiState.value.searchDateFilter)
-        coVerify { eventReader.searchEventsInRangeWithNextOccurrence("test", any(), any()) }
-    }
-
-    @Test
-    fun `deactivateSearch resets filter to Upcoming`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        viewModel.setSearchDateFilter(DateFilter.AnyTime)
-        advanceUntilIdle()
-
-        viewModel.deactivateSearch()
-        advanceUntilIdle()
-
-        assertEquals(DateFilter.Upcoming, viewModel.uiState.value.searchDateFilter)
     }
 
     // ==================== Agenda Tests ====================
@@ -5307,7 +5013,7 @@ class HomeViewModelTest {
     // ==================== Occurrence Repair and Coverage Tests ====================
 
     @Test
-    fun `setViewingMonth runs the missing-occurrence repair and no extension`() = runTest {
+    fun `setViewingMonth runs the missing-occurrence repair`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -5317,51 +5023,6 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         coVerify { eventCoordinator.repairMissingOccurrences() }
-        coVerify(exactly = 0) { eventCoordinator.ensureOccurrencesCover(any(), any()) }
-    }
-
-    /** Makes the mocked search run the ViewModel's Room searcher, as the real one does. */
-    private fun runRoomSearcher() {
-        coEvery { displayEventRepository.searchDisplayEvents(any(), any(), any(), any()) } coAnswers {
-            arg<suspend (String) -> List<org.onekash.kashcal.domain.model.SearchResult>>(3).invoke(firstArg())
-        }
-    }
-
-    @Test
-    fun `a range-filtered search covers the range's occurrences before searching it`() = runTest {
-        runRoomSearcher()
-        coJustRun { eventCoordinator.ensureOccurrencesCover(any(), any()) }
-        coEvery { eventReader.searchEventsInRangeWithNextOccurrence(any(), any(), any()) } returns emptyList()
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-        val start = 1_900_000_000_000L
-        val end = start + 7 * 24 * 3_600_000L
-
-        viewModel.activateSearch()
-        viewModel.setSearchDateFilter(DateFilter.CustomRange(start, end))
-        viewModel.updateSearchQuery("test")
-        advanceUntilIdle()
-
-        val range = DateFilter.CustomRange(start, end).getTimeRange(java.time.ZoneId.systemDefault(), viewModel.uiState.value.firstDayOfWeek)!!
-        coVerifyOrder {
-            eventCoordinator.ensureOccurrencesCover(range.first, range.second)
-            eventReader.searchEventsInRangeWithNextOccurrence("test", range.first, range.second)
-        }
-    }
-
-    @Test
-    fun `an Any time search needs no occurrence coverage`() = runTest {
-        runRoomSearcher()
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        viewModel.setSearchDateFilter(DateFilter.AnyTime)
-        viewModel.updateSearchQuery("test")
-        advanceUntilIdle()
-
-        coVerify { eventReader.searchEventsWithNextOccurrence("test") }
-        coVerify(exactly = 0) { eventCoordinator.ensureOccurrencesCover(any(), any()) }
     }
 
     // ==================== Helper Functions ====================

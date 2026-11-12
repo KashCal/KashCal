@@ -70,6 +70,22 @@ object CalendarSpan {
         }
     }
 
+    /**
+     * Returns whether a view showing [shown] may step [step] days (-1 or 1): to a day inside the
+     * span, or, from a day outside it, toward it.
+     */
+    fun canStepDay(shown: LocalDate, step: Int, today: LocalDate = LocalDate.now()): Boolean {
+        val first = firstDay(today)
+        val last = lastDay(today)
+        val target = shown.plusDays(step.toLong())
+        return when {
+            target in first..last -> true
+            shown < first -> step > 0
+            shown > last -> step < 0
+            else -> false
+        }
+    }
+
     /** Returns [date], or the span's nearest end when it falls outside. */
     fun clamp(date: LocalDate, today: LocalDate = LocalDate.now()): LocalDate =
         date.coerceIn(firstDay(today), lastDay(today))

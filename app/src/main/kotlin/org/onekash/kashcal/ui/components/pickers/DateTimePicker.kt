@@ -6,7 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -65,7 +64,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -78,7 +76,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLocale
@@ -114,6 +111,7 @@ import org.onekash.kashcal.ui.shared.ALL_DAY_LENGTH_CHIPS_DAYS
 import org.onekash.kashcal.ui.shared.TIMED_LENGTH_CHIPS_MINUTES
 import org.onekash.kashcal.ui.shared.formatDuration
 import org.onekash.kashcal.ui.shared.formatDurationShort
+import org.onekash.kashcal.ui.shared.stepSwipe
 import org.onekash.kashcal.ui.util.CalendarSpan
 import org.onekash.kashcal.ui.util.SelectedDay
 import org.onekash.kashcal.util.DateTimeUtils
@@ -396,8 +394,8 @@ internal fun DateTimeSheet(
     val timePattern = if (use24Hour) "HH:mm" else "h:mm a"
 
     // Every change is applied to the current state, never to one a callback captured, so a
-    // handler that outlives a recomposition (the grid's swipe, a fling's last report) can't
-    // bring an older state back.
+    // handler that outlives a recomposition (a fling's last report) can't bring an older state
+    // back.
     val update: ((DateTimeSheetState) -> DateTimeSheetState) -> Unit = { change -> sheet = change(sheet) }
     val commit: () -> Unit = {
         val (committed, fields) = sheet.commit()
@@ -929,7 +927,6 @@ fun InlineDatePickerContent(
     }
     val today = remember(todayRefreshKey) { LocalDate.now() }
 
-    var totalDrag by remember { mutableFloatStateOf(0f) }
     val monthYearFormat = remember { DateTimeUtils.localizedFormatter("yMMMM") }
     // Internal when the caller doesn't manage visibility (the RecurrencePicker "Until" date,
     // the home screen date pickers).
@@ -952,23 +949,11 @@ fun InlineDatePickerContent(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp, vertical = 4.dp)
-            .then(
-                if (!effectiveShowMonthYearPicker) Modifier.pointerInput(displayedMonth, canGoBack, canGoForward) {
-                    detectHorizontalDragGestures(
-                        onDragStart = { totalDrag = 0f },
-                        onDragEnd = {
-                            if (totalDrag > 100f && canGoBack) {
-                                onMonthChange(displayedMonth.minusMonths(1))
-                            } else if (totalDrag < -100f && canGoForward) {
-                                onMonthChange(displayedMonth.plusMonths(1))
-                            }
-                        },
-                        onHorizontalDrag = { _, dragAmount ->
-                            totalDrag += dragAmount
-                        }
-                    )
-                } else Modifier
-            )
+            .stepSwipe(
+                enabled = !effectiveShowMonthYearPicker,
+                canGoBack = canGoBack,
+                canGoForward = canGoForward,
+            ) { step -> onMonthChange(displayedMonth.plusMonths(step.toLong())) }
     ) {
         Row(
             modifier = Modifier

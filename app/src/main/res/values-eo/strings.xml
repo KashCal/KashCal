@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Enigu 6 deksesumajn signojn (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Ĉio</string>
     <string name="view_week">Semajno</string>
     <string name="view_month">Monato</string>
     <string name="label_all_day">Tuttaga</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">Sabato</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Neniuj eventoj trovitaj</string>
     <string name="empty_no_upcoming_events">Neniuj venontaj eventoj</string>
     <string name="empty_no_calendars">Neniuj kalendaroj disponeblaj</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">Elekti monaton kaj jaron</string>
     <string name="cd_previous_month">Antaŭa monato</string>
     <string name="cd_next_month">Venonta monato</string>
+    <string name="cd_previous_day">Antaŭa tago</string>
+    <string name="cd_next_day">Venonta tago</string>
     <string name="cd_month_year_picker">Monata kaj jara elektilo</string>
     <string name="cd_remove_alert">Forigi alarmon</string>
     <string name="cd_warning">Averto</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">Stato de la kalendaro: bele malplena.</string>
     <string name="empty_no_events_day_5">Nenio planita. Ĝuu la trankvilon.</string>
     <string name="filter_date">Dato</string>
+    <string name="search_tab_upcoming">Venontaj</string>
+    <string name="search_tab_past">Pasintaj</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d evento</item>
+        <item quantity="other">%1$s, %2$d eventoj</item>
+    </plurals>
+    <string name="search_date_this_week">Ĉi-semajne</string>
+    <string name="search_date_this_month">Ĉi-monate</string>
+    <string name="search_date_pick">Elekti datojn…</string>
+    <string name="search_next">Sekva: %1$s</string>
+    <string name="search_last">Lasta: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Loko:</string>
+    <string name="search_reason_notes">Notoj:</string>
+    <string name="search_reason_guest">Gasto:</string>
+    <string name="search_keep_typing">Daŭre tajpu por serĉi</string>
+    <string name="search_no_matches">Neniu evento kongruas kun “%1$s”</string>
+    <string name="search_lookback_line">Sinkroniga retrorigardo: %1$s</string>
+    <string name="search_sync_settings">Sinkronigaj agordoj</string>
+    <string name="cd_search_sync_settings">Malfermi la agordon de sinkroniga retrorigardo</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Montri %d pasintan eventon</item>
+        <item quantity="other">Montri %d pasintajn eventojn</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">%d plia en kaŝita kalendaro</item>
+        <item quantity="other">%d pliaj en kaŝitaj kalendaroj</item>
+    </plurals>
+    <string name="search_show">Montri</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Montri %d kongruon en kaŝita kalendaro</item>
+        <item quantity="other">Montri %d kongruojn en kaŝitaj kalendaroj</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Montri %d en kaŝita kalendaro</item>
+        <item quantity="other">Montri %d en kaŝitaj kalendaroj</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Inkluzive de %d kaŝita kalendaro</item>
+        <item quantity="other">Inkluzive de %d kaŝitaj kalendaroj</item>
+    </plurals>
+    <string name="search_leave_out">Preterlasi</string>
+    <string name="cd_search_leave_out">Preterlasi kaŝitajn kalendarojn</string>
+    <string name="search_hidden_calendar">%1$s · kaŝita</string>
+    <string name="cd_search_date_this_week">Montri kongruojn de ĉi tiu semajno</string>
+    <string name="cd_search_date_this_month">Montri kongruojn de ĉi tiu monato</string>
+    <string name="cd_search_date_pick">Elekti datojn por serĉi</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d venonta</item>
+        <item quantity="other">%d venontaj</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d pasinta</item>
+        <item quantity="other">%d pasintaj</item>
+    </plurals>
+    <string name="search_no_past_events">Neniu pasinta evento</string>
+    <string name="search_no_events_in_dates">Neniu evento en ĉi tiuj datoj</string>
     <string name="label_select_date">Elektu daton</string>
     <string name="hint_tap_date_range">Tuŝu la saman daton por unu tago, aŭ alian daton por intervalo</string>
     <string name="cd_clear">Forviŝi</string>

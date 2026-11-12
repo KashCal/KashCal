@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
  * Tests the RFC 9253 properties LINK and RELATED-TO: parsing, generate-and-re-parse, the
  * [ICalLink] and [ICalRelation] models, and their fromParameters edge cases.
  *
- * ical4j 4.3.0's Link property requires a VALUE parameter, so the fixtures carry VALUE=URI.
+ * ical4j's Link property requires a VALUE parameter, so the fixtures carry VALUE=URI.
  */
 class ICalParserRfc9253Test {
 

@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Εισάγετε 6 hex χαρακτήρες (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Όλα</string>
     <string name="view_week">Εβδομάδα</string>
     <string name="view_month">Μήνας</string>
     <string name="label_all_day">Ολοήμερο</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">Σάββατο</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Δεν βρέθηκαν συμβάντα</string>
     <string name="empty_no_upcoming_events">Δεν υπάρχουν επερχόμενα συμβάντα</string>
     <string name="empty_no_calendars">Δεν υπάρχουν διαθέσιμα ημερολόγια</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">Επιλογή μήνα και έτους</string>
     <string name="cd_previous_month">Προηγούμενος μήνας</string>
     <string name="cd_next_month">Επόμενος μήνας</string>
+    <string name="cd_previous_day">Προηγούμενη ημέρα</string>
+    <string name="cd_next_day">Επόμενη ημέρα</string>
     <string name="cd_month_year_picker">Επιλογέας μήνα και έτους</string>
     <string name="cd_remove_alert">Αφαίρεση ειδοποίησης</string>
     <string name="cd_warning">Προειδοποίηση</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">Κατάσταση ημερολογίου: υπέροχα άδειο.</string>
     <string name="empty_no_events_day_5">Τίποτα προγραμματισμένο. Απολαύστε την ηρεμία.</string>
     <string name="filter_date">Ημερομηνία</string>
+    <string name="search_tab_upcoming">Προσεχή</string>
+    <string name="search_tab_past">Παλιά</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d συμβάν</item>
+        <item quantity="other">%1$s, %2$d συμβάντα</item>
+    </plurals>
+    <string name="search_date_this_week">Αυτή την εβδομάδα</string>
+    <string name="search_date_this_month">Αυτόν τον μήνα</string>
+    <string name="search_date_pick">Επιλογή ημερομηνιών…</string>
+    <string name="search_next">Επόμενο: %1$s</string>
+    <string name="search_last">Τελευταίο: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Τοποθεσία:</string>
+    <string name="search_reason_notes">Σημειώσεις:</string>
+    <string name="search_reason_guest">Προσκεκλημένος:</string>
+    <string name="search_keep_typing">Συνεχίστε να πληκτρολογείτε για αναζήτηση</string>
+    <string name="search_no_matches">Κανένα συμβάν δεν ταιριάζει με «%1$s»</string>
+    <string name="search_lookback_line">Αναδρομικός συγχρονισμός: %1$s</string>
+    <string name="search_sync_settings">Ρυθμίσεις συγχρονισμού</string>
+    <string name="cd_search_sync_settings">Άνοιγμα ρύθμισης αναδρομικού συγχρονισμού</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Εμφάνιση %d παλιού συμβάντος</item>
+        <item quantity="other">Εμφάνιση %d παλιών συμβάντων</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">%d ακόμη σε κρυφό ημερολόγιο</item>
+        <item quantity="other">%d ακόμη σε κρυφά ημερολόγια</item>
+    </plurals>
+    <string name="search_show">Εμφάνιση</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Εμφάνιση %d αποτελέσματος σε κρυφό ημερολόγιο</item>
+        <item quantity="other">Εμφάνιση %d αποτελεσμάτων σε κρυφά ημερολόγια</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Εμφάνιση %d σε κρυφό ημερολόγιο</item>
+        <item quantity="other">Εμφάνιση %d σε κρυφά ημερολόγια</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Συμπεριλαμβάνεται %d κρυφό ημερολόγιο</item>
+        <item quantity="other">Συμπεριλαμβάνονται %d κρυφά ημερολόγια</item>
+    </plurals>
+    <string name="search_leave_out">Εξαίρεση</string>
+    <string name="cd_search_leave_out">Εξαίρεση κρυφών ημερολογίων</string>
+    <string name="search_hidden_calendar">%1$s · κρυφό</string>
+    <string name="cd_search_date_this_week">Εμφάνιση αποτελεσμάτων αυτής της εβδομάδας</string>
+    <string name="cd_search_date_this_month">Εμφάνιση αποτελεσμάτων αυτού του μήνα</string>
+    <string name="cd_search_date_pick">Επιλογή ημερομηνιών αναζήτησης</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d προσεχές</item>
+        <item quantity="other">%d προσεχή</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d παλιό</item>
+        <item quantity="other">%d παλιά</item>
+    </plurals>
+    <string name="search_no_past_events">Δεν υπάρχουν παλιά συμβάντα</string>
+    <string name="search_no_events_in_dates">Δεν υπάρχουν συμβάντα σε αυτές τις ημερομηνίες</string>
     <string name="label_select_date">Επιλέξτε ημερομηνία</string>
     <string name="hint_tap_date_range">Πατήστε την ίδια ημερομηνία για μία ημέρα ή άλλη για εύρος</string>
     <string name="cd_clear">Εκκαθάριση</string>

@@ -176,6 +176,8 @@ data class AccountSettingsUiState(
 @Composable
 fun AccountSettingsScreen(
     uiState: AccountSettingsUiState,
+    openSyncLookback: Boolean = false,
+    onSyncLookbackOpened: () -> Unit = {},
     onShowICloudSignIn: () -> Unit = {},
     onHideICloudSignIn: () -> Unit = {},
     onAppleIdChange: (String) -> Unit = {},
@@ -356,6 +358,14 @@ fun AccountSettingsScreen(
                 var showAppInfoSheet by remember { mutableStateOf(false) }
                 var showAddSubscriptionDialog by remember { mutableStateOf(false) }
                 var showSyncLookbackSheet by remember { mutableStateOf(false) }
+                // A request (search's Sync settings link) opens the sheet once the screen has
+                // loaded; clearing it keeps a later return to this screen from opening it again.
+                LaunchedEffect(openSyncLookback) {
+                    if (openSyncLookback) {
+                        showSyncLookbackSheet = true
+                        onSyncLookbackOpened()
+                    }
+                }
                 var showSyncFrequencySheet by remember { mutableStateOf(false) }
                 var showCalendarNotificationsSheet by remember { mutableStateOf(false) }
 

@@ -149,7 +149,6 @@
     <string name="label_enter_hex">กรอก 6 ตัวอักษรฐาน 16 (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">ทั้งหมด</string>
     <string name="view_week">สัปดาห์</string>
     <string name="view_month">เดือน</string>
     <string name="label_all_day">ทั้งวัน</string>
@@ -515,7 +514,6 @@
     <string name="option_saturday">วันเสาร์</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">ไม่พบกิจกรรม</string>
     <string name="empty_no_upcoming_events">ไม่มีกิจกรรมที่จะมาถึง</string>
     <string name="empty_no_calendars">ไม่มีปฏิทินที่ใช้ได้</string>
 
@@ -814,6 +812,8 @@
     <string name="cd_pick_month_year">เลือกเดือนและปี</string>
     <string name="cd_previous_month">เดือนก่อน</string>
     <string name="cd_next_month">เดือนถัดไป</string>
+    <string name="cd_previous_day">วันก่อน</string>
+    <string name="cd_next_day">วันถัดไป</string>
     <string name="cd_month_year_picker">ตัวเลือกเดือนและปี</string>
     <string name="cd_remove_alert">ลบแจ้งเตือน</string>
     <string name="cd_warning">คำเตือน</string>
@@ -1104,6 +1104,57 @@
     <string name="empty_no_events_day_4">สถานะปฏิทิน: ว่างสุด ๆ อย่างน่ายินดี</string>
     <string name="empty_no_events_day_5">ไม่มีอะไรต้องทำ เพลิดเพลินกับความสงบเถอะ</string>
     <string name="filter_date">วันที่</string>
+    <string name="search_tab_upcoming">ถัดไป</string>
+    <string name="search_tab_past">ที่ผ่านมา</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="other">%1$s, %2$d กิจกรรม</item>
+    </plurals>
+    <string name="search_date_this_week">สัปดาห์นี้</string>
+    <string name="search_date_this_month">เดือนนี้</string>
+    <string name="search_date_pick">เลือกวันที่…</string>
+    <string name="search_next">ครั้งถัดไป: %1$s</string>
+    <string name="search_last">ครั้งล่าสุด: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">สถานที่:</string>
+    <string name="search_reason_notes">บันทึก:</string>
+    <string name="search_reason_guest">ผู้เข้าร่วม:</string>
+    <string name="search_keep_typing">พิมพ์ต่อเพื่อค้นหา</string>
+    <string name="search_no_matches">ไม่มีกิจกรรมที่ตรงกับ “%1$s”</string>
+    <string name="search_lookback_line">ซิงค์ย้อนหลัง: %1$s</string>
+    <string name="search_sync_settings">การตั้งค่าซิงค์</string>
+    <string name="cd_search_sync_settings">เปิดการตั้งค่าซิงค์ย้อนหลัง</string>
+    <plurals name="search_show_past">
+        <item quantity="other">แสดงกิจกรรมที่ผ่านมา %d รายการ</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="other">อีก %d รายการในปฏิทินที่ซ่อนอยู่</item>
+    </plurals>
+    <string name="search_show">แสดง</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="other">แสดงผลที่ตรงกัน %d รายการในปฏิทินที่ซ่อนอยู่</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="other">แสดง %d รายการในปฏิทินที่ซ่อนอยู่</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="other">รวมปฏิทินที่ซ่อนอยู่ %d ปฏิทิน</item>
+    </plurals>
+    <string name="search_leave_out">ไม่รวม</string>
+    <string name="cd_search_leave_out">ไม่รวมปฏิทินที่ซ่อนอยู่</string>
+    <string name="search_hidden_calendar">%1$s · ซ่อนอยู่</string>
+    <string name="cd_search_date_this_week">แสดงผลที่ตรงกันในสัปดาห์นี้</string>
+    <string name="cd_search_date_this_month">แสดงผลที่ตรงกันในเดือนนี้</string>
+    <string name="cd_search_date_pick">เลือกวันที่ที่จะค้นหา</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="other">ถัดไป %d รายการ</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="other">ที่ผ่านมา %d รายการ</item>
+    </plurals>
+    <string name="search_no_past_events">ไม่มีกิจกรรมที่ผ่านมา</string>
+    <string name="search_no_events_in_dates">ไม่มีกิจกรรมในวันที่เหล่านี้</string>
     <string name="label_select_date">เลือกวันที่</string>
     <string name="hint_tap_date_range">แตะวันเดียวกันสำหรับวันเดียว หรือแตะวันอื่นสำหรับช่วงเวลา</string>
     <string name="cd_clear">ล้าง</string>

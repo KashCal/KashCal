@@ -149,7 +149,6 @@
     <string name="label_enter_hex">৬টি hex অক্ষর লিখুন (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">সব</string>
     <string name="view_week">সপ্তাহ</string>
     <string name="view_month">মাস</string>
     <string name="label_all_day">সারাদিন</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">শনিবার</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">কোনো ইভেন্ট পাওয়া যায়নি</string>
     <string name="empty_no_upcoming_events">কোনো আসন্ন ইভেন্ট নেই</string>
     <string name="empty_no_calendars">কোনো ক্যালেন্ডার নেই</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">মাস ও বছর বেছে নিন</string>
     <string name="cd_previous_month">আগের মাস</string>
     <string name="cd_next_month">পরের মাস</string>
+    <string name="cd_previous_day">আগের দিন</string>
+    <string name="cd_next_day">পরের দিন</string>
     <string name="cd_month_year_picker">মাস ও বছর নির্বাচক</string>
     <string name="cd_remove_alert">সতর্কতা সরান</string>
     <string name="cd_warning">সতর্কতা</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">ক্যালেন্ডারের অবস্থা: চমৎকারভাবে ফাঁকা।</string>
     <string name="empty_no_events_day_5">কিছুই ঠিক করা নেই। শান্তি উপভোগ করুন।</string>
     <string name="filter_date">তারিখ</string>
+    <string name="search_tab_upcoming">আসন্ন</string>
+    <string name="search_tab_past">অতীত</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d টি ইভেন্ট</item>
+        <item quantity="other">%1$s, %2$d টি ইভেন্ট</item>
+    </plurals>
+    <string name="search_date_this_week">এই সপ্তাহ</string>
+    <string name="search_date_this_month">এই মাস</string>
+    <string name="search_date_pick">তারিখ বাছুন…</string>
+    <string name="search_next">পরবর্তী: %1$s</string>
+    <string name="search_last">সর্বশেষ: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">অবস্থান:</string>
+    <string name="search_reason_notes">নোটস:</string>
+    <string name="search_reason_guest">অতিথি:</string>
+    <string name="search_keep_typing">খুঁজতে টাইপ করতে থাকুন</string>
+    <string name="search_no_matches">“%1$s”-এর সাথে কোনো ইভেন্ট মেলেনি</string>
+    <string name="search_lookback_line">সিংক লুকব্যাক: %1$s</string>
+    <string name="search_sync_settings">সিংক সেটিংস</string>
+    <string name="cd_search_sync_settings">সিংক লুকব্যাক সেটিং খুলুন</string>
+    <plurals name="search_show_past">
+        <item quantity="one">%d টি অতীত ইভেন্ট দেখান</item>
+        <item quantity="other">%d টি অতীত ইভেন্ট দেখান</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">লুকানো ক্যালেন্ডারে আরও %d টি</item>
+        <item quantity="other">লুকানো ক্যালেন্ডারগুলোতে আরও %d টি</item>
+    </plurals>
+    <string name="search_show">দেখান</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">লুকানো ক্যালেন্ডারে %d টি মিল দেখান</item>
+        <item quantity="other">লুকানো ক্যালেন্ডারগুলোতে %d টি মিল দেখান</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">লুকানো ক্যালেন্ডারে %d টি দেখান</item>
+        <item quantity="other">লুকানো ক্যালেন্ডারগুলোতে %d টি দেখান</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">%d টি লুকানো ক্যালেন্ডার সহ</item>
+        <item quantity="other">%d টি লুকানো ক্যালেন্ডার সহ</item>
+    </plurals>
+    <string name="search_leave_out">বাদ দিন</string>
+    <string name="cd_search_leave_out">লুকানো ক্যালেন্ডার বাদ দিন</string>
+    <string name="search_hidden_calendar">%1$s · লুকানো</string>
+    <string name="cd_search_date_this_week">এই সপ্তাহের মিল দেখান</string>
+    <string name="cd_search_date_this_month">এই মাসের মিল দেখান</string>
+    <string name="cd_search_date_pick">খুঁজতে তারিখ বাছুন</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d টি আসন্ন</item>
+        <item quantity="other">%d টি আসন্ন</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d টি অতীত</item>
+        <item quantity="other">%d টি অতীত</item>
+    </plurals>
+    <string name="search_no_past_events">কোনো অতীত ইভেন্ট নেই</string>
+    <string name="search_no_events_in_dates">এই তারিখগুলোতে কোনো ইভেন্ট নেই</string>
     <string name="label_select_date">তারিখ নির্বাচন করুন</string>
     <string name="hint_tap_date_range">একদিনের জন্য একই তারিখ ট্যাপ করুন, বা সীমার জন্য অন্য তারিখ</string>
     <string name="cd_clear">মুছুন</string>

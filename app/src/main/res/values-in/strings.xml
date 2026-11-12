@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Masukkan 6 karakter hex (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Semua</string>
     <string name="view_week">Minggu</string>
     <string name="view_month">Bulan</string>
     <string name="label_all_day">Sepanjang hari</string>
@@ -515,7 +514,6 @@
     <string name="option_saturday">Sabtu</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Tidak ada acara ditemukan</string>
     <string name="empty_no_upcoming_events">Tidak ada acara mendatang</string>
     <string name="empty_no_calendars">Tidak ada kalender tersedia</string>
 
@@ -814,6 +812,8 @@
     <string name="cd_pick_month_year">Pilih bulan dan tahun</string>
     <string name="cd_previous_month">Bulan sebelumnya</string>
     <string name="cd_next_month">Bulan berikutnya</string>
+    <string name="cd_previous_day">Hari sebelumnya</string>
+    <string name="cd_next_day">Hari berikutnya</string>
     <string name="cd_month_year_picker">Pemilih bulan dan tahun</string>
     <string name="cd_remove_alert">Hapus peringatan</string>
     <string name="cd_warning">Peringatan</string>
@@ -1104,6 +1104,57 @@
     <string name="empty_no_events_day_4">Status kalender: kosong melompong.</string>
     <string name="empty_no_events_day_5">Nggak ada agenda. Nikmati ketenangannya.</string>
     <string name="filter_date">Tanggal</string>
+    <string name="search_tab_upcoming">Mendatang</string>
+    <string name="search_tab_past">Lalu</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="other">%1$s, %2$d acara</item>
+    </plurals>
+    <string name="search_date_this_week">Minggu ini</string>
+    <string name="search_date_this_month">Bulan ini</string>
+    <string name="search_date_pick">Pilih tanggal…</string>
+    <string name="search_next">Berikutnya: %1$s</string>
+    <string name="search_last">Terakhir: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Lokasi:</string>
+    <string name="search_reason_notes">Catatan:</string>
+    <string name="search_reason_guest">Tamu:</string>
+    <string name="search_keep_typing">Terus ketik untuk mencari</string>
+    <string name="search_no_matches">Tidak ada acara yang cocok dengan “%1$s”</string>
+    <string name="search_lookback_line">Rentang Sinkronisasi Mundur: %1$s</string>
+    <string name="search_sync_settings">Pengaturan sinkronisasi</string>
+    <string name="cd_search_sync_settings">Buka pengaturan rentang sinkronisasi mundur</string>
+    <plurals name="search_show_past">
+        <item quantity="other">Tampilkan %d acara lalu</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="other">%d lagi di kalender tersembunyi</item>
+    </plurals>
+    <string name="search_show">Tampilkan</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="other">Tampilkan %d kecocokan di kalender tersembunyi</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="other">Tampilkan %d di kalender tersembunyi</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="other">Termasuk %d kalender tersembunyi</item>
+    </plurals>
+    <string name="search_leave_out">Kecualikan</string>
+    <string name="cd_search_leave_out">Kecualikan kalender tersembunyi</string>
+    <string name="search_hidden_calendar">%1$s · tersembunyi</string>
+    <string name="cd_search_date_this_week">Tampilkan kecocokan minggu ini</string>
+    <string name="cd_search_date_this_month">Tampilkan kecocokan bulan ini</string>
+    <string name="cd_search_date_pick">Pilih tanggal untuk mencari</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="other">%d mendatang</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="other">%d lalu</item>
+    </plurals>
+    <string name="search_no_past_events">Tidak ada acara lalu</string>
+    <string name="search_no_events_in_dates">Tidak ada acara pada tanggal ini</string>
     <string name="label_select_date">Pilih tanggal</string>
     <string name="hint_tap_date_range">Ketuk tanggal yang sama untuk satu hari, atau tanggal lain untuk rentang</string>
     <string name="cd_clear">Hapus</string>

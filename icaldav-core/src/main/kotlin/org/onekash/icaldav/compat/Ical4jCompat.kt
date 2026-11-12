@@ -67,7 +67,7 @@ inline fun <reified T : Parameter> Property.getParameterOrNull(name: String): T?
 /**
  * Returns the first parameter whose name equals [name] ignoring case, or null if there is none.
  * RFC 5545 §3.1 makes parameter names case-insensitive, so `EMAIL=`, `email=` and `Email=` all
- * match. ical4j 4.3.0's `getParameter(name)` also compares names ignoring case; this returns an
+ * match. ical4j's `getParameter(name)` also compares names ignoring case; this returns an
  * untyped [Parameter].
  */
 fun Property.getParameterIgnoreCase(name: String): Parameter? {

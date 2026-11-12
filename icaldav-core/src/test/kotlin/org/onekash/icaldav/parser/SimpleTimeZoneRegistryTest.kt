@@ -1,10 +1,14 @@
 package org.onekash.icaldav.parser
 
+import io.mockk.mockk
+import net.fortuna.ical4j.model.TimeZone
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import java.time.DateTimeException
 import java.time.ZoneId
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -12,7 +16,7 @@ import kotlin.test.assertTrue
  * Tests [SimpleTimeZoneRegistry], which works on Android without ZoneRulesProvider: getTimeZone
  * returns null, register and clear are no-ops, getZoneRules is empty, getTzId passes its input
  * through, and getZoneId resolves IANA IDs and Windows names (hardcoded aliases and the
- * properties-file fallback, in any case) and returns null for blank or unknown IDs.
+ * properties-file fallback, in any case) and throws DateTimeException for blank or unknown IDs.
  */
 @DisplayName("SimpleTimeZoneRegistry")
 class SimpleTimeZoneRegistryTest {
@@ -25,7 +29,6 @@ class SimpleTimeZoneRegistryTest {
         assertNull(registry.getTimeZone("America/New_York"))
         assertNull(registry.getTimeZone("Europe/London"))
         assertNull(registry.getTimeZone("UTC"))
-        assertNull(registry.getTimeZone(null))
         assertNull(registry.getTimeZone(""))
     }
 
@@ -33,9 +36,10 @@ class SimpleTimeZoneRegistryTest {
     @DisplayName("register does not throw")
     fun `register is no-op`() {
         // Passes if it doesn't throw.
-        registry.register(null)
-        registry.register(null, false)
-        registry.register(null, true)
+        val timezone = mockk<TimeZone>()
+        registry.register(timezone)
+        registry.register(timezone, false)
+        registry.register(timezone, true)
     }
 
     @Test
@@ -66,12 +70,11 @@ class SimpleTimeZoneRegistryTest {
     }
 
     @Test
-    @DisplayName("getZoneId returns null for invalid timezone")
-    fun `getZoneId returns null for invalid`() {
-        assertNull(registry.getZoneId("Invalid/Timezone"))
-        assertNull(registry.getZoneId(null))
-        assertNull(registry.getZoneId(""))
-        assertNull(registry.getZoneId("   "))
+    @DisplayName("getZoneId throws DateTimeException for invalid timezone")
+    fun `getZoneId throws for invalid`() {
+        for (id in listOf("Invalid/Timezone", "", "   ")) {
+            assertFailsWith<DateTimeException>(id) { registry.getZoneId(id) }
+        }
     }
 
     @Test
@@ -95,7 +98,6 @@ class SimpleTimeZoneRegistryTest {
     fun `getTzId passes through`() {
         assertEquals("America/New_York", registry.getTzId("America/New_York"))
         assertEquals("UTC", registry.getTzId("UTC"))
-        assertNull(registry.getTzId(null))
     }
 
     // ==================== Properties File Fallback (Issue #45) ====================

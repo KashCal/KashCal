@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Introduïu 6 caràcters hexadecimals (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Tot</string>
     <string name="view_week">Setmana</string>
     <string name="view_month">Mes</string>
     <string name="label_all_day">Tot el dia</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">Dissabte</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">No s\'han trobat esdeveniments</string>
     <string name="empty_no_upcoming_events">No hi ha esdeveniments propers</string>
     <string name="empty_no_calendars">No hi ha calendaris disponibles</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">Triar mes i any</string>
     <string name="cd_previous_month">Mes anterior</string>
     <string name="cd_next_month">Mes següent</string>
+    <string name="cd_previous_day">Dia anterior</string>
+    <string name="cd_next_day">Dia següent</string>
     <string name="cd_month_year_picker">Selector de mes i any</string>
     <string name="cd_remove_alert">Eliminar alerta</string>
     <string name="cd_warning">Avís</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">Estat del calendari: meravellosament buit.</string>
     <string name="empty_no_events_day_5">Res planejat. Gaudeix de la calma.</string>
     <string name="filter_date">Data</string>
+    <string name="search_tab_upcoming">Propers</string>
+    <string name="search_tab_past">Passats</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d esdeveniment</item>
+        <item quantity="other">%1$s, %2$d esdeveniments</item>
+    </plurals>
+    <string name="search_date_this_week">Aquesta setmana</string>
+    <string name="search_date_this_month">Aquest mes</string>
+    <string name="search_date_pick">Tria dates…</string>
+    <string name="search_next">Proper: %1$s</string>
+    <string name="search_last">Últim: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Ubicació:</string>
+    <string name="search_reason_notes">Notes:</string>
+    <string name="search_reason_guest">Convidat:</string>
+    <string name="search_keep_typing">Continua escrivint per cercar</string>
+    <string name="search_no_matches">Cap esdeveniment coincideix amb «%1$s»</string>
+    <string name="search_lookback_line">Sincronitzar retrospectivament: %1$s</string>
+    <string name="search_sync_settings">Configuració de sincronització</string>
+    <string name="cd_search_sync_settings">Obre la configuració de sincronització retrospectiva</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Mostra %d esdeveniment passat</item>
+        <item quantity="other">Mostra %d esdeveniments passats</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">%d més en un calendari amagat</item>
+        <item quantity="other">%d més en calendaris amagats</item>
+    </plurals>
+    <string name="search_show">Mostra</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Mostra %d coincidència en un calendari amagat</item>
+        <item quantity="other">Mostra %d coincidències en calendaris amagats</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Mostra\'n %d en un calendari amagat</item>
+        <item quantity="other">Mostra\'n %d en calendaris amagats</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Inclou %d calendari amagat</item>
+        <item quantity="other">Inclou %d calendaris amagats</item>
+    </plurals>
+    <string name="search_leave_out">Omet</string>
+    <string name="cd_search_leave_out">Omet els calendaris amagats</string>
+    <string name="search_hidden_calendar">%1$s · amagat</string>
+    <string name="cd_search_date_this_week">Mostra coincidències d\'aquesta setmana</string>
+    <string name="cd_search_date_this_month">Mostra coincidències d\'aquest mes</string>
+    <string name="cd_search_date_pick">Tria dates per cercar</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d proper</item>
+        <item quantity="other">%d propers</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d passat</item>
+        <item quantity="other">%d passats</item>
+    </plurals>
+    <string name="search_no_past_events">Cap esdeveniment passat</string>
+    <string name="search_no_events_in_dates">Cap esdeveniment en aquestes dates</string>
     <string name="label_select_date">Selecciona una data</string>
     <string name="hint_tap_date_range">Toca la mateixa data per un sol dia, o una altra data per un rang</string>
     <string name="cd_clear">Esborrar</string>

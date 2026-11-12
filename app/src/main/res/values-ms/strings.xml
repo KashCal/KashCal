@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Masukkan 6 aksara hex (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Semua</string>
     <string name="view_week">Minggu</string>
     <string name="view_month">Bulan</string>
     <string name="label_all_day">Sepanjang hari</string>
@@ -515,7 +514,6 @@
     <string name="option_saturday">Sabtu</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Tiada acara dijumpai</string>
     <string name="empty_no_upcoming_events">Tiada acara akan datang</string>
     <string name="empty_no_calendars">Tiada kalendar tersedia</string>
 
@@ -814,6 +812,8 @@
     <string name="cd_pick_month_year">Pilih bulan dan tahun</string>
     <string name="cd_previous_month">Bulan lepas</string>
     <string name="cd_next_month">Bulan depan</string>
+    <string name="cd_previous_day">Hari sebelumnya</string>
+    <string name="cd_next_day">Hari berikutnya</string>
     <string name="cd_month_year_picker">Pemilih bulan dan tahun</string>
     <string name="cd_remove_alert">Buang peringatan</string>
     <string name="cd_warning">Amaran</string>
@@ -1104,6 +1104,57 @@
     <string name="empty_no_events_day_4">Status kalendar: kosong yang indah.</string>
     <string name="empty_no_events_day_5">Tiada apa dirancang. Nikmati ketenangan.</string>
     <string name="filter_date">Tarikh</string>
+    <string name="search_tab_upcoming">Akan datang</string>
+    <string name="search_tab_past">Lepas</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="other">%1$s, %2$d acara</item>
+    </plurals>
+    <string name="search_date_this_week">Minggu ini</string>
+    <string name="search_date_this_month">Bulan ini</string>
+    <string name="search_date_pick">Pilih tarikh…</string>
+    <string name="search_next">Seterusnya: %1$s</string>
+    <string name="search_last">Terakhir: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Lokasi:</string>
+    <string name="search_reason_notes">Nota:</string>
+    <string name="search_reason_guest">Tetamu:</string>
+    <string name="search_keep_typing">Teruskan menaip untuk mencari</string>
+    <string name="search_no_matches">Tiada acara sepadan dengan “%1$s”</string>
+    <string name="search_lookback_line">Lihat Balik Segerak: %1$s</string>
+    <string name="search_sync_settings">Tetapan segerak</string>
+    <string name="cd_search_sync_settings">Buka tetapan lihat balik segerak</string>
+    <plurals name="search_show_past">
+        <item quantity="other">Tunjukkan %d acara lepas</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="other">%d lagi dalam kalendar tersembunyi</item>
+    </plurals>
+    <string name="search_show">Tunjukkan</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="other">Tunjukkan %d padanan dalam kalendar tersembunyi</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="other">Tunjukkan %d dalam kalendar tersembunyi</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="other">Termasuk %d kalendar tersembunyi</item>
+    </plurals>
+    <string name="search_leave_out">Kecualikan</string>
+    <string name="cd_search_leave_out">Kecualikan kalendar tersembunyi</string>
+    <string name="search_hidden_calendar">%1$s · tersembunyi</string>
+    <string name="cd_search_date_this_week">Tunjukkan padanan minggu ini</string>
+    <string name="cd_search_date_this_month">Tunjukkan padanan bulan ini</string>
+    <string name="cd_search_date_pick">Pilih tarikh untuk dicari</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="other">%d akan datang</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="other">%d lepas</item>
+    </plurals>
+    <string name="search_no_past_events">Tiada acara lepas</string>
+    <string name="search_no_events_in_dates">Tiada acara pada tarikh ini</string>
     <string name="label_select_date">Pilih tarikh</string>
     <string name="hint_tap_date_range">Ketik tarikh sama untuk satu hari, atau tarikh lain untuk julat</string>
     <string name="cd_clear">Kosongkan</string>

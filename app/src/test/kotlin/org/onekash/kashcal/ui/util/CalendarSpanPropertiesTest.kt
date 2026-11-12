@@ -131,6 +131,36 @@ class CalendarSpanPropertiesTest {
     }
 
     @Test
+    fun `canStepDay steps inside the span and from outside it only toward the span`(): Unit = runBlocking {
+        val anyDates = Arb.localDate(LocalDate.of(1500, 1, 1), LocalDate.of(2600, 12, 31))
+        checkAll(PropertyRuns.config(2_000), todays, anyDates, Arb.element(-1, 1)) { today, date, step ->
+            val first = CalendarSpan.firstDay(today)
+            val last = CalendarSpan.lastDay(today)
+            val target = date.plusDays(step.toLong())
+            val expected = when {
+                !target.isBefore(first) && !target.isAfter(last) -> true
+                date.isBefore(first) -> step > 0
+                date.isAfter(last) -> step < 0
+                else -> false
+            }
+            assertEquals("$date step $step from $today", expected, CalendarSpan.canStepDay(date, step, today))
+        }
+    }
+
+    @Test
+    fun `canStepDay stops at the span's first and last day`() {
+        val today = LocalDate.of(2026, 11, 11)
+        val first = CalendarSpan.firstDay(today)
+        val last = CalendarSpan.lastDay(today)
+        assertTrue(CalendarSpan.canStepDay(first, 1, today))
+        assertEquals(false, CalendarSpan.canStepDay(first, -1, today))
+        assertTrue(CalendarSpan.canStepDay(last, -1, today))
+        assertEquals(false, CalendarSpan.canStepDay(last, 1, today))
+        assertTrue(CalendarSpan.canStepDay(today, 1, today))
+        assertTrue(CalendarSpan.canStepDay(today, -1, today))
+    }
+
+    @Test
     fun `the span stays after the 1582 Julian to Gregorian change`() {
         val first = CalendarSpan.firstDay(LocalDate.now())
         assertTrue("$first", first.isAfter(LocalDate.of(1583, 1, 1)))

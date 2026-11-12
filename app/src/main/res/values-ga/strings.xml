@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Cuir isteach 6 charachtar hex (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Uile</string>
     <string name="view_week">Seachtain</string>
     <string name="view_month">Mí</string>
     <string name="label_all_day">An lá ar fad</string>
@@ -519,7 +518,6 @@
     <string name="option_saturday">Dé Sathairn</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Ní bhfuarthas imeachtaí</string>
     <string name="empty_no_upcoming_events">Gan imeachtaí ag teacht</string>
     <string name="empty_no_calendars">Gan féilirí ar fáil</string>
 
@@ -858,6 +856,8 @@
     <string name="cd_pick_month_year">Roghnaigh mí agus bliain</string>
     <string name="cd_previous_month">An mhí roimhe</string>
     <string name="cd_next_month">An mhí seo chugainn</string>
+    <string name="cd_previous_day">An lá roimhe</string>
+    <string name="cd_next_day">An lá dár gcionn</string>
     <string name="cd_month_year_picker">Roghnóir míosa agus bliana</string>
     <string name="cd_remove_alert">Bain foláireamh</string>
     <string name="cd_warning">Rabhadh</string>
@@ -1332,6 +1332,89 @@
     <string name="empty_no_events_day_4">Stádas an fhéilire: folamh go hálainn.</string>
     <string name="empty_no_events_day_5">Faic beartaithe. Bain sult as an suaimhneas.</string>
     <string name="filter_date">Dáta</string>
+    <string name="search_tab_upcoming">Le teacht</string>
+    <string name="search_tab_past">Caite</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d imeacht</item>
+        <item quantity="two">%1$s, %2$d imeacht</item>
+        <item quantity="few">%1$s, %2$d imeacht</item>
+        <item quantity="many">%1$s, %2$d n-imeacht</item>
+        <item quantity="other">%1$s, %2$d imeacht</item>
+    </plurals>
+    <string name="search_date_this_week">An tseachtain seo</string>
+    <string name="search_date_this_month">An mhí seo</string>
+    <string name="search_date_pick">Roghnaigh dátaí…</string>
+    <string name="search_next">An chéad cheann eile: %1$s</string>
+    <string name="search_last">An ceann is déanaí: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Suíomh:</string>
+    <string name="search_reason_notes">Nótaí:</string>
+    <string name="search_reason_guest">Aoi:</string>
+    <string name="search_keep_typing">Lean ort ag clóscríobh le cuardach</string>
+    <string name="search_no_matches">Níl aon imeacht ag teacht le “%1$s”</string>
+    <string name="search_lookback_line">Féachaint Siar Sioncronúithe: %1$s</string>
+    <string name="search_sync_settings">Socruithe sioncronaithe</string>
+    <string name="cd_search_sync_settings">Oscail an socrú féachaint siar sioncronaithe</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Taispeáin %d imeacht roimhe seo</item>
+        <item quantity="two">Taispeáin %d imeacht roimhe seo</item>
+        <item quantity="few">Taispeáin %d imeacht roimhe seo</item>
+        <item quantity="many">Taispeáin %d n-imeacht roimhe seo</item>
+        <item quantity="other">Taispeáin %d imeacht roimhe seo</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">%d eile i bhféilire i bhfolach</item>
+        <item quantity="two">%d eile i bhféilirí i bhfolach</item>
+        <item quantity="few">%d eile i bhféilirí i bhfolach</item>
+        <item quantity="many">%d eile i bhféilirí i bhfolach</item>
+        <item quantity="other">%d eile i bhféilirí i bhfolach</item>
+    </plurals>
+    <string name="search_show">Taispeáin</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Taispeáin %d toradh i bhféilire i bhfolach</item>
+        <item quantity="two">Taispeáin %d thoradh i bhféilirí i bhfolach</item>
+        <item quantity="few">Taispeáin %d thoradh i bhféilirí i bhfolach</item>
+        <item quantity="many">Taispeáin %d dtoradh i bhféilirí i bhfolach</item>
+        <item quantity="other">Taispeáin %d toradh i bhféilirí i bhfolach</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Taispeáin %d i bhféilire i bhfolach</item>
+        <item quantity="two">Taispeáin %d i bhféilirí i bhfolach</item>
+        <item quantity="few">Taispeáin %d i bhféilirí i bhfolach</item>
+        <item quantity="many">Taispeáin %d i bhféilirí i bhfolach</item>
+        <item quantity="other">Taispeáin %d i bhféilirí i bhfolach</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Lena n-áirítear %d fhéilire i bhfolach</item>
+        <item quantity="two">Lena n-áirítear %d fhéilire i bhfolach</item>
+        <item quantity="few">Lena n-áirítear %d fhéilire i bhfolach</item>
+        <item quantity="many">Lena n-áirítear %d bhféilire i bhfolach</item>
+        <item quantity="other">Lena n-áirítear %d féilire i bhfolach</item>
+    </plurals>
+    <string name="search_leave_out">Fág amach</string>
+    <string name="cd_search_leave_out">Fág amach féilirí i bhfolach</string>
+    <string name="search_hidden_calendar">%1$s · i bhfolach</string>
+    <string name="cd_search_date_this_week">Taispeáin torthaí na seachtaine seo</string>
+    <string name="cd_search_date_this_month">Taispeáin torthaí na míosa seo</string>
+    <string name="cd_search_date_pick">Roghnaigh dátaí le cuardach</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d le teacht</item>
+        <item quantity="two">%d le teacht</item>
+        <item quantity="few">%d le teacht</item>
+        <item quantity="many">%d le teacht</item>
+        <item quantity="other">%d le teacht</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d caite</item>
+        <item quantity="two">%d caite</item>
+        <item quantity="few">%d caite</item>
+        <item quantity="many">%d caite</item>
+        <item quantity="other">%d caite</item>
+    </plurals>
+    <string name="search_no_past_events">Níl aon imeacht caite</string>
+    <string name="search_no_events_in_dates">Níl aon imeacht ar na dátaí seo</string>
     <string name="label_select_date">Roghnaigh dáta</string>
     <string name="hint_tap_date_range">Tapáil an dáta céanna le haghaidh lá amháin, nó dáta eile le haghaidh raon</string>
     <string name="cd_clear">Glan</string>

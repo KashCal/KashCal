@@ -149,7 +149,6 @@
     <string name="label_enter_hex">16進数6文字を入力 (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">すべて</string>
     <string name="view_week">週</string>
     <string name="view_month">月</string>
     <string name="label_all_day">終日</string>
@@ -515,7 +514,6 @@
     <string name="option_saturday">土曜日</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">予定が見つかりません</string>
     <string name="empty_no_upcoming_events">今後の予定はありません</string>
     <string name="empty_no_calendars">利用可能なカレンダーがありません</string>
 
@@ -814,6 +812,8 @@
     <string name="cd_pick_month_year">月と年を選択</string>
     <string name="cd_previous_month">前の月</string>
     <string name="cd_next_month">次の月</string>
+    <string name="cd_previous_day">前の日</string>
+    <string name="cd_next_day">次の日</string>
     <string name="cd_month_year_picker">月と年のピッカー</string>
     <string name="cd_remove_alert">アラートを削除</string>
     <string name="cd_warning">警告</string>
@@ -1104,6 +1104,57 @@
     <string name="empty_no_events_day_4">カレンダーの状態：見事に空っぽです。</string>
     <string name="empty_no_events_day_5">予定はありません。この静けさを楽しみましょう。</string>
     <string name="filter_date">日付</string>
+    <string name="search_tab_upcoming">今後</string>
+    <string name="search_tab_past">過去</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="other">%1$s、%2$d件の予定</item>
+    </plurals>
+    <string name="search_date_this_week">今週</string>
+    <string name="search_date_this_month">今月</string>
+    <string name="search_date_pick">日付を選択…</string>
+    <string name="search_next">次回：%1$s</string>
+    <string name="search_last">前回：%1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">場所：</string>
+    <string name="search_reason_notes">メモ：</string>
+    <string name="search_reason_guest">ゲスト：</string>
+    <string name="search_keep_typing">入力を続けると検索します</string>
+    <string name="search_no_matches">「%1$s」に一致する予定はありません</string>
+    <string name="search_lookback_line">同期の遡り期間：%1$s</string>
+    <string name="search_sync_settings">同期設定</string>
+    <string name="cd_search_sync_settings">同期の遡り期間の設定を開く</string>
+    <plurals name="search_show_past">
+        <item quantity="other">過去の予定を%d件表示</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="other">非表示のカレンダーにあと%d件</item>
+    </plurals>
+    <string name="search_show">表示</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="other">非表示のカレンダーの一致%d件を表示</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="other">非表示のカレンダーの%d件を表示</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="other">非表示のカレンダー%d件を含む</item>
+    </plurals>
+    <string name="search_leave_out">除外</string>
+    <string name="cd_search_leave_out">非表示のカレンダーを除外</string>
+    <string name="search_hidden_calendar">%1$s · 非表示</string>
+    <string name="cd_search_date_this_week">今週の一致を表示</string>
+    <string name="cd_search_date_this_month">今月の一致を表示</string>
+    <string name="cd_search_date_pick">検索する日付を選択</string>
+    <string name="search_announce">%1$s、%2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="other">今後%d件</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="other">過去%d件</item>
+    </plurals>
+    <string name="search_no_past_events">過去の予定はありません</string>
+    <string name="search_no_events_in_dates">この日付に予定はありません</string>
     <string name="label_select_date">日付を選択</string>
     <string name="hint_tap_date_range">同じ日付をタップで1日、別の日付で範囲を選択</string>
     <string name="cd_clear">クリア</string>

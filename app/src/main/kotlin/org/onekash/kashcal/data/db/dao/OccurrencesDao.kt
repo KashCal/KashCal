@@ -219,12 +219,13 @@ interface OccurrencesDao {
     @Query("SELECT * FROM occurrences WHERE event_id = :eventId ORDER BY start_ts ASC")
     suspend fun getForEvent(eventId: Long): List<Occurrence>
 
-    /**
-     * Returns every occurrence of [eventIds] by start time, cancelled ones included, in one
-     * query; search loads its results' occurrences this way instead of one query per event.
-     */
+    /** Returns every occurrence of [eventIds] by start, cancelled ones included, in one query. */
     @Query("SELECT * FROM occurrences WHERE event_id IN (:eventIds) ORDER BY start_ts ASC")
     suspend fun getForEvents(eventIds: List<Long>): List<Occurrence>
+
+    /** Returns the occurrence rows with [ids], in no particular order. */
+    @Query("SELECT * FROM occurrences WHERE id IN (:ids)")
+    suspend fun getByIds(ids: List<Long>): List<Occurrence>
 
     /** Returns how many occurrence rows [eventId] has. */
     @Query("SELECT COUNT(*) FROM occurrences WHERE event_id = :eventId")

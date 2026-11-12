@@ -12,6 +12,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.KashCalDatabase
+import org.onekash.kashcal.data.db.dao.EventSearchSql
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
@@ -20,6 +21,7 @@ import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.reader.EventReader
+import org.onekash.kashcal.domain.search.SearchQuery
 import org.onekash.kashcal.testutil.TestDataStoreFactory
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -29,7 +31,7 @@ import kotlin.system.measureTimeMillis
 /**
  * Sets time ceilings on an in-memory Room database, printing each measured time.
  *
- * Covers inserting 1000 events, month-range and day queries, FTS search, occurrence
+ * Covers inserting 1000 events, month-range and day queries, event search, occurrence
  * expansion through [OccurrenceGenerator.regenerateOccurrences] (daily, weekly BYDAY, monthly
  * BYSETPOS, and a rule with no COUNT or UNTIL), deleting and updating 200 events one by one, and
  * a day Flow's first emission.
@@ -47,7 +49,7 @@ class PerformanceBaselineTest {
     companion object {
         const val LARGE_DATASET_INSERT_THRESHOLD = 10000L // 10s for 1000 events
         const val RANGE_QUERY_THRESHOLD = 500L // 500ms for month query
-        const val SEARCH_QUERY_THRESHOLD = 200L // 200ms for FTS search
+        const val SEARCH_QUERY_THRESHOLD = 200L // 200ms for event search
         const val RRULE_EXPANSION_THRESHOLD = 2000L // 2s for 2-year expansion
         const val BATCH_DELETE_THRESHOLD = 3000L // 3s for batch delete
     }
@@ -182,8 +184,14 @@ class PerformanceBaselineTest {
 
     // ==================== Search Performance Tests ====================
 
+    private suspend fun search(text: String) = database.eventsDao().searchMatches(
+        System.currentTimeMillis().let { now ->
+            EventSearchSql.nextAndLast(SearchQuery.of(text), now, Occurrence.toDayFormat(now, false))
+        }
+    )
+
     @Test
-    fun `FTS search across 500 events should be fast`() = runTest {
+    fun `search across 500 events should be fast`() = runTest {
         // Create 500 events with varied titles
         val titles = listOf("Meeting", "Call", "Review", "Standup", "Planning", "Demo", "Workshop")
 
@@ -195,11 +203,11 @@ class PerformanceBaselineTest {
 
         // Search for "Meeting"
         val searchTime = measureTimeMillis {
-            val results = database.eventsDao().search("Meeting")
+            val results = search("Meeting")
             assertTrue(results.size > 50) // 72 "Meeting" titles
         }
 
-        println("FTS search 'Meeting' across 500 events: ${searchTime}ms")
+        println("Search 'Meeting' across 500 events: ${searchTime}ms")
         assertTrue(
             "Search took ${searchTime}ms, should be under ${SEARCH_QUERY_THRESHOLD}ms",
             searchTime < SEARCH_QUERY_THRESHOLD
@@ -207,7 +215,7 @@ class PerformanceBaselineTest {
     }
 
     @Test
-    fun `FTS search with exact match should be reasonably fast`() = runTest {
+    fun `search with exact match should be reasonably fast`() = runTest {
         repeat(300) { i ->
             val event = createTestEvent("Important Quarterly Review $i", System.currentTimeMillis() + i * 3600000)
             database.eventsDao().insert(event)
@@ -215,13 +223,13 @@ class PerformanceBaselineTest {
 
         val searchTime = measureTimeMillis {
             // "Important" is a word in all 300 titles.
-            val results = database.eventsDao().search("Important")
+            val results = search("Important")
             // Search returns up to 1000 rows, so all 300 should match; the assert only
             // requires a non-empty result.
             assertTrue("Expected some results, got ${results.size}", results.isNotEmpty())
         }
 
-        println("FTS exact search across 300 events: ${searchTime}ms")
+        println("Exact search across 300 events: ${searchTime}ms")
         assertTrue(
             "Exact search took ${searchTime}ms, should be under ${SEARCH_QUERY_THRESHOLD}ms",
             searchTime < SEARCH_QUERY_THRESHOLD

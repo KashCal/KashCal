@@ -5,7 +5,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,10 +27,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,7 +37,6 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
@@ -58,6 +54,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import org.onekash.kashcal.R
+import org.onekash.kashcal.ui.shared.stepSwipe
 import org.onekash.kashcal.ui.util.CalendarSpan
 import org.onekash.kashcal.util.DateTimeUtils
 import java.time.DayOfWeek
@@ -167,9 +164,6 @@ internal fun DateTimeSheetGrid(
         onPauseOrDispose { }
     }
     val today = remember(todayRefreshKey) { LocalDate.now() }
-    // The swipe handler keeps running across recompositions, so it reads the latest callback.
-    val currentOnMonth by rememberUpdatedState(onMonth)
-    var totalDrag by remember { mutableFloatStateOf(0f) }
     // The arrows and swipes stop at the CalendarSpan's ends; from a month outside it (an
     // existing event's) they only move toward it.
     val canGoBack = CalendarSpan.canStepMonth(displayedMonth, -1, today)
@@ -179,18 +173,9 @@ internal fun DateTimeSheetGrid(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp)
-            .then(
-                if (!showMonthYearPicker) Modifier.pointerInput(displayedMonth, canGoBack, canGoForward) {
-                    detectHorizontalDragGestures(
-                        onDragStart = { totalDrag = 0f },
-                        onDragEnd = {
-                            if (totalDrag > 100f && canGoBack) currentOnMonth(displayedMonth.minusMonths(1))
-                            else if (totalDrag < -100f && canGoForward) currentOnMonth(displayedMonth.plusMonths(1))
-                        },
-                        onHorizontalDrag = { _, dragAmount -> totalDrag += dragAmount }
-                    )
-                } else Modifier
-            )
+            .stepSwipe(enabled = !showMonthYearPicker, canGoBack = canGoBack, canGoForward = canGoForward) { step ->
+                onMonth(displayedMonth.plusMonths(step.toLong()))
+            }
     ) {
         SheetMonthHeader(
             displayedMonth = displayedMonth,

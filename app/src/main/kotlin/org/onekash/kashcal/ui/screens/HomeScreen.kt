@@ -44,6 +44,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -63,7 +65,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -110,6 +111,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -122,6 +124,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -136,9 +139,7 @@ import kotlinx.coroutines.launch
 import org.onekash.kashcal.R
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
-import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.domain.model.DisplayEvent
-import org.onekash.kashcal.domain.model.SearchResult
 import org.onekash.kashcal.ui.components.CalendarDrawer
 import org.onekash.kashcal.ui.components.DayEventsSheet
 import org.onekash.kashcal.ui.components.EventCard
@@ -171,7 +172,6 @@ import org.onekash.kashcal.ui.components.declinedCardAlpha
 import org.onekash.kashcal.ui.components.declinedTitleDecoration
 import org.onekash.kashcal.ui.components.eventStateDescription
 import org.onekash.kashcal.ui.components.formatDisplayEventTitle
-import org.onekash.kashcal.ui.components.formatEventTitle
 import org.onekash.kashcal.ui.components.pickers.InlineDatePickerContent
 import org.onekash.kashcal.ui.components.weekview.WeekViewContent
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
@@ -182,7 +182,6 @@ import org.onekash.kashcal.domain.planner.PlannerWeekState
 import org.onekash.kashcal.ui.print.printAnchorDate
 import org.onekash.kashcal.ui.screens.insights.InsightsScreen
 import org.onekash.kashcal.ui.screens.planner.PlannerView
-import org.onekash.kashcal.ui.screens.planner.dayDetailEvents
 import org.onekash.kashcal.ui.util.plannerShownWeekStart
 import org.onekash.kashcal.ui.screens.insights.InsightsViewModel
 import org.onekash.kashcal.ui.util.DayPagerUtils
@@ -190,8 +189,10 @@ import org.onekash.kashcal.ui.util.MonthPagerUtils
 import org.onekash.kashcal.ui.util.SelectedDay
 import org.onekash.kashcal.ui.util.rememberDayPagerSyncCoordinator
 import org.onekash.kashcal.ui.viewmodels.DateFilter
+import org.onekash.kashcal.ui.viewmodels.SearchTab
 import org.onekash.kashcal.ui.viewmodels.EditScope
 import org.onekash.kashcal.ui.viewmodels.AgendaUiState
+import org.onekash.kashcal.ui.viewmodels.DayDetailState
 import org.onekash.kashcal.ui.viewmodels.HomeUiState
 import org.onekash.kashcal.ui.viewmodels.ViewMode
 import org.onekash.kashcal.ui.viewmodels.WeekEventsUiState
@@ -219,6 +220,7 @@ fun HomeScreen(
     agendaEvents: AgendaUiState = AgendaUiState.EMPTY,
     monthEvents: ImmutableMap<Int, ImmutableList<DisplayEvent>> = persistentMapOf(),
     plannerState: PlannerWeekState? = null,
+    dayDetail: DayDetailState? = null,
     isOnline: Boolean = true,
     // Navigation callbacks
     onDateSelected: (Long) -> Unit,
@@ -238,8 +240,14 @@ fun HomeScreen(
     onSearchClick: () -> Unit = {},
     onSearchClose: () -> Unit = {},
     onSearchQueryChange: (String) -> Unit = {},
-    onSearchResultClick: (Event, Long?) -> Unit = { _, _ -> },  // (event, nextOccurrenceTs)
+    // (event, the start the result is dated at)
+    onSearchResultClick: (Event, Long?) -> Unit = { _, _ -> },
     // Search date filter callbacks
+    onSearchTabSelect: (SearchTab) -> Unit = {},
+    onSearchDateChipClick: () -> Unit = {},
+    onSearchDateMenuDismiss: () -> Unit = {},
+    onSearchIncludeHiddenChange: (Boolean) -> Unit = {},
+    onSearchOpenSyncSettings: () -> Unit = {},
     onSearchDateFilterChange: (DateFilter) -> Unit = {},
     onSearchShowDatePicker: () -> Unit = {},
     onSearchHideDatePicker: () -> Unit = {},
@@ -325,9 +333,10 @@ fun HomeScreen(
     onTimeGridEventTap: (DisplayEvent) -> Boolean = { true },
     // URL callback (for error actions that open URLs)
     onClearPendingUrl: () -> Unit = {},
-    // Day detail sheet callbacks (month view)
+    // Day detail sheet callbacks (full-height month view and Planner)
     onShowDayDetail: (Long) -> Unit = {},
     onDismissDayDetail: () -> Unit = {},
+    onStepDayDetail: (Int) -> Unit = {},
     // Day pager cache callbacks
     onLoadEventsForDayPagerRange: (Long) -> Unit = {},
     shouldRefreshDayPagerCache: (Long) -> Boolean = { true },
@@ -662,14 +671,23 @@ fun HomeScreen(
                         }
                         uiState.isSearchActive && uiState.searchQuery.isNotEmpty() -> {
                             SearchContent(
-                                results = uiState.searchResults,
-                                currentFilter = uiState.searchDateFilter,
+                                query = uiState.searchQuery,
+                                state = uiState.searchState,
+                                tab = uiState.searchTab,
+                                dateFilter = uiState.searchDateFilter,
+                                showDateMenu = uiState.showSearchDateMenu,
+                                includeHidden = uiState.searchIncludeHidden,
                                 showEventEmojis = uiState.showEventEmojis,
                                 timePattern = timePattern,
                                 onResultClick = onSearchResultClick,
                                 onDeviceEventClick = onDeviceEventClick,
-                                onFilterSelect = onSearchDateFilterChange,
-                                onCustomDateClick = onSearchShowDatePicker
+                                onTabSelect = onSearchTabSelect,
+                                onDateChipClick = onSearchDateChipClick,
+                                onDateMenuDismiss = onSearchDateMenuDismiss,
+                                onDateFilterSelect = onSearchDateFilterChange,
+                                onPickDates = onSearchShowDatePicker,
+                                onIncludeHiddenChange = onSearchIncludeHiddenChange,
+                                onOpenSyncSettings = onSearchOpenSyncSettings
                             )
                         }
                         uiState.viewMode == ViewMode.INSIGHTS -> {
@@ -1256,19 +1274,17 @@ fun HomeScreen(
         )
     }
 
-    // Day events sheet for the full-height month view and the Planner
-    if (uiState.showDayDetailSheet) {
-        val dayCode = DayPagerUtils.msToDayCode(uiState.dayDetailDate)
-        val dayEvents = dayDetailEvents(uiState.viewMode, monthEvents, plannerState, dayCode)
+    // Day events sheet for the full-height month view and the Planner, shown once its day has read
+    if (uiState.showDayDetailSheet && dayDetail != null) {
         DayEventsSheet(
-            dateMs = uiState.dayDetailDate,
-            events = dayEvents,
+            day = dayDetail,
             showEventEmojis = uiState.showEventEmojis,
             timePattern = timePattern,
             onEventClick = onEventClick,
             onDeviceEventClick = onDeviceEventClick,
             onCreateEvent = onCreateEventWithDateTime,
             onDismiss = onDismissDayDetail,
+            onStepDay = onStepDayDetail,
             attendeesByEventId = dayAttendees
         )
     }
@@ -1384,11 +1400,15 @@ private fun HomeTopAppBar(
                         IconButton(onClick = onSearchClose) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back), modifier = Modifier.size(24.dp))
                         }
+                        val searchKeyboard = LocalSoftwareKeyboardController.current
                         BasicTextField(
                             value = uiState.searchQuery,
                             onValueChange = onSearchQueryChange,
                             modifier = Modifier.weight(1f).focusRequester(searchFocusRequester),
                             singleLine = true,
+                            // Search runs as the user types; the key only closes the keyboard.
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            keyboardActions = KeyboardActions(onSearch = { searchKeyboard?.hide() }),
                             textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
                             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                             decorationBox = { innerTextField ->
@@ -2013,188 +2033,6 @@ private fun DayEventsPage(
     }
 }
 
-@Composable
-private fun SearchResultCard(
-    searchResult: SearchResult,
-    isPast: Boolean,
-    showEventEmojis: Boolean = true,
-    timePattern: String = "h:mm a",
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val displayEvent = searchResult.displayEvent
-    val stripeColor = Color(displayEvent.calendarColor)
-    val fillColor = Color(displayEvent.eventColor ?: displayEvent.calendarColor)
-    val fillAlpha = displayEvent.cardFillAlpha()
-
-    // For a Room recurring event, show "Next: date" from displayTs
-    val dateString = remember(searchResult, timePattern, LocalDisplayZone.current) {
-        when (displayEvent) {
-            is DisplayEvent.Room -> {
-                // displayTs differs from the event start for a recurring event with a later
-                // occurrence
-                val nextOccTs = searchResult.displayTs.takeIf { it != displayEvent.event.startTs }
-                formatSearchResultDateWithOccurrence(displayEvent.event, nextOccTs, timePattern = timePattern)
-            }
-            is DisplayEvent.Device -> {
-                formatSearchResultDate(displayEvent, timePattern = timePattern)
-            }
-        }
-    }
-
-    // Title with the age for birthday events and the optional emoji
-    val resources = LocalResources.current
-    val displayTitle = remember(searchResult, showEventEmojis) {
-        when (displayEvent) {
-            is DisplayEvent.Room -> formatEventTitle(displayEvent.event, searchResult.displayTs, showEventEmojis, resources)
-            is DisplayEvent.Device -> EmojiMatcher.formatWithEmoji(displayEvent.title, showEventEmojis)
-        }
-    }
-
-    val searchStateLabel = eventStateDescription(isPast, displayEvent.isDeclinedByMe, displayEvent.isCancelled)
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .alpha(declinedCardAlpha(isPast, displayEvent.isDeclinedByMe, displayEvent.isCancelled))
-            .then(if (searchStateLabel != null) Modifier.semantics { stateDescription = searchStateLabel } else Modifier)
-            .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = fillColor.copy(alpha = fillAlpha)),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(modifier = Modifier.height(IntrinsicSize.Min)) {
-            Box(
-                modifier = Modifier
-                    .width(4.dp)
-                    .fillMaxHeight()
-                    .background(stripeColor)
-            )
-            Column(modifier = Modifier.padding(12.dp).weight(1f)) {
-                Text(
-                    displayTitle,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    dateString,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                if (!displayEvent.location.isNullOrEmpty()) {
-                    Text(
-                        displayEvent.location!!,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-    }
-}
-
-/**
- * Shows search results under four date filter chips: All, Week, Month and a date picker.
- * The chips sit outside the LazyColumn to avoid a crash, in a plain Row without horizontalScroll.
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SearchContent(
-    results: ImmutableList<SearchResult>,
-    currentFilter: DateFilter,
-    showEventEmojis: Boolean = true,
-    timePattern: String = "h:mm a",
-    onResultClick: (Event, Long?) -> Unit,
-    onDeviceEventClick: (DisplayEvent.Device) -> Unit = {},
-    onFilterSelect: (DateFilter) -> Unit,
-    onCustomDateClick: () -> Unit
-) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Four chips fit without scrolling
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
-        ) {
-            FilterChip(
-                selected = currentFilter == DateFilter.AnyTime,
-                onClick = { onFilterSelect(DateFilter.AnyTime) },
-                label = { Text(stringResource(R.string.view_all)) }
-            )
-            FilterChip(
-                selected = currentFilter == DateFilter.ThisWeek,
-                onClick = { onFilterSelect(DateFilter.ThisWeek) },
-                label = { Text(stringResource(R.string.view_week)) }
-            )
-            FilterChip(
-                selected = currentFilter == DateFilter.ThisMonth,
-                onClick = { onFilterSelect(DateFilter.ThisMonth) },
-                label = { Text(stringResource(R.string.view_month)) }
-            )
-            // Date chip: shows the picked date or range, else the "Date" label
-            val isCustom = currentFilter is DateFilter.SingleDay || currentFilter is DateFilter.CustomRange
-            val dateLabel = stringResource(R.string.filter_date)
-            FilterChip(
-                selected = isCustom,
-                onClick = onCustomDateClick,
-                label = { Text(if (isCustom) currentFilter.displayName else dateLabel) }
-            )
-        }
-
-        if (results.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(32.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(stringResource(R.string.empty_no_events_found), color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(
-                    items = results,
-                    key = { result ->
-                        when (val de = result.displayEvent) {
-                            is DisplayEvent.Room -> "room_${de.event.id}"
-                            is DisplayEvent.Device -> "device_${de.instance.instanceId}"
-                        }
-                    },
-                    contentType = { "search_result" }
-                ) { result ->
-                    val displayEvent = result.displayEvent
-                    // Room exceptions count as recurring; recurring results never dim as past
-                    val isRecurring = when (displayEvent) {
-                        is DisplayEvent.Room -> displayEvent.event.isRecurring || displayEvent.event.isException
-                        is DisplayEvent.Device -> displayEvent.hasRrule
-                    }
-                    val isPast = !isRecurring &&
-                        DateTimeUtils.isEventPast(displayEvent.endTs, displayEvent.endDay, displayEvent.isAllDay)
-                    SearchResultCard(
-                        searchResult = result,
-                        isPast = isPast,
-                        showEventEmojis = showEventEmojis,
-                        timePattern = timePattern,
-                        modifier = Modifier.animateItem(),
-                        onClick = {
-                            when (displayEvent) {
-                                is DisplayEvent.Room -> onResultClick(displayEvent.event, result.displayTs)
-                                is DisplayEvent.Device -> onDeviceEventClick(displayEvent)
-                            }
-                        }
-                    )
-                }
-            }
-        }
-    }
-}
-
 /**
  * Padding around the agenda list. The top inset is also the peek threshold the week bar uses
  * to skip an item bleeding into the padding (the anchor derivation in [HomeScreen]); both read
@@ -2485,190 +2323,6 @@ private fun formatAgendaCardDate(
             val startTime = timeFormat.format(Date(displayEvent.startTs))
             val endTime = timeFormat.format(Date(displayEvent.endTs))
             "$startTime - $endTime$recurringIndicator"
-        }
-    }
-}
-
-/**
- * Formats a search result's date line:
- * - Multi-day: "Dec 20, 2023 → Dec 25, 2023"
- * - Single-day all-day: "Dec 20, 2023"
- * - Single-day timed: "Dec 20, 2023 · 9:00 AM"
- *
- * A series or exception adds " 🔁". An all-day [Event.endTs] is inclusive (the exclusive RFC 5545
- * DTEND minus 1 ms), so a Dec 20-22 event, DTEND Dec 23, shows as ending Dec 22.
- *
- * @param zoneId zone for the date calculations; injectable for tests.
- * @param timePattern time pattern; the default "h:mm a" is 12-hour.
- */
-internal fun formatSearchResultDate(
-    event: Event,
-    zoneId: ZoneId = ZoneId.systemDefault(),
-    timePattern: String = "h:mm a"
-): String {
-    val dateFormatter = DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("yMMMd"), Locale.getDefault())
-    val timeFormatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
-
-    val startDate = DateTimeUtils.eventTsToLocalDate(event.startTs, event.isAllDay, zoneId)
-    val displayEndDate = DateTimeUtils.eventTsToLocalDate(event.endTs, event.isAllDay, zoneId)
-    val isMultiDay = DateTimeUtils.spansMultipleDays(event.startTs, event.endTs, event.isAllDay, zoneId)
-    // An exception has originalEventId but no rrule
-    val isRecurring = event.isRecurring || event.isException
-
-    val startDateStr = startDate.format(dateFormatter)
-
-    return buildString {
-        append(startDateStr)
-        if (isMultiDay) {
-            val endDateStr = displayEndDate.format(dateFormatter)
-            append(" \u2192 $endDateStr")
-        } else if (!event.isAllDay) {
-            val startTime = Instant.ofEpochMilli(event.startTs).atZone(zoneId).format(timeFormatter)
-            append(" \u00B7 $startTime")
-        }
-        if (isRecurring) append(" \uD83D\uDD01")
-    }
-}
-
-/**
- * Formats a device calendar search result's date line like the [Event] overload, from the
- * [DisplayEvent] common properties.
- */
-private fun formatSearchResultDate(
-    displayEvent: DisplayEvent,
-    zoneId: ZoneId = ZoneId.systemDefault(),
-    timePattern: String = "h:mm a"
-): String {
-    val dateFormatter = DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("yMMMd"), Locale.getDefault())
-    val timeFormatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
-
-    val startDate = DateTimeUtils.eventTsToLocalDate(displayEvent.startTs, displayEvent.isAllDay, zoneId)
-    val endDate = DateTimeUtils.eventTsToLocalDate(displayEvent.endTs, displayEvent.isAllDay, zoneId)
-    val isMultiDay = DateTimeUtils.spansMultipleDays(displayEvent.startTs, displayEvent.endTs, displayEvent.isAllDay, zoneId)
-
-    return buildString {
-        append(startDate.format(dateFormatter))
-        if (isMultiDay) {
-            append(" \u2192 ${endDate.format(dateFormatter)}")
-        } else if (!displayEvent.isAllDay) {
-            val startTime = Instant.ofEpochMilli(displayEvent.startTs).atZone(zoneId).format(timeFormatter)
-            append(" \u00B7 $startTime")
-        }
-        if (displayEvent.hasRrule) append(" \uD83D\uDD01")
-    }
-}
-
-/**
- * Formats a search result's date line with the next occurrence for a series or exception with
- * [nextOccurrenceTs]: "Next: Jan 15, 2025 🔁", or "Next: Jan 15, 2025 · 9:00 AM 🔁" when timed.
- * Anything else falls back to [formatSearchResultDate].
- *
- * @param nextOccurrenceTs the next occurrence's start, or null.
- * @param zoneId zone for the date calculations; injectable for tests.
- * @param timePattern time pattern; the default "h:mm a" is 12-hour.
- */
-internal fun formatSearchResultDateWithOccurrence(
-    event: Event,
-    nextOccurrenceTs: Long?,
-    zoneId: ZoneId = ZoneId.systemDefault(),
-    timePattern: String = "h:mm a"
-): String {
-    val isRecurring = event.isRecurring || event.isException
-
-    if (!isRecurring || nextOccurrenceTs == null) {
-        return formatSearchResultDate(event, zoneId, timePattern)
-    }
-
-    val dateFormatter = DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("yMMMd"), Locale.getDefault())
-    val timeFormatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
-
-    val nextDate = Instant.ofEpochMilli(nextOccurrenceTs)
-        .atZone(zoneId)
-        .toLocalDate()
-    val nextDateStr = nextDate.format(dateFormatter)
-
-    return buildString {
-        append("Next: ")
-        append(nextDateStr)
-        if (!event.isAllDay) {
-            val nextTime = Instant.ofEpochMilli(nextOccurrenceTs).atZone(zoneId).format(timeFormatter)
-            append(" \u00B7 $nextTime")
-        }
-        append(" \uD83D\uDD01")  // Recurring indicator
-    }
-}
-
-// ==================== Search Date Picker Components ====================
-
-/**
- * Shows the search date sheet for picking a single day or a date range, with
- * InlineDatePickerContent. Each tap goes to [onDateSelected]; the ViewModel decides:
- * - First tap: stores the range start, which comes back as [selectedDateMs]
- * - Second tap on the same day: a SingleDay filter
- * - Second tap on another day: a CustomRange filter
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SearchDatePickerSheet(
-    selectedDateMs: Long?,
-    onDateSelected: (Long) -> Unit,
-    onDismiss: () -> Unit,
-    firstDayOfWeek: Int = java.util.Calendar.SUNDAY
-) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    // Remembered so the fallback to now doesn't change on every frame of the sheet animation,
-    // which causes jank
-    val stableSelectedDate = remember(selectedDateMs) {
-        selectedDateMs ?: System.currentTimeMillis()
-    }
-
-    // Displayed month; opens on the selected date's month, or the current month
-    var displayedMonth by remember {
-        mutableStateOf(SelectedDay.yearMonth(selectedDateMs ?: System.currentTimeMillis()))
-    }
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        ) {
-            Text(
-                text = if (selectedDateMs == null) {
-                    stringResource(R.string.label_select_date)
-                } else {
-                    stringResource(R.string.hint_tap_date_range)
-                },
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-
-            InlineDatePickerContent(
-                selectedDateMillis = stableSelectedDate,
-                displayedMonth = displayedMonth,
-                onDateSelect = { dateMs ->
-                    onDateSelected(dateMs)
-                },
-                onMonthChange = { newMonth ->
-                    displayedMonth = newMonth
-                },
-                firstDayOfWeek = firstDayOfWeek
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            TextButton(
-                onClick = onDismiss,
-                modifier = Modifier.align(Alignment.End)
-            ) {
-                Text(stringResource(R.string.action_cancel))
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }

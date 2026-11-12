@@ -251,7 +251,7 @@ class ImportExportTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val result = exporter.exportCalendar(context, events, "My Calendar")
 
-        assertTrue("Export should succeed", result.isSuccess)
+        assertTrue("Export should succeed: ${result.exceptionOrNull()}", result.isSuccess)
 
         // Asserts only that the export succeeds; the written file isn't read.
     }

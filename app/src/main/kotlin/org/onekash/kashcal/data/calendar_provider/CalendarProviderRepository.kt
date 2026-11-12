@@ -380,6 +380,12 @@ interface CalendarProviderRepository {
     suspend fun getAttendees(eventId: Long): List<DeviceAttendee>
 
     /**
+     * Returns the `Attendees` rows of [eventIds] by event id, in batched queries, for the search
+     * reason line; events with no guests are absent. A failed read returns what it read so far.
+     */
+    suspend fun getAttendeesForEvents(eventIds: Collection<Long>): Map<Long, List<DeviceAttendee>>
+
+    /**
      * Sets the user's own RSVP by updating only the `Attendees` row whose `_ID` is
      * [attendeeId], so no guest's synced status is overwritten. Fails with `EventNotFound`
      * when no row matched.

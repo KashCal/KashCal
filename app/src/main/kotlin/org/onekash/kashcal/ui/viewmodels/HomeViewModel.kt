@@ -79,7 +79,6 @@ import org.onekash.kashcal.domain.onboarding.shouldShowOnboarding
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.ui.util.plannerPageForDate
 import org.onekash.kashcal.ui.util.plannerWeekStart
-import org.onekash.kashcal.domain.model.SearchResult
 import org.onekash.kashcal.domain.model.toEventForDuplicate
 import org.onekash.kashcal.domain.reader.DeviceEventReader
 import org.onekash.kashcal.domain.reader.DisplayEventRepository
@@ -118,6 +117,8 @@ import org.onekash.kashcal.KashCalApplication
 import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.util.TimezoneUtils
 import org.onekash.kashcal.util.ZoneSource
+import org.onekash.kashcal.domain.search.SearchQuery
+import org.onekash.kashcal.domain.search.SearchOutcome
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
@@ -126,6 +127,9 @@ import java.util.Calendar
 import javax.inject.Inject
 
 private const val TAG = "HomeViewModel"
+
+/** Quiet time after a keystroke before search runs. */
+private const val SEARCH_TYPING_DELAY_MS = 300L
 
 /** Upcoming window shown by the agenda view (90 days). */
 private const val AGENDA_WINDOW_MS = 90L * 24 * 60 * 60 * 1000
@@ -737,6 +741,62 @@ class HomeViewModel(
                 }
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), persistentMapOf())
+
+    /** Holds one read of the day sheet's day: its day code and that day's events. */
+    private data class DayDetailRead(val dayCode: Int, val events: ImmutableList<DisplayEvent>)
+
+    /**
+     * The day sheet's shown day and its events, read on their own for that one day, so a step
+     * needs no other view to have the day loaded. Null while the sheet is closed and until the
+     * shown day's first read after opening. A step keeps the previous day until the next one
+     * reads, so the sheet never shows an empty list between two days; a failed read shows its
+     * day with no events. The time of day and the arrows follow [HomeUiState.dayDetailDate] at
+     * once whenever it is still the read's day, as after a zone change keeps the local day.
+     */
+    @Suppress("OPT_IN_USAGE")
+    val dayDetail: StateFlow<DayDetailState?> =
+        _uiState
+            .map { state -> if (state.isDayDetailOpen) DayPagerUtils.msToDayCode(state.dayDetailDate) else null }
+            .distinctUntilChanged()
+            .restartOnZoneChange()
+            .flatMapLatest { dayCode ->
+                if (dayCode == null) {
+                    flowOf(null)
+                } else {
+                    displayEventRepository.getDisplayEventsForDateRange(dayCode, dayCode)
+                        .map { byDay -> DayDetailRead(dayCode, byDay[dayCode] ?: persistentListOf()) }
+                        .catch { e ->
+                            if (e is CancellationException) throw e
+                            Log.e(TAG, "Error loading day sheet events", e)
+                            emit(DayDetailRead(dayCode, persistentListOf()))
+                        }
+                }
+            }
+            .combine(_uiState) { read, state -> read?.let { dayDetailState(it, state) } }
+            .distinctUntilChanged()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    /**
+     * Returns [read] as the sheet shows it: at [HomeUiState.dayDetailDate]'s time of day while
+     * that is still the read's day, else at the read day's noon until the next read lands; the
+     * arrows stop at the [CalendarSpan] ends.
+     */
+    private fun dayDetailState(read: DayDetailRead, state: HomeUiState): DayDetailState {
+        val zone = ZoneId.systemDefault()
+        val day = DayPagerUtils.dayCodeToLocalDate(read.dayCode)
+        val dateMs = if (state.isDayDetailOpen && DayPagerUtils.msToDayCode(state.dayDetailDate) == read.dayCode) {
+            state.dayDetailDate
+        } else {
+            day.atTime(12, 0).atZone(zone).toInstant().toEpochMilli()
+        }
+        return DayDetailState(
+            dayCode = read.dayCode,
+            dateMs = dateMs,
+            events = read.events,
+            canGoBack = CalendarSpan.canStepDay(day, -1),
+            canGoForward = CalendarSpan.canStepDay(day, 1),
+        )
+    }
 
     // Planner events, keyed by the day code of the settled week's first day: set only while
     // PLANNER is active, null otherwise, like monthGridKey.
@@ -1500,7 +1560,7 @@ class HomeViewModel(
                 dayDetailDate = rezoneLocalDateTime(it.dayDetailDate, oldZone, newZone),
                 searchDateRangeStart = it.searchDateRangeStart
                     ?.let { ms -> rezoneMidnight(ms, oldZone, newZone) },
-                searchDateFilter = rezoneDateFilter(it.searchDateFilter, oldZone, newZone),
+                searchDateFilter = it.searchDateFilter?.let { filter -> rezoneDateFilter(filter, oldZone, newZone) },
                 loadedMonths = persistentSetOf(),
                 loadedYears = persistentSetOf(),
                 eventDots = persistentMapOf(),
@@ -1522,11 +1582,8 @@ class HomeViewModel(
         if (_uiState.value.viewMode == ViewMode.MONTH_FULL && center != 0L) {
             loadEventsForDayPagerRange(center)
         }
-        // Search results hold the old zone's ranges and day codes.
-        val query = _uiState.value.searchQuery
-        if (_uiState.value.isSearchActive && query.length >= 2) {
-            performSearch(query)
-        }
+        // Search results hold the old zone's ranges, day codes and past rule.
+        restartSearch()
     }
 
     // ==================== Sync Operations ====================
@@ -2584,6 +2641,22 @@ class HomeViewModel(
         }
     }
 
+    /**
+     * Moves the day sheet [step] days (-1 or 1), keeping the time of day it was opened with; a
+     * time inside a spring-forward gap moves forward as [java.time.ZonedDateTime.plusDays] does.
+     * Only the sheet's day changes: the selected day, the viewing month and the Planner week stay
+     * where the user left them, so closing the sheet returns there. Does nothing while the sheet
+     * is closed or past the [CalendarSpan] ends.
+     */
+    fun stepDayDetail(step: Int) {
+        val state = _uiState.value
+        if (!state.isDayDetailOpen) return
+        val shown = Instant.ofEpochMilli(state.dayDetailDate).atZone(ZoneId.systemDefault())
+        if (!CalendarSpan.canStepDay(shown.toLocalDate(), step)) return
+        val next = shown.plusDays(step.toLong()).toInstant().toEpochMilli()
+        _uiState.update { it.copy(dayDetailDate = next) }
+    }
+
     fun dismissDayDetail() {
         _uiState.update {
             it.copy(showDayDetailSheet = false, dayDetailDate = 0L)
@@ -2654,77 +2727,152 @@ class HomeViewModel(
 
     // ==================== Search ====================
 
-    /** Opens search with an empty query and the Upcoming filter. */
+    /**
+     * Opens search with an empty query, Upcoming selected, no date range and hidden calendars
+     * left out. Every entry point (toolbar, widget, shortcut, notification) comes through here.
+     */
     fun activateSearch() {
-        _uiState.update {
-            it.copy(
-                isSearchActive = true,
-                searchQuery = "",
-                searchResults = persistentListOf(),
-                searchDateFilter = DateFilter.Upcoming,
-                showSearchDatePicker = false,
-                searchDateRangeStart = null
-            )
-        }
+        searchJob?.cancel()
+        _uiState.update { it.withSearchReset(active = true) }
     }
 
-    /** Closes search and resets its state, the date filter included. */
+    /** Closes search and resets its state; see [activateSearch]. */
     fun deactivateSearch() {
-        _uiState.update {
-            it.copy(
-                isSearchActive = false,
-                searchQuery = "",
-                searchResults = persistentListOf(),
-                searchDateFilter = DateFilter.Upcoming,
-                showSearchDatePicker = false,
-                searchDateRangeStart = null
-            )
-        }
+        searchJob?.cancel()
+        _uiState.update { it.withSearchReset(active = false) }
     }
+
+    private fun HomeUiState.withSearchReset(active: Boolean) = copy(
+        isSearchActive = active,
+        searchQuery = "",
+        searchState = SearchResultsState.Idle,
+        searchTab = SearchTab.UPCOMING,
+        searchDateFilter = null,
+        searchIncludeHidden = false,
+        showSearchDateMenu = false,
+        showSearchDatePicker = false,
+        searchDateRangeStart = null,
+    )
 
     /**
-     * Sets the search query and searches 300 ms later, cancelling a pending search. A query
-     * under 2 characters clears the results instead.
+     * Sets the search query and searches [SEARCH_TYPING_DELAY_MS] later, cancelling the search
+     * before. A query that isn't [SearchQuery.isSearchable] (one-letter words, only separators)
+     * shows [SearchResultsState.TooShort]; an empty one [SearchResultsState.Idle]. The selected
+     * list, the date range and the hidden-calendar choice stay.
      */
     fun updateSearchQuery(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
-
         searchJob?.cancel()
-
-        if (query.length >= 2) {
-            searchJob = viewModelScope.launch {
-                delay(300)
-                performSearch(query)
+        val parsed = SearchQuery.of(query)
+        when {
+            query.isEmpty() -> _uiState.update { it.copy(searchState = SearchResultsState.Idle) }
+            !parsed.isSearchable -> _uiState.update { it.copy(searchState = SearchResultsState.TooShort) }
+            else -> searchJob = viewModelScope.launch {
+                delay(SEARCH_TYPING_DELAY_MS)
+                collectSearch(parsed)
             }
-        } else {
-            _uiState.update { it.copy(searchResults = persistentListOf()) }
         }
+    }
+
+    /** Runs the current query again at once, for a new date range or zone. */
+    private fun restartSearch() {
+        val state = _uiState.value
+        val parsed = SearchQuery.of(state.searchQuery)
+        if (!state.isSearchActive || !parsed.isSearchable) return
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch { collectSearch(parsed) }
+    }
+
+    /**
+     * Shows [query]'s results until cancelled: one observed search
+     * ([DisplayEventRepository.observeSearch]) whose every emission replaces the results, so an
+     * edit or a sync while search is open shows at once. Logs one timing line for the first
+     * result; the query text is not logged. An error is logged and puts back the results shown
+     * before this search started.
+     */
+    private suspend fun collectSearch(query: SearchQuery) {
+        val state = _uiState.value
+        val zone = _displayZone.value
+        val range = state.searchDateFilter?.getTimeRange(zone, state.firstDayOfWeek)?.let { (from, to) -> from..to }
+        val before = state.searchState
+        _uiState.update { it.copy(searchState = SearchResultsState.Loading) }
+        val started = System.nanoTime()
+        var logged = false
+        try {
+            displayEventRepository.observeSearch(query, System.currentTimeMillis(), zone, range).collect { outcome ->
+                _uiState.update { it.copy(searchState = SearchResultsState.Loaded(outcome)) }
+                if (!logged) {
+                    logged = true
+                    logSearchTiming(query, outcome, (System.nanoTime() - started) / 1_000_000)
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "Search error", e)
+            _uiState.update {
+                if (it.searchState == SearchResultsState.Loading) it.copy(searchState = before) else it
+            }
+        }
+    }
+
+    private fun logSearchTiming(query: SearchQuery, outcome: SearchOutcome, totalMs: Long) {
+        val t = outcome.timing
+        Log.i(
+            TAG,
+            "Search timing: words=${query.words.size} room=${t.roomMs}ms device=${t.deviceMs}ms total=${totalMs}ms " +
+                "coverage=${t.coverageMs?.let { "${it}ms" } ?: "none"} upcoming=${outcome.upcoming.size} " +
+                "past=${outcome.past.size} hidden=${outcome.hiddenUpcoming.size + outcome.hiddenPast.size} " +
+                "range=${outcome.range?.size ?: "none"}"
+        )
+    }
+
+    /**
+     * Shows the Upcoming or Past list without searching again, and clears a date range: the
+     * running search already holds both lists.
+     */
+    fun selectSearchTab(tab: SearchTab) {
+        _uiState.update { it.copy(searchTab = tab, searchDateFilter = null, showSearchDateMenu = false) }
+    }
+
+    /** Opens the Date chip's menu. */
+    fun openSearchDateMenu() {
+        _uiState.update { it.copy(showSearchDateMenu = true) }
+    }
+
+    /** Closes the Date chip's menu. */
+    fun dismissSearchDateMenu() {
+        _uiState.update { it.copy(showSearchDateMenu = false) }
+    }
+
+    /** Shows or leaves out matches in calendars hidden in the app, for this search only. */
+    fun setSearchIncludeHidden(include: Boolean) {
+        _uiState.update { it.copy(searchIncludeHidden = include) }
     }
 
     // ==================== Search Date Filter ====================
 
     /**
-     * Sets the search date filter, closes the date picker and re-runs a query of 2 or more
-     * characters. Called for a filter chip tap and a date picked in the picker.
+     * Narrows search to [filter], closes the Date menu and the date picker, and searches again
+     * for that range. Called for This week, This month and a date picked in the picker.
      */
     fun setSearchDateFilter(filter: DateFilter) {
         _uiState.update {
             it.copy(
                 searchDateFilter = filter,
+                showSearchDateMenu = false,
                 showSearchDatePicker = false,
                 searchDateRangeStart = null
             )
         }
-
-        if (_uiState.value.searchQuery.length >= 2) {
-            performSearch(_uiState.value.searchQuery)
-        }
+        restartSearch()
     }
 
-    /** Shows the search date picker sheet with no range started. */
+    /** Shows the search date picker sheet with no range started, closing the Date menu. */
     fun showSearchDatePicker() {
         _uiState.update {
             it.copy(
+                showSearchDateMenu = false,
                 showSearchDatePicker = true,
                 searchDateRangeStart = null
             )
@@ -2776,108 +2924,6 @@ class HomeViewModel(
         val instant = Instant.ofEpochMilli(epochMs)
         val localDate = instant.atZone(ZoneId.systemDefault()).toLocalDate()
         return localDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-    }
-
-    /**
-     * Searches Room and device events for [query] under the current date filter and shows the
-     * results from visible calendars. Errors are logged and leave the results as they were.
-     *
-     * Room time filters use the occurrences table: the default Upcoming filter keeps events
-     * with an occurrence not yet ended, so a multi-day event in progress and a series both
-     * match; a filter with a time range keeps events with an occurrence in it; [DateFilter.AnyTime]
-     * keeps past events too.
-     */
-    private fun performSearch(query: String) {
-        viewModelScope.launch {
-            try {
-                val dateFilter = _uiState.value.searchDateFilter
-                val timeRange = dateFilter.getTimeRange(ZoneId.systemDefault(), _uiState.value.firstDayOfWeek)
-                val calendarMap = _uiState.value.calendars.associateBy { it.id }
-
-                // Day range for the device calendar search.
-                val today = LocalDate.now()
-                val todayCode = today.year * 10000 + today.monthValue * 100 + today.dayOfMonth
-                val (searchStartDayCode, searchEndDayCode) = when {
-                    timeRange != null -> {
-                        DayPagerUtils.msToDayCode(timeRange.first) to DayPagerUtils.msToDayCode(timeRange.second)
-                    }
-                    dateFilter is DateFilter.AnyTime -> {
-                        val syncPastDays = dataStore.syncPastDays.first()
-                        val pastDate = if (syncPastDays == Int.MAX_VALUE) {
-                            today.minusYears(10)  // A practical limit for the device search
-                        } else {
-                            today.minusDays(syncPastDays.toLong())
-                        }
-                        val futureDate = today.plusYears(2)
-                        (pastDate.year * 10000 + pastDate.monthValue * 100 + pastDate.dayOfMonth) to
-                            (futureDate.year * 10000 + futureDate.monthValue * 100 + futureDate.dayOfMonth)
-                    }
-                    else -> {
-                        val futureDate = today.plusYears(2)
-                        todayCode to (futureDate.year * 10000 + futureDate.monthValue * 100 + futureDate.dayOfMonth)
-                    }
-                }
-
-                // Room FTS search, each result shown at its next occurrence (or its own start).
-                val roomSearcher: suspend (String) -> List<SearchResult> = { q ->
-                    val ewnoResults = when {
-                        timeRange != null -> {
-                            // The range filter reads occurrence rows, which may not reach it yet.
-                            eventCoordinator.ensureOccurrencesCover(timeRange.first, timeRange.second)
-                            eventReader.searchEventsInRangeWithNextOccurrence(q, timeRange.first, timeRange.second)
-                        }
-                        dateFilter is DateFilter.AnyTime -> eventReader.searchEventsWithNextOccurrence(q)
-                        else -> eventReader.searchEventsExcludingPastWithNextOccurrence(q)
-                    }
-                    ewnoResults.map { ewno ->
-                        val event = ewno.event
-                        val calendar = calendarMap[event.calendarId]
-                        val syntheticOcc = Occurrence(
-                            eventId = event.id,
-                            calendarId = event.calendarId,
-                            startTs = event.startTs,
-                            endTs = event.endTs,
-                            startDay = DateTimeUtils.eventTsToDayCode(event.startTs, event.isAllDay),
-                            endDay = DateTimeUtils.eventTsToEndDayCode(
-                                endTs = event.endTs,
-                                startTs = event.startTs,
-                                isAllDay = event.isAllDay
-                            ),
-                            isCancelled = false,
-                            exceptionEventId = null
-                        )
-                        SearchResult(
-                            displayEvent = DisplayEvent.Room(event, syntheticOcc, calendar),
-                            displayTs = ewno.nextOccurrenceTs ?: event.startTs
-                        )
-                    }
-                }
-
-                val results = withContext(ioDispatcher) {
-                    displayEventRepository.searchDisplayEvents(
-                        query, searchStartDayCode, searchEndDayCode, roomSearcher
-                    )
-                }
-
-                // Room results from visible calendars (Calendar.isVisible).
-                val visibleCalendarIds = _uiState.value.calendars
-                    .filter { it.isVisible }
-                    .map { it.id }
-                    .toSet()
-                val filteredResults = results.filter { result ->
-                    when (val de = result.displayEvent) {
-                        is DisplayEvent.Room -> de.event.calendarId in visibleCalendarIds
-                        is DisplayEvent.Device -> true // only visible ones were searched
-                    }
-                }
-
-                _uiState.update { it.copy(searchResults = filteredResults.toPersistentList()) }
-
-                Log.d(TAG, "Search '$query' returned ${filteredResults.size} results (filter=${dateFilter::class.simpleName})")
-            } catch (e: Exception) {
-                Log.e(TAG, "Search error", e)
-            }
-        }
     }
 
     // ==================== UI Sheets/Dialogs ====================
@@ -5330,7 +5376,7 @@ internal fun rezoneLocalDateTime(ms: Long, oldZone: ZoneId, newZone: ZoneId): Lo
 
 /**
  * Returns [filter] with the dates a picked day or range holds as local midnights moved to the
- * same dates in [newZone]; the relative filters (Upcoming, This week and the like) are kept.
+ * same dates in [newZone]; This week and This month are kept, since they follow today's date.
  */
 internal fun rezoneDateFilter(filter: DateFilter, oldZone: ZoneId, newZone: ZoneId): DateFilter =
     when (filter) {

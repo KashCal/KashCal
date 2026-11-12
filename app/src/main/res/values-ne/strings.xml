@@ -149,7 +149,6 @@
     <string name="label_enter_hex">६ hex अक्षर हाल्नुहोस् (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">सबै</string>
     <string name="view_week">हप्ता</string>
     <string name="view_month">महिना</string>
     <string name="label_all_day">दिनभर</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">शनिबार</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">कुनै कार्यक्रम भेटिएन</string>
     <string name="empty_no_upcoming_events">आगामी कार्यक्रम छैन</string>
     <string name="empty_no_calendars">क्यालेन्डर उपलब्ध छैन</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">महिना र वर्ष छान्नुहोस्</string>
     <string name="cd_previous_month">गत महिना</string>
     <string name="cd_next_month">आउने महिना</string>
+    <string name="cd_previous_day">अघिल्लो दिन</string>
+    <string name="cd_next_day">अर्को दिन</string>
     <string name="cd_month_year_picker">महिना र वर्ष चयनकर्ता</string>
     <string name="cd_remove_alert">सतर्कता हटाउनुहोस्</string>
     <string name="cd_warning">चेतावनी</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">पात्रोको अवस्था: शानदार रूपमा खाली।</string>
     <string name="empty_no_events_day_5">केही योजना छैन। शान्तिको आनन्द लिनुहोस्।</string>
     <string name="filter_date">मिति</string>
+    <string name="search_tab_upcoming">आगामी</string>
+    <string name="search_tab_past">विगत</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d कार्यक्रम</item>
+        <item quantity="other">%1$s, %2$d कार्यक्रम</item>
+    </plurals>
+    <string name="search_date_this_week">यो हप्ता</string>
+    <string name="search_date_this_month">यो महिना</string>
+    <string name="search_date_pick">मितिहरू छान्नुहोस्…</string>
+    <string name="search_next">अर्को: %1$s</string>
+    <string name="search_last">पछिल्लो: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">स्थान:</string>
+    <string name="search_reason_notes">टिप्पणीहरू:</string>
+    <string name="search_reason_guest">पाहुना:</string>
+    <string name="search_keep_typing">खोज्न टाइप गरिरहनुहोस्</string>
+    <string name="search_no_matches">“%1$s” सँग मेल खाने कुनै कार्यक्रम छैन</string>
+    <string name="search_lookback_line">सिंक लुकब्याक: %1$s</string>
+    <string name="search_sync_settings">सिंक सेटिङ</string>
+    <string name="cd_search_sync_settings">सिंक लुकब्याक सेटिङ खोल्नुहोस्</string>
+    <plurals name="search_show_past">
+        <item quantity="one">%d विगत कार्यक्रम देखाउनुहोस्</item>
+        <item quantity="other">%d विगत कार्यक्रमहरू देखाउनुहोस्</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">लुकाइएको क्यालेन्डरमा थप %d</item>
+        <item quantity="other">लुकाइएका क्यालेन्डरहरूमा थप %d</item>
+    </plurals>
+    <string name="search_show">देखाउनुहोस्</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">लुकाइएको क्यालेन्डरमा %d मेल देखाउनुहोस्</item>
+        <item quantity="other">लुकाइएका क्यालेन्डरहरूमा %d मेल देखाउनुहोस्</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">लुकाइएको क्यालेन्डरमा %d देखाउनुहोस्</item>
+        <item quantity="other">लुकाइएका क्यालेन्डरहरूमा %d देखाउनुहोस्</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">%d लुकाइएको क्यालेन्डर सहित</item>
+        <item quantity="other">%d लुकाइएका क्यालेन्डरहरू सहित</item>
+    </plurals>
+    <string name="search_leave_out">हटाउनुहोस्</string>
+    <string name="cd_search_leave_out">लुकाइएका क्यालेन्डरहरू हटाउनुहोस्</string>
+    <string name="search_hidden_calendar">%1$s · लुकाइएको</string>
+    <string name="cd_search_date_this_week">यो हप्ताका मेलहरू देखाउनुहोस्</string>
+    <string name="cd_search_date_this_month">यो महिनाका मेलहरू देखाउनुहोस्</string>
+    <string name="cd_search_date_pick">खोज्न मितिहरू छान्नुहोस्</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d आगामी</item>
+        <item quantity="other">%d आगामी</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d विगत</item>
+        <item quantity="other">%d विगत</item>
+    </plurals>
+    <string name="search_no_past_events">कुनै विगत कार्यक्रम छैन</string>
+    <string name="search_no_events_in_dates">यी मितिहरूमा कुनै कार्यक्रम छैन</string>
     <string name="label_select_date">मिति चयन गर्नुहोस्</string>
     <string name="hint_tap_date_range">एक दिनको लागि उही मिति ट्याप गर्नुहोस्, वा दायराको लागि अर्को मिति</string>
     <string name="cd_clear">खाली गर्नुहोस्</string>

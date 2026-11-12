@@ -69,6 +69,16 @@ class SettingsActivity : FragmentActivity() {
 
         /** Opens the Automatic calendar backup sheet, as the backup failure notification does. */
         const val EXTRA_OPEN_CALENDAR_BACKUP = "open_calendar_backup"
+
+        /** Opens Settings on the Sync lookback sheet; search's Sync settings link sends it. */
+        const val EXTRA_OPEN_SYNC_LOOKBACK = "open_sync_lookback"
+
+        /**
+         * Returns whether this create should open the Sync lookback sheet: only a fresh start
+         * with [EXTRA_OPEN_SYNC_LOOKBACK]; after a recreation the sheet's own state decides.
+         */
+        fun opensSyncLookback(savedInstanceState: Bundle?, intent: Intent): Boolean =
+            savedInstanceState == null && intent.getBooleanExtra(EXTRA_OPEN_SYNC_LOOKBACK, false)
     }
 
     private val viewModel: AccountSettingsViewModel by viewModels()
@@ -121,6 +131,7 @@ class SettingsActivity : FragmentActivity() {
         if (savedInstanceState == null && intent.getBooleanExtra(EXTRA_OPEN_CALENDAR_BACKUP, false)) {
             calendarBackupViewModel.requestSheet()
         }
+        if (opensSyncLookback(savedInstanceState, intent)) viewModel.requestSyncLookbackSheet()
 
         setContent {
             SettingsRoute(

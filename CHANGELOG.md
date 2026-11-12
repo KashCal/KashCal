@@ -1,3 +1,19 @@
+## [2026.11.12]
+
+How long since your last haircut? Search said "No events found" and left the mirror to answer. The appointment was there all along; search only looked ahead.
+
+Now it looks back too. Upcoming and Past sit side by side, each with its count, and Past starts with the most recent, so the date is the first row. The mirror can retire.
+
+### Everything in this release
+
+- Added Upcoming and Past to search, each with its count; a repeating event shows once on each side with its next or last date, #420
+- Changed search to match a word anywhere in the title, location, notes or a guest's name or email, in any case, in every calendar; each result says where it matched and how far away it is
+- Changed the `All`, `Week` and `Month` search chips into one `Date` chip with `This week`, `This month` and `Pick dates…`
+- Added hints to empty searches, including matches in hidden calendars and a link to `Sync lookback`
+- Added arrows and a sideways swipe to move the day sheet one day, #433
+- Fixed repeating events that ended over a year ago missing on some past dates, and a weekday listed twice in a repeat rule adding a duplicate occurrence
+- Fixed the date pickers' month swipe in right-to-left languages
+
 ## [2026.11.10]
 
 - Fixed repeating events missing on far-off dates; views and date pickers now reach 150 years either side of today

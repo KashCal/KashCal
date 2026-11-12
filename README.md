@@ -133,7 +133,7 @@ SilentSuite two-way sync was tested by [@silent-suite](https://github.com/silent
 
 | Category | Technology |
 |----------|------------|
-| CalDAV/ICS | `icaldav-core` (in-tree, wraps ical4j 4.3.0) |
+| CalDAV/ICS | `icaldav-core` (in-tree, wraps ical4j) |
 | CardDAV/contacts | `vcard-core` (in-tree, wraps ez-vcard 0.12.2) |
 | UI | Jetpack Compose, Material 3 |
 | Widgets | Jetpack Glance |

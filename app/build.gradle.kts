@@ -287,7 +287,7 @@ dependencies {
     // JSON
     implementation(libs.kotlinx.serialization.json)
 
-    // iCal Parsing (RFC 5545): in-tree subproject that wraps ical4j 4.3.0
+    // iCal Parsing (RFC 5545): in-tree subproject that wraps ical4j
     implementation(project(":icaldav-core"))
 
     // vCard Parsing (RFC 2426 / RFC 6350): in-tree pure-JVM subproject that

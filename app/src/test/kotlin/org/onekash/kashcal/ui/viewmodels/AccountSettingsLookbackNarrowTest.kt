@@ -401,7 +401,7 @@ class AccountSettingsLookbackNarrowTest {
      * repair HomeViewModel runs on a month swipe.
      */
     private suspend fun scrollBackTo(daysAgo: Int) {
-        coordinator.ensureOccurrencesCover(now - daysAgo * day, now - daysAgo * day + day)
+        generator.ensureCovered(now - daysAgo * day, now - daysAgo * day + day)
         coordinator.repairMissingOccurrences()
     }
 

@@ -149,7 +149,6 @@
     <string name="label_enter_hex">hex අක්ෂර 6ක් ඇතුළත් කරන්න (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">සියල්ල</string>
     <string name="view_week">සතිය</string>
     <string name="view_month">මාසය</string>
     <string name="label_all_day">මුළු දිනය</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">සෙනසුරාදා</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">සිදුවීම් හමු නොවීය</string>
     <string name="empty_no_upcoming_events">ඉදිරි සිදුවීම් නැත</string>
     <string name="empty_no_calendars">දින දර්ශන නොමැත</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">මාසය සහ වසර තෝරන්න</string>
     <string name="cd_previous_month">පෙර මාසය</string>
     <string name="cd_next_month">මීළඟ මාසය</string>
+    <string name="cd_previous_day">පෙර දිනය</string>
+    <string name="cd_next_day">මීළඟ දිනය</string>
     <string name="cd_month_year_picker">මාසය සහ වසර තෝරනය</string>
     <string name="cd_remove_alert">ඇඟවීම ඉවත් කරන්න</string>
     <string name="cd_warning">අනතුරු ඇඟවීම</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">දින දර්ශන තත්ත්වය: අපූරුවට හිස්.</string>
     <string name="empty_no_events_day_5">කිසිවක් සැලසුම් කර නැත. නිස්කලංකභාවය භුක්ති විඳින්න.</string>
     <string name="filter_date">දිනය</string>
+    <string name="search_tab_upcoming">ඉදිරි</string>
+    <string name="search_tab_past">අතීත</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, සිදුවීම %2$d</item>
+        <item quantity="other">%1$s, සිදුවීම් %2$d</item>
+    </plurals>
+    <string name="search_date_this_week">මෙම සතිය</string>
+    <string name="search_date_this_month">මෙම මාසය</string>
+    <string name="search_date_pick">දින තෝරන්න…</string>
+    <string name="search_next">ඊළඟ: %1$s</string>
+    <string name="search_last">අවසන්: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">ස්ථානය:</string>
+    <string name="search_reason_notes">සටහන්:</string>
+    <string name="search_reason_guest">අමුත්තා:</string>
+    <string name="search_keep_typing">සෙවීමට දිගටම ටයිප් කරන්න</string>
+    <string name="search_no_matches">“%1$s” ට ගැළපෙන සිදුවීම් නැත</string>
+    <string name="search_lookback_line">සමමුහුර්ත ආපසු බැලීම: %1$s</string>
+    <string name="search_sync_settings">සමමුහුර්ත සැකසීම්</string>
+    <string name="cd_search_sync_settings">සමමුහුර්ත ආපසු බැලීමේ සැකසීම විවෘත කරන්න</string>
+    <plurals name="search_show_past">
+        <item quantity="one">අතීත සිදුවීම %d පෙන්වන්න</item>
+        <item quantity="other">අතීත සිදුවීම් %d පෙන්වන්න</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">සඟවා ඇති දින දර්ශනයක තවත් %d</item>
+        <item quantity="other">සඟවා ඇති දින දර්ශනවල තවත් %d</item>
+    </plurals>
+    <string name="search_show">පෙන්වන්න</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">සඟවා ඇති දින දර්ශනයක ගැළපීම %d පෙන්වන්න</item>
+        <item quantity="other">සඟවා ඇති දින දර්ශනවල ගැළපීම් %d පෙන්වන්න</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">සඟවා ඇති දින දර්ශනයක %d පෙන්වන්න</item>
+        <item quantity="other">සඟවා ඇති දින දර්ශනවල %d පෙන්වන්න</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">සඟවා ඇති දින දර්ශන %d ඇතුළුව</item>
+        <item quantity="other">සඟවා ඇති දින දර්ශන %d ඇතුළුව</item>
+    </plurals>
+    <string name="search_leave_out">බැහැර කරන්න</string>
+    <string name="cd_search_leave_out">සඟවා ඇති දින දර්ශන බැහැර කරන්න</string>
+    <string name="search_hidden_calendar">%1$s · සඟවා ඇත</string>
+    <string name="cd_search_date_this_week">මෙම සතියේ ගැළපීම් පෙන්වන්න</string>
+    <string name="cd_search_date_this_month">මෙම මාසයේ ගැළපීම් පෙන්වන්න</string>
+    <string name="cd_search_date_pick">සෙවීමට දින තෝරන්න</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">ඉදිරි %d</item>
+        <item quantity="other">ඉදිරි %d</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">අතීත %d</item>
+        <item quantity="other">අතීත %d</item>
+    </plurals>
+    <string name="search_no_past_events">අතීත සිදුවීම් නැත</string>
+    <string name="search_no_events_in_dates">මෙම දිනවල සිදුවීම් නැත</string>
     <string name="label_select_date">දිනයක් තෝරන්න</string>
     <string name="hint_tap_date_range">එක් දිනක් සඳහා එකම දිනය තට්ටු කරන්න, හෝ පරාසයක් සඳහා වෙනත් දිනයක්</string>
     <string name="cd_clear">හිස් කරන්න</string>

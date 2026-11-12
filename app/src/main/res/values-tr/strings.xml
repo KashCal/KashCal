@@ -149,7 +149,6 @@
     <string name="label_enter_hex">6 hex karakter gir (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Tümü</string>
     <string name="view_week">Hafta</string>
     <string name="view_month">Ay</string>
     <string name="label_all_day">Tüm gün</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">Cumartesi</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Etkinlik bulunamadı</string>
     <string name="empty_no_upcoming_events">Yaklaşan etkinlik yok</string>
     <string name="empty_no_calendars">Kullanılabilir takvim yok</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">Ay ve yıl seç</string>
     <string name="cd_previous_month">Önceki ay</string>
     <string name="cd_next_month">Sonraki ay</string>
+    <string name="cd_previous_day">Önceki gün</string>
+    <string name="cd_next_day">Sonraki gün</string>
     <string name="cd_month_year_picker">Ay ve yıl seçici</string>
     <string name="cd_remove_alert">Uyarıyı kaldır</string>
     <string name="cd_warning">Uyarı</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">Takvim durumu: harika şekilde boş.</string>
     <string name="empty_no_events_day_5">Hiç planın yok. Sakinliğin tadını çıkar.</string>
     <string name="filter_date">Tarih</string>
+    <string name="search_tab_upcoming">Yaklaşan</string>
+    <string name="search_tab_past">Geçmiş</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d etkinlik</item>
+        <item quantity="other">%1$s, %2$d etkinlik</item>
+    </plurals>
+    <string name="search_date_this_week">Bu hafta</string>
+    <string name="search_date_this_month">Bu ay</string>
+    <string name="search_date_pick">Tarih seç…</string>
+    <string name="search_next">Sonraki: %1$s</string>
+    <string name="search_last">Son: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Konum:</string>
+    <string name="search_reason_notes">Notlar:</string>
+    <string name="search_reason_guest">Konuk:</string>
+    <string name="search_keep_typing">Aramak için yazmaya devam et</string>
+    <string name="search_no_matches">“%1$s” ile eşleşen etkinlik yok</string>
+    <string name="search_lookback_line">Eşitleme Geçmişi Süresi: %1$s</string>
+    <string name="search_sync_settings">Eşitleme ayarları</string>
+    <string name="cd_search_sync_settings">Eşitleme geçmişi süresi ayarını aç</string>
+    <plurals name="search_show_past">
+        <item quantity="one">%d geçmiş etkinliği göster</item>
+        <item quantity="other">%d geçmiş etkinliği göster</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">Gizli bir takvimde %d tane daha</item>
+        <item quantity="other">Gizli takvimlerde %d tane daha</item>
+    </plurals>
+    <string name="search_show">Göster</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Gizli bir takvimdeki %d eşleşmeyi göster</item>
+        <item quantity="other">Gizli takvimlerdeki %d eşleşmeyi göster</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Gizli bir takvimdeki %d sonucu göster</item>
+        <item quantity="other">Gizli takvimlerdeki %d sonucu göster</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">%d gizli takvim dahil</item>
+        <item quantity="other">%d gizli takvim dahil</item>
+    </plurals>
+    <string name="search_leave_out">Hariç tut</string>
+    <string name="cd_search_leave_out">Gizli takvimleri hariç tut</string>
+    <string name="search_hidden_calendar">%1$s · gizli</string>
+    <string name="cd_search_date_this_week">Bu haftaki eşleşmeleri göster</string>
+    <string name="cd_search_date_this_month">Bu ayki eşleşmeleri göster</string>
+    <string name="cd_search_date_pick">Aranacak tarihleri seç</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d yaklaşan</item>
+        <item quantity="other">%d yaklaşan</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d geçmiş</item>
+        <item quantity="other">%d geçmiş</item>
+    </plurals>
+    <string name="search_no_past_events">Geçmiş etkinlik yok</string>
+    <string name="search_no_events_in_dates">Bu tarihlerde etkinlik yok</string>
     <string name="label_select_date">Tarih seç</string>
     <string name="hint_tap_date_range">Tek gün için aynı tarihe, aralık için başka tarihe dokun</string>
     <string name="cd_clear">Temizle</string>

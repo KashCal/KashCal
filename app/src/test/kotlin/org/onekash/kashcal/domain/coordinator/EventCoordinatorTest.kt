@@ -580,17 +580,6 @@ class EventCoordinatorTest {
         verify { eventReader.getAllCalendars() }
     }
 
-    @Test
-    fun `searchEvents delegates to reader`() = runTest {
-        val query = "meeting"
-        val results = listOf(testEvent, recurringEvent)
-        coEvery { eventReader.searchEvents(query) } returns results
-
-        val result = coordinator.searchEvents(query)
-
-        assertEquals(2, result.size)
-    }
-
     // ==================== Occurrence Generation Tests ====================
 
     @Test
@@ -601,15 +590,6 @@ class EventCoordinatorTest {
         val count = coordinator.regenerateOccurrences(recurringEvent.id)
 
         assertEquals(52, count)
-    }
-
-    @Test
-    fun `ensureOccurrencesCover asks the generator to cover the range both ways`() = runTest {
-        coJustRun { occurrenceGenerator.ensureCovered(any(), any(), any(), any(), any()) }
-
-        coordinator.ensureOccurrencesCover(1_000L, 2_000L)
-
-        coVerify(exactly = 1) { occurrenceGenerator.ensureCovered(1_000L, 2_000L, true, any(), any()) }
     }
 
     @Test

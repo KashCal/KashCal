@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Ingiza herufi 6 za hex (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Zote</string>
     <string name="view_week">Wiki</string>
     <string name="view_month">Mwezi</string>
     <string name="label_all_day">Siku nzima</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">Jumamosi</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Hakuna matukio yaliyopatikana</string>
     <string name="empty_no_upcoming_events">Hakuna matukio yanayokuja</string>
     <string name="empty_no_calendars">Hakuna kalenda zinazopatikana</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">Chagua mwezi na mwaka</string>
     <string name="cd_previous_month">Mwezi uliopita</string>
     <string name="cd_next_month">Mwezi ujao</string>
+    <string name="cd_previous_day">Siku iliyopita</string>
+    <string name="cd_next_day">Siku inayofuata</string>
     <string name="cd_month_year_picker">Kichagua mwezi na mwaka</string>
     <string name="cd_remove_alert">Ondoa tahadhari</string>
     <string name="cd_warning">Onyo</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">Hali ya kalenda: tupu kwa fahari.</string>
     <string name="empty_no_events_day_5">Hakuna kilichopangwa. Furahia utulivu.</string>
     <string name="filter_date">Tarehe</string>
+    <string name="search_tab_upcoming">Yajayo</string>
+    <string name="search_tab_past">Yaliyopita</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, tukio %2$d</item>
+        <item quantity="other">%1$s, matukio %2$d</item>
+    </plurals>
+    <string name="search_date_this_week">Wiki hii</string>
+    <string name="search_date_this_month">Mwezi huu</string>
+    <string name="search_date_pick">Chagua tarehe…</string>
+    <string name="search_next">Lijalo: %1$s</string>
+    <string name="search_last">La mwisho: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Mahali:</string>
+    <string name="search_reason_notes">Maelezo:</string>
+    <string name="search_reason_guest">Mgeni:</string>
+    <string name="search_keep_typing">Endelea kuandika ili kutafuta</string>
+    <string name="search_no_matches">Hakuna matukio yanayolingana na “%1$s”</string>
+    <string name="search_lookback_line">Muda wa Kusawazisha Nyuma: %1$s</string>
+    <string name="search_sync_settings">Mipangilio ya kusawazisha</string>
+    <string name="cd_search_sync_settings">Fungua mpangilio wa muda wa kusawazisha nyuma</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Onyesha tukio %d lililopita</item>
+        <item quantity="other">Onyesha matukio %d yaliyopita</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">%d zaidi katika kalenda iliyofichwa</item>
+        <item quantity="other">%d zaidi katika kalenda zilizofichwa</item>
+    </plurals>
+    <string name="search_show">Onyesha</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Onyesha tokeo %d katika kalenda iliyofichwa</item>
+        <item quantity="other">Onyesha matokeo %d katika kalenda zilizofichwa</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Onyesha %d katika kalenda iliyofichwa</item>
+        <item quantity="other">Onyesha %d katika kalenda zilizofichwa</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Ikijumuisha kalenda %d iliyofichwa</item>
+        <item quantity="other">Ikijumuisha kalenda %d zilizofichwa</item>
+    </plurals>
+    <string name="search_leave_out">Ondoa</string>
+    <string name="cd_search_leave_out">Ondoa kalenda zilizofichwa</string>
+    <string name="search_hidden_calendar">%1$s · imefichwa</string>
+    <string name="cd_search_date_this_week">Onyesha matokeo ya wiki hii</string>
+    <string name="cd_search_date_this_month">Onyesha matokeo ya mwezi huu</string>
+    <string name="cd_search_date_pick">Chagua tarehe za kutafuta</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d yajayo</item>
+        <item quantity="other">%d yajayo</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d lililopita</item>
+        <item quantity="other">%d yaliyopita</item>
+    </plurals>
+    <string name="search_no_past_events">Hakuna matukio yaliyopita</string>
+    <string name="search_no_events_in_dates">Hakuna matukio katika tarehe hizi</string>
     <string name="label_select_date">Chagua tarehe</string>
     <string name="hint_tap_date_range">Gusa tarehe hiyo hiyo kwa siku moja, au tarehe nyingine kwa kipindi</string>
     <string name="cd_clear">Futa</string>

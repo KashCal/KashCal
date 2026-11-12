@@ -628,8 +628,8 @@ class ExceptionOccurrenceModelTest {
             placeholderTitle = "Recurring meeting",
         )
 
-        // The sentinel lets the FTS-search and title-suggest exclusions in `EventsDao`, shared
-        // with ICS-sync synthetics, hide it.
+        // The sentinel lets the search exclusion in `EventSearchSql` and the title-suggest
+        // exclusion in `EventsDao`, shared with ICS-sync synthetics, hide it.
         assertEquals(
             "true",
             syntheticMaster.extraProperties?.get("X-KASHCAL-SYNTHETIC-MASTER"),

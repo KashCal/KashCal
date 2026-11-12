@@ -88,9 +88,8 @@ class ICalParser(
 
     /**
      * Creates a parser with the Android-safe [SimpleTimeZoneRegistry], the choice for most
-     * callers and for Android. That registry resolves IDs with ZoneId.of, supported on Android
-     * via desugaring, relies on the data's embedded VTIMEZONE definitions, and has no external
-     * dependencies.
+     * callers and for Android. That registry resolves IDs with ZoneId.of, which Android supports,
+     * relies on the data's embedded VTIMEZONE definitions, and has no external dependencies.
      */
     constructor() : this(SimpleTimeZoneRegistry())
 
@@ -129,8 +128,8 @@ class ICalParser(
          * ZoneRulesProvider is available and that need pre-built TimeZone objects from the
          * registry or the complete Windows timezone name mapping.
          *
-         * Never use it on Android: it crashes at runtime because ZoneRulesProvider isn't
-         * available via desugaring.
+         * Not for Android: Android blocks the custom ZoneRulesProvider that registry installs, so
+         * ical4j falls back to platform zones there and the registry adds nothing over the default.
          */
         fun createWithFullRegistry(): ICalParser {
             return ICalParser(net.fortuna.ical4j.model.TimeZoneRegistryImpl())

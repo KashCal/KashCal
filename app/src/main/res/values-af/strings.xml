@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Voer 6 hex-karakters in (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Alles</string>
     <string name="view_week">Week</string>
     <string name="view_month">Maand</string>
     <string name="label_all_day">Heeldag</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">Saterdag</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Geen gebeurtenisse gevind nie</string>
     <string name="empty_no_upcoming_events">Geen komende gebeurtenisse nie</string>
     <string name="empty_no_calendars">Geen kalenders beskikbaar nie</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">Kies maand en jaar</string>
     <string name="cd_previous_month">Vorige maand</string>
     <string name="cd_next_month">Volgende maand</string>
+    <string name="cd_previous_day">Vorige dag</string>
+    <string name="cd_next_day">Volgende dag</string>
     <string name="cd_month_year_picker">Maand- en jaarkieser</string>
     <string name="cd_remove_alert">Verwyder waarskuwing</string>
     <string name="cd_warning">Waarskuwing</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">Kalenderstatus: heerlik leeg.</string>
     <string name="empty_no_events_day_5">Niks beplan nie. Geniet die kalmte.</string>
     <string name="filter_date">Datum</string>
+    <string name="search_tab_upcoming">Komend</string>
+    <string name="search_tab_past">Verby</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d gebeurtenis</item>
+        <item quantity="other">%1$s, %2$d gebeurtenisse</item>
+    </plurals>
+    <string name="search_date_this_week">Hierdie week</string>
+    <string name="search_date_this_month">Hierdie maand</string>
+    <string name="search_date_pick">Kies datums…</string>
+    <string name="search_next">Volgende: %1$s</string>
+    <string name="search_last">Laaste: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Ligging:</string>
+    <string name="search_reason_notes">Notas:</string>
+    <string name="search_reason_guest">Gas:</string>
+    <string name="search_keep_typing">Hou aan tik om te soek</string>
+    <string name="search_no_matches">Geen gebeurtenisse pas by “%1$s” nie</string>
+    <string name="search_lookback_line">Sinkroniseringsrugsig: %1$s</string>
+    <string name="search_sync_settings">Sinkroniseringsinstellings</string>
+    <string name="cd_search_sync_settings">Maak die sinkroniseringsrugsig-instelling oop</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Wys %d vorige gebeurtenis</item>
+        <item quantity="other">Wys %d vorige gebeurtenisse</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">%d meer in \'n versteekte kalender</item>
+        <item quantity="other">%d meer in versteekte kalenders</item>
+    </plurals>
+    <string name="search_show">Wys</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Wys %d treffer in \'n versteekte kalender</item>
+        <item quantity="other">Wys %d treffers in versteekte kalenders</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Wys %d in \'n versteekte kalender</item>
+        <item quantity="other">Wys %d in versteekte kalenders</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Insluitend %d versteekte kalender</item>
+        <item quantity="other">Insluitend %d versteekte kalenders</item>
+    </plurals>
+    <string name="search_leave_out">Laat weg</string>
+    <string name="cd_search_leave_out">Laat versteekte kalenders weg</string>
+    <string name="search_hidden_calendar">%1$s · versteek</string>
+    <string name="cd_search_date_this_week">Wys treffers hierdie week</string>
+    <string name="cd_search_date_this_month">Wys treffers hierdie maand</string>
+    <string name="cd_search_date_pick">Kies datums om te soek</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d komend</item>
+        <item quantity="other">%d komend</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d verby</item>
+        <item quantity="other">%d verby</item>
+    </plurals>
+    <string name="search_no_past_events">Geen vorige gebeurtenisse nie</string>
+    <string name="search_no_events_in_dates">Geen gebeurtenisse op hierdie datums nie</string>
     <string name="label_select_date">Kies \'n datum</string>
     <string name="hint_tap_date_range">Tik dieselfde datum vir \'n enkele dag, of \'n ander datum vir reeks</string>
     <string name="cd_clear">Maak skoon</string>

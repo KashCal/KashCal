@@ -7,6 +7,7 @@ import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -23,6 +24,8 @@ import org.junit.runner.RunWith
 import org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository
 import org.onekash.kashcal.data.calendar_provider.deviceEventReader
 import org.onekash.kashcal.data.calendar_provider.deviceEventWriter
+import org.onekash.kashcal.domain.search.SearchOutcome
+import org.onekash.kashcal.domain.search.SearchQuery
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
 import org.onekash.kashcal.util.ZoneSource
 import org.robolectric.RobolectricTestRunner
@@ -55,7 +58,7 @@ class HomeViewModelZoneChangeTest {
     private val dateRangeCalls = mutableListOf<Pair<Int, Int>>()
     private val dayRangeCalls = mutableListOf<Long>()
     private val dotCalls = mutableListOf<Pair<Int, Int>>()
-    private val searchCalls = mutableListOf<Triple<String, Int, Int>>()
+    private val searchCalls = mutableListOf<Pair<String, LongRange?>>()
 
     @Before
     fun setUp() {
@@ -78,9 +81,9 @@ class HomeViewModelZoneChangeTest {
             dayRangeCalls += firstArg<Long>()
             MutableStateFlow(persistentMapOf())
         }
-        coEvery { repo.searchDisplayEvents(any(), any(), any(), any()) } answers {
-            searchCalls += Triple(firstArg<String>(), secondArg<Int>(), thirdArg<Int>())
-            emptyList()
+        every { repo.observeSearch(any(), any(), any(), any()) } answers {
+            searchCalls += firstArg<SearchQuery>().words.joinToString(" ") to arg<LongRange?>(3)
+            flowOf(SearchOutcome())
         }
         coEvery { repo.getDisplayEventsGroupedByDayOnce(any(), any()) } answers {
             dotCalls += firstArg<Int>() to secondArg<Int>()
@@ -336,7 +339,8 @@ class HomeViewModelZoneChangeTest {
         advanceUntilIdle()
 
         assertTrue("searched again", searchCalls.size > before)
-        assertEquals(Triple("zsf", 20261104, 20261104), searchCalls.last())
+        val (start, end) = DateFilter.SingleDay(midnight(NOV_4, TOKYO)).getTimeRange(TOKYO)
+        assertEquals("zsf" to start..end, searchCalls.last())
     }
 
     @Test

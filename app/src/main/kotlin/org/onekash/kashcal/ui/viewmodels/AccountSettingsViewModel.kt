@@ -1162,6 +1162,23 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
+    private val _syncLookbackSheetRequested = MutableStateFlow(false)
+
+    /**
+     * True when search's Sync settings link asked for the Sync lookback sheet and the screen
+     * hasn't opened it yet ([consumeSyncLookbackSheetRequest]). Held here, not in the activity,
+     * so it survives until the screen has loaded and is gone once the sheet opened.
+     */
+    val syncLookbackSheetRequested: StateFlow<Boolean> = _syncLookbackSheetRequested.asStateFlow()
+
+    fun requestSyncLookbackSheet() {
+        _syncLookbackSheetRequested.value = true
+    }
+
+    fun consumeSyncLookbackSheetRequest() {
+        _syncLookbackSheetRequested.value = false
+    }
+
     /**
      * Applies the route the onboarding sheet launched Settings with, once per view model: the
      * sign-in routes open their sheet and make closing it return to HomeScreen. The Device

@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Faka izinhlamvu ze-hex eziyi-6 (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Konke</string>
     <string name="view_week">Isonto</string>
     <string name="view_month">Inyanga</string>
     <string name="label_all_day">Usuku lonke</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">UMgqibelo</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Ayikho imicimbi etholakele</string>
     <string name="empty_no_upcoming_events">Ayikho imicimbi ezayo</string>
     <string name="empty_no_calendars">Awekho amakhalenda atholakalayo</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">Khetha inyanga nonyaka</string>
     <string name="cd_previous_month">Inyanga edlule</string>
     <string name="cd_next_month">Inyanga ezayo</string>
+    <string name="cd_previous_day">Usuku olwedlule</string>
+    <string name="cd_next_day">Usuku olulandelayo</string>
     <string name="cd_month_year_picker">Isikhethi senyanga nonyaka</string>
     <string name="cd_remove_alert">Susa isexwayiso</string>
     <string name="cd_warning">Isexwayiso</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">Isimo sekhalenda: singenalutho ngendlela emnandi.</string>
     <string name="empty_no_events_day_5">Akukho okuhleliwe. Jabulela ukuthula.</string>
     <string name="filter_date">Usuku</string>
+    <string name="search_tab_upcoming">Okuzayo</string>
+    <string name="search_tab_past">Okudlule</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d umcimbi</item>
+        <item quantity="other">%1$s, %2$d imicimbi</item>
+    </plurals>
+    <string name="search_date_this_week">Leli viki</string>
+    <string name="search_date_this_month">Le nyanga</string>
+    <string name="search_date_pick">Khetha izinsuku…</string>
+    <string name="search_next">Okulandelayo: %1$s</string>
+    <string name="search_last">Okokugcina: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Indawo:</string>
+    <string name="search_reason_notes">Amanothi:</string>
+    <string name="search_reason_guest">Isivakashi:</string>
+    <string name="search_keep_typing">Qhubeka uthayipha ukuze useshe</string>
+    <string name="search_no_matches">Ayikho imicimbi efana no-“%1$s”</string>
+    <string name="search_lookback_line">Ukubheka Emuva Kokuvumelanisa: %1$s</string>
+    <string name="search_sync_settings">Izilungiselelo zokuvumelanisa</string>
+    <string name="cd_search_sync_settings">Vula isilungiselelo sokubheka emuva kokuvumelanisa</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Bonisa umcimbi odlule o-%d</item>
+        <item quantity="other">Bonisa imicimbi edlule engu-%d</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">%d okunye kukhalenda efihliwe</item>
+        <item quantity="other">%d okunye kumakhalenda afihliwe</item>
+    </plurals>
+    <string name="search_show">Bonisa</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Bonisa okufanayo okungu-%d kukhalenda efihliwe</item>
+        <item quantity="other">Bonisa okufanayo okungu-%d kumakhalenda afihliwe</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Bonisa %d kukhalenda efihliwe</item>
+        <item quantity="other">Bonisa %d kumakhalenda afihliwe</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Kufaka phakathi ikhalenda efihliwe engu-%d</item>
+        <item quantity="other">Kufaka phakathi amakhalenda afihliwe angu-%d</item>
+    </plurals>
+    <string name="search_leave_out">Shiya</string>
+    <string name="cd_search_leave_out">Shiya amakhalenda afihliwe</string>
+    <string name="search_hidden_calendar">%1$s · kufihliwe</string>
+    <string name="cd_search_date_this_week">Bonisa okufanayo kuleli viki</string>
+    <string name="cd_search_date_this_month">Bonisa okufanayo kule nyanga</string>
+    <string name="cd_search_date_pick">Khetha izinsuku zokusesha</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d okuzayo</item>
+        <item quantity="other">%d okuzayo</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d okudlule</item>
+        <item quantity="other">%d okudlule</item>
+    </plurals>
+    <string name="search_no_past_events">Ayikho imicimbi edlule</string>
+    <string name="search_no_events_in_dates">Ayikho imicimbi kulezi zinsuku</string>
     <string name="label_select_date">Khetha usuku</string>
     <string name="hint_tap_date_range">Thepha usuku olufanayo losuku olulodwa, noma olunye usuku lebanga</string>
     <string name="cd_clear">Sula</string>

@@ -48,7 +48,6 @@ class DeviceHomeViewModelTestFactory(
     val eventCoordinator: EventCoordinator = eventCoordinator ?: mockk {
         every { getAllCalendars() } returns MutableStateFlow(emptyList())
         every { getAllAccounts() } returns MutableStateFlow(emptyList())
-        coJustRun { ensureOccurrencesCover(any(), any()) }
         coEvery { repairMissingOccurrences() } returns 0
         coJustRun { recordTagUsage(any()) }
     }

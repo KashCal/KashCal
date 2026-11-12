@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Įveskite 6 hex simbolius (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Visi</string>
     <string name="view_week">Savaitė</string>
     <string name="view_month">Mėnuo</string>
     <string name="label_all_day">Visa diena</string>
@@ -518,7 +517,6 @@
     <string name="option_saturday">Šeštadienis</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Įvykių nerasta</string>
     <string name="empty_no_upcoming_events">Artėjančių įvykių nėra</string>
     <string name="empty_no_calendars">Nėra pasiekiamų kalendorių</string>
 
@@ -847,6 +845,8 @@
     <string name="cd_pick_month_year">Pasirinkti mėnesį ir metus</string>
     <string name="cd_previous_month">Ankstesnis mėnuo</string>
     <string name="cd_next_month">Kitas mėnuo</string>
+    <string name="cd_previous_day">Ankstesnė diena</string>
+    <string name="cd_next_day">Kita diena</string>
     <string name="cd_month_year_picker">Mėnesio ir metų pasirinkimas</string>
     <string name="cd_remove_alert">Pašalinti priminimą</string>
     <string name="cd_warning">Įspėjimas</string>
@@ -1275,6 +1275,81 @@
     <string name="empty_no_events_day_4">Kalendoriaus būsena: nuostabiai tuščia.</string>
     <string name="empty_no_events_day_5">Nieko nesuplanuota. Mėgaukis ramybe.</string>
     <string name="filter_date">Data</string>
+    <string name="search_tab_upcoming">Būsimi</string>
+    <string name="search_tab_past">Praėję</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d įvykis</item>
+        <item quantity="few">%1$s, %2$d įvykiai</item>
+        <item quantity="many">%1$s, %2$d įvykio</item>
+        <item quantity="other">%1$s, %2$d įvykių</item>
+    </plurals>
+    <string name="search_date_this_week">Ši savaitė</string>
+    <string name="search_date_this_month">Šis mėnuo</string>
+    <string name="search_date_pick">Pasirinkti datas…</string>
+    <string name="search_next">Kitas: %1$s</string>
+    <string name="search_last">Paskutinis: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Vieta:</string>
+    <string name="search_reason_notes">Pastabos:</string>
+    <string name="search_reason_guest">Svečias:</string>
+    <string name="search_keep_typing">Rašyk toliau, kad pradėtum paiešką</string>
+    <string name="search_no_matches">Nėra įvykių, atitinkančių „%1$s“</string>
+    <string name="search_lookback_line">Sinchronizavimo gylis: %1$s</string>
+    <string name="search_sync_settings">Sinchronizavimo nustatymai</string>
+    <string name="cd_search_sync_settings">Atidaryti sinchronizavimo gylio nustatymą</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Rodyti %d praėjusį įvykį</item>
+        <item quantity="few">Rodyti %d praėjusius įvykius</item>
+        <item quantity="many">Rodyti %d praėjusio įvykio</item>
+        <item quantity="other">Rodyti %d praėjusių įvykių</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">Dar %d paslėptame kalendoriuje</item>
+        <item quantity="few">Dar %d paslėptuose kalendoriuose</item>
+        <item quantity="many">Dar %d paslėptuose kalendoriuose</item>
+        <item quantity="other">Dar %d paslėptuose kalendoriuose</item>
+    </plurals>
+    <string name="search_show">Rodyti</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Rodyti %d atitikmenį paslėptame kalendoriuje</item>
+        <item quantity="few">Rodyti %d atitikmenis paslėptuose kalendoriuose</item>
+        <item quantity="many">Rodyti %d atitikmens paslėptuose kalendoriuose</item>
+        <item quantity="other">Rodyti %d atitikmenų paslėptuose kalendoriuose</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Rodyti %d paslėptame kalendoriuje</item>
+        <item quantity="few">Rodyti %d paslėptuose kalendoriuose</item>
+        <item quantity="many">Rodyti %d paslėptuose kalendoriuose</item>
+        <item quantity="other">Rodyti %d paslėptuose kalendoriuose</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Įskaitant %d paslėptą kalendorių</item>
+        <item quantity="few">Įskaitant %d paslėptus kalendorius</item>
+        <item quantity="many">Įskaitant %d paslėpto kalendoriaus</item>
+        <item quantity="other">Įskaitant %d paslėptų kalendorių</item>
+    </plurals>
+    <string name="search_leave_out">Neįtraukti</string>
+    <string name="cd_search_leave_out">Neįtraukti paslėptų kalendorių</string>
+    <string name="search_hidden_calendar">%1$s · paslėptas</string>
+    <string name="cd_search_date_this_week">Rodyti atitikmenis šią savaitę</string>
+    <string name="cd_search_date_this_month">Rodyti atitikmenis šį mėnesį</string>
+    <string name="cd_search_date_pick">Pasirinkti paieškos datas</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d būsimas</item>
+        <item quantity="few">%d būsimi</item>
+        <item quantity="many">%d būsimo</item>
+        <item quantity="other">%d būsimų</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d praėjęs</item>
+        <item quantity="few">%d praėję</item>
+        <item quantity="many">%d praėjusio</item>
+        <item quantity="other">%d praėjusių</item>
+    </plurals>
+    <string name="search_no_past_events">Nėra praėjusių įvykių</string>
+    <string name="search_no_events_in_dates">Šiomis datomis įvykių nėra</string>
     <string name="label_select_date">Pasirinkti datą</string>
     <string name="hint_tap_date_range">Bakstelėkite tą pačią datą vienai dienai arba kitą datą intervalui</string>
     <string name="cd_clear">Išvalyti</string>

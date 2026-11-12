@@ -27,7 +27,6 @@ import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Category
 import org.onekash.kashcal.data.db.entity.Event
-import org.onekash.kashcal.data.db.entity.EventFts
 import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.PendingCancel
@@ -48,7 +47,6 @@ import org.onekash.kashcal.data.db.entity.SyncLog
  * - calendars: calendar collections
  * - categories: per-tag color and recency
  * - events: masters and exceptions
- * - events_fts: FTS4 search index over events
  * - ics_subscriptions: ICS feed subscriptions
  * - occurrences: materialized RRULE expansions
  * - pending_cancels: removed attendees awaiting an iTIP CANCEL
@@ -67,7 +65,6 @@ import org.onekash.kashcal.data.db.entity.SyncLog
         Calendar::class,
         Category::class,
         Event::class,
-        EventFts::class,
         IcsSubscription::class,
         Occurrence::class,
         PendingCancel::class,
@@ -76,7 +73,7 @@ import org.onekash.kashcal.data.db.entity.SyncLog
         ScheduledReminder::class,
         SyncLog::class
     ],
-    version = 27,
+    version = 28,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 3, to = 4)

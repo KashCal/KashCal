@@ -52,6 +52,9 @@ class AndroidCalendarProviderRepository @Inject constructor(
             Calendars.OWNER_ACCOUNT          // 7
         )
 
+        /** Event ids per batched attendee query, under SQLite's bound-variable limit. */
+        private const val ATTENDEE_EVENT_BATCH = 500
+
         /**
          * Attendee read projection. Order matters: [mapToDeviceAttendee] reads by index.
          * `internal` so `AttendeesProjectionTest` can assert these five columns in this order.
@@ -1453,6 +1456,32 @@ class AndroidCalendarProviderRepository @Inject constructor(
             emptyList()
         }
     }
+
+    override suspend fun getAttendeesForEvents(eventIds: Collection<Long>): Map<Long, List<DeviceAttendee>> =
+        withContext(Dispatchers.IO) {
+            val result = mutableMapOf<Long, MutableList<DeviceAttendee>>()
+            try {
+                for (batch in eventIds.distinct().chunked(ATTENDEE_EVENT_BATCH)) {
+                    contentResolver.query(
+                        Attendees.CONTENT_URI,
+                        ATTENDEES_PROJECTION + Attendees.EVENT_ID,
+                        "${Attendees.EVENT_ID} IN (${batch.joinToString(",") { "?" }})",
+                        batch.map { it.toString() }.toTypedArray(),
+                        null
+                    )?.use { cursor ->
+                        val eventColumn = ATTENDEES_PROJECTION.size
+                        while (cursor.moveToNext()) {
+                            result.getOrPut(cursor.getLong(eventColumn)) { mutableListOf() } += mapToDeviceAttendee(cursor)
+                        }
+                    }
+                }
+            } catch (e: SecurityException) {
+                Log.w(TAG, "Permission denied reading attendees for ${eventIds.size} events", e)
+            } catch (e: Exception) {
+                Log.w(TAG, "Error reading attendees for ${eventIds.size} events", e)
+            }
+            result
+        }
 
     private fun mapToDeviceAttendee(cursor: android.database.Cursor): DeviceAttendee = DeviceAttendee(
         id = cursor.getLong(0),

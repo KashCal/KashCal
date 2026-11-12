@@ -2,7 +2,7 @@ package org.onekash.kashcal.ui.screens
 
 import android.Manifest
 import androidx.activity.ComponentActivity
-import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.LocalActivity
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -114,6 +114,7 @@ class AccountSettingsScreenViewModelWiringTest {
         every { vm.themeMode } returns flowOf(ThemeMode.SYSTEM)
         every { vm.colorSource } returns flowOf(ColorSource.DYNAMIC)
         every { vm.accentSeed } returns flowOf(0)
+        every { vm.syncLookbackSheetRequested } returns MutableStateFlow(false)
         // UI-state flows.
         every { vm.uiState } returns MutableStateFlow(
             AccountSettingsUiState(
@@ -185,7 +186,7 @@ class AccountSettingsScreenViewModelWiringTest {
         onFinish: () -> Unit = {},
     ) {
         composeTestRule.setContent {
-            hostActivity = LocalContext.current as ComponentActivity
+            hostActivity = LocalActivity.current as ComponentActivity
             SettingsRoute(
                 viewModel = vm,
                 initialThemeMode = ThemeMode.SYSTEM,

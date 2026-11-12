@@ -2410,11 +2410,111 @@ class MigrationTest {
         assertTrue(triggerExists(PendingOperationTriggers.EVENT_DELETE_TRIGGER))
     }
 
+    // ==================== Migration 27 to 28 (search index dropped) ====================
+
+    private fun migrateUpToV27() {
+        migrateUpToV26()
+        Migrations.MIGRATION_26_27.migrate(db)
+    }
+
+    /** Creates the v27 FTS4 search index and Room's four sync triggers, as `27.json` lists them. */
+    private fun createV27SearchIndex() {
+        db.execSQL(
+            "CREATE VIRTUAL TABLE IF NOT EXISTS `events_fts` USING FTS4(`title` TEXT NOT NULL, `location` TEXT, " +
+                "`description` TEXT, content=`events`)"
+        )
+        db.execSQL(
+            "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_events_fts_BEFORE_UPDATE BEFORE UPDATE ON `events` " +
+                "BEGIN DELETE FROM `events_fts` WHERE `docid`=OLD.`rowid`; END"
+        )
+        db.execSQL(
+            "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_events_fts_BEFORE_DELETE BEFORE DELETE ON `events` " +
+                "BEGIN DELETE FROM `events_fts` WHERE `docid`=OLD.`rowid`; END"
+        )
+        db.execSQL(
+            "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_events_fts_AFTER_UPDATE AFTER UPDATE ON `events` " +
+                "BEGIN INSERT INTO `events_fts`(`docid`, `title`, `location`, `description`) " +
+                "VALUES (NEW.`rowid`, NEW.`title`, NEW.`location`, NEW.`description`); END"
+        )
+        db.execSQL(
+            "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_events_fts_AFTER_INSERT AFTER INSERT ON `events` " +
+                "BEGIN INSERT INTO `events_fts`(`docid`, `title`, `location`, `description`) " +
+                "VALUES (NEW.`rowid`, NEW.`title`, NEW.`location`, NEW.`description`); END"
+        )
+    }
+
+    private fun searchIndexObjects(): Long =
+        db.query("SELECT COUNT(*) FROM sqlite_master WHERE name LIKE '%events_fts%' OR sql LIKE '%events_fts%'")
+            .use { it.moveToFirst(); it.getLong(0) }
+
+    @Test
+    fun `migration 27 to 28 drops the search index and its triggers and keeps every event`() {
+        migrateUpToV27()
+        createV27SearchIndex()
+        seedV24Calendars()
+        insertEvent(1); insertEvent(2)
+        val before = listOf("events", "calendars", "accounts", "attendees", "occurrences").map { rows(it) }
+        assertTrue(searchIndexObjects() > 0)
+
+        Migrations.MIGRATION_27_28.migrate(db)
+
+        assertEquals(0L, searchIndexObjects())
+        assertEquals(before, listOf("events", "calendars", "accounts", "attendees", "occurrences").map { rows(it) })
+        assertTrue(triggerExists(PendingOperationTriggers.EVENT_DELETE_TRIGGER))
+    }
+
+    @Test
+    fun `migration 27 to 28 leaves events writable`() {
+        migrateUpToV27()
+        createV27SearchIndex()
+        seedV24Calendars()
+        insertEvent(1)
+
+        Migrations.MIGRATION_27_28.migrate(db)
+
+        insertEvent(2)
+        db.execSQL("UPDATE events SET title = 'Renamed' WHERE id = 1")
+        db.execSQL("DELETE FROM events WHERE id = 2")
+        val titles = db.query("SELECT title FROM events").use { c -> buildList { while (c.moveToNext()) add(c.getString(0)) } }
+        assertEquals(listOf("Renamed"), titles)
+    }
+
+    @Test
+    fun `migration 27 to 28 accepts a database without the search index and can run again`() {
+        migrateUpToV27()
+        seedV24Calendars()
+        insertEvent(1)
+        val before = rows("events")
+
+        Migrations.MIGRATION_27_28.migrate(db)
+        Migrations.MIGRATION_27_28.migrate(db)
+
+        assertEquals(0L, searchIndexObjects())
+        assertEquals(before, rows("events"))
+    }
+
+    @Test
+    fun `migration 27 to 28 drops any other trigger that names the search index`() {
+        migrateUpToV27()
+        createV27SearchIndex()
+        db.execSQL(
+            "CREATE TRIGGER legacy_events_search_sync AFTER INSERT ON `events` " +
+                "BEGIN INSERT INTO `events_fts`(`docid`, `title`) VALUES (NEW.`rowid`, NEW.`title`); END"
+        )
+        seedV24Calendars()
+
+        Migrations.MIGRATION_27_28.migrate(db)
+
+        assertFalse(triggerExists("legacy_events_search_sync"))
+        assertEquals(0L, searchIndexObjects())
+        insertEvent(1)
+    }
+
     // ==================== Migration Chain/Registry Tests ====================
 
     @Test
     fun `all migrations array contains expected migrations`() {
-        assertEquals(25, Migrations.ALL_MIGRATIONS.size)
+        assertEquals(26, Migrations.ALL_MIGRATIONS.size)
     }
 
     @Test
@@ -2471,12 +2571,14 @@ class MigrationTest {
         assertEquals(26, migrations[23].endVersion)
         assertEquals(26, migrations[24].startVersion)
         assertEquals(27, migrations[24].endVersion)
+        assertEquals(27, migrations[25].startVersion)
+        assertEquals(28, migrations[25].endVersion)
     }
 
     @Test
     fun `migration versions form valid chain with gaps`() {
         val migrations = Migrations.ALL_MIGRATIONS.toList()
-        // Manual: 1→2, 2→3, then 4→5 through 26→27 (3→4 is the AutoMigration)
+        // Manual: 1→2, 2→3, then 4→5 through 27→28 (3→4 is the AutoMigration)
         assertTrue(migrations[0].endVersion == migrations[1].startVersion) // 2
         assertTrue(migrations[2].startVersion == 4) // gap at 3→4
         for (i in 2 until migrations.size - 1) {

@@ -55,7 +55,8 @@ import javax.inject.Inject
  * RRULE, sentinel cleared), so exception FKs stay valid.
  *
  * The value matches `SYNTHETIC_MASTER_EXTRA_KEY` in `IcsSubscriptionRepository`, so the
- * FTS-search and title-suggest exclusions in [EventsDao] and the occurrence skip in
+ * search exclusion in [org.onekash.kashcal.data.db.dao.EventSearchSql], the title-suggest
+ * exclusion in [EventsDao] and the occurrence skip in
  * [OccurrenceGenerator.generateOccurrences] cover both paths. The two declarations are kept
  * separate on purpose: ICS sync and CalDAV pull are separate code paths.
  */

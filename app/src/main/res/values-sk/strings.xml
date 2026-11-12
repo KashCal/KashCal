@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Zadajte 6 hex znakov (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Všetko</string>
     <string name="view_week">Týždeň</string>
     <string name="view_month">Mesiac</string>
     <string name="label_all_day">Celý deň</string>
@@ -518,7 +517,6 @@
     <string name="option_saturday">Sobota</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Žiadne udalosti nenájdené</string>
     <string name="empty_no_upcoming_events">Žiadne nadchádzajúce udalosti</string>
     <string name="empty_no_calendars">Žiadne dostupné kalendáre</string>
 
@@ -847,6 +845,8 @@
     <string name="cd_pick_month_year">Vybrať mesiac a rok</string>
     <string name="cd_previous_month">Predchádzajúci mesiac</string>
     <string name="cd_next_month">Ďalší mesiac</string>
+    <string name="cd_previous_day">Predchádzajúci deň</string>
+    <string name="cd_next_day">Ďalší deň</string>
     <string name="cd_month_year_picker">Výber mesiaca a roku</string>
     <string name="cd_remove_alert">Odstrániť upozornenie</string>
     <string name="cd_warning">Varovanie</string>
@@ -1275,6 +1275,81 @@
     <string name="empty_no_events_day_4">Stav kalendára: nádherne prázdny.</string>
     <string name="empty_no_events_day_5">Nič v pláne. Užite si pokoj.</string>
     <string name="filter_date">Dátum</string>
+    <string name="search_tab_upcoming">Budúce</string>
+    <string name="search_tab_past">Minulé</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d udalosť</item>
+        <item quantity="few">%1$s, %2$d udalosti</item>
+        <item quantity="many">%1$s, %2$d udalostí</item>
+        <item quantity="other">%1$s, %2$d udalostí</item>
+    </plurals>
+    <string name="search_date_this_week">Tento týždeň</string>
+    <string name="search_date_this_month">Tento mesiac</string>
+    <string name="search_date_pick">Vybrať dátumy…</string>
+    <string name="search_next">Najbližšie: %1$s</string>
+    <string name="search_last">Naposledy: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Miesto:</string>
+    <string name="search_reason_notes">Poznámky:</string>
+    <string name="search_reason_guest">Hosť:</string>
+    <string name="search_keep_typing">Na vyhľadanie píšte ďalej</string>
+    <string name="search_no_matches">Výrazu „%1$s“ nezodpovedajú žiadne udalosti</string>
+    <string name="search_lookback_line">Rozsah synchronizácie späť: %1$s</string>
+    <string name="search_sync_settings">Nastavenia synchronizácie</string>
+    <string name="cd_search_sync_settings">Otvoriť rozsah synchronizácie späť</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Zobraziť %d minulú udalosť</item>
+        <item quantity="few">Zobraziť %d minulé udalosti</item>
+        <item quantity="many">Zobraziť %d minulých udalostí</item>
+        <item quantity="other">Zobraziť %d minulých udalostí</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">Ďalšia %d v skrytom kalendári</item>
+        <item quantity="few">Ďalšie %d v skrytých kalendároch</item>
+        <item quantity="many">Ďalších %d v skrytých kalendároch</item>
+        <item quantity="other">Ďalších %d v skrytých kalendároch</item>
+    </plurals>
+    <string name="search_show">Zobraziť</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Zobraziť %d výsledok v skrytom kalendári</item>
+        <item quantity="few">Zobraziť %d výsledky v skrytých kalendároch</item>
+        <item quantity="many">Zobraziť %d výsledkov v skrytých kalendároch</item>
+        <item quantity="other">Zobraziť %d výsledkov v skrytých kalendároch</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Zobraziť %d v skrytom kalendári</item>
+        <item quantity="few">Zobraziť %d v skrytých kalendároch</item>
+        <item quantity="many">Zobraziť %d v skrytých kalendároch</item>
+        <item quantity="other">Zobraziť %d v skrytých kalendároch</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Vrátane %d skrytého kalendára</item>
+        <item quantity="few">Vrátane %d skrytých kalendárov</item>
+        <item quantity="many">Vrátane %d skrytých kalendárov</item>
+        <item quantity="other">Vrátane %d skrytých kalendárov</item>
+    </plurals>
+    <string name="search_leave_out">Vynechať</string>
+    <string name="cd_search_leave_out">Vynechať skryté kalendáre</string>
+    <string name="search_hidden_calendar">%1$s · skrytý</string>
+    <string name="cd_search_date_this_week">Zobraziť výsledky z tohto týždňa</string>
+    <string name="cd_search_date_this_month">Zobraziť výsledky z tohto mesiaca</string>
+    <string name="cd_search_date_pick">Vybrať dátumy na hľadanie</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d budúca</item>
+        <item quantity="few">%d budúce</item>
+        <item quantity="many">%d budúcich</item>
+        <item quantity="other">%d budúcich</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d minulá</item>
+        <item quantity="few">%d minulé</item>
+        <item quantity="many">%d minulých</item>
+        <item quantity="other">%d minulých</item>
+    </plurals>
+    <string name="search_no_past_events">Žiadne minulé udalosti</string>
+    <string name="search_no_events_in_dates">V týchto dňoch nie sú žiadne udalosti</string>
     <string name="label_select_date">Vyberte dátum</string>
     <string name="hint_tap_date_range">Ťuknite na rovnaký dátum pre jeden deň, alebo na iný pre rozsah</string>
     <string name="cd_clear">Vymazať</string>

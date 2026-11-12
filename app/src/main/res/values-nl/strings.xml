@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Voer 6 hex-tekens in (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Alles</string>
     <string name="view_week">Week</string>
     <string name="view_month">Maand</string>
     <string name="label_all_day">Hele dag</string>
@@ -515,7 +514,6 @@
     <string name="option_saturday">Zaterdag</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Geen afspraken gevonden</string>
     <string name="empty_no_upcoming_events">Geen komende afspraken</string>
     <string name="empty_no_calendars">Geen agenda\'s beschikbaar</string>
 
@@ -824,6 +822,8 @@
     <string name="cd_pick_month_year">Maand en jaar kiezen</string>
     <string name="cd_previous_month">Vorige maand</string>
     <string name="cd_next_month">Volgende maand</string>
+    <string name="cd_previous_day">Vorige dag</string>
+    <string name="cd_next_day">Volgende dag</string>
     <string name="cd_month_year_picker">Maand- en jaarkiezer</string>
     <string name="cd_remove_alert">Herinnering verwijderen</string>
     <string name="cd_warning">Waarschuwing</string>
@@ -1160,6 +1160,65 @@
     <string name="empty_no_events_day_4">Agendastatus: heerlijk leeg.</string>
     <string name="empty_no_events_day_5">Niets gepland. Geniet van de rust.</string>
     <string name="filter_date">Datum</string>
+    <string name="search_tab_upcoming">Komend</string>
+    <string name="search_tab_past">Voorbij</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d afspraak</item>
+        <item quantity="other">%1$s, %2$d afspraken</item>
+    </plurals>
+    <string name="search_date_this_week">Deze week</string>
+    <string name="search_date_this_month">Deze maand</string>
+    <string name="search_date_pick">Datums kiezen…</string>
+    <string name="search_next">Volgende: %1$s</string>
+    <string name="search_last">Laatste: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Locatie:</string>
+    <string name="search_reason_notes">Notities:</string>
+    <string name="search_reason_guest">Gast:</string>
+    <string name="search_keep_typing">Typ verder om te zoeken</string>
+    <string name="search_no_matches">Geen afspraken gevonden voor ‘%1$s’</string>
+    <string name="search_lookback_line">Sync-terugblik: %1$s</string>
+    <string name="search_sync_settings">Sync-instellingen</string>
+    <string name="cd_search_sync_settings">Instelling voor sync-terugblik openen</string>
+    <plurals name="search_show_past">
+        <item quantity="one">%d afgelopen afspraak tonen</item>
+        <item quantity="other">%d afgelopen afspraken tonen</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">Nog %d in een verborgen agenda</item>
+        <item quantity="other">Nog %d in verborgen agenda\'s</item>
+    </plurals>
+    <string name="search_show">Tonen</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">%d resultaat in een verborgen agenda tonen</item>
+        <item quantity="other">%d resultaten in verborgen agenda\'s tonen</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">%d in een verborgen agenda tonen</item>
+        <item quantity="other">%d in verborgen agenda\'s tonen</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Inclusief %d verborgen agenda</item>
+        <item quantity="other">Inclusief %d verborgen agenda\'s</item>
+    </plurals>
+    <string name="search_leave_out">Weglaten</string>
+    <string name="cd_search_leave_out">Verborgen agenda\'s weglaten</string>
+    <string name="search_hidden_calendar">%1$s · verborgen</string>
+    <string name="cd_search_date_this_week">Resultaten van deze week tonen</string>
+    <string name="cd_search_date_this_month">Resultaten van deze maand tonen</string>
+    <string name="cd_search_date_pick">Datums kiezen om te zoeken</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d komend</item>
+        <item quantity="other">%d komend</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d voorbij</item>
+        <item quantity="other">%d voorbij</item>
+    </plurals>
+    <string name="search_no_past_events">Geen afgelopen afspraken</string>
+    <string name="search_no_events_in_dates">Geen afspraken op deze datums</string>
     <string name="label_select_date">Selecteer een datum</string>
     <string name="hint_tap_date_range">Tik dezelfde datum voor één dag, of een andere datum voor een bereik</string>
     <string name="cd_clear">Wissen</string>

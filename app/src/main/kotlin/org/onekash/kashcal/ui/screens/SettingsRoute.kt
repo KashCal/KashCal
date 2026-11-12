@@ -418,6 +418,8 @@ fun SettingsRoute(
                 calendarBackupViewModel?.consumeSheetRequest()
             }
         }
+        // Search's Sync settings link; the Root screen opens the sheet and clears the request.
+        val syncLookbackRequested = viewModel.syncLookbackSheetRequested.collectAsStateWithLifecycle().value
         val calendarBackupModel = calendarBackupViewModel?.model?.collectAsStateWithLifecycle()?.value
         val backupRow = calendarBackupRowSubtitle(calendarBackupModel)
         var showBirthdaysAnniversariesScreen by rememberSaveable { mutableStateOf(false) }
@@ -768,6 +770,8 @@ fun SettingsRoute(
                     SettingsDestination.Root -> {
                         AccountSettingsScreen(
                             uiState = uiState,
+                            openSyncLookback = syncLookbackRequested,
+                            onSyncLookbackOpened = viewModel::consumeSyncLookbackSheetRequest,
                             onShowICloudSignIn = viewModel::showICloudSignInSheet,
                             onHideICloudSignIn = viewModel::hideICloudSignInSheet,
                             onAppleIdChange = viewModel::onAppleIdChange,

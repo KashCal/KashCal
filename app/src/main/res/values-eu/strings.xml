@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Sartu 6 karaktere hamaseitarrak (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Dena</string>
     <string name="view_week">Astea</string>
     <string name="view_month">Hilabetea</string>
     <string name="label_all_day">Egun osoa</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">Larunbata</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Ez da gertaerarik aurkitu</string>
     <string name="empty_no_upcoming_events">Ez dago hurrengo gertaerarik</string>
     <string name="empty_no_calendars">Ez dago egutegirik erabilgarri</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">Hilabetea eta urtea hautatu</string>
     <string name="cd_previous_month">Aurreko hilabetea</string>
     <string name="cd_next_month">Hurrengo hilabetea</string>
+    <string name="cd_previous_day">Aurreko eguna</string>
+    <string name="cd_next_day">Hurrengo eguna</string>
     <string name="cd_month_year_picker">Hilabete eta urte hautatzailea</string>
     <string name="cd_remove_alert">Alerta kendu</string>
     <string name="cd_warning">Abisua</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">Egutegiaren egoera: zoragarriro hutsik.</string>
     <string name="empty_no_events_day_5">Ezer planeatu gabe. Gozatu lasaitasunaz.</string>
     <string name="filter_date">Data</string>
+    <string name="search_tab_upcoming">Datozenak</string>
+    <string name="search_tab_past">Iraganak</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, gertaera %2$d</item>
+        <item quantity="other">%1$s, %2$d gertaera</item>
+    </plurals>
+    <string name="search_date_this_week">Aste hau</string>
+    <string name="search_date_this_month">Hilabete hau</string>
+    <string name="search_date_pick">Aukeratu datak…</string>
+    <string name="search_next">Hurrengoa: %1$s</string>
+    <string name="search_last">Azkena: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Kokapena:</string>
+    <string name="search_reason_notes">Oharrak:</string>
+    <string name="search_reason_guest">Gonbidatua:</string>
+    <string name="search_keep_typing">Jarraitu idazten bilatzeko</string>
+    <string name="search_no_matches">Ez dago «%1$s» bilaketarekin bat datorren gertaerarik</string>
+    <string name="search_lookback_line">Sinkronizazio atzera-begirada: %1$s</string>
+    <string name="search_sync_settings">Sinkronizazio-ezarpenak</string>
+    <string name="cd_search_sync_settings">Ireki sinkronizazio atzera-begiradaren ezarpena</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Erakutsi iraganeko gertaera %d</item>
+        <item quantity="other">Erakutsi iraganeko %d gertaera</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">%d gehiago ezkutuko egutegi batean</item>
+        <item quantity="other">%d gehiago ezkutuko egutegietan</item>
+    </plurals>
+    <string name="search_show">Erakutsi</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Erakutsi ezkutuko egutegi bateko emaitza %d</item>
+        <item quantity="other">Erakutsi ezkutuko egutegietako %d emaitza</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Erakutsi %d ezkutuko egutegi batean</item>
+        <item quantity="other">Erakutsi %d ezkutuko egutegietan</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Ezkutuko egutegi %d barne</item>
+        <item quantity="other">Ezkutuko %d egutegi barne</item>
+    </plurals>
+    <string name="search_leave_out">Utzi kanpoan</string>
+    <string name="cd_search_leave_out">Utzi kanpoan ezkutuko egutegiak</string>
+    <string name="search_hidden_calendar">%1$s · ezkutatuta</string>
+    <string name="cd_search_date_this_week">Erakutsi aste honetako emaitzak</string>
+    <string name="cd_search_date_this_month">Erakutsi hilabete honetako emaitzak</string>
+    <string name="cd_search_date_pick">Aukeratu bilatzeko datak</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d datorren</item>
+        <item quantity="other">%d datozen</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d iragan</item>
+        <item quantity="other">%d iragan</item>
+    </plurals>
+    <string name="search_no_past_events">Ez dago iraganeko gertaerarik</string>
+    <string name="search_no_events_in_dates">Ez dago gertaerarik data hauetan</string>
     <string name="label_select_date">Hautatu data bat</string>
     <string name="hint_tap_date_range">Sakatu data berdina egun baterako, edo beste data bat tarte baterako</string>
     <string name="cd_clear">Garbitu</string>

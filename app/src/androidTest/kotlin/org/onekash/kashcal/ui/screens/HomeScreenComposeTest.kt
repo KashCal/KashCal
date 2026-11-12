@@ -15,7 +15,6 @@ import kotlinx.collections.immutable.persistentSetOf
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
@@ -27,6 +26,8 @@ import org.onekash.kashcal.ui.viewmodels.ViewMode
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.Calendar as JavaCalendar
+import org.onekash.kashcal.ui.viewmodels.SearchResultsState
+import org.onekash.kashcal.domain.search.SearchOutcome
 
 /**
  * Tests HomeScreen rendering and callbacks through its semantics tree, finding nodes by text or
@@ -76,17 +77,6 @@ class HomeScreenComposeTest {
             startTs = System.currentTimeMillis() + 7200000,
             endTs = System.currentTimeMillis() + 10800000,
             dtstamp = System.currentTimeMillis()
-        )
-    )
-
-    private val testSearchResults = persistentListOf(
-        EventWithNextOccurrence(
-            event = testEvents[0],
-            nextOccurrenceTs = System.currentTimeMillis()
-        ),
-        EventWithNextOccurrence(
-            event = testEvents[1],
-            nextOccurrenceTs = System.currentTimeMillis() + 7200000
         )
     )
 
@@ -388,13 +378,13 @@ class HomeScreenComposeTest {
     }
 
     @Test
-    fun homeScreen_searchModeShowsNoEventsFound() {
+    fun homeScreen_searchModeNamesTheQueryWhenNothingMatches() {
         composeTestRule.setContent {
             HomeScreen(
                 uiState = createDefaultUiState().copy(
                     isSearchActive = true,
                     searchQuery = "nonexistent",
-                    searchResults = persistentListOf()
+                    searchState = SearchResultsState.Loaded(SearchOutcome())
                 ),
                 isOnline = true,
                 onDateSelected = {},
@@ -405,17 +395,17 @@ class HomeScreenComposeTest {
             )
         }
 
-        composeTestRule.onNodeWithText("No events found").assertIsDisplayed()
+        composeTestRule.onNodeWithText("No events match “nonexistent”").assertIsDisplayed()
     }
 
     @Test
-    fun homeScreen_searchModeShowsDateFilterChips() {
+    fun homeScreen_searchModeShowsUpcomingPastAndDateChips() {
         composeTestRule.setContent {
             HomeScreen(
                 uiState = createDefaultUiState().copy(
                     isSearchActive = true,
                     searchQuery = "test",
-                    searchResults = persistentListOf()
+                    searchState = SearchResultsState.Loaded(SearchOutcome())
                 ),
                 isOnline = true,
                 onDateSelected = {},
@@ -426,10 +416,9 @@ class HomeScreenComposeTest {
             )
         }
 
-        // The date filter chips are All, Week, Month and Date; the first three are asserted.
-        composeTestRule.onNodeWithText("All").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Week").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Month").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Upcoming").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Past").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Date").assertIsDisplayed()
     }
 
     @Test
@@ -504,7 +493,7 @@ class HomeScreenComposeTest {
             )
         }
 
-        composeTestRule.onNodeWithText("No upcoming events").assertIsDisplayed()
+        composeTestRule.onNodeWithText("No events match “nonexistent”").assertIsDisplayed()
     }
 
     @Test

@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Indtast 6 hex-tegn (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Alle</string>
     <string name="view_week">Uge</string>
     <string name="view_month">Måned</string>
     <string name="label_all_day">Hele dagen</string>
@@ -515,7 +514,6 @@
     <string name="option_saturday">Lørdag</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Ingen begivenheder fundet</string>
     <string name="empty_no_upcoming_events">Ingen kommende begivenheder</string>
     <string name="empty_no_calendars">Ingen kalendere tilgængelige</string>
 
@@ -824,6 +822,8 @@
     <string name="cd_pick_month_year">Vælg måned og år</string>
     <string name="cd_previous_month">Forrige måned</string>
     <string name="cd_next_month">Næste måned</string>
+    <string name="cd_previous_day">Forrige dag</string>
+    <string name="cd_next_day">Næste dag</string>
     <string name="cd_month_year_picker">Måned- og årsvælger</string>
     <string name="cd_remove_alert">Fjern påmindelse</string>
     <string name="cd_warning">Advarsel</string>
@@ -1160,6 +1160,65 @@
     <string name="empty_no_events_day_4">Kalenderstatus: dejligt tom.</string>
     <string name="empty_no_events_day_5">Intet planlagt. Nyd roen.</string>
     <string name="filter_date">Dato</string>
+    <string name="search_tab_upcoming">Kommende</string>
+    <string name="search_tab_past">Tidligere</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d begivenhed</item>
+        <item quantity="other">%1$s, %2$d begivenheder</item>
+    </plurals>
+    <string name="search_date_this_week">Denne uge</string>
+    <string name="search_date_this_month">Denne måned</string>
+    <string name="search_date_pick">Vælg datoer…</string>
+    <string name="search_next">Næste: %1$s</string>
+    <string name="search_last">Seneste: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Placering:</string>
+    <string name="search_reason_notes">Noter:</string>
+    <string name="search_reason_guest">Gæst:</string>
+    <string name="search_keep_typing">Skriv videre for at søge</string>
+    <string name="search_no_matches">Ingen begivenheder matcher „%1$s“</string>
+    <string name="search_lookback_line">Synk-tilbageblik: %1$s</string>
+    <string name="search_sync_settings">Synk-indstillinger</string>
+    <string name="cd_search_sync_settings">Åbn indstillingen for synk-tilbageblik</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Vis %d tidligere begivenhed</item>
+        <item quantity="other">Vis %d tidligere begivenheder</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">%d mere i en skjult kalender</item>
+        <item quantity="other">%d mere i skjulte kalendere</item>
+    </plurals>
+    <string name="search_show">Vis</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Vis %d match i en skjult kalender</item>
+        <item quantity="other">Vis %d match i skjulte kalendere</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Vis %d i en skjult kalender</item>
+        <item quantity="other">Vis %d i skjulte kalendere</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Inkl. %d skjult kalender</item>
+        <item quantity="other">Inkl. %d skjulte kalendere</item>
+    </plurals>
+    <string name="search_leave_out">Udelad</string>
+    <string name="cd_search_leave_out">Udelad skjulte kalendere</string>
+    <string name="search_hidden_calendar">%1$s · skjult</string>
+    <string name="cd_search_date_this_week">Vis match i denne uge</string>
+    <string name="cd_search_date_this_month">Vis match i denne måned</string>
+    <string name="cd_search_date_pick">Vælg datoer at søge i</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d kommende</item>
+        <item quantity="other">%d kommende</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d tidligere</item>
+        <item quantity="other">%d tidligere</item>
+    </plurals>
+    <string name="search_no_past_events">Ingen tidligere begivenheder</string>
+    <string name="search_no_events_in_dates">Ingen begivenheder på disse datoer</string>
     <string name="label_select_date">Vælg en dato</string>
     <string name="hint_tap_date_range">Tryk på samme dato for enkelt dag, eller en anden dato for et interval</string>
     <string name="cd_clear">Ryd</string>

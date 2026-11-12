@@ -195,6 +195,7 @@ class MainActivity : FragmentActivity() {
                 val agendaEvents by homeViewModel.agendaEvents.collectAsStateWithLifecycle()
                 val monthEvents by homeViewModel.monthEvents.collectAsStateWithLifecycle()
                 val plannerState by homeViewModel.plannerState.collectAsStateWithLifecycle()
+                val dayDetail by homeViewModel.dayDetail.collectAsStateWithLifecycle()
                 val displayZone by homeViewModel.displayZone.collectAsStateWithLifecycle()
                 val isOnline by homeViewModel.isOnline.collectAsStateWithLifecycle()
                 val appLockEnabled by appLockViewModel.appLockEnabled.collectAsStateWithLifecycle()
@@ -578,6 +579,7 @@ class MainActivity : FragmentActivity() {
                     agendaEvents = agendaEvents,
                     monthEvents = monthEvents,
                     plannerState = plannerState,
+                    dayDetail = dayDetail,
                     isOnline = isOnline,
                     // Navigation callbacks
                     onDateSelected = { dateMillis -> homeViewModel.selectDate(dateMillis) },
@@ -645,12 +647,23 @@ class MainActivity : FragmentActivity() {
                     onSearchClick = { homeViewModel.activateSearch() },
                     onSearchClose = { homeViewModel.deactivateSearch() },
                     onSearchQueryChange = { query -> homeViewModel.updateSearchQuery(query) },
-                    onSearchResultClick = { event, nextOccurrenceTs ->
+                    onSearchResultClick = { event, occurrenceTs ->
                         quickViewEvent = event
-                        quickViewOccurrenceTs = nextOccurrenceTs  // Next occurrence of a series.
+                        // The occurrence the result is dated at.
+                        quickViewOccurrenceTs = occurrenceTs
                         showQuickViewSheet = true
                     },
                     // Search date filter callbacks
+                    onSearchTabSelect = { tab -> homeViewModel.selectSearchTab(tab) },
+                    onSearchDateChipClick = { homeViewModel.openSearchDateMenu() },
+                    onSearchDateMenuDismiss = { homeViewModel.dismissSearchDateMenu() },
+                    onSearchIncludeHiddenChange = { include -> homeViewModel.setSearchIncludeHidden(include) },
+                    onSearchOpenSyncSettings = {
+                        launchInternalActivity(
+                            Intent(this@MainActivity, SettingsActivity::class.java)
+                                .putExtra(SettingsActivity.EXTRA_OPEN_SYNC_LOOKBACK, true)
+                        )
+                    },
                     onSearchDateFilterChange = { filter -> homeViewModel.setSearchDateFilter(filter) },
                     onSearchShowDatePicker = { homeViewModel.showSearchDatePicker() },
                     onSearchHideDatePicker = { homeViewModel.hideSearchDatePicker() },
@@ -808,6 +821,7 @@ class MainActivity : FragmentActivity() {
                     // Day detail sheet callbacks
                     onShowDayDetail = { dateMs -> homeViewModel.showDayDetail(dateMs) },
                     onDismissDayDetail = { homeViewModel.dismissDayDetail() },
+                    onStepDayDetail = { step -> homeViewModel.stepDayDetail(step) },
                     // Day pager cache callbacks
                     onLoadEventsForDayPagerRange = { centerDateMs -> homeViewModel.loadEventsForDayPagerRange(centerDateMs) },
                     shouldRefreshDayPagerCache = { currentDateMs -> homeViewModel.shouldRefreshDayPagerCache(currentDateMs) },

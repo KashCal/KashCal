@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Ievadiet 6 hex rakstzīmes (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Visi</string>
     <string name="view_week">Nedēļa</string>
     <string name="view_month">Mēnesis</string>
     <string name="label_all_day">Visu dienu</string>
@@ -517,7 +516,6 @@
     <string name="option_saturday">Sestdiena</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Notikumi nav atrasti</string>
     <string name="empty_no_upcoming_events">Nav gaidāmu notikumu</string>
     <string name="empty_no_calendars">Nav pieejamu kalendāru</string>
 
@@ -836,6 +834,8 @@
     <string name="cd_pick_month_year">Izvēlēties mēnesi un gadu</string>
     <string name="cd_previous_month">Iepriekšējais mēnesis</string>
     <string name="cd_next_month">Nākamais mēnesis</string>
+    <string name="cd_previous_day">Iepriekšējā diena</string>
+    <string name="cd_next_day">Nākamā diena</string>
     <string name="cd_month_year_picker">Mēneša un gada izvēle</string>
     <string name="cd_remove_alert">Noņemt atgādinājumu</string>
     <string name="cd_warning">Brīdinājums</string>
@@ -1218,6 +1218,73 @@
     <string name="empty_no_events_day_4">Kalendāra statuss: brīnišķīgi tukšs.</string>
     <string name="empty_no_events_day_5">Nekas nav ieplānots. Baudi mieru.</string>
     <string name="filter_date">Datums</string>
+    <string name="search_tab_upcoming">Gaidāmie</string>
+    <string name="search_tab_past">Pagājušie</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="zero">%1$s, %2$d notikumu</item>
+        <item quantity="one">%1$s, %2$d notikums</item>
+        <item quantity="other">%1$s, %2$d notikumi</item>
+    </plurals>
+    <string name="search_date_this_week">Šī nedēļa</string>
+    <string name="search_date_this_month">Šis mēnesis</string>
+    <string name="search_date_pick">Izvēlēties datumus…</string>
+    <string name="search_next">Nākamais: %1$s</string>
+    <string name="search_last">Pēdējais: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Vieta:</string>
+    <string name="search_reason_notes">Piezīmes:</string>
+    <string name="search_reason_guest">Viesis:</string>
+    <string name="search_keep_typing">Turpini rakstīt, lai meklētu</string>
+    <string name="search_no_matches">Neviens notikums neatbilst “%1$s”</string>
+    <string name="search_lookback_line">Sinhronizācijas atskats: %1$s</string>
+    <string name="search_sync_settings">Sinhronizācijas iestatījumi</string>
+    <string name="cd_search_sync_settings">Atvērt sinhronizācijas atskata iestatījumu</string>
+    <plurals name="search_show_past">
+        <item quantity="zero">Rādīt %d pagājušo notikumu</item>
+        <item quantity="one">Rādīt %d pagājušo notikumu</item>
+        <item quantity="other">Rādīt %d pagājušos notikumus</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="zero">Vēl %d paslēptos kalendāros</item>
+        <item quantity="one">Vēl %d paslēptā kalendārā</item>
+        <item quantity="other">Vēl %d paslēptos kalendāros</item>
+    </plurals>
+    <string name="search_show">Rādīt</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="zero">Rādīt %d atbilsmju paslēptos kalendāros</item>
+        <item quantity="one">Rādīt %d atbilsmi paslēptā kalendārā</item>
+        <item quantity="other">Rādīt %d atbilsmes paslēptos kalendāros</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="zero">Rādīt %d paslēptos kalendāros</item>
+        <item quantity="one">Rādīt %d paslēptā kalendārā</item>
+        <item quantity="other">Rādīt %d paslēptos kalendāros</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="zero">Ieskaitot %d paslēpto kalendāru</item>
+        <item quantity="one">Ieskaitot %d paslēpto kalendāru</item>
+        <item quantity="other">Ieskaitot %d paslēptos kalendārus</item>
+    </plurals>
+    <string name="search_leave_out">Neiekļaut</string>
+    <string name="cd_search_leave_out">Neiekļaut paslēptos kalendārus</string>
+    <string name="search_hidden_calendar">%1$s · paslēpts</string>
+    <string name="cd_search_date_this_week">Rādīt atbilsmes šonedēļ</string>
+    <string name="cd_search_date_this_month">Rādīt atbilsmes šomēnes</string>
+    <string name="cd_search_date_pick">Izvēlēties meklēšanas datumus</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="zero">%d gaidāmo</item>
+        <item quantity="one">%d gaidāmais</item>
+        <item quantity="other">%d gaidāmie</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="zero">%d pagājušo</item>
+        <item quantity="one">%d pagājušais</item>
+        <item quantity="other">%d pagājušie</item>
+    </plurals>
+    <string name="search_no_past_events">Nav pagājušo notikumu</string>
+    <string name="search_no_events_in_dates">Šajos datumos nav notikumu</string>
     <string name="label_select_date">Izvēlēties datumu</string>
     <string name="hint_tap_date_range">Pieskarieties tam pašam datumam vienai dienai vai citam datumam diapazonam</string>
     <string name="cd_clear">Notīrīt</string>

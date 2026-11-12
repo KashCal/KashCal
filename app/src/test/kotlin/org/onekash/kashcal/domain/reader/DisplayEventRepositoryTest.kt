@@ -9,7 +9,6 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.domain.model.DisplayEvent
-import org.onekash.kashcal.domain.model.SearchResult
 import java.time.ZoneOffset
 
 /**
@@ -17,9 +16,9 @@ import java.time.ZoneOffset
  * [spannedDayCodesWithinWindow], and the instance, search and SecurityException behavior of
  * [FakeCalendarProviderRepository].
  *
- * The merge, grouping, multi-day expansion and search-merge tests run inline `sortedBy`,
- * `groupBy` and unclamped expansion code modeled on the repository and don't call it; the
- * repository expands through [spannedDayCodesWithinWindow].
+ * The merge, grouping and multi-day expansion tests run inline `sortedBy`, `groupBy` and
+ * unclamped expansion code modeled on the repository and don't call it; the repository expands
+ * through [spannedDayCodesWithinWindow].
  * [DisplayEventRepositoryDeviceRealProviderTest] drives its Flow and one-shot reads.
  */
 class DisplayEventRepositoryTest {
@@ -392,47 +391,6 @@ class DisplayEventRepositoryTest {
             val result = fake.searchInstances("conference", 20260215, 20260215, setOf(1L))
             assertEquals(1, result.size)
         }
-    }
-
-    // ========== Search Merge (Room + Device) ==========
-
-    @Test
-    fun `search merge sorts by displayTs`() {
-        val roomResult = SearchResult(
-            displayEvent = roomEvent(startTs = 2000L, title = "Room Result"),
-            displayTs = 2000L
-        )
-        val deviceResult = SearchResult(
-            displayEvent = deviceEvent(startTs = 1000L, title = "Device Result"),
-            displayTs = 1000L
-        )
-
-        val merged = listOf(roomResult, deviceResult).sortedBy { it.displayTs }
-        assertEquals("Device Result", merged[0].displayEvent.title)
-        assertEquals("Room Result", merged[1].displayEvent.title)
-    }
-
-    @Test
-    fun `search merge with Room recurring uses nextOccurrenceTs`() {
-        // A recurring Room event with startTs=1000 whose next occurrence is at 5000.
-        val roomResult = SearchResult(
-            displayEvent = roomEvent(startTs = 1000L, title = "Recurring Room"),
-            displayTs = 5000L // nextOccurrenceTs
-        )
-        val deviceResult = SearchResult(
-            displayEvent = deviceEvent(startTs = 3000L, title = "Device Event"),
-            displayTs = 3000L
-        )
-
-        val merged = listOf(roomResult, deviceResult).sortedBy { it.displayTs }
-        assertEquals("Device Event", merged[0].displayEvent.title)
-        assertEquals("Recurring Room", merged[1].displayEvent.title)
-    }
-
-    @Test
-    fun `search merge with both empty returns empty`() {
-        val merged = emptyList<SearchResult>().sortedBy { it.displayTs }
-        assertTrue(merged.isEmpty())
     }
 
     // ========== Test Helpers ==========

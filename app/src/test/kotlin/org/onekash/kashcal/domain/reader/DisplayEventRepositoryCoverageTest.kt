@@ -6,12 +6,16 @@ import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -27,6 +31,9 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.model.DisplayEvent
+import org.onekash.kashcal.domain.rrule.RruleBuilder
+import org.onekash.kashcal.domain.search.SearchOutcome
+import org.onekash.kashcal.domain.search.SearchQuery
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.testutil.TestDataStoreFactory
 import org.onekash.kashcal.ui.util.DayPagerUtils
@@ -40,8 +47,10 @@ import java.time.ZoneId
  * The read every view, widget and print goes through returns a repeating series' occurrence
  * for any week, however its stored rows were left: rows from an old window (what an install
  * holds after the series' window passed), a week far past today's window, and a series
- * created on a far date. Real [EventReader], [OccurrenceGenerator] and [EventWriter] over an
- * in-memory database; no device calendars.
+ * created on a far date. A search expands only the matched series whose stored rows lack a
+ * date: back to DTSTART when the last or first occurrence is missing, so one that ended years
+ * ago shows under Past, and forward only when the next one is. Real [EventReader],
+ * [OccurrenceGenerator] and [EventWriter] over an in-memory database; no device calendars.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -77,6 +86,7 @@ class DisplayEventRepositoryCoverageTest {
         val dataStore: KashCalDataStore = mockk {
             every { showDeclinedEvents } returns MutableStateFlow(true)
             every { hiddenDeviceCalendarIds } returns MutableStateFlow(emptySet())
+            every { syncPastDays } returns MutableStateFlow(KashCalDataStore.DEFAULT_SYNC_PAST_DAYS)
             coEvery { getShowDeclinedEvents() } returns true
             coEvery { getDeviceCalendarsEnabled() } returns false
             coEvery { getEnabledDeviceCalendarIds() } returns emptySet()
@@ -173,5 +183,169 @@ class DisplayEventRepositoryCoverageTest {
             titles(display.getDisplayEventsForRange(ms(far.plusWeeks(2).minusDays(3)), ms(far.plusWeeks(2).plusDays(4))).first())
                 .count { it.startsWith("Imported") },
         )
+    }
+
+    // ---- search: only matched series lacking a date are expanded ----
+
+    private suspend fun endedThreeYearsAgo(title: String): Event {
+        val start = ms(today.minusYears(8), 9)
+        val rrule = RruleBuilder.withUntil("FREQ=WEEKLY", ms(today.minusYears(3)))
+        val id = database.eventsDao().insert(series(title, start).copy(rrule = rrule))
+        val event = database.eventsDao().getById(id)!!
+        generator.regenerateOccurrences(event)
+        assertEquals("saved with no rows", 0, database.occurrencesDao().getForEvent(id).size)
+        return event
+    }
+
+    private fun search(text: String) = display.observeSearch(SearchQuery.of(text), System.currentTimeMillis(), zone)
+
+    @Test
+    fun `a search lists a series that ended three years ago under Past at its last occurrence`(): Unit = runBlocking {
+        val ended = endedThreeYearsAgo("Physio")
+
+        // Before its rows land the series is dated by its own start; it moves once they do.
+        val outcome = withTimeout(10_000) { search("physio").first { it.past.isNotEmpty() && it.past.single().displayTs > ended.startTs } }
+
+        val lastRow = database.occurrencesDao().getForEvent(ended.id).maxOf { it.startTs }
+        assertEquals(lastRow, outcome.past.single().displayTs)
+        assertTrue(outcome.upcoming.isEmpty())
+        assertEquals(ended.startTs, database.occurrencesDao().getForEvent(ended.id).minOf { it.startTs })
+    }
+
+    @Test
+    fun `a search leaves unmatched series alone`(): Unit = runBlocking {
+        val ended = endedThreeYearsAgo("Physio")
+        val dailyId = database.eventsDao().insert(series("Daily walk", ms(today.minusYears(10), 7)).copy(rrule = "FREQ=DAILY"))
+        generator.generateOccurrences(database.eventsDao().getById(dailyId)!!, ms(today), ms(today.plusDays(30)))
+        val dailyRows = database.occurrencesDao().getForEvent(dailyId).size
+
+        withTimeout(10_000) { search("physio").first { it.past.isNotEmpty() && it.past.single().displayTs > ended.startTs } }
+
+        assertEquals(dailyRows, database.occurrencesDao().getForEvent(dailyId).size)
+    }
+
+    @Test
+    fun `a search with no repeating match writes no rows`(): Unit = runBlocking {
+        writer.createEvent(series("Dentist", ms(today.plusDays(2), 9)).copy(uid = "", rrule = null), isLocal = true)
+        val dailyId = database.eventsDao().insert(series("Daily walk", ms(today.minusYears(10), 7)).copy(rrule = "FREQ=DAILY"))
+        val rowsBefore = database.occurrencesDao().getForEvent(dailyId).size
+
+        val outcome = searchAndSettle("dentist") { it.upcoming.isNotEmpty() }
+
+        assertEquals(listOf("Dentist"), outcome.upcoming.map { it.displayEvent.title })
+        assertEquals(rowsBefore, database.occurrencesDao().getForEvent(dailyId).size)
+        assertNull(outcome.timing.coverageMs)
+    }
+
+    @Test
+    fun `later emissions of the same search add no rows`(): Unit = runBlocking {
+        val ended = endedThreeYearsAgo("Physio")
+        val seen = mutableListOf<SearchOutcome>()
+        val job = launch { search("physio").collect { seen += it } }
+        withTimeout(10_000) { while (seen.none { it.past.isNotEmpty() && it.past.single().displayTs > ended.startTs }) delay(10) }
+        val rows = database.occurrencesDao().getForEvent(ended.id).size
+        val emitted = seen.size
+
+        writer.createEvent(series("Physio follow-up", ms(today.plusDays(1), 9)).copy(uid = "", rrule = null), isLocal = true)
+        withTimeout(10_000) { while (seen.size == emitted || seen.last().upcoming.isEmpty()) delay(10) }
+        delay(300)
+
+        assertEquals(rows, database.occurrencesDao().getForEvent(ended.id).size)
+        job.cancel()
+    }
+
+    @Test
+    fun `a date range years ahead finds a series whose rows stop near today`(): Unit = runBlocking {
+        seriesWithRows("Choir", ms(today, 19), ms(today), ms(today.plusDays(60)))
+        val far = today.plusYears(5)
+        val range = ms(far)..(ms(far.plusDays(7)) - 1)
+
+        val outcome = withTimeout(10_000) {
+            display.observeSearch(SearchQuery.of("choir"), System.currentTimeMillis(), zone, range).first { !it.range.isNullOrEmpty() }
+        }
+
+        assertEquals(listOf("Choir"), outcome.range!!.map { it.displayEvent.title })
+        assertTrue(outcome.range!!.single().displayTs >= range.first)
+    }
+
+    /**
+     * Collects a search until [shown] holds, then keeps collecting for two seconds, the time a
+     * series expansion launched by the search would need to write its rows. Ending the
+     * collection earlier would cancel that work and hide it.
+     */
+    private suspend fun searchAndSettle(text: String, shown: (SearchOutcome) -> Boolean): SearchOutcome = coroutineScope {
+        val seen = mutableListOf<SearchOutcome>()
+        val job = launch { search(text).collect { seen += it } }
+        withTimeout(10_000) { while (seen.none(shown)) delay(10) }
+        delay(2_000)
+        job.cancel()
+        seen.last(shown)
+    }
+
+    @Test
+    fun `a running series whose dates are stored gains no rows from a search`(): Unit = runBlocking {
+        val standupId = database.eventsDao().insert(series("Standup", ms(today.minusYears(8), 9)).copy(rrule = "FREQ=DAILY"))
+        val standup = database.eventsDao().getById(standupId)!!
+        generator.generateOccurrences(standup, ms(today.minusDays(30)), ms(today.plusDays(60)))
+        val before = database.occurrencesDao().getForEvent(standup.id)
+
+        val outcome = searchAndSettle("standup") { it.upcoming.isNotEmpty() && it.past.isNotEmpty() }
+
+        assertEquals(listOf("Standup"), outcome.past.map { it.displayEvent.title })
+        val after = database.occurrencesDao().getForEvent(standup.id)
+        assertEquals(before.size, after.size)
+        assertEquals(before.minOf { it.startTs }, after.minOf { it.startTs })
+    }
+
+    @Test
+    fun `a series whose stored rows all ended is extended forward only`(): Unit = runBlocking {
+        val choir = seriesWithRows("Choir", ms(today.minusYears(5), 19), ms(today.minusYears(1)), ms(today.minusDays(30)))
+        val before = database.occurrencesDao().getForEvent(choir.id)
+
+        val outcome = withTimeout(10_000) { search("choir").first { it.upcoming.isNotEmpty() } }
+
+        assertEquals(listOf("Choir"), outcome.upcoming.map { it.displayEvent.title })
+        val after = database.occurrencesDao().getForEvent(choir.id)
+        assertEquals("nothing written before the stored rows", before.minOf { it.startTs }, after.minOf { it.startTs })
+        assertTrue(after.size > before.size)
+    }
+
+    @Test
+    fun `a renamed occurrence alone writes no rows`(): Unit = runBlocking {
+        val yoga = seriesWithRows("Yoga", ms(today.minusYears(8), 7), ms(today.minusDays(30)), ms(today.plusDays(60)))
+        val instance = database.occurrencesDao().getForEvent(yoga.id).first { it.startTs > System.currentTimeMillis() }.startTs
+        val renamedId = database.eventsDao().insert(
+            yoga.copy(id = 0, title = "Morning stretch", rrule = null, startTs = instance, endTs = instance + hour,
+                originalEventId = yoga.id, originalInstanceTime = instance)
+        )
+        generator.linkException(yoga.id, instance, database.eventsDao().getById(renamedId)!!)
+        val rows = database.occurrencesDao().getForEvent(yoga.id).size
+
+        val outcome = searchAndSettle("stretch") { it.upcoming.isNotEmpty() }
+
+        assertEquals(listOf("Morning stretch"), outcome.upcoming.map { it.displayEvent.title })
+        assertEquals(rows, database.occurrencesDao().getForEvent(yoga.id).size)
+    }
+
+    @Test
+    fun `a series starting years ahead and viewed past its start is listed at its first occurrence`(): Unit = runBlocking {
+        val first = today.plusYears(3)
+        val created = writer.createEvent(series("Retreat", ms(first, 9)).copy(uid = ""), isLocal = true)
+        val viewed = first.plusYears(1)
+        assertTrue("the week a year past its start shows it", weekShows(viewed, "Retreat"))
+
+        val outcome = searchAndSettle("retreat") { it.upcoming.isNotEmpty() }
+
+        assertEquals(created.startTs, outcome.upcoming.single().displayTs)
+    }
+
+    @Test
+    fun `a two-letter search does not expand the series it matches`(): Unit = runBlocking {
+        val ended = endedThreeYearsAgo("Physio")
+
+        val outcome = searchAndSettle("ph") { it.past.isNotEmpty() }
+
+        assertEquals("dated by its own start", ended.startTs, outcome.past.single().displayTs)
+        assertEquals(0, database.occurrencesDao().getForEvent(ended.id).size)
     }
 }

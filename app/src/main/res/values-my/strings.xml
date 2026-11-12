@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Hex အက္ခရာ ၆ လုံး ထည့်ပါ (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">အားလုံး</string>
     <string name="view_week">အပတ်</string>
     <string name="view_month">လ</string>
     <string name="label_all_day">တစ်နေ့တာ</string>
@@ -515,7 +514,6 @@
     <string name="option_saturday">စနေ</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">ပွဲများ မတွေ့ရှိပါ</string>
     <string name="empty_no_upcoming_events">လာမည့်ပွဲများ မရှိပါ</string>
     <string name="empty_no_calendars">ပြက္ခဒိန်များ မရှိပါ</string>
 
@@ -814,6 +812,8 @@
     <string name="cd_pick_month_year">လနှင့်နှစ် ရွေးချယ်</string>
     <string name="cd_previous_month">ယခင်လ</string>
     <string name="cd_next_month">နောက်လ</string>
+    <string name="cd_previous_day">ယခင်နေ့</string>
+    <string name="cd_next_day">နောက်နေ့</string>
     <string name="cd_month_year_picker">လနှင့်နှစ် ရွေးချယ်ကိရိယာ</string>
     <string name="cd_remove_alert">သတိပေးချက် ဖယ်ရှား</string>
     <string name="cd_warning">သတိပေးချက်</string>
@@ -1104,6 +1104,57 @@
     <string name="empty_no_events_day_4">ပြက္ခဒိန်အခြေအနေ— သာယာလှပစွာ ဗလာ။</string>
     <string name="empty_no_events_day_5">အစီအစဉ်ဘာမှမရှိ။ ငြိမ်းချမ်းမှုကို ခံစားပါ။</string>
     <string name="filter_date">ရက်စွဲ</string>
+    <string name="search_tab_upcoming">လာမည့်</string>
+    <string name="search_tab_past">ပြီးခဲ့</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="other">%1$s, ပွဲ %2$d ခု</item>
+    </plurals>
+    <string name="search_date_this_week">ဤအပတ်</string>
+    <string name="search_date_this_month">ဤလ</string>
+    <string name="search_date_pick">ရက်စွဲ ရွေး…</string>
+    <string name="search_next">နောက်တစ်ကြိမ်: %1$s</string>
+    <string name="search_last">နောက်ဆုံး: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">တည်နေရာ:</string>
+    <string name="search_reason_notes">မှတ်စုများ:</string>
+    <string name="search_reason_guest">ဧည့်သည်:</string>
+    <string name="search_keep_typing">ရှာရန် ဆက်ရိုက်ပါ</string>
+    <string name="search_no_matches">“%1$s” နှင့် ကိုက်ညီသော ပွဲ မရှိပါ</string>
+    <string name="search_lookback_line">ချိန်ကိုက် ပြန်ကြည့်ရာကာလ: %1$s</string>
+    <string name="search_sync_settings">ချိန်ကိုက်ခြင်း ဆက်တင်များ</string>
+    <string name="cd_search_sync_settings">ချိန်ကိုက် ပြန်ကြည့်ရာကာလ ဆက်တင်ကို ဖွင့်</string>
+    <plurals name="search_show_past">
+        <item quantity="other">ပြီးခဲ့သော ပွဲ %d ခု ပြ</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="other">ဖျောက်ထားသော ပြက္ခဒိန်များတွင် နောက်ထပ် %d ခု</item>
+    </plurals>
+    <string name="search_show">ပြ</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="other">ဖျောက်ထားသော ပြက္ခဒိန်များရှိ ကိုက်ညီမှု %d ခု ပြ</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="other">ဖျောက်ထားသော ပြက္ခဒိန်များရှိ %d ခု ပြ</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="other">ဖျောက်ထားသော ပြက္ခဒိန် %d ခု အပါအဝင်</item>
+    </plurals>
+    <string name="search_leave_out">ချန်</string>
+    <string name="cd_search_leave_out">ဖျောက်ထားသော ပြက္ခဒိန်များကို ချန်</string>
+    <string name="search_hidden_calendar">%1$s · ဖျောက်ထား</string>
+    <string name="cd_search_date_this_week">ဤအပတ်ရှိ ကိုက်ညီမှုများ ပြ</string>
+    <string name="cd_search_date_this_month">ဤလရှိ ကိုက်ညီမှုများ ပြ</string>
+    <string name="cd_search_date_pick">ရှာရန် ရက်စွဲ ရွေး</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="other">လာမည့် %d ခု</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="other">ပြီးခဲ့ %d ခု</item>
+    </plurals>
+    <string name="search_no_past_events">ပြီးခဲ့သော ပွဲများ မရှိပါ</string>
+    <string name="search_no_events_in_dates">ဤရက်စွဲများတွင် ပွဲများ မရှိပါ</string>
     <string name="label_select_date">ရက်စွဲ ရွေးချယ်ပါ</string>
     <string name="hint_tap_date_range">ရက်တစ်ရက်အတွက် တူညီသောရက်ကို နှိပ်ပါ သို့မဟုတ် အကွာအဝေးအတွက် အခြားရက်ကို နှိပ်ပါ</string>
     <string name="cd_clear">ရှင်း</string>

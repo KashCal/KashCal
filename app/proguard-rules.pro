@@ -177,7 +177,7 @@
 -keep class * implements net.fortuna.ical4j.transform.compliance.Rfc5545ComponentRule { *; }
 -keep class * implements net.fortuna.ical4j.transform.compliance.Rfc5545PropertyRule { *; }
 
-# Keep ical4j ZoneRulesProvider (loaded via ServiceLoader)
+# Keep ical4j's ZoneRulesProvider, which ical4j constructs and registers itself
 -keep class net.fortuna.ical4j.model.DefaultZoneRulesProvider { *; }
 -keep class * implements java.time.zone.ZoneRulesProvider { *; }
 

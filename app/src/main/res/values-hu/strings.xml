@@ -149,7 +149,6 @@
     <string name="label_enter_hex">Adj meg 6 hex karaktert (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Mind</string>
     <string name="view_week">Hét</string>
     <string name="view_month">Hónap</string>
     <string name="label_all_day">Egész napos</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">Szombat</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Nem található esemény</string>
     <string name="empty_no_upcoming_events">Nincs közelgő esemény</string>
     <string name="empty_no_calendars">Nincs elérhető naptár</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">Hónap és év kiválasztása</string>
     <string name="cd_previous_month">Előző hónap</string>
     <string name="cd_next_month">Következő hónap</string>
+    <string name="cd_previous_day">Előző nap</string>
+    <string name="cd_next_day">Következő nap</string>
     <string name="cd_month_year_picker">Hónap és év választó</string>
     <string name="cd_remove_alert">Figyelmeztetés eltávolítása</string>
     <string name="cd_warning">Figyelmeztetés</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">Naptár állapota: gyönyörűen üres.</string>
     <string name="empty_no_events_day_5">Semmi sincs tervezve. Élvezd a nyugalmat.</string>
     <string name="filter_date">Dátum</string>
+    <string name="search_tab_upcoming">Közelgő</string>
+    <string name="search_tab_past">Korábbi</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d esemény</item>
+        <item quantity="other">%1$s, %2$d esemény</item>
+    </plurals>
+    <string name="search_date_this_week">Ez a hét</string>
+    <string name="search_date_this_month">Ez a hónap</string>
+    <string name="search_date_pick">Dátumok választása…</string>
+    <string name="search_next">Következő: %1$s</string>
+    <string name="search_last">Legutóbbi: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Helyszín:</string>
+    <string name="search_reason_notes">Jegyzetek:</string>
+    <string name="search_reason_guest">Vendég:</string>
+    <string name="search_keep_typing">Írj tovább a kereséshez</string>
+    <string name="search_no_matches">Egy esemény sem egyezik ezzel: „%1$s”</string>
+    <string name="search_lookback_line">Szinkronizálási visszatekintés: %1$s</string>
+    <string name="search_sync_settings">Szinkronizálási beállítások</string>
+    <string name="cd_search_sync_settings">Szinkronizálási visszatekintés beállítás megnyitása</string>
+    <plurals name="search_show_past">
+        <item quantity="one">%d korábbi esemény megjelenítése</item>
+        <item quantity="other">%d korábbi esemény megjelenítése</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">Még %d egy rejtett naptárban</item>
+        <item quantity="other">Még %d rejtett naptárakban</item>
+    </plurals>
+    <string name="search_show">Megjelenítés</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">%d találat megjelenítése egy rejtett naptárban</item>
+        <item quantity="other">%d találat megjelenítése rejtett naptárakban</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">%d találat megjelenítése egy rejtett naptárból</item>
+        <item quantity="other">%d találat megjelenítése rejtett naptárakból</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">%d rejtett naptárral együtt</item>
+        <item quantity="other">%d rejtett naptárral együtt</item>
+    </plurals>
+    <string name="search_leave_out">Kihagyás</string>
+    <string name="cd_search_leave_out">Rejtett naptárak kihagyása</string>
+    <string name="search_hidden_calendar">%1$s · rejtett</string>
+    <string name="cd_search_date_this_week">Találatok megjelenítése ezen a héten</string>
+    <string name="cd_search_date_this_month">Találatok megjelenítése ebben a hónapban</string>
+    <string name="cd_search_date_pick">Keresési dátumok kiválasztása</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d közelgő</item>
+        <item quantity="other">%d közelgő</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d korábbi</item>
+        <item quantity="other">%d korábbi</item>
+    </plurals>
+    <string name="search_no_past_events">Nincsenek korábbi események</string>
+    <string name="search_no_events_in_dates">Nincs esemény ezeken a napokon</string>
     <string name="label_select_date">Válassz dátumot</string>
     <string name="hint_tap_date_range">Egy naphoz koppints ugyanarra, időszakhoz másik dátumra</string>
     <string name="cd_clear">Törlés</string>

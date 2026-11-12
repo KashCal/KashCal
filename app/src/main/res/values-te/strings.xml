@@ -149,7 +149,6 @@
     <string name="label_enter_hex">6 hex అక్షరాలు నమోదు చేయండి (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">అన్నీ</string>
     <string name="view_week">వారం</string>
     <string name="view_month">నెల</string>
     <string name="label_all_day">రోజంతా</string>
@@ -516,7 +515,6 @@
     <string name="option_saturday">శనివారం</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">ఈవెంట్‌లు కనుగొనబడలేదు</string>
     <string name="empty_no_upcoming_events">రాబోయే ఈవెంట్‌లు లేవు</string>
     <string name="empty_no_calendars">క్యాలెండర్లు అందుబాటులో లేవు</string>
 
@@ -825,6 +823,8 @@
     <string name="cd_pick_month_year">నెల మరియు సంవత్సరం ఎంచుకో</string>
     <string name="cd_previous_month">గత నెల</string>
     <string name="cd_next_month">వచ్చే నెల</string>
+    <string name="cd_previous_day">మునుపటి రోజు</string>
+    <string name="cd_next_day">తదుపరి రోజు</string>
     <string name="cd_month_year_picker">నెల మరియు సంవత్సరం పికర్</string>
     <string name="cd_remove_alert">హెచ్చరిక తొలగించు</string>
     <string name="cd_warning">హెచ్చరిక</string>
@@ -1161,6 +1161,65 @@
     <string name="empty_no_events_day_4">క్యాలెండర్ స్థితి: అద్భుతంగా ఖాళీ.</string>
     <string name="empty_no_events_day_5">ఏమీ షెడ్యూల్ కాలేదు. ప్రశాంతతను ఆస్వాదించండి.</string>
     <string name="filter_date">తేదీ</string>
+    <string name="search_tab_upcoming">రాబోయేవి</string>
+    <string name="search_tab_past">గతం</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d ఈవెంట్</item>
+        <item quantity="other">%1$s, %2$d ఈవెంట్‌లు</item>
+    </plurals>
+    <string name="search_date_this_week">ఈ వారం</string>
+    <string name="search_date_this_month">ఈ నెల</string>
+    <string name="search_date_pick">తేదీలను ఎంచుకోండి…</string>
+    <string name="search_next">తదుపరి: %1$s</string>
+    <string name="search_last">చివరిది: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">ప్రదేశం:</string>
+    <string name="search_reason_notes">నోట్స్:</string>
+    <string name="search_reason_guest">అతిథి:</string>
+    <string name="search_keep_typing">శోధించడానికి టైప్ చేస్తూ ఉండండి</string>
+    <string name="search_no_matches">“%1$s”కు సరిపోలే ఈవెంట్‌లు లేవు</string>
+    <string name="search_lookback_line">సింక్ లుక్‌బ్యాక్: %1$s</string>
+    <string name="search_sync_settings">సింక్ సెట్టింగ్‌లు</string>
+    <string name="cd_search_sync_settings">సింక్ లుక్‌బ్యాక్ సెట్టింగ్‌ను తెరవండి</string>
+    <plurals name="search_show_past">
+        <item quantity="one">%d గత ఈవెంట్‌ను చూపించు</item>
+        <item quantity="other">%d గత ఈవెంట్‌లను చూపించు</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">దాచిన క్యాలెండర్‌లో మరో %d</item>
+        <item quantity="other">దాచిన క్యాలెండర్‌లలో మరో %d</item>
+    </plurals>
+    <string name="search_show">చూపించు</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">దాచిన క్యాలెండర్‌లో %d సరిపోలికను చూపించు</item>
+        <item quantity="other">దాచిన క్యాలెండర్‌లలో %d సరిపోలికలను చూపించు</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">దాచిన క్యాలెండర్‌లో %d చూపించు</item>
+        <item quantity="other">దాచిన క్యాలెండర్‌లలో %d చూపించు</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">%d దాచిన క్యాలెండర్‌తో సహా</item>
+        <item quantity="other">%d దాచిన క్యాలెండర్‌లతో సహా</item>
+    </plurals>
+    <string name="search_leave_out">మినహాయించు</string>
+    <string name="cd_search_leave_out">దాచిన క్యాలెండర్‌లను మినహాయించు</string>
+    <string name="search_hidden_calendar">%1$s · దాచబడింది</string>
+    <string name="cd_search_date_this_week">ఈ వారం సరిపోలికలను చూపించు</string>
+    <string name="cd_search_date_this_month">ఈ నెల సరిపోలికలను చూపించు</string>
+    <string name="cd_search_date_pick">శోధించడానికి తేదీలను ఎంచుకోండి</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d రాబోయేది</item>
+        <item quantity="other">%d రాబోయేవి</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d గతంలో</item>
+        <item quantity="other">%d గతంలో</item>
+    </plurals>
+    <string name="search_no_past_events">గత ఈవెంట్‌లు లేవు</string>
+    <string name="search_no_events_in_dates">ఈ తేదీల్లో ఈవెంట్‌లు లేవు</string>
     <string name="label_select_date">తేదీ ఎంచుకో</string>
     <string name="hint_tap_date_range">ఒక రోజు కోసం అదే తేదీ ట్యాప్ చేయి, లేదా పరిధి కోసం మరొక తేదీ</string>
     <string name="cd_clear">క్లియర్</string>

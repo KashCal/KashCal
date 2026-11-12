@@ -7,11 +7,27 @@ import androidx.room.Embedded
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.RawQuery
 import androidx.room.Update
 import androidx.room.Upsert
+import androidx.sqlite.db.SupportSQLiteQuery
 import kotlinx.coroutines.flow.Flow
+import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
+
+/**
+ * Holds one row of [EventsDao.observeSearchMatches]: a matching event and the ids of the
+ * occurrence rows [EventSearchSql.nextAndLast] picked for it.
+ */
+data class SearchMatchRow(
+    @Embedded val event: Event,
+    @ColumnInfo(name = "next_occurrence_id") val nextOccurrenceId: Long?,
+    @ColumnInfo(name = "last_occurrence_id") val lastOccurrenceId: Long?,
+    @ColumnInfo(name = "range_occurrence_id") val rangeOccurrenceId: Long?,
+    @ColumnInfo(name = "has_occurrences") val hasOccurrences: Boolean,
+)
 
 /** Pairs an event with the occurrence start its query picked as next_occurrence_ts. */
 data class EventWithNextOccurrence(
@@ -707,138 +723,16 @@ interface EventsDao {
         limit: Int
     ): List<TitleSuggestion>
 
-    /**
-     * Searches title, location and description with FTS4; returns at most 1000 events by start
-     * time, without PENDING_DELETE rows or synthetic masters.
-     *
-     * [query] is FTS4 MATCH syntax: `meeting`, prefix `meet*`, all words `team meeting`, phrase
-     * `"team meeting"`, `meeting OR standup`. The caller adds the `*` for prefix matching.
-     */
-    @Query("""
-        SELECT events.* FROM events
-        JOIN events_fts ON events.id = events_fts.rowid
-        WHERE events_fts MATCH :query
-        AND events.sync_status != 'PENDING_DELETE'
-        AND (events.extra_properties IS NULL
-             OR events.extra_properties NOT LIKE '%X-KASHCAL-SYNTHETIC-MASTER%')
-        ORDER BY events.start_ts ASC
-        LIMIT 1000
-    """)
-    suspend fun search(query: String): List<Event>
+    /** Runs a search built by [EventSearchSql.nextAndLast] once. */
+    @RawQuery
+    suspend fun searchMatches(query: SupportSQLiteQuery): List<SearchMatchRow>
 
     /**
-     * Matches [query] as [search] does and returns at most 1000 events, not PENDING_DELETE,
-     * with a non-cancelled occurrence not ended at [now]: an event in progress counts, a series
-     * whose last occurrence ended doesn't. The occurrences table decides this, since a master's
-     * end_ts is its first occurrence's. Synthetic masters aren't filtered out here.
+     * Emits the rows of a search built by [EventSearchSql.nextAndLast], again whenever events,
+     * occurrences or attendees change.
      */
-    @Query("""
-        SELECT DISTINCT events.* FROM events
-        JOIN events_fts ON events.id = events_fts.rowid
-        JOIN occurrences ON events.id = occurrences.event_id
-        WHERE events_fts MATCH :query
-        AND events.sync_status != 'PENDING_DELETE'
-        AND occurrences.end_ts >= :now
-        AND occurrences.is_cancelled = 0
-        ORDER BY events.start_ts ASC
-        LIMIT 1000
-    """)
-    suspend fun searchFuture(query: String, now: Long): List<Event>
-
-    /**
-     * Matches [query] as [search] does and returns at most 1000 events, not PENDING_DELETE,
-     * with a non-cancelled occurrence overlapping [rangeStart]..[rangeEnd], inclusive.
-     * Synthetic masters aren't filtered out here.
-     */
-    @Query("""
-        SELECT DISTINCT events.* FROM events
-        JOIN events_fts ON events.id = events_fts.rowid
-        JOIN occurrences ON events.id = occurrences.event_id
-        WHERE events_fts MATCH :query
-        AND events.sync_status != 'PENDING_DELETE'
-        AND occurrences.start_ts <= :rangeEnd
-        AND occurrences.end_ts >= :rangeStart
-        AND occurrences.is_cancelled = 0
-        ORDER BY events.start_ts ASC
-        LIMIT 1000
-    """)
-    suspend fun searchInRange(query: String, rangeStart: Long, rangeEnd: Long): List<Event>
-
-    // ========== FTS Search with Next Occurrence ==========
-
-    /**
-     * Searches for the "All" filter, past events included, with the event's own start_ts as
-     * next_occurrence_ts. Ordered by distance from [now].
-     *
-     * Exceptions are left out so a series with changed occurrences isn't listed once per
-     * change (#149); synthetic masters are left out too.
-     */
-    @Query("""
-        SELECT events.*, events.start_ts as next_occurrence_ts
-        FROM events
-        JOIN events_fts ON events.id = events_fts.rowid
-        WHERE events_fts MATCH :query
-        AND events.sync_status != 'PENDING_DELETE'
-        AND events.original_event_id IS NULL
-        AND (events.extra_properties IS NULL
-             OR events.extra_properties NOT LIKE '%X-KASHCAL-SYNTHETIC-MASTER%')
-        ORDER BY ABS(events.start_ts - :now) ASC
-        LIMIT 1000
-    """)
-    suspend fun searchWithOccurrence(query: String, now: Long): List<EventWithNextOccurrence>
-
-    /**
-     * Searches for the default filter: events with a non-cancelled occurrence not ended at
-     * [now], each with its earliest such occurrence's start, soonest first.
-     */
-    @Query("""
-        SELECT DISTINCT events.*,
-               (SELECT MIN(o.start_ts) FROM occurrences o
-                WHERE o.event_id = events.id
-                AND o.end_ts >= :now
-                AND o.is_cancelled = 0) as next_occurrence_ts
-        FROM events
-        JOIN events_fts ON events.id = events_fts.rowid
-        JOIN occurrences ON events.id = occurrences.event_id
-        WHERE events_fts MATCH :query
-        AND events.sync_status != 'PENDING_DELETE'
-        AND occurrences.end_ts >= :now
-        AND occurrences.is_cancelled = 0
-        GROUP BY events.id
-        ORDER BY next_occurrence_ts ASC
-        LIMIT 1000
-    """)
-    suspend fun searchFutureWithOccurrence(query: String, now: Long): List<EventWithNextOccurrence>
-
-    /**
-     * Searches for a date filter (week, month, custom date): events with a non-cancelled
-     * occurrence overlapping the inclusive range, each with its earliest such occurrence's
-     * start, soonest first.
-     */
-    @Query("""
-        SELECT DISTINCT events.*,
-               (SELECT MIN(o.start_ts) FROM occurrences o
-                WHERE o.event_id = events.id
-                AND o.end_ts >= :rangeStart
-                AND o.start_ts <= :rangeEnd
-                AND o.is_cancelled = 0) as next_occurrence_ts
-        FROM events
-        JOIN events_fts ON events.id = events_fts.rowid
-        JOIN occurrences ON events.id = occurrences.event_id
-        WHERE events_fts MATCH :query
-        AND events.sync_status != 'PENDING_DELETE'
-        AND occurrences.start_ts <= :rangeEnd
-        AND occurrences.end_ts >= :rangeStart
-        AND occurrences.is_cancelled = 0
-        GROUP BY events.id
-        ORDER BY next_occurrence_ts ASC
-        LIMIT 1000
-    """)
-    suspend fun searchInRangeWithOccurrence(
-        query: String,
-        rangeStart: Long,
-        rangeEnd: Long
-    ): List<EventWithNextOccurrence>
+    @RawQuery(observedEntities = [Event::class, Occurrence::class, Attendee::class])
+    fun observeSearchMatches(query: SupportSQLiteQuery): Flow<List<SearchMatchRow>>
 
     /**
      * Emits masters and one-off events, not PENDING_DELETE, with a non-cancelled occurrence
