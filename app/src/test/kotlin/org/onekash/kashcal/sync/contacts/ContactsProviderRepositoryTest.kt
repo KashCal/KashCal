@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.contacts
 
 import android.content.ContentProviderOperation
+import android.content.ContentProvider
 import android.content.ContentProviderResult
 import android.content.ContentResolver
 import android.content.ContentUris
@@ -8,6 +9,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.OperationApplicationException
 import android.database.MatrixCursor
+import android.os.Bundle
 import android.provider.ContactsContract
 import android.provider.ContactsContract.CommonDataKinds.GroupMembership
 import android.provider.ContactsContract.CommonDataKinds.Photo
@@ -106,6 +108,14 @@ class ContactsProviderRepositoryTest {
             ContentProviderResult(ContentUris.withAppendedId(RawContacts.CONTENT_URI, 1L))
         }
         return op.resolveValueBackReferences(backRefs, backRefs.size)!!
+    }
+
+    private fun selectionOf(op: ContentProviderOperation): String {
+        val provider = mockk<ContentProvider>()
+        val extras = slot<Bundle>()
+        every { provider.update(any(), any(), capture(extras)) } returns 1
+        op.apply(provider, emptyArray(), 0)
+        return extras.captured.getString(ContentResolver.QUERY_ARG_SQL_SELECTION).orEmpty()
     }
 
     /** The RawContact insert is the one carrying SOURCE_ID; Data rows never do. */
@@ -919,9 +929,32 @@ class ContactsProviderRepositoryTest {
 
     private fun emptyCursor(vararg columns: String) = MatrixCursor(columns)
 
-    private fun dirtyRow(id: Long, href: String, uid: String, etag: String?) =
-        MatrixCursor(arrayOf(RawContacts._ID, RawContacts.SOURCE_ID, RawContacts.SYNC1, RawContacts.SYNC2))
-            .apply { addRow(arrayOf<Any?>(id, href, uid, etag)) }
+    private fun dirtyRow(id: Long, href: String, uid: String, etag: String?, version: Long = 7L) =
+        MatrixCursor(arrayOf(RawContacts._ID, RawContacts.SOURCE_ID, RawContacts.SYNC1, RawContacts.SYNC2, RawContacts.VERSION))
+            .apply { addRow(arrayOf<Any?>(id, href, uid, etag, version)) }
+
+    @Test
+    fun `pendingLocalChanges reads VERSION before the contact data`() = runBlocking {
+        var readVersion = false
+        val cr = changesResolver(
+            dirty = {
+                readVersion = true
+                dirtyRow(100L, "/edited.vcf", "uid-1", "\"etag-1\"")
+            },
+            deleted = { emptyCursor(RawContacts.SOURCE_ID, RawContacts.SYNC2) },
+            data = {
+                assertTrue("VERSION must precede the data snapshot", readVersion)
+                structuredNameData("Alice Edited", "Alice", "Edited")
+            },
+        )
+
+        val changes = repo(cr).pendingLocalChanges(ACCOUNT_NAME)
+        assertEquals(7L, changes.edited.single().rawContactVersion)
+
+        verify(exactly = 1) {
+            cr.query(any(), match { it?.contains(RawContacts.VERSION) == true }, any(), any(), any())
+        }
+    }
 
     private fun structuredNameData(displayName: String, given: String, family: String) =
         MatrixCursor(
@@ -1132,15 +1165,113 @@ class ContactsProviderRepositoryTest {
     // ---------- markContactUploaded (SYNC2 + DIRTY=0 via sync-adapter) ----------
 
     @Test
-    fun `markContactUploaded clears DIRTY and stores the new etag via a sync-adapter, account-scoped write`() = runBlocking {
+    fun `markContactUploaded preserves a re-edit and stores the acknowledged etag and redirect`() = runBlocking {
         val cr = resolverFor(rawContactId = 88L)
+        val batches = mutableListOf<ArrayList<ContentProviderOperation>>()
+        every { cr.applyBatch(eq(ContactsContract.AUTHORITY), capture(batches)) } returns
+            arrayOf(ContentProviderResult(1), ContentProviderResult(1))
+
+        val result = repo(cr).markContactUploaded(ACCOUNT_NAME, "/x.vcf", "\"e2\"", newHref = "/moved/x.vcf", uploadedVersion = 7L)
+
+        assertTrue(result.isSuccess)
+        assertEquals("both writes belong to the same transaction", 1, batches.size)
+        val ops = batches.single()
+        assertEquals(2, ops.size)
+        assertEquals("${RawContacts.VERSION} = ?", selectionOf(ops.first()))
+        assertArrayEquals(arrayOf("7"), ops.first().resolveSelectionArgsBackReferences(emptyArray(), 0))
+        assertEquals(0, valuesOf(ops.first()).getAsInteger(RawContacts.DIRTY))
+        val fallback = ops.last()
+        assertEquals("${RawContacts.DIRTY} = ?", selectionOf(fallback))
+        assertArrayEquals(arrayOf("1"), fallback.resolveSelectionArgsBackReferences(emptyArray(), 0))
+        assertEquals("\"e2\"", valuesOf(fallback).getAsString(RawContacts.SYNC2))
+        assertEquals("/moved/x.vcf", valuesOf(fallback).getAsString(RawContacts.SOURCE_ID))
+        assertFalse("the newer edit stays dirty", valuesOf(fallback).containsKey(RawContacts.DIRTY))
+        assertEquals(88L, ContentUris.parseId(fallback.uri))
+        assertEquals(ACCOUNT_NAME, fallback.uri.getQueryParameter(RawContacts.ACCOUNT_NAME))
+        assertEquals(ACCOUNT_TYPE, fallback.uri.getQueryParameter(RawContacts.ACCOUNT_TYPE))
+        assertEquals("true", fallback.uri.getQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER))
+        assertTrue(ops.all { it.uri == fallback.uri && !it.isYieldAllowed })
+    }
+
+    @Test
+    fun `markNewContactUploaded preserves a re-edit and stamps the created resource`() = runBlocking {
+        val cr = mockk<ContentResolver>()
+        val batches = mutableListOf<ArrayList<ContentProviderOperation>>()
+        every { cr.applyBatch(eq(ContactsContract.AUTHORITY), capture(batches)) } returns
+            arrayOf(ContentProviderResult(1), ContentProviderResult(1))
+
+        val result = repo(cr).markNewContactUploaded(ACCOUNT_NAME, 77L, "/new.vcf", "\"created\"", uploadedVersion = 7L)
+
+        assertTrue(result.isSuccess)
+        assertEquals("both writes belong to the same transaction", 1, batches.size)
+        val ops = batches.single()
+        assertEquals(2, ops.size)
+        assertEquals("${RawContacts.VERSION} = ?", selectionOf(ops.first()))
+        assertArrayEquals(arrayOf("7"), ops.first().resolveSelectionArgsBackReferences(emptyArray(), 0))
+        assertEquals(0, valuesOf(ops.first()).getAsInteger(RawContacts.DIRTY))
+        val fallback = ops.last()
+        assertEquals("${RawContacts.DIRTY} = ?", selectionOf(fallback))
+        assertArrayEquals(arrayOf("1"), fallback.resolveSelectionArgsBackReferences(emptyArray(), 0))
+        assertEquals("/new.vcf", valuesOf(fallback).getAsString(RawContacts.SOURCE_ID))
+        assertEquals("\"created\"", valuesOf(fallback).getAsString(RawContacts.SYNC2))
+        assertFalse("the second edit still needs an upload", valuesOf(fallback).containsKey(RawContacts.DIRTY))
+        assertEquals(77L, ContentUris.parseId(fallback.uri))
+        assertEquals(ACCOUNT_NAME, fallback.uri.getQueryParameter(RawContacts.ACCOUNT_NAME))
+        assertEquals(ACCOUNT_TYPE, fallback.uri.getQueryParameter(RawContacts.ACCOUNT_TYPE))
+        assertEquals("true", fallback.uri.getQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER))
+        assertTrue(ops.all { it.uri == fallback.uri && !it.isYieldAllowed })
+    }
+
+    @Test
+    fun `markNewContactUploaded without an uploaded version stamps the resource and keeps DIRTY`() = runBlocking {
+        val cr = mockk<ContentResolver>()
         val batch = slot<ArrayList<ContentProviderOperation>>()
         every { cr.applyBatch(eq(ContactsContract.AUTHORITY), capture(batch)) } returns arrayOf(ContentProviderResult(1))
 
-        val result = repo(cr).markContactUploaded(ACCOUNT_NAME, "/x.vcf", "\"new-etag\"")
+        val result = repo(cr).markNewContactUploaded(ACCOUNT_NAME, 77L, "/adopted.vcf", "\"srv\"", uploadedVersion = null)
+
+        assertTrue(result.isSuccess)
+        val op = batch.captured.single()
+        val v = valuesOf(op)
+        assertEquals("/adopted.vcf", v.getAsString(RawContacts.SOURCE_ID))
+        assertEquals("\"srv\"", v.getAsString(RawContacts.SYNC2))
+        assertFalse("the adopted row stays pending", v.containsKey(RawContacts.DIRTY))
+        assertEquals(77L, ContentUris.parseId(op.uri))
+        assertEquals("true", op.uri.getQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER))
+    }
+
+    @Test
+    fun `a short acknowledgement batch is a failure even when the first result reports a match`() = runBlocking {
+        val cr = resolverFor(rawContactId = 88L)
+        every { cr.applyBatch(any(), any()) } returns arrayOf(ContentProviderResult(1))
+
+        val result = repo(cr).markContactUploaded(ACCOUNT_NAME, "/x.vcf", "\"e2\"", uploadedVersion = 7L)
+
+        assertEquals(ContactWriteFailure.PARTIAL_APPLY, (result.exceptionOrNull() as ContactWriteException).failure)
+    }
+
+    @Test
+    fun `acknowledgement success does not depend on affected row counts`() = runBlocking {
+        val cr = resolverFor(rawContactId = 88L)
+        val repository = repo(cr)
+        for (reported in listOf(ContentProviderResult(0), ContentProviderResult(1), ContentProviderResult(RawContacts.CONTENT_URI))) {
+            every { cr.applyBatch(any(), any()) } returns arrayOf(reported, reported)
+            assertTrue(repository.markNewContactUploaded(ACCOUNT_NAME, 88L, "/x.vcf", "\"e2\"", uploadedVersion = 7L).isSuccess)
+        }
+    }
+
+    @Test
+    fun `markContactUploaded clears DIRTY and stores the new etag via a sync-adapter, account-scoped write`() = runBlocking {
+        val cr = resolverFor(rawContactId = 88L)
+        val batch = slot<ArrayList<ContentProviderOperation>>()
+        every { cr.applyBatch(eq(ContactsContract.AUTHORITY), capture(batch)) } returns arrayOf(ContentProviderResult(1), ContentProviderResult(0))
+
+        val result = repo(cr).markContactUploaded(ACCOUNT_NAME, "/x.vcf", "\"new-etag\"", uploadedVersion = 7L)
         assertTrue(result.isSuccess)
 
-        val op = batch.captured.single()
+        val op = batch.captured.first()
+        assertEquals("${RawContacts.VERSION} = ?", selectionOf(op))
+        assertArrayEquals(arrayOf("7"), op.resolveSelectionArgsBackReferences(emptyArray(), 0))
         assertTrue("marks the row in place, an update not an insert", op.isUpdate)
         val v = valuesOf(op)
         assertEquals("SYNC2 = the server's post-PUT etag", "\"new-etag\"", v.getAsString(RawContacts.SYNC2))
@@ -1157,11 +1288,11 @@ class ContactsProviderRepositoryTest {
     fun `markContactUploaded moves the contact to the href the server redirected it to`() = runBlocking {
         val cr = resolverFor(rawContactId = 88L)
         val batch = slot<ArrayList<ContentProviderOperation>>()
-        every { cr.applyBatch(eq(ContactsContract.AUTHORITY), capture(batch)) } returns arrayOf(ContentProviderResult(1))
+        every { cr.applyBatch(eq(ContactsContract.AUTHORITY), capture(batch)) } returns arrayOf(ContentProviderResult(1), ContentProviderResult(0))
 
-        repo(cr).markContactUploaded(ACCOUNT_NAME, "/x.vcf", "\"e2\"", newHref = "/moved/x.vcf")
+        repo(cr).markContactUploaded(ACCOUNT_NAME, "/x.vcf", "\"e2\"", newHref = "/moved/x.vcf", uploadedVersion = 7L)
 
-        val v = valuesOf(batch.captured.single())
+        val v = valuesOf(batch.captured.first())
         assertEquals("/moved/x.vcf", v.getAsString(RawContacts.SOURCE_ID))
         assertEquals("\"e2\"", v.getAsString(RawContacts.SYNC2))
     }
@@ -1170,11 +1301,11 @@ class ContactsProviderRepositoryTest {
     fun `markContactUploaded without a new href leaves SOURCE_ID alone`() = runBlocking {
         val cr = resolverFor(rawContactId = 88L)
         val batch = slot<ArrayList<ContentProviderOperation>>()
-        every { cr.applyBatch(eq(ContactsContract.AUTHORITY), capture(batch)) } returns arrayOf(ContentProviderResult(1))
+        every { cr.applyBatch(eq(ContactsContract.AUTHORITY), capture(batch)) } returns arrayOf(ContentProviderResult(1), ContentProviderResult(0))
 
-        repo(cr).markContactUploaded(ACCOUNT_NAME, "/x.vcf", "\"e2\"")
+        repo(cr).markContactUploaded(ACCOUNT_NAME, "/x.vcf", "\"e2\"", uploadedVersion = 7L)
 
-        assertFalse(valuesOf(batch.captured.single()).containsKey(RawContacts.SOURCE_ID))
+        assertTrue(batch.captured.none { valuesOf(it).containsKey(RawContacts.SOURCE_ID) })
     }
 
     @Test
@@ -1184,9 +1315,9 @@ class ContactsProviderRepositoryTest {
         val cr = mockk<ContentResolver>()
         every { cr.query(any(), any(), capture(selection), capture(args), any()) } returns
             MatrixCursor(arrayOf(RawContacts._ID, RawContacts.SYNC4)).apply { addRow(arrayOf<Any?>(5L, 0)) }
-        every { cr.applyBatch(any(), any()) } returns arrayOf(ContentProviderResult(1))
+        every { cr.applyBatch(any(), any()) } returns arrayOf(ContentProviderResult(1), ContentProviderResult(0))
 
-        repo(cr).markContactUploaded(ACCOUNT_NAME, "/x.vcf", "\"e\"")
+        repo(cr).markContactUploaded(ACCOUNT_NAME, "/x.vcf", "\"e\"", uploadedVersion = 7L)
 
         assertTrue("scoped by ACCOUNT_NAME", selection.captured.contains(RawContacts.ACCOUNT_NAME))
         assertTrue("scoped by ACCOUNT_TYPE", selection.captured.contains(RawContacts.ACCOUNT_TYPE))
@@ -1201,7 +1332,7 @@ class ContactsProviderRepositoryTest {
         val cr = mockk<ContentResolver>()
         every { cr.query(any(), any(), any(), any(), any()) } returns
             MatrixCursor(arrayOf(RawContacts._ID, RawContacts.SYNC4)) // empty
-        val result = repo(cr).markContactUploaded(ACCOUNT_NAME, "/gone.vcf", "\"e\"")
+        val result = repo(cr).markContactUploaded(ACCOUNT_NAME, "/gone.vcf", "\"e\"", uploadedVersion = 7L)
         assertTrue("a vanished href is a no-op success", result.isSuccess)
         verify(exactly = 0) { cr.applyBatch(any(), any()) }
     }
@@ -1213,7 +1344,7 @@ class ContactsProviderRepositoryTest {
         // didn't fully apply, so it must be a failure.
         val cr = resolverFor(rawContactId = 1L)
         every { cr.applyBatch(any(), any()) } returns emptyArray()
-        val result = repo(cr).markContactUploaded(ACCOUNT_NAME, "/x.vcf", "\"e\"")
+        val result = repo(cr).markContactUploaded(ACCOUNT_NAME, "/x.vcf", "\"e\"", uploadedVersion = 7L)
         assertTrue("a short applyBatch result must be a Result.failure", result.isFailure)
     }
 
@@ -1221,7 +1352,7 @@ class ContactsProviderRepositoryTest {
     fun `markContactUploaded classifies a SecurityException without leaking a message`() = runBlocking {
         val cr = resolverFor(rawContactId = 1L)
         every { cr.applyBatch(any(), any()) } throws SecurityException("WRITE_CONTACTS revoked for /secret.vcf")
-        val result = repo(cr).markContactUploaded(ACCOUNT_NAME, "/x.vcf", "\"e\"")
+        val result = repo(cr).markContactUploaded(ACCOUNT_NAME, "/x.vcf", "\"e\"", uploadedVersion = 7L)
         assertTrue(result.isFailure)
         val cause = result.exceptionOrNull()
         assertTrue("failure is a typed enum, not the raw provider exception", cause is ContactWriteException)
@@ -1238,14 +1369,15 @@ class ContactsProviderRepositoryTest {
         // provider _ID with no SOURCE_ID lookup (this mock stubs no query).
         val cr = mockk<ContentResolver>()
         val batch = slot<ArrayList<ContentProviderOperation>>()
-        every { cr.applyBatch(eq(ContactsContract.AUTHORITY), capture(batch)) } returns arrayOf(ContentProviderResult(1))
+        every { cr.applyBatch(eq(ContactsContract.AUTHORITY), capture(batch)) } returns arrayOf(ContentProviderResult(1), ContentProviderResult(0))
 
         val result = repo(cr).markNewContactUploaded(
             ACCOUNT_NAME, localId = 77L, href = "/ab/default/uid1.vcf", newEtag = "\"srv-1\"",
+            uploadedVersion = 7L,
         )
         assertTrue(result.isSuccess)
 
-        val op = batch.captured.single()
+        val op = batch.captured.first()
         assertTrue("stamps the originating row in place, an update not an insert", op.isUpdate)
         val v = valuesOf(op)
         assertEquals("SOURCE_ID = the created server href", "/ab/default/uid1.vcf", v.getAsString(RawContacts.SOURCE_ID))
@@ -1263,7 +1395,7 @@ class ContactsProviderRepositoryTest {
     fun `markNewContactUploaded resolves nothing and is a no-op success when the local id is unset`() = runBlocking {
         // An unset _ID (0L) must never write blind: no query, no applyBatch.
         val cr = mockk<ContentResolver>()
-        val result = repo(cr).markNewContactUploaded(ACCOUNT_NAME, localId = 0L, href = "/x.vcf", newEtag = "\"e\"")
+        val result = repo(cr).markNewContactUploaded(ACCOUNT_NAME, localId = 0L, href = "/x.vcf", newEtag = "\"e\"", uploadedVersion = 7L)
         assertTrue("an unset local id is a no-op success", result.isSuccess)
         verify(exactly = 0) { cr.query(any(), any(), any(), any(), any()) }
         verify(exactly = 0) { cr.applyBatch(any(), any()) }

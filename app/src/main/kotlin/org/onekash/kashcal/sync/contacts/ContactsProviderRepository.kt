@@ -47,6 +47,8 @@ data class MappedContactWrite(
  * @property localId the RawContact `_ID`. A device-created contact has a blank [href], so its
  *   create is written back by `_ID`. Defaults to `0L`; no real `_ID` is 0, so a write-back
  *   keyed on `0L` is a no-op instead of stamping the wrong row.
+ * @property rawContactVersion the `RawContacts.VERSION` read before [contact]'s Data rows, so
+ *   a later edit cannot be acknowledged as part of this upload.
  */
 data class LocalContactEdit(
     val href: String,
@@ -54,6 +56,7 @@ data class LocalContactEdit(
     val storedEtag: String?,
     val contact: Contact,
     val localId: Long = 0L,
+    val rawContactVersion: Long,
 )
 
 /**
@@ -257,8 +260,10 @@ interface ContactsProviderRepository {
 
     /**
      * Records that the contact at [href] under [accountName] was pushed: sets `SYNC2` to
-     * [newEtag] and clears `DIRTY` in one sync-adapter write, so the provider doesn't mark
-     * the row dirty again and loop the push.
+     * [newEtag] and clears `DIRTY` only if `VERSION` still equals [uploadedVersion], in a
+     * sync-adapter write so the provider doesn't mark the row dirty again and loop the push. A
+     * newer edit keeps `DIRTY` and receives the acknowledged etag for its next conditional PUT.
+     * `ContactsProviderRepositoryTest` covers both outcomes.
      *
      * An [href] that no longer resolves (deleted between scan and push) is a no-op success. A
      * short `applyBatch` result is a [Result.failure]. On failure the contact stays `DIRTY`.
@@ -270,6 +275,7 @@ interface ContactsProviderRepository {
         accountName: String,
         href: String,
         newEtag: String,
+        uploadedVersion: Long,
         newHref: String? = null,
     ): Result<Unit>
 
@@ -282,8 +288,8 @@ interface ContactsProviderRepository {
      * and goes into the body, so two devices on the account can't collide on a name, and a
      * retry after a failed write-back targets the same resource and proves ownership by UID.
      *
-     * `DIRTY` is cleared only when the server create succeeds. Like the other write-backs
-     * this is a sync-adapter write, so it doesn't count as a new edit. A [localId] of `0L` is
+     * This metadata-only sync-adapter write preserves `VERSION`, so the create still
+     * acknowledges the version read before its Data rows. A [localId] of `0L` is
      * a no-op success. A short `applyBatch` result is a [Result.failure]; on failure the
      * caller skips the PUT and defers.
      */
@@ -295,8 +301,10 @@ interface ContactsProviderRepository {
 
     /**
      * Records that the net-new device contact [localId] under [accountName] was created on
-     * the server: sets `SOURCE_ID` to [href] and `SYNC2` to [newEtag] and clears `DIRTY`, in
-     * one sync-adapter write.
+     * the server: sets `SOURCE_ID` to [href] and `SYNC2` to [newEtag]. Like
+     * [markContactUploaded], clears `DIRTY` only when `VERSION` equals [uploadedVersion]. A
+     * null [uploadedVersion] keeps `DIRTY`: an adopted resource proves the name is ours, not
+     * that it holds the device's current fields, so the next push uploads them with `If-Match`.
      *
      * [markContactUploaded] for a contact with no prior server resource: its `SOURCE_ID` was
      * blank, so it is addressed by [localId]. Stamping the href lets the next pull match the
@@ -311,6 +319,7 @@ interface ContactsProviderRepository {
         localId: Long,
         href: String,
         newEtag: String,
+        uploadedVersion: Long?,
     ): Result<Unit>
 
     /**

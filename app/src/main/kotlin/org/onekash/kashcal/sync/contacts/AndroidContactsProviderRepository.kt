@@ -506,15 +506,23 @@ class AndroidContactsProviderRepository @Inject constructor(
     /**
      * Reads the account's `DIRTY = 1 AND DELETED = 0` RawContacts (user edits and
      * device-created contacts) as [LocalContactEdit]s. The locators are read in full before the
-     * per-row Data reads so no cursor stays open across a nested query. `DELETED = 0` leaves a
-     * soft-deleted dirty row to the tombstone scan.
+     * per-row Data reads so no cursor stays open across a nested query. VERSION is read with
+     * them, before the Data rows, so an edit during the snapshot cannot be cleared by
+     * [markContactUploaded]. `ContactsProviderRepositoryTest` enforces the read order.
+     * `DELETED = 0` leaves a soft-deleted dirty row to the tombstone scan.
      */
     private fun queryDirtyEdits(accountName: String): List<LocalContactEdit> {
-        data class Locator(val id: Long, val href: String, val uid: String, val etag: String?)
+        data class Locator(
+            val id: Long,
+            val href: String,
+            val uid: String,
+            val etag: String?,
+            val rawContactVersion: Long,
+        )
 
         val locators = contentResolver.query(
             syncAdapterUri(RawContacts.CONTENT_URI, accountName),
-            arrayOf(RawContacts._ID, RawContacts.SOURCE_ID, RawContacts.SYNC1, RawContacts.SYNC2),
+            arrayOf(RawContacts._ID, RawContacts.SOURCE_ID, RawContacts.SYNC1, RawContacts.SYNC2, RawContacts.VERSION),
             "${accountScopeSelection()} AND ${RawContacts.DIRTY} = 1 AND ${RawContacts.DELETED} = 0",
             accountScopeArgs(accountName),
             null,
@@ -527,6 +535,7 @@ class AndroidContactsProviderRepository @Inject constructor(
                         href = cursor.getString(1).orEmpty(),
                         uid = cursor.getString(2).orEmpty(),
                         etag = cursor.getString(3)?.takeIf { it.isNotEmpty() },
+                        rawContactVersion = cursor.getLong(4),
                     ),
                 )
             }
@@ -550,14 +559,15 @@ class AndroidContactsProviderRepository @Inject constructor(
                 href = loc.href,
                 uid = loc.uid,
                 storedEtag = loc.etag,
-                // version, rawVCard and kind aren't on Data rows and keep their defaults; the
-                // push composes the body at the book's version. The UID comes from SYNC1.
-                // The photo is normalized ([ContactPhotoTranscoder]) so strict servers
-                // store it.
+                // The vCard version, rawVCard and kind aren't on Data rows and keep their
+                // defaults; the push composes the body at the book's version. The UID comes
+                // from SYNC1. The photo is normalized ([ContactPhotoTranscoder]) so strict
+                // servers store it.
                 contact = mapped.copy(photo = photoTranscoder.normalize(mapped.photo)),
                 // The only stable key a net-new contact (blank SOURCE_ID) can be written back
                 // against after its server create.
                 localId = loc.id,
+                rawContactVersion = loc.rawContactVersion,
             )
         }
     }
@@ -657,17 +667,11 @@ class AndroidContactsProviderRepository @Inject constructor(
         accountName: String,
         href: String,
         newEtag: String,
+        uploadedVersion: Long,
         newHref: String?,
-    ): Result<Unit> = applyScopedIdWrite("mark-uploaded", resolveRawContactId(accountName, href)) { id ->
-        ContentProviderOperation.newUpdate(rawContactByIdUri(accountName, id))
-            .apply { if (newHref != null) withValue(RawContacts.SOURCE_ID, newHref) }
-            .withValue(RawContacts.SYNC2, newEtag)
-            // Clear DIRTY in the same sync-adapter write. Sync-adapter mode stops the
-            // provider setting DIRTY again on this write, which would spin the push
-            // forever; clearing it takes the row out of the next scan.
-            .withValue(RawContacts.DIRTY, 0)
-            .build()
-    }
+    ): Result<Unit> = acknowledgeUpload(
+        "mark-uploaded", accountName, resolveRawContactId(accountName, href), newEtag, uploadedVersion, newHref,
+    )
 
     override suspend fun assignContactUid(
         accountName: String,
@@ -677,13 +681,15 @@ class AndroidContactsProviderRepository @Inject constructor(
         // By _ID: a net-new row's SOURCE_ID is still blank. A 0L (unset) _ID is a no-op
         // and stamps no row.
         applyScopedIdWrite("assign-uid", localId.takeIf { it > 0L }) { id ->
-            ContentProviderOperation.newUpdate(rawContactByIdUri(accountName, id))
-                // Persist the generated UID so it names the resource and retries reuse it.
-                // DIRTY stays 1 so the row stays pending until the server create clears it;
-                // sync-adapter mode keeps this write from counting as a new edit.
-                .withValue(RawContacts.SYNC1, uid)
-                .withValue(RawContacts.DIRTY, 1)
-                .build()
+            listOf(
+                ContentProviderOperation.newUpdate(rawContactByIdUri(accountName, id))
+                    // Persist the generated UID so it names the resource and retries reuse it.
+                    // DIRTY stays 1 so the row stays pending until the server create clears it;
+                    // sync-adapter mode keeps this write from counting as a new edit.
+                    .withValue(RawContacts.SYNC1, uid)
+                    .withValue(RawContacts.DIRTY, 1)
+                    .build(),
+            )
         }
 
     override suspend fun markNewContactUploaded(
@@ -691,41 +697,71 @@ class AndroidContactsProviderRepository @Inject constructor(
         localId: Long,
         href: String,
         newEtag: String,
+        uploadedVersion: Long?,
     ): Result<Unit> =
         // By _ID, never a SOURCE_ID lookup: a net-new row's SOURCE_ID is still blank, so an
         // href lookup would find nothing. A 0L (unset) _ID passes null to
         // applyScopedIdWrite, a no-op that stamps no row.
-        applyScopedIdWrite("mark-new-uploaded", localId.takeIf { it > 0L }) { id ->
+        acknowledgeUpload("mark-new-uploaded", accountName, localId.takeIf { it > 0L }, newEtag, uploadedVersion, href)
+
+    private suspend fun acknowledgeUpload(
+        label: String,
+        accountName: String,
+        rawContactId: Long?,
+        newEtag: String,
+        uploadedVersion: Long?,
+        newHref: String?,
+    ): Result<Unit> {
+        fun update(id: Long) =
             ContentProviderOperation.newUpdate(rawContactByIdUri(accountName, id))
-                // The new server href, so the next pull matches this row and skips it
-                // instead of inserting a duplicate.
-                .withValue(RawContacts.SOURCE_ID, href)
+                // A create's or redirect's new server href, so the next pull matches this row
+                // and skips it instead of inserting a duplicate.
+                .apply { if (newHref != null) withValue(RawContacts.SOURCE_ID, newHref) }
                 .withValue(RawContacts.SYNC2, newEtag)
-                // Clear DIRTY in the same sync-adapter write so this write-back isn't read as
-                // a new edit, which would spin the push forever.
-                .withValue(RawContacts.DIRTY, 0)
-                .build()
+
+        return applyScopedIdWrite(label, rawContactId) { id ->
+            if (uploadedVersion == null) {
+                listOf(update(id).build())
+            } else {
+                // Check VERSION before metadata writes that might increment it. No yield points
+                // may split this transaction; ContactsProviderRepositoryTest enforces the order.
+                listOf(
+                    update(id)
+                        .withSelection("${RawContacts.VERSION} = ?", arrayOf(uploadedVersion.toString()))
+                        // Clear DIRTY in the same sync-adapter write. Sync-adapter mode stops the
+                        // provider setting DIRTY again on this write, which would spin the push
+                        // forever; clearing it takes the row out of the next scan.
+                        .withValue(RawContacts.DIRTY, 0)
+                        .build(),
+                    update(id)
+                        .withSelection("${RawContacts.DIRTY} = ?", arrayOf("1"))
+                        .build(),
+                )
+            }
         }
+    }
 
     override suspend fun hardDeleteTombstone(accountName: String, href: String): Result<Unit> =
         applyScopedIdWrite("hard-delete-tombstone", resolveTombstoneId(accountName, href)) { id ->
             // A delete through the sync-adapter URI is a hard delete; a non-adapter delete
             // only sets DELETED again, leaving the row forever.
-            ContentProviderOperation.newDelete(rawContactByIdUri(accountName, id)).build()
+            listOf(ContentProviderOperation.newDelete(rawContactByIdUri(accountName, id)).build())
         }
 
     override suspend fun restoreTombstone(accountName: String, href: String): Result<Unit> =
         applyScopedIdWrite("restore-tombstone", resolveTombstoneId(accountName, href)) { id ->
-            ContentProviderOperation.newUpdate(rawContactByIdUri(accountName, id))
-                .withValue(RawContacts.DELETED, 0)
-                // Clear DIRTY too, or the restored row comes back as a pending edit on the
-                // next scan.
-                .withValue(RawContacts.DIRTY, 0)
-                .build()
+            listOf(
+                ContentProviderOperation.newUpdate(rawContactByIdUri(accountName, id))
+                    .withValue(RawContacts.DELETED, 0)
+                    // Clear DIRTY too, or the restored row comes back as a pending edit on the
+                    // next scan.
+                    .withValue(RawContacts.DIRTY, 0)
+                    .build(),
+            )
         }
 
     /**
-     * Applies the single op [buildOp] builds for [rawContactId] and checks the applied-op count.
+     * Applies the ops [buildOps] builds for [rawContactId] and checks the applied-op count.
      * A null [rawContactId] (no matching row, or an unset `_ID`) is a no-op success. A short
      * `applyBatch` result is a [Result.failure]: per-op counts can lie, but a short result array
      * reliably means the write didn't fully apply. Failures are classified as
@@ -735,10 +771,10 @@ class AndroidContactsProviderRepository @Inject constructor(
     private suspend fun applyScopedIdWrite(
         label: String,
         rawContactId: Long?,
-        buildOp: (Long) -> ContentProviderOperation,
+        buildOps: (Long) -> List<ContentProviderOperation>,
     ): Result<Unit> = withContext(Dispatchers.IO) {
         val id = rawContactId ?: return@withContext Result.success(Unit)
-        val ops = arrayListOf(buildOp(id))
+        val ops = ArrayList(buildOps(id))
         try {
             val results = contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
             if (results.size < ops.size) {
