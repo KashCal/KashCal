@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">Synlege kalenderveker</string>
+    <string name="month_widget_weeks_auto">Automatisk (heile månaden)</string>
+    <string name="month_widget_weeks_description">Veker i alle månadsmodular. Automatisk viser heile månaden; kortare visingar held inneverande veke synleg.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d veke</item>
+        <item quantity="other">%1$d veker</item>
+    </plurals>
+</resources>

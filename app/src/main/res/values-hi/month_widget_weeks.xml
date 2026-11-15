@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">दिखने वाले कैलेंडर सप्ताह</string>
+    <string name="month_widget_weeks_auto">अपने आप (पूरा महीना)</string>
+    <string name="month_widget_weeks_description">सभी मासिक विजेट में दिखने वाले सप्ताह। अपने आप मोड में पूरा महीना दिखता है; छोटे दृश्य में मौजूदा सप्ताह दिखाई देता रहता है।</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d सप्ताह</item>
+        <item quantity="other">%1$d सप्ताह</item>
+    </plurals>
+</resources>

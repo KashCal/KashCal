@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">Synlige kalenderuker</string>
+    <string name="month_widget_weeks_auto">Automatisk (hele måneden)</string>
+    <string name="month_widget_weeks_description">Uker i alle månedsmoduler. Automatisk viser hele måneden; kortere visninger holder inneværende uke synlig.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d uke</item>
+        <item quantity="other">%1$d uker</item>
+    </plurals>
+</resources>

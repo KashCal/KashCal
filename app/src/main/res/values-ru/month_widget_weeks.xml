@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">Видимые недели календаря</string>
+    <string name="month_widget_weeks_auto">Автоматически (весь месяц)</string>
+    <string name="month_widget_weeks_description">Недели во всех месячных виджетах. Автоматический режим показывает весь месяц; сокращённый вид сохраняет текущую неделю видимой.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d неделя</item>
+        <item quantity="few">%1$d недели</item>
+        <item quantity="many">%1$d недель</item>
+        <item quantity="other">%1$d недели</item>
+    </plurals>
+</resources>

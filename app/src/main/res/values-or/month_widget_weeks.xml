@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">ଦୃଶ୍ୟମାନ କ୍ୟାଲେଣ୍ଡର ସପ୍ତାହ</string>
+    <string name="month_widget_weeks_auto">ସ୍ୱୟଂଚାଳିତ (ପୂରା ମାସ)</string>
+    <string name="month_widget_weeks_description">ସମସ୍ତ ମାସିକ ୱିଜେଟରେ ଦେଖାଯାଉଥିବା ସପ୍ତାହ। ସ୍ୱୟଂଚାଳିତ ପୂରା ମାସ ଦେଖାଏ; ଛୋଟ ଦୃଶ୍ୟରେ ଚଳିତ ସପ୍ତାହ ଦୃଶ୍ୟମାନ ରହେ।</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d ସପ୍ତାହ</item>
+        <item quantity="other">%1$d ସପ୍ତାହ</item>
+    </plurals>
+</resources>

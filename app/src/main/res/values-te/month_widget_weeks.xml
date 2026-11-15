@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">కనిపించే క్యాలెండర్ వారాలు</string>
+    <string name="month_widget_weeks_auto">స్వయంచాలకం (నెల మొత్తం)</string>
+    <string name="month_widget_weeks_description">అన్ని నెలవారీ విడ్జెట్‌లలో చూపించే వారాలు. స్వయంచాలకం నెల మొత్తాన్ని చూపిస్తుంది; తక్కువ వారాల వీక్షణలో ప్రస్తుత వారం కనిపిస్తూనే ఉంటుంది.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d వారం</item>
+        <item quantity="other">%1$d వారాలు</item>
+    </plurals>
+</resources>

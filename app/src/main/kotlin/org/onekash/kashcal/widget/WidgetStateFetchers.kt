@@ -206,3 +206,21 @@ internal suspend fun fetchMonthEvents(
         emptyMap()
     }
 }
+
+
+/** One settings read reused on initial render and each live widget refresh. */
+internal data class MonthWidgetSettings(
+    val firstDayOfWeek: Int,
+    val showWeekNumbers: Boolean,
+    val weekCount: Int,
+    val maxEventsPerDay: Int,
+    val showEventEmojis: Boolean,
+)
+
+internal suspend fun fetchMonthWidgetSettings(dataStore: KashCalDataStore) = MonthWidgetSettings(
+    firstDayOfWeek = dataStore.getFirstDayOfWeek(),
+    showWeekNumbers = dataStore.showWeekNumbers.first(),
+    weekCount = dataStore.monthWidgetWeeks.first(),
+    maxEventsPerDay = dataStore.widgetMaxEventsPerDay.first(),
+    showEventEmojis = dataStore.showEventEmojis.first(),
+)

@@ -260,6 +260,57 @@ class MonthWidgetSpanLayoutTest {
         assertEquals(listOf("Busy", "Free", "Timed"), titles)
     }
 
+    @Test
+    fun `daily limit counts events and does not count the overflow marker as an event`() {
+        val events = mapOf(week[2] to (1..10).map { timed(5, "Task$it") })
+        for (limit in listOf(3, 5, 8)) {
+            val render = computeMonthWidgetWeekRender(week, events, maxSlots = 18, maxEventsPerDay = limit)
+            assertEquals(limit, render.slots.count { it[2] is MonthWidgetSlot.CellEvent })
+            assertEquals(10 - limit, (render.slots.last()[2] as MonthWidgetSlot.Overflow).count)
+        }
+    }
+
+    @Test
+    fun `multi-day bars and single-day events share one daily event limit`() {
+        val bars = (1..2).map { multiDay(week.first(), week.last(), "Trip$it") }
+        val events = week.associateWith { day -> bars + (1..8).map { timed(day % 100, "Task$it") } }
+        val render = computeMonthWidgetWeekRender(week, events, maxSlots = 18, maxEventsPerDay = 3)
+        for (col in 0..6) {
+            assertEquals(2, render.slots.count { it[col] is MonthWidgetSlot.BarSegment })
+            assertEquals(1, render.slots.count { it[col] is MonthWidgetSlot.CellEvent })
+            assertEquals(7, (render.slots.last()[col] as MonthWidgetSlot.Overflow).count)
+        }
+    }
+
+    @Test
+    fun `overflow reports hidden multi-day bars as well as hidden single-day events`() {
+        val bars = (1..10).map { multiDay(week.first(), week.last(), "Trip$it") }
+        val events = week.associateWith { bars }
+        val render = computeMonthWidgetWeekRender(week, events, maxSlots = 18, maxEventsPerDay = 3)
+        for (col in 0..6) {
+            assertEquals(3, render.slots.count { it[col] is MonthWidgetSlot.BarSegment })
+            assertEquals(7, (render.slots.last()[col] as MonthWidgetSlot.Overflow).count)
+        }
+    }
+
+    @Test
+    fun `event and height budgets never conflict across all offered limits`() {
+        val bars = (1..4).map { multiDay(week.first(), week.last(), "Trip$it") }
+        val events = week.associateWith { day -> bars + (1..20).map { timed(day % 100, "Task$it") } }
+        for (limit in listOf(3, 5, 8, 10, 15)) for (heightRows in 1..18) {
+            val render = computeMonthWidgetWeekRender(week, events, heightRows, limit)
+            assertTrue(render.slots.size <= heightRows)
+            for (col in 0..6) {
+                val shown = render.slots.count {
+                    it[col] is MonthWidgetSlot.BarSegment || it[col] is MonthWidgetSlot.CellEvent
+                }
+                assertTrue(shown <= limit)
+                val marker = render.slots.map { it[col] }.filterIsInstance<MonthWidgetSlot.Overflow>().singleOrNull()
+                if (marker != null) assertEquals(24 - shown, marker.count)
+            }
+        }
+    }
+
     // ==================== Helpers ====================
 
     private fun timed(day: Int, title: String = "Timed") = WidgetEvent(
