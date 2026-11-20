@@ -26,8 +26,9 @@ import java.util.concurrent.TimeUnit
 /**
  * Refreshes ICS subscriptions in WorkManager, by [KEY_REFRESH_TYPE]: the periodic run refreshes
  * due feeds ([REFRESH_TYPE_DUE]); one-shot requests refresh every enabled feed
- * ([REFRESH_TYPE_ALL]) or one feed ([REFRESH_TYPE_SINGLE]). Nothing in app code enqueues the
- * one-shot requests today.
+ * ([REFRESH_TYPE_ALL]) or one feed ([REFRESH_TYPE_SINGLE]). Pull-to-refresh enqueues the
+ * all-feeds request through [org.onekash.kashcal.sync.scheduler.SyncScheduler.requestImmediateIcsRefresh];
+ * nothing in app code enqueues the one-feed request today.
  */
 @HiltWorker
 class IcsRefreshWorker @AssistedInject constructor(

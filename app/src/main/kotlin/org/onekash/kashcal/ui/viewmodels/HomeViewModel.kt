@@ -1604,9 +1604,9 @@ class HomeViewModel(
     // ==================== Sync Operations ====================
 
     /**
-     * Runs a pull-to-refresh sync, the only sync that shows the refresh spinner, and a contact
-     * sync. Unconfigured it shows a snackbar and offline an error; while a sync runs it does
-     * nothing.
+     * Runs a pull-to-refresh sync, the only sync that shows the refresh spinner, a contact sync
+     * and a refresh of every feed that is not paused. Unconfigured it shows a snackbar and
+     * offline an error; while a sync runs it does nothing.
      */
     fun refreshSync() {
         if (!_uiState.value.isConfigured) {
@@ -1630,6 +1630,10 @@ class HomeViewModel(
         // The contact worker syncs only accounts with contact sync enabled, so requesting it
         // unconditionally is cheap.
         syncScheduler.requestImmediateContactSync()
+        // Feeds are not accounts, so the sync above doesn't reach them. Only this gesture
+        // refreshes them; a resume would re-download every feed each time the app is opened.
+        // The worker refreshes only enabled feeds, so a paused feed is skipped.
+        syncScheduler.requestImmediateIcsRefresh()
     }
 
     /**

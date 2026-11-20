@@ -25,6 +25,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.R
+import org.onekash.kashcal.data.ics.IcsRefreshWorker
 import org.onekash.kashcal.sync.notification.ChangeNotificationChannels
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
@@ -192,6 +193,18 @@ class SyncSchedulerTest {
         val workInfos =
             workManager.getWorkInfosForUniqueWork(SyncScheduler.ONE_SHOT_CONTACT_SYNC_WORK).get()
         assertEquals(1, workInfos.size)
+    }
+
+    @Test
+    fun `requestImmediateIcsRefresh enqueues one one-shot refresh of every feed`() {
+        scheduler.requestImmediateIcsRefresh()
+
+        val workId = scheduler.requestImmediateIcsRefresh()
+
+        assertNotNull(workId)
+        val workInfos =
+            workManager.getWorkInfosForUniqueWork(IcsRefreshWorker.ONE_SHOT_REFRESH_WORK).get()
+        assertEquals(1, workInfos.count { !it.state.isFinished })
     }
 
     @Test

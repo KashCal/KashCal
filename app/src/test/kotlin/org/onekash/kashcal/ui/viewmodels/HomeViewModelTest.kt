@@ -1396,6 +1396,42 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `refreshSync when online also refreshes ICS feeds`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        networkStateFlow.value = true
+        io.mockk.clearMocks(syncScheduler, answers = false, recordedCalls = true, childMocks = false)
+
+        viewModel.refreshSync()
+        advanceUntilIdle()
+
+        // Feeds are not accounts, so the calendar sync doesn't reach them.
+        verify(exactly = 1) { syncScheduler.requestImmediateIcsRefresh() }
+    }
+
+    @Test
+    fun `syncOnResumeIfNeeded does not refresh ICS feeds`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        io.mockk.clearMocks(syncScheduler, answers = false, recordedCalls = true, childMocks = false)
+
+        viewModel.syncOnResumeIfNeeded()
+        advanceUntilIdle()
+
+        // Only the pull-to-refresh gesture refreshes feeds; each resume would re-download them all.
+        verify { syncScheduler.requestImmediateSync(any(), any()) }
+        verify(exactly = 0) { syncScheduler.requestImmediateIcsRefresh() }
+    }
+
+    @Test
     fun `syncOnResumeIfNeeded does not trigger contact sync`() = runTest {
         coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true

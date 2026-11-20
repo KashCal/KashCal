@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
+import org.onekash.kashcal.data.ics.IcsRefreshWorker
 import org.onekash.kashcal.domain.changes.RecentChangeEntry
 import org.onekash.kashcal.sync.session.SyncTrigger
 import org.onekash.kashcal.sync.contacts.ContactSyncWorker
@@ -247,6 +248,16 @@ class SyncScheduler @Inject constructor(
 
         return oneShotWork.id
     }
+
+    /**
+     * Requests a one-shot refresh of every enabled ICS feed, replacing a queued or running one.
+     * Feeds are not accounts, so [requestImmediateSync] never reaches them; pull-to-refresh
+     * calls this as well. The worker's constraints live in [IcsRefreshWorker.requestImmediateRefresh].
+     *
+     * @return the work request's id, for status tracking
+     */
+    fun requestImmediateIcsRefresh(): java.util.UUID =
+        IcsRefreshWorker.requestImmediateRefresh(context)
 
     /**
      * Applies the defaults of user-initiated one-shot sync work: the LAN-friendly network
