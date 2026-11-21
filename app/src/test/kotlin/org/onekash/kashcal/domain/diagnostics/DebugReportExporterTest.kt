@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.Context
 import android.net.Uri
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.Configuration
 import androidx.work.OneTimeWorkRequestBuilder
@@ -44,6 +43,7 @@ import org.onekash.kashcal.sync.session.SyncSession
 import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.sync.session.SyncTrigger
 import org.onekash.kashcal.sync.session.SyncType
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.io.File
@@ -70,7 +70,7 @@ class DebugReportExporterTest {
     @Before
     fun setUp() {
         context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
         dataStoreScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
@@ -247,9 +247,10 @@ class DebugReportExporterTest {
             "Background restricted: yes",
             "Pending reminders: 0",
             "debug-report-test",
-            "Database: version ${database.openHelper.readableDatabase.version}",
+            "Database: version ${TestDatabases.exportedSchemaVersion};",
             "accounts 2",
             "calendars 2",
+            "ics 0 events / 0 parts",
         ).forEach { assertTrue("missing '$it' in\n$setup", setup.contains(it)) }
     }
 

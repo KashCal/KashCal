@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d gehiago</string>
     <string name="tags_autocomplete_create_new">Sortu «%1$s»</string>
     <string name="cd_tag">Etiketa: %1$s</string>
+    <string name="tags_show_events_click_label">Erakutsi etiketa hau duten gertaerak</string>
+    <string name="tags_show_events">Erakutsi gertaerak</string>
     <string name="cd_tags_move_menu">Eraman etiketak</string>
     <string name="tags_move_above_notes">Eraman oharren gainera</string>
     <string name="tags_move_below_notes">Eraman oharren azpira</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Sinkronizazio-saioak ikusi (azken 48 orduak)</string>
     <string name="settings_import_subtitle">Gehitu ICS fitxategi bateko ekitaldiak edozein egutegitara</string>
     <string name="settings_birthday_reminder">Urtebetetze-gogorarazlea</string>
-    <string name="settings_use_device_timezone">Gailuaren ordu-zona erabili</string>
     <string name="settings_section_calendars">Egutegiak eta kontuak</string>
     <string name="settings_section_appearance">Itxura</string>
     <string name="settings_section_creating_events">Gertaeren hobespenak</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">Errepikakorra</string>
     <string name="cd_enabled">Gaituta</string>
     <string name="cd_sync_error">Sinkronizazio-errorea</string>
-    <string name="cd_select_label">%1$s hautatu</string>
     <string name="cd_wheel_picker">Gurpil-hautatzailea %1$d aukerarekin</string>
     <string name="cd_time_entry_keyboard">Sartu ordu zehatza</string>
     <string name="time_entry_dialog_title">Sartu ordua</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">Amaiera</string>
     <string name="sheet_hint_change_end">Ukitu egun bat amaiera aldatzeko</string>
     <string name="label_timezone">Ordu-zona</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Bilatu hiria, herrialdea edo zona</string>
+    <string name="timezone_section_this_event">Gertaera hau</string>
+    <string name="timezone_section_device">Gailuko ordu-zona</string>
+    <string name="timezone_section_recent">Azkenak</string>
+    <string name="timezone_section_all">Ordu-zona guztiak</string>
+    <string name="timezone_offsets_on">Desfaseak %1$s egunean</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Egutegitik: %1$s</string>
+    <string name="timezone_shown_in_device_time">Gailuko orduan erakusten da</string>
+    <string name="timezone_loading">Ordu-zonak kargatzen…</string>
+    <string name="timezone_no_match">Ez dago bat datorren ordu-zonarik</string>
+    <string name="timezone_no_match_hint">Saiatu hiri, herrialde edo +5:30 bezalako desfase batekin</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Alertak</string>
     <string name="label_add_alert">Alerta gehitu</string>
     <string name="label_recurrence_never">Inoiz ez</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">Gertaera berriak egutegi honetan sortuko dira</string>
     <string name="label_reminders_truncated">%1$d erakutsi gabe (%2$d guztira, gehienez %3$d editagarri)</string>
     <string name="label_found_events">Aurkitutakoak: %1$d gertaera</string>
-    <string name="placeholder_search">Bilatu…</string>
     <string name="settings_search_placeholder">Bilatu ezarpenetan…</string>
     <string name="settings_search_no_results">Ez da ezarpenik aurkitu \"%1$s\" bilaketarako</string>
     <string name="cd_search_settings">Bilatu ezarpenetan</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">Izenbururik gabeko gertaera</string>
     <string name="recurring_this_event">Gertaera hau</string>
     <string name="recurring_all_events">Gertaera guztiak</string>
+    <string name="recurring_scope_move_not_expressible">Errepikapen-arauak ezin du aldaketa hau jarraitu</string>
+    <string name="event_form_move_not_expressible">Errepikapen-arauak ezin du aldaketa hau jarraitu. Ez da ezer gorde.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Bertaratuak</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">Gonbidatua:</string>
     <string name="search_keep_typing">Jarraitu idazten bilatzeko</string>
     <string name="search_no_matches">Ez dago «%1$s» bilaketarekin bat datorren gertaerarik</string>
+    <string name="search_no_events_tagged">Ez dago «%1$s» etiketatutako gertaerarik</string>
     <string name="search_lookback_line">Sinkronizazio atzera-begirada: %1$s</string>
     <string name="search_sync_settings">Sinkronizazio-ezarpenak</string>
     <string name="cd_search_sync_settings">Ireki sinkronizazio atzera-begiradaren ezarpena</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">Jario honen zerbitzariak sarbidea ukatu du.</string>
     <string name="ics_feed_error_too_large">Egutegi-jario hau handiegia da deskargatzeko.</string>
     <string name="ics_feed_error_unreadable">Ezin izan dira jario honetako gertaerak erakutsi.</string>
+    <string name="ics_feed_error_event_not_saved">«%1$s» ez da gorde.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">Gertaera %1$d ez da gorde.</item>
+        <item quantity="other">%1$d gertaera ez dira gorde.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">Gertaera %1$d ez da gorde, «%2$s» barne.</item>
+        <item quantity="other">%1$d gertaera ez dira gorde, «%2$s» barne.</item>
+    </plurals>
     <string name="insights_title">Ikuspegiak</string>
     <string name="insights_period_this_week">Astea</string>
     <string name="insights_period_last_week">Aurreko astea</string>

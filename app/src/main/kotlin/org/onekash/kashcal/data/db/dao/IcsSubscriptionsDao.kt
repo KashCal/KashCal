@@ -1,11 +1,11 @@
 package org.onekash.kashcal.data.db.dao
 
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Update
+import androidx.room3.Dao
+import androidx.room3.Delete
+import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
+import androidx.room3.Query
+import androidx.room3.Update
 import kotlinx.coroutines.flow.Flow
 import org.onekash.kashcal.data.db.entity.IcsSubscription
 
@@ -88,6 +88,26 @@ interface IcsSubscriptionsDao {
         timestamp: Long,
         etag: String?,
         lastModified: String?
+    )
+
+    /**
+     * Records a sync that stored the feed except some events: the time, the validators and
+     * [error] together. Null validators make the next fetch unconditional.
+     */
+    @Query("""
+        UPDATE ics_subscriptions
+        SET last_sync = :timestamp,
+            etag = :etag,
+            last_modified = :lastModified,
+            last_error = :error
+        WHERE id = :id
+    """)
+    suspend fun updateSyncWithMissingEvents(
+        id: Long,
+        timestamp: Long,
+        etag: String?,
+        lastModified: String?,
+        error: String
     )
 
     @Query("""

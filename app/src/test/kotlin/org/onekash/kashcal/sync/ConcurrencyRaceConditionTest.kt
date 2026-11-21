@@ -1,8 +1,6 @@
 package org.onekash.kashcal.sync
 
 import android.content.Context
-import androidx.room.Room
-import androidx.room.withTransaction
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -26,6 +24,7 @@ import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.util.UUID
@@ -53,7 +52,7 @@ class ConcurrencyRaceConditionTest {
     @Before
     fun setup() = runTest {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .addCallback(PendingOperationTriggers.callback())
             .allowMainThreadQueries()
             .build()
@@ -357,7 +356,7 @@ class ConcurrencyRaceConditionTest {
         val eventId = event.id
 
         try {
-            database.withTransaction {
+            database.runInTransaction {
                 // Update event
                 database.eventsDao().update(event.copy(title = "Updated"))
 
@@ -392,10 +391,10 @@ class ConcurrencyRaceConditionTest {
     fun `nested transactions should maintain consistency`() = runTest {
         val event = createAndInsertEvent("Nested Transaction Test")
 
-        database.withTransaction {
+        database.runInTransaction {
             database.eventsDao().update(event.copy(title = "Outer Update"))
 
-            database.withTransaction {
+            database.runInTransaction {
                 database.eventsDao().update(event.copy(title = "Inner Update"))
             }
         }

@@ -393,7 +393,7 @@ END:VCALENDAR
 
     /**
      * Builds a KashCal Event and Attendee rows, serializes them via the production organizer
-     * push path (IcsPatcher.generateFresh, no rawIcal), creates on the server and re-fetches.
+     * push path (IcsPatcher.generateFresh, no stored ICS), creates on the server and re-fetches.
      * Checks that the attendee set KashCal emits round-trips through a real server.
      */
     @Test

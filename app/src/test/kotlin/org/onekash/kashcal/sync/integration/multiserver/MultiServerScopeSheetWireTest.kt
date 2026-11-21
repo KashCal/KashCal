@@ -231,7 +231,7 @@ class MultiServerScopeSheetWireTest(
             startTs = t.occurrence2StartTs + 30 * 60_000L, // shifted +30min
             endTs = t.occurrence2EndTs + 30 * 60_000L,
         )
-        val ics = IcsPatcher.serializeWithExceptions(master, listOf(exception))
+        val ics = IcsPatcher.serializeWithExceptions(master, null, listOf(exception))
 
         val stored = putAndFetch(uid, ics) ?: error("fetch returned null")
         val unfolded = unfold(stored)
@@ -276,7 +276,7 @@ class MultiServerScopeSheetWireTest(
         assertEquals("FREQ=WEEKLY;COUNT=4", splitNewSeries)
 
         // PUT truncated master.
-        val masterIcs = IcsPatcher.serialize(masterEvent(masterUid, t, rrule = truncatedMaster))
+        val masterIcs = IcsPatcher.serialize(masterEvent(masterUid, t, rrule = truncatedMaster), ics = null)
         val storedMaster = putAndFetch(masterUid, masterIcs) ?: error("master fetch null")
         val masterRruleStored = rrulePropFrom(firstVeventBody(storedMaster))
         assertNotNull("Master must carry RRULE on $config", masterRruleStored)
@@ -297,7 +297,7 @@ class MultiServerScopeSheetWireTest(
             dtstamp = System.currentTimeMillis(),
             syncStatus = SyncStatus.SYNCED,
         )
-        val newSeriesIcs = IcsPatcher.serialize(newMaster)
+        val newSeriesIcs = IcsPatcher.serialize(newMaster, ics = null)
         val storedNewSeries = putAndFetch(newSeriesUid, newSeriesIcs) ?: error("new series fetch null")
         val newRruleStored = rrulePropFrom(firstVeventBody(storedNewSeries))
         assertNotNull("New series must carry RRULE on $config", newRruleStored)
@@ -342,7 +342,7 @@ class MultiServerScopeSheetWireTest(
             dtstamp = System.currentTimeMillis(),
             syncStatus = SyncStatus.SYNCED,
         )
-        val ics = IcsPatcher.serialize(newRow)
+        val ics = IcsPatcher.serialize(newRow, ics = null)
         val stored = putAndFetch(newSeriesUid, ics) ?: error("fetch null")
         val rruleStored = rrulePropFrom(firstVeventBody(stored))
         assertNull(
@@ -395,7 +395,7 @@ class MultiServerScopeSheetWireTest(
             dtstamp = System.currentTimeMillis(),
             syncStatus = SyncStatus.SYNCED,
         )
-        val ics = IcsPatcher.serialize(newRow)
+        val ics = IcsPatcher.serialize(newRow, ics = null)
         val stored = putAndFetch(newSeriesUid, ics) ?: error("fetch null")
         val rruleStored = rrulePropFrom(firstVeventBody(stored))
         assertNotNull("Server must store the new RRULE on ${config.name}", rruleStored)
@@ -462,7 +462,7 @@ class MultiServerScopeSheetWireTest(
             dtstamp = System.currentTimeMillis(),
             syncStatus = SyncStatus.SYNCED,
         )
-        val masterIcs = IcsPatcher.serialize(masterDaily)
+        val masterIcs = IcsPatcher.serialize(masterDaily, ics = null)
         val storedMaster = putAndFetch(masterUid, masterIcs) ?: error("master fetch null")
         assertTrue(
             "Server should accept the COUNT=10 master on ${config.name}",
@@ -601,7 +601,7 @@ END:VCALENDAR
             dtstamp = System.currentTimeMillis(),
             syncStatus = SyncStatus.SYNCED,
         )
-        val newSeriesIcs = IcsPatcher.serialize(newSeries)
+        val newSeriesIcs = IcsPatcher.serialize(newSeries, ics = null)
         val newSeriesResult = client!!.createEvent(calendarUrl!!, newSeriesUid, newSeriesIcs)
         assertTrue(
             "New series CREATE must succeed on ${config.name} (saw 403 on iCloud in production): " +
@@ -737,7 +737,7 @@ END:VCALENDAR
             dtstamp = System.currentTimeMillis(),
             syncStatus = SyncStatus.SYNCED,
         )
-        val masterIcs = IcsPatcher.serialize(masterDaily)
+        val masterIcs = IcsPatcher.serialize(masterDaily, ics = null)
         val storedMaster = putAndFetch(masterUid, masterIcs) ?: error("master fetch null")
         assertTrue(
             "Master COUNT=10 must round-trip on ${config.name}",

@@ -1,7 +1,6 @@
 package org.onekash.kashcal.data.ics
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coVerify
 import io.mockk.every
@@ -17,6 +16,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.icaldav.parser.ICalParser
+import org.onekash.kashcal.data.db.EventIcsStore
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
@@ -38,6 +38,7 @@ import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.onekash.kashcal.ui.components.attendees.AttendeeStatus
 import org.onekash.kashcal.ui.components.attendees.shouldShowRespondSection
 import org.robolectric.RobolectricTestRunner
@@ -77,7 +78,7 @@ class IcsInvitationImportTest {
     @Before
     fun setUp() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        db = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
         val generator = OccurrenceGenerator(
@@ -175,6 +176,7 @@ class IcsInvitationImportTest {
             "https://dav.example.test/cal/personal/${parsed.uid}.ics", "\"e1\""
         )
         val id = db.eventsDao().insert(mapped.event.copy(syncStatus = SyncStatus.SYNCED))
+        EventIcsStore(db).write(id, mapped.ics)
         db.attendeesDao().replaceForEvent(id, mapped.attendees.map { it.copy(eventId = id) })
         generator.regenerateOccurrences(db.eventsDao().getById(id)!!)
         return id
@@ -269,7 +271,7 @@ class IcsInvitationImportTest {
             importFile("issue_364_request.ics", calendarId)
             val event = masters(calendarId).single()
 
-            val body = IcsPatcher.serialize(event, db.attendeesDao().getForEventOnce(event.id))
+            val body = IcsPatcher.serialize(event, EventIcsStore(db).read(event), db.attendeesDao().getForEventOnce(event.id))
 
             val lines = body.replace(Regex("\r?\n[ \t]"), "").lines()
             assertTrue(lines.contains("UID:test-invitation-123@example.com"))
@@ -441,7 +443,7 @@ class IcsInvitationImportTest {
     fun `a REQUEST for a meeting awaiting deletion creates nothing`() = runBlocking {
         val calendarId = caldavCalendarId()
         val id = seedSyncedCopy(calendarId, fixture("nextcloud_request.ics"))
-        db.openHelper.writableDatabase.execSQL("UPDATE events SET sync_status = 'PENDING_DELETE' WHERE id = $id")
+        TestDatabases.raw(db).execSQL("UPDATE events SET sync_status = 'PENDING_DELETE' WHERE id = $id")
 
         val result = importFile("nextcloud_request.ics", calendarId)
 
@@ -506,7 +508,7 @@ class IcsInvitationImportTest {
             val request = message("REQUEST", vevent(0, "20261001T100000Z"))
             val masterId = if (pulled) {
                 seedSyncedCopy(calendarId, request).also {
-                    db.openHelper.writableDatabase.execSQL("UPDATE events SET reminders = '[\"-PT15M\"]' WHERE id = $it")
+                    TestDatabases.raw(db).execSQL("UPDATE events SET reminders = '[\"-PT15M\"]' WHERE id = $it")
                     scheduler.scheduleUpcomingReminders()
                 }
             } else {
@@ -529,7 +531,7 @@ class IcsInvitationImportTest {
         val scheduler = realReminderScheduler()
         val calendarId = caldavCalendarId()
         val masterId = seedSyncedCopy(calendarId, message("REQUEST", vevent(0, "20261001T100000Z", status = "CANCELLED")))
-        db.openHelper.writableDatabase.execSQL("UPDATE events SET reminders = '[\"-PT15M\"]' WHERE id = $masterId")
+        TestDatabases.raw(db).execSQL("UPDATE events SET reminders = '[\"-PT15M\"]' WHERE id = $masterId")
 
         scheduler.scheduleUpcomingReminders()
 
@@ -668,6 +670,7 @@ class IcsInvitationImportTest {
     fun `rescheduled invitation replaces the synced original on a CalDAV calendar`() = runBlocking {
         val calendarId = caldavCalendarId(guestAddress)
         val original = seedOriginal(calendarId)
+        val originalIcs = requireNotNull(EventIcsStore(db).readOwn(original.id))
         val newer = rescheduled()
         val newerEvent = newer.groups.single().masters.single().event
 
@@ -682,7 +685,7 @@ class IcsInvitationImportTest {
         assertEquals(SyncStatus.PENDING_UPDATE, stored.syncStatus)
         assertEquals(original.caldavUrl, stored.caldavUrl)
         assertEquals(original.etag, stored.etag)
-        assertEquals("the server copy stays the row's copy", original.rawIcal, stored.rawIcal)
+        assertEquals("the server copy stays the row's copy", originalIcs, EventIcsStore(db).readOwn(original.id))
         val op = pendingOps().single()
         assertEquals(original.id, op.eventId)
         assertEquals(PendingOperation.OPERATION_UPDATE, op.operation)

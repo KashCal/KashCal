@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.integration.multiserver
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.every
 import io.mockk.mockk
@@ -33,6 +33,7 @@ import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.sync.strategy.PushResult
 import org.onekash.kashcal.sync.strategy.PushStrategy
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.text.SimpleDateFormat
@@ -141,7 +142,7 @@ class MultiServerUnknownPropertyRoundTripTest(
     @Before
     fun setup() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries().build()
 
         occurrenceGenerator = OccurrenceGenerator(
@@ -168,7 +169,8 @@ class MultiServerUnknownPropertyRoundTripTest(
             dataStore = dataStore,
             inviteNotifier = mockk(relaxed = true),
             accountRepository = mockk(relaxed = true),
-            reminderScheduler = mockk(relaxed = true)
+            reminderScheduler = mockk(relaxed = true),
+            icsSource = EventIcsStore(database),
         )
 
         pushStrategy = PushStrategy(
@@ -188,7 +190,8 @@ class MultiServerUnknownPropertyRoundTripTest(
                 contactsProviderRepository = mockk(relaxed = true)
             ),
             attendeesDao = database.attendeesDao(),
-            pendingCancelsDao = database.pendingCancelsDao()
+            pendingCancelsDao = database.pendingCancelsDao(),
+            icsSource = EventIcsStore(database),
         )
     }
 
@@ -390,7 +393,7 @@ class MultiServerUnknownPropertyRoundTripTest(
     }
 
     /**
-     * Store this run's own resource the way pull does: every VEVENT row carries
+     * Store this run's own resource the way pull does: the series row holds
      * the whole body, and changed occurrences are normalized against the series
      * DTSTART and linked to its occurrences.
      */
@@ -401,6 +404,7 @@ class MultiServerUnknownPropertyRoundTripTest(
         val seriesId = database.eventsDao().insert(
             ICalEventMapper.toEntity(seriesParsed, body, calendar.id, url, etag).event
         )
+        EventIcsStore(database).write(seriesId, body)
         val series = database.eventsDao().getById(seriesId)!!
         if (series.isRecurring) occurrenceGenerator.regenerateOccurrences(series)
         parsed.filter { it.recurrenceId != null }.forEach { occurrence ->

@@ -1,8 +1,10 @@
 package org.onekash.kashcal.ui.components
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.performClick
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -34,7 +36,7 @@ class EventQuickViewSheetTagsTest {
         dtstamp = 1_000,
     )
 
-    private fun render(categories: List<String>?) {
+    private fun render(categories: List<String>?, onTagClick: ((String) -> Unit)? = null) {
         composeTestRule.setContent {
             MaterialTheme {
                 EventQuickViewSheet(
@@ -44,6 +46,7 @@ class EventQuickViewSheetTagsTest {
                     onDismiss = {},
                     onEdit = {},
                     onDeleteSingle = {},
+                    onTagClick = onTagClick,
                 )
             }
         }
@@ -64,5 +67,15 @@ class EventQuickViewSheetTagsTest {
         render(listOf("Work"))
         // "New tag" is the editable add-tag affordance; it must never appear here.
         assertEquals(0, countWithText("New tag"))
+    }
+
+    @Test
+    fun tapping_a_tag_passes_its_name_to_the_host() {
+        val tapped = mutableListOf<String>()
+        render(listOf("Work", "Focus"), onTagClick = { tapped += it })
+
+        composeTestRule.onNode(hasContentDescription("Tag: Focus")).performClick()
+
+        assertEquals(listOf("Focus"), tapped)
     }
 }

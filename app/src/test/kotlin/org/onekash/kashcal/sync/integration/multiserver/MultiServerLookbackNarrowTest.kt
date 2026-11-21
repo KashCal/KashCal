@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.integration.multiserver
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import io.mockk.mockk
@@ -38,6 +38,7 @@ import org.onekash.kashcal.sync.contacts.FakeContactsProviderRepository
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.onekash.kashcal.sync.strategy.PushResult
 import org.onekash.kashcal.sync.strategy.PushStrategy
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.io.File
@@ -95,7 +96,7 @@ class MultiServerLookbackNarrowTest(private val config: CalDavServerConfig) {
     fun setUp() {
         CalDavTestServerLoader.createClient(config)?.let { client = it.first; creds = it.second }
         val context: Context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java).allowMainThreadQueries().build()
+        db = TestDatabases.inMemory(context).allowMainThreadQueries().build()
         // A real DataStore, so the lookback the occurrence generator reads changes as the setting
         // does.
         dataStoreScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
@@ -203,7 +204,7 @@ class MultiServerLookbackNarrowTest(private val config: CalDavServerConfig) {
     }
 
     /**
-     * Stores this run's own resource the way pull does: every VEVENT row carries the whole
+     * Stores this run's own resource the way pull does: the series row holds the whole
      * body, and the changed occurrence is normalized against the series DTSTART and linked to
      * its occurrence. Returns the series row id.
      */
@@ -214,6 +215,7 @@ class MultiServerLookbackNarrowTest(private val config: CalDavServerConfig) {
         assertTrue("${config.name}: the stored resource must be this run's own event", parsed.all { it.uid == uid })
         val seriesParsed = parsed.first { it.recurrenceId == null }
         val seriesId = db.eventsDao().insert(ICalEventMapper.toEntity(seriesParsed, body, calendar.id, url, etag).event)
+        EventIcsStore(db).write(seriesId, body)
         generator.regenerateOccurrences(db.eventsDao().getById(seriesId)!!)
         parsed.filter { it.recurrenceId != null }.forEach { occurrence ->
             val row = ICalEventMapper.toEntity(occurrence, body, calendar.id, url, etag, masterDtStart = seriesParsed.dtStart)
@@ -280,6 +282,7 @@ class MultiServerLookbackNarrowTest(private val config: CalDavServerConfig) {
         accountRepository = accountRepository(),
         attendeesDao = db.attendeesDao(),
         pendingCancelsDao = db.pendingCancelsDao(),
+        icsSource = EventIcsStore(db),
     )
 
     private fun accountRepository(): AccountRepository = AccountRepositoryImpl(

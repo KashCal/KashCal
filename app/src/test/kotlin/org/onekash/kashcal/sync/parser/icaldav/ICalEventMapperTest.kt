@@ -1002,10 +1002,11 @@ class ICalEventMapperTest {
             "the parser collects ATTACH as an unknown property",
             events.first().rawProperties.keys.any { it.startsWith("ATTACH") }
         )
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
+        val mapped = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = mapped.event
 
         assertNull("every unknown value was omitted, so the map is null", entity.extraProperties)
-        assertEquals("the stored copy is kept as passed in", ics, entity.rawIcal)
+        assertEquals("the stored copy is kept as passed in", ics, mapped.ics)
     }
 
     @Test

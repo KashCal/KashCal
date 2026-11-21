@@ -38,4 +38,27 @@ object IcsFeedErrors {
     fun isNetwork(stored: String) = stored.startsWith(NETWORK_PREFIX)
 
     fun isSsl(stored: String) = stored.startsWith(SSL_PREFIX)
+
+    private val notSavedText = Regex("""^Events not saved \((\d+)\)(?:: (.*))?$""", RegexOption.DOT_MATCHES_ALL)
+    private const val NOT_SAVED_TITLE_LENGTH = 60
+
+    /** Whitespace runs, including the line and paragraph separators `\s` leaves out. */
+    private val titleSpace = Regex("""[\s\u0085\u2028\u2029]+""")
+
+    /**
+     * Returns the text for a refresh that stored the feed except [count] events, naming the first
+     * of [titles] that isn't blank, on one line and cut to [NOT_SAVED_TITLE_LENGTH] code points.
+     */
+    fun notSaved(count: Int, titles: List<String>): String {
+        val title = titles.asSequence()
+            .map { it.replace(titleSpace, " ").trim() }
+            .firstOrNull { it.isNotEmpty() }
+            ?.let { it.substring(0, it.offsetByCodePoints(0, minOf(NOT_SAVED_TITLE_LENGTH, it.codePointCount(0, it.length)))) }
+            ?.trimEnd()
+        return "Events not saved ($count)" + (title?.let { ": $it" } ?: "")
+    }
+
+    /** Returns the count and title of a text made by [notSaved], or null for any other text. */
+    fun notSavedOf(stored: String): Pair<Int, String?>? =
+        notSavedText.find(stored)?.let { it.groupValues[1].toInt() to it.groupValues[2].ifEmpty { null } }
 }

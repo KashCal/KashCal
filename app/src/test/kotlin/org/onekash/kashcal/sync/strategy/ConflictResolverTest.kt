@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import io.mockk.Runs
+import org.onekash.kashcal.testutil.FakeEventIcsSource
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -64,7 +65,8 @@ class ConflictResolverTest {
             attendeesDao = attendeesDao,
             pendingOperationsDao = pendingOperationsDao,
             occurrenceGenerator = occurrenceGenerator,
-            database = database
+            database = database,
+            icsSource = FakeEventIcsSource(),
         )
     }
 

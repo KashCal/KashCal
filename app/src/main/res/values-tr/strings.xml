@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d daha</string>
     <string name="tags_autocomplete_create_new">\"%1$s\" oluştur</string>
     <string name="cd_tag">Etiket: %1$s</string>
+    <string name="tags_show_events_click_label">Bu etikete sahip etkinlikleri göster</string>
+    <string name="tags_show_events">Etkinlikleri göster</string>
     <string name="cd_tags_move_menu">Etiketleri taşı</string>
     <string name="tags_move_above_notes">Notların üstüne taşı</string>
     <string name="tags_move_below_notes">Notların altına taşı</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Eşitleme oturumlarını görüntüle (son 48 saat)</string>
     <string name="settings_import_subtitle">Bir ICS dosyasından etkinlikleri herhangi bir takvime ekle</string>
     <string name="settings_birthday_reminder">Doğum Günü Hatırlatıcısı</string>
-    <string name="settings_use_device_timezone">Cihaz saat dilimini kullan</string>
     <string name="settings_section_calendars">Takvimler ve hesaplar</string>
     <string name="settings_section_appearance">Görünüm</string>
     <string name="settings_section_creating_events">Etkinlik tercihleri</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">Tekrarlanan</string>
     <string name="cd_enabled">Etkin</string>
     <string name="cd_sync_error">Eşitleme hatası</string>
-    <string name="cd_select_label">%1$s seç</string>
     <string name="cd_wheel_picker">%1$d seçenekli tekerlek seçici</string>
     <string name="cd_time_entry_keyboard">Tam saati gir</string>
     <string name="time_entry_dialog_title">Saati gir</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">Bitiş</string>
     <string name="sheet_hint_change_end">Bitişi değiştirmek için bir güne dokun</string>
     <string name="label_timezone">Saat dilimi</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Şehir, ülke veya dilim ara</string>
+    <string name="timezone_section_this_event">Bu etkinlik</string>
+    <string name="timezone_section_device">Cihaz saat dilimi</string>
+    <string name="timezone_section_recent">Son kullanılanlar</string>
+    <string name="timezone_section_all">Tüm saat dilimleri</string>
+    <string name="timezone_offsets_on">Farklar: %1$s tarihine göre</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Takvimdeki adı: %1$s</string>
+    <string name="timezone_shown_in_device_time">Cihaz saatiyle gösteriliyor</string>
+    <string name="timezone_loading">Saat dilimleri yükleniyor…</string>
+    <string name="timezone_no_match">Eşleşen saat dilimi yok</string>
+    <string name="timezone_no_match_hint">Bir şehir, ülke veya +5:30 gibi bir fark dene</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Uyarılar</string>
     <string name="label_add_alert">Uyarı Ekle</string>
     <string name="label_recurrence_never">Asla</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">Yeni etkinlikler bu takvimde oluşturulacak</string>
     <string name="label_reminders_truncated">%1$d gösterilmiyor (%2$d toplam, en fazla %3$d düzenlenebilir)</string>
     <string name="label_found_events">Bulunan: %1$d etkinlik</string>
-    <string name="placeholder_search">Ara…</string>
     <string name="settings_search_placeholder">Ayarlarda ara…</string>
     <string name="settings_search_no_results">\"%1$s\" için ayar bulunamadı</string>
     <string name="cd_search_settings">Ayarlarda ara</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">Başlıksız etkinlik</string>
     <string name="recurring_this_event">Bu etkinlik</string>
     <string name="recurring_all_events">Tüm etkinlikler</string>
+    <string name="recurring_scope_move_not_expressible">Tekrar kuralı bu değişikliği izleyemez</string>
+    <string name="event_form_move_not_expressible">Tekrar kuralı bu değişikliği izleyemez. Hiçbir şey kaydedilmedi.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Katılımcılar</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">Konuk:</string>
     <string name="search_keep_typing">Aramak için yazmaya devam et</string>
     <string name="search_no_matches">“%1$s” ile eşleşen etkinlik yok</string>
+    <string name="search_no_events_tagged">“%1$s” etiketli etkinlik yok</string>
     <string name="search_lookback_line">Eşitleme Geçmişi Süresi: %1$s</string>
     <string name="search_sync_settings">Eşitleme ayarları</string>
     <string name="cd_search_sync_settings">Eşitleme geçmişi süresi ayarını aç</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">Bu akışın sunucusu erişimi reddetti.</string>
     <string name="ics_feed_error_too_large">Bu takvim akışı indirilemeyecek kadar büyük.</string>
     <string name="ics_feed_error_unreadable">Bu akışın etkinlikleri gösterilemedi.</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s” kaydedilmedi.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d etkinlik kaydedilmedi.</item>
+        <item quantity="other">%1$d etkinlik kaydedilmedi.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">“%2$s” dahil %1$d etkinlik kaydedilmedi.</item>
+        <item quantity="other">“%2$s” dahil %1$d etkinlik kaydedilmedi.</item>
+    </plurals>
     <string name="insights_title">İstatistikler</string>
     <string name="insights_period_this_week">Hafta</string>
     <string name="insights_period_last_week">Geçen hafta</string>

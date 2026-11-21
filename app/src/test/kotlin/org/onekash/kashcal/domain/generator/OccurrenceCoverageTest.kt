@@ -1,8 +1,6 @@
 package org.onekash.kashcal.domain.generator
 
 import android.content.Context
-import androidx.room.Room
-import androidx.room.withTransaction
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.every
 import io.mockk.mockkObject
@@ -30,6 +28,7 @@ import org.onekash.kashcal.domain.rrule.RruleBuilder
 import org.onekash.kashcal.domain.search.SearchQuery
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -59,7 +58,7 @@ class OccurrenceCoverageTest {
     @Before
     fun setUp(): Unit = runBlocking {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
         val real = database.occurrencesDao()
@@ -188,7 +187,7 @@ class OccurrenceCoverageTest {
     @Test
     fun `a call inside a transaction is refused and writes nothing`(): Unit = runBlocking {
         val a = weekly("A")
-        database.withTransaction { generator.ensureCovered(now + 5 * year, now + 5 * year + 7 * day) }
+        database.runInTransaction { generator.ensureCovered(now + 5 * year, now + 5 * year + 7 * day) }
         assertEquals(0, rowsAfter(a.id, now + 5 * year))
         assertEquals(emptyList<String>(), calls.filter { it == "forward" })
     }
@@ -198,7 +197,7 @@ class OccurrenceCoverageTest {
         weekly("A")
         generator.ensureCovered(now + 5 * year, now + 5 * year + 7 * day)
         assertEquals("no pending operation", 0, database.pendingOperationsDao().getAll().size)
-        val reminderRows = database.query("SELECT COUNT(*) FROM scheduled_reminders", null).use { it.moveToFirst(); it.getInt(0) }
+        val reminderRows = TestDatabases.raw(database).query("SELECT COUNT(*) FROM scheduled_reminders").use { it.moveToFirst(); it.getInt(0) }
         assertEquals("no reminder row", 0, reminderRows)
     }
 

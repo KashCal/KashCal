@@ -1,7 +1,6 @@
 package org.onekash.kashcal.domain.reader
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.every
@@ -36,6 +35,7 @@ import org.onekash.kashcal.domain.search.SearchOutcome
 import org.onekash.kashcal.domain.search.SearchQuery
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.onekash.kashcal.ui.util.DayPagerUtils
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -71,7 +71,7 @@ class DisplayEventRepositoryCoverageTest {
     @Before
     fun setUp(): Unit = runBlocking {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
         generator = OccurrenceGenerator(
@@ -337,6 +337,16 @@ class DisplayEventRepositoryCoverageTest {
         val outcome = searchAndSettle("retreat") { it.upcoming.isNotEmpty() }
 
         assertEquals(created.startTs, outcome.upcoming.single().displayTs)
+    }
+
+    @Test
+    fun `a tag search lists a tagged series that ended three years ago at its last occurrence`(): Unit = runBlocking {
+        val ended = endedThreeYearsAgo("Physio")
+        database.eventsDao().update(ended.copy(categories = listOf("Health")))
+
+        val outcome = withTimeout(10_000) { search("#health").first { it.past.isNotEmpty() && it.past.single().displayTs > ended.startTs } }
+
+        assertEquals(database.occurrencesDao().getForEvent(ended.id).maxOf { it.startTs }, outcome.past.single().displayTs)
     }
 
     @Test

@@ -22,6 +22,10 @@ import org.onekash.kashcal.data.db.entity.IcsSubscription
  * events is a success, not invalid ICS. Not tested here: the fetcher also
  * retries the network errors `isRetryableError` accepts (socket timeout, unknown host, connect
  * failure, connection reset), and retries an SSL handshake failure once after AIA completion.
+ *
+ * Every response is closed, retried or not: the next request then reuses the connection, which
+ * MockWebServer shows as sequence number 1 on it (0 is a new connection). The responses carry a
+ * body, since OkHttp frees the connection of an empty body by itself.
  */
 class OkHttpIcsFetcherRetryTest {
 
@@ -276,5 +280,43 @@ class OkHttpIcsFetcherRetryTest {
 
         assertTrue("Should return NotModified", result is IcsFetcher.FetchResult.NotModified)
         assertEquals("Should only make 1 request", 1, mockServer.requestCount)
+    }
+
+    // ==================== Every response is closed ====================
+
+    private fun withBody(code: Int) = MockResponse().setResponseCode(code).setBody("status $code")
+
+    @Test
+    fun `a retried response is closed before the next attempt`() = runTest {
+        // 503 without Retry-After: with Retry-After 0, OkHttp itself re-sends a 503 and closes it.
+        for (first in listOf(withBody(503), withBody(500), withBody(429).setHeader("Retry-After", "0"))) {
+            mockServer.enqueue(first)
+            mockServer.enqueue(MockResponse().setResponseCode(200).setBody(validIcsContent))
+
+            val result = fetcher.fetch(subscription)
+
+            assertTrue("$first: success after the retry", result is IcsFetcher.FetchResult.Success)
+            mockServer.takeRequest()
+            assertEquals("$first: the retry reuses the connection", 1, mockServer.takeRequest().sequenceNumber)
+            fetcher = OkHttpIcsFetcher()
+        }
+    }
+
+    @Test
+    fun `a response mapped to an error or not-modified is closed`() = runTest {
+        // A 304 has no body, so OkHttp frees its connection either way; it pins the behaviour.
+        for (code in listOf(401, 403, 404, 413, 418, 304)) {
+            mockServer.enqueue(if (code == 304) MockResponse().setResponseCode(304) else withBody(code))
+            mockServer.enqueue(MockResponse().setResponseCode(200).setBody(validIcsContent))
+
+            val first = fetcher.fetch(subscription)
+            assertTrue("$code: mapped to an error or not-modified", first !is IcsFetcher.FetchResult.Success)
+            val next = fetcher.fetch(subscription)
+
+            assertTrue("$code: the next fetch succeeds", next is IcsFetcher.FetchResult.Success)
+            mockServer.takeRequest()
+            assertEquals("$code: the next fetch reuses the connection", 1, mockServer.takeRequest().sequenceNumber)
+            fetcher = OkHttpIcsFetcher()
+        }
     }
 }

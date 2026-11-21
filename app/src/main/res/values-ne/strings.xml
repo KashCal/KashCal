@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d थप</string>
     <string name="tags_autocomplete_create_new">\"%1$s\" सिर्जना गर्नुहोस्</string>
     <string name="cd_tag">ट्याग: %1$s</string>
+    <string name="tags_show_events_click_label">यो ट्याग भएका कार्यक्रमहरू देखाउनुहोस्</string>
+    <string name="tags_show_events">कार्यक्रमहरू देखाउनुहोस्</string>
     <string name="cd_tags_move_menu">ट्यागहरू सार्नुहोस्</string>
     <string name="tags_move_above_notes">टिप्पणीमाथि सार्नुहोस्</string>
     <string name="tags_move_below_notes">टिप्पणीमुनि सार्नुहोस्</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">सिंक सत्रहरू हेर्नुहोस् (पछिल्लो ४८ घण्टा)</string>
     <string name="settings_import_subtitle">ICS फाइलबाट कुनै पनि क्यालेन्डरमा कार्यक्रम थप्नुहोस्</string>
     <string name="settings_birthday_reminder">जन्मदिन सम्झना</string>
-    <string name="settings_use_device_timezone">उपकरणको समय क्षेत्र प्रयोग गर्नुहोस्</string>
     <string name="settings_section_calendars">पात्राहरू &amp; खाताहरू</string>
     <string name="settings_section_appearance">रूप</string>
     <string name="settings_section_creating_events">कार्यक्रम प्राथमिकताहरू</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">दोहोरिने</string>
     <string name="cd_enabled">सक्षम</string>
     <string name="cd_sync_error">सिंक त्रुटि</string>
-    <string name="cd_select_label">%1$s चयन गर्नुहोस्</string>
     <string name="cd_wheel_picker">%1$d विकल्प भएको ह्वील पिकर</string>
     <string name="cd_time_entry_keyboard">ठ्याक्कै समय प्रविष्ट गर्नुहोस्</string>
     <string name="time_entry_dialog_title">समय प्रविष्ट गर्नुहोस्</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">अन्त्य हुन्छ</string>
     <string name="sheet_hint_change_end">अन्त्य परिवर्तन गर्न एउटा दिनमा ट्याप गर्नुहोस्</string>
     <string name="label_timezone">समय क्षेत्र</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">सहर, देश वा क्षेत्र खोज्नुहोस्</string>
+    <string name="timezone_section_this_event">यो कार्यक्रम</string>
+    <string name="timezone_section_device">उपकरणको समय क्षेत्र</string>
+    <string name="timezone_section_recent">हालैका</string>
+    <string name="timezone_section_all">सबै समय क्षेत्रहरू</string>
+    <string name="timezone_offsets_on">%1$s मा अफसेटहरू</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">क्यालेन्डरबाट: %1$s</string>
+    <string name="timezone_shown_in_device_time">उपकरणको समयमा देखाइएको</string>
+    <string name="timezone_loading">समय क्षेत्रहरू लोड हुँदैछन्…</string>
+    <string name="timezone_no_match">कुनै समय क्षेत्र मेल खाएन</string>
+    <string name="timezone_no_match_hint">सहर, देश वा +5:30 जस्तो अफसेट प्रयास गर्नुहोस्</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">सतर्कताहरू</string>
     <string name="label_add_alert">सतर्कता थप्नुहोस्</string>
     <string name="label_recurrence_never">कहिल्यै होइन</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">नयाँ कार्यक्रमहरू यो क्यालेन्डरमा बनाइनेछ</string>
     <string name="label_reminders_truncated">%1$d देखाइएको छैन (%2$d जम्मा, अधिकतम %3$d सम्पादनयोग्य)</string>
     <string name="label_found_events">भेटियो: %1$d कार्यक्रम</string>
-    <string name="placeholder_search">खोज्नुहोस्…</string>
     <string name="settings_search_placeholder">सेटिङ खोज्नुहोस्…</string>
     <string name="settings_search_no_results">\"%1$s\" का लागि कुनै सेटिङ भेटिएन</string>
     <string name="cd_search_settings">सेटिङ खोज्नुहोस्</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">शीर्षक नभएको कार्यक्रम</string>
     <string name="recurring_this_event">यो कार्यक्रम</string>
     <string name="recurring_all_events">सबै कार्यक्रम</string>
+    <string name="recurring_scope_move_not_expressible">दोहोर्याउने नियमले यो परिवर्तन पछ्याउन सक्दैन</string>
+    <string name="event_form_move_not_expressible">दोहोर्याउने नियमले यो परिवर्तन पछ्याउन सक्दैन। केही पनि सुरक्षित भएन।</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">उपस्थित</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">पाहुना:</string>
     <string name="search_keep_typing">खोज्न टाइप गरिरहनुहोस्</string>
     <string name="search_no_matches">“%1$s” सँग मेल खाने कुनै कार्यक्रम छैन</string>
+    <string name="search_no_events_tagged">“%1$s” ट्याग भएका कुनै कार्यक्रम छैन</string>
     <string name="search_lookback_line">सिंक लुकब्याक: %1$s</string>
     <string name="search_sync_settings">सिंक सेटिङ</string>
     <string name="cd_search_sync_settings">सिंक लुकब्याक सेटिङ खोल्नुहोस्</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">यो फिडको सर्भरले पहुँच अस्वीकार गरेको छ।</string>
     <string name="ics_feed_error_too_large">यो पात्रो फिड डाउनलोड गर्न धेरै ठूलो छ।</string>
     <string name="ics_feed_error_unreadable">यो फिडका कार्यक्रमहरू देखाउन सकिएन।</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s” सुरक्षित गरिएन।</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d कार्यक्रम सुरक्षित गरिएन।</item>
+        <item quantity="other">%1$d कार्यक्रमहरू सुरक्षित गरिएनन्।</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">“%2$s” सहित %1$d कार्यक्रम सुरक्षित गरिएन।</item>
+        <item quantity="other">“%2$s” सहित %1$d कार्यक्रमहरू सुरक्षित गरिएनन्।</item>
+    </plurals>
     <string name="insights_title">अन्तरदृष्टि</string>
     <string name="insights_period_this_week">हप्ता</string>
     <string name="insights_period_last_week">गत हप्ता</string>

@@ -18,7 +18,17 @@ internal fun icsFeedErrorMessage(stored: String): UiMessage = when {
     stored == IcsFeedErrors.NO_EVENTS_PARSED -> UiMessage.ResId(R.string.ics_feed_error_unreadable)
     IcsFeedErrors.isNetwork(stored) -> UiMessage.ResId(R.string.error_network_connection_failed)
     IcsFeedErrors.isSsl(stored) -> UiMessage.ResId(R.string.error_network_ssl)
-    else -> IcsFeedErrors.httpStatusOf(stored)
-        ?.let { UiMessage.ResId(R.string.ics_fetch_error_http, listOf(it)) }
+    else -> IcsFeedErrors.notSavedOf(stored)?.let(::notSavedMessage)
+        ?: IcsFeedErrors.httpStatusOf(stored)?.let { UiMessage.ResId(R.string.ics_fetch_error_http, listOf(it)) }
         ?: UiMessage.Literal(stored)
+}
+
+/** One named event, several with the first title, or a count when none has a title. */
+private fun notSavedMessage(notSaved: Pair<Int, String?>): UiMessage {
+    val (count, title) = notSaved
+    return when {
+        title == null -> UiMessage.Plural(R.plurals.ics_feed_error_events_not_saved, count, listOf(count))
+        count == 1 -> UiMessage.ResId(R.string.ics_feed_error_event_not_saved, listOf(title))
+        else -> UiMessage.Plural(R.plurals.ics_feed_error_events_not_saved_including, count, listOf(count, title))
+    }
 }

@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d ಇನ್ನಷ್ಟು</string>
     <string name="tags_autocomplete_create_new">\"%1$s\" ರಚಿಸಿ</string>
     <string name="cd_tag">ಟ್ಯಾಗ್: %1$s</string>
+    <string name="tags_show_events_click_label">ಈ ಟ್ಯಾಗ್ ಇರುವ ಈವೆಂಟ್‌ಗಳನ್ನು ತೋರಿಸಿ</string>
+    <string name="tags_show_events">ಈವೆಂಟ್‌ಗಳನ್ನು ತೋರಿಸಿ</string>
     <string name="cd_tags_move_menu">ಟ್ಯಾಗ್‌ಗಳನ್ನು ಸರಿಸಿ</string>
     <string name="tags_move_above_notes">ಟಿಪ್ಪಣಿಗಳ ಮೇಲೆ ಸರಿಸಿ</string>
     <string name="tags_move_below_notes">ಟಿಪ್ಪಣಿಗಳ ಕೆಳಗೆ ಸರಿಸಿ</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">ಸಿಂಕ್ ಸೆಷನ್‌ಗಳನ್ನು ನೋಡಿ (ಕೊನೆಯ 48 ಗಂಟೆಗಳು)</string>
     <string name="settings_import_subtitle">ICS ಫೈಲ್‌ನಿಂದ ಈವೆಂಟ್‌ಗಳನ್ನು ಯಾವುದೇ ಕ್ಯಾಲೆಂಡರ್‌ಗೆ ಸೇರಿಸಿ</string>
     <string name="settings_birthday_reminder">ಹುಟ್ಟುಹಬ್ಬ ರಿಮೈಂಡರ್</string>
-    <string name="settings_use_device_timezone">ಸಾಧನದ ಟೈಮ್‌ಜೋನ್ ಬಳಸಿ</string>
     <string name="settings_section_calendars">ಕ್ಯಾಲೆಂಡರ್‌ಗಳು &amp; ಖಾತೆಗಳು</string>
     <string name="settings_section_appearance">ಗೋಚರಿಕೆ</string>
     <string name="settings_section_creating_events">ಈವೆಂಟ್ ಆದ್ಯತೆಗಳು</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">ಪುನರಾವರ್ತಿತ</string>
     <string name="cd_enabled">ಆನ್ ಆಗಿದೆ</string>
     <string name="cd_sync_error">ಸಿಂಕ್ ದೋಷ</string>
-    <string name="cd_select_label">%1$s ಆಯ್ಕೆಮಾಡಿ</string>
     <string name="cd_wheel_picker">%1$d ಆಯ್ಕೆಗಳೊಂದಿಗೆ ವೀಲ್ ಪಿಕರ್</string>
     <string name="cd_time_entry_keyboard">ನಿಖರವಾದ ಸಮಯವನ್ನು ನಮೂದಿಸಿ</string>
     <string name="time_entry_dialog_title">ಸಮಯವನ್ನು ನಮೂದಿಸಿ</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">ಮುಕ್ತಾಯ</string>
     <string name="sheet_hint_change_end">ಅಂತ್ಯವನ್ನು ಬದಲಾಯಿಸಲು ಒಂದು ದಿನವನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ</string>
     <string name="label_timezone">ಸಮಯ ವಲಯ</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">ನಗರ, ದೇಶ ಅಥವಾ ಸಮಯ ವಲಯವನ್ನು ಹುಡುಕಿ</string>
+    <string name="timezone_section_this_event">ಈ ಈವೆಂಟ್</string>
+    <string name="timezone_section_device">ಸಾಧನದ ಸಮಯ ವಲಯ</string>
+    <string name="timezone_section_recent">ಇತ್ತೀಚಿನವು</string>
+    <string name="timezone_section_all">ಎಲ್ಲಾ ಸಮಯ ವಲಯಗಳು</string>
+    <string name="timezone_offsets_on">%1$s ರಂದು ಆಫ್‌ಸೆಟ್‌ಗಳು</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">ಕ್ಯಾಲೆಂಡರ್‌ನಿಂದ: %1$s</string>
+    <string name="timezone_shown_in_device_time">ಸಾಧನದ ಸಮಯದಲ್ಲಿ ತೋರಿಸಲಾಗಿದೆ</string>
+    <string name="timezone_loading">ಸಮಯ ವಲಯಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ…</string>
+    <string name="timezone_no_match">ಯಾವುದೇ ಸಮಯ ವಲಯ ಹೊಂದಿಕೆಯಾಗುತ್ತಿಲ್ಲ</string>
+    <string name="timezone_no_match_hint">ನಗರ, ದೇಶ ಅಥವಾ +5:30 ರಂತಹ ಆಫ್‌ಸೆಟ್ ಪ್ರಯತ್ನಿಸಿ</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">ಎಚ್ಚರಿಕೆಗಳು</string>
     <string name="label_add_alert">ಎಚ್ಚರಿಕೆ ಸೇರಿಸಿ</string>
     <string name="label_recurrence_never">ಎಂದಿಗೂ ಇಲ್ಲ</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">ಹೊಸ ಈವೆಂಟ್‌ಗಳನ್ನು ಈ ಕ್ಯಾಲೆಂಡರ್‌ನಲ್ಲಿ ರಚಿಸಲಾಗುತ್ತದೆ</string>
     <string name="label_reminders_truncated">%1$d ತೋರಿಸಿಲ್ಲ (%2$d ಒಟ್ಟು, ಗರಿಷ್ಠ %3$d ಬದಲಾಯಿಸಬಹುದು)</string>
     <string name="label_found_events">ಕಂಡುಬಂದವು: %1$d ಈವೆಂಟ್‌ಗಳು</string>
-    <string name="placeholder_search">ಹುಡುಕಿ…</string>
     <string name="settings_search_placeholder">ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಹುಡುಕಿ…</string>
     <string name="settings_search_no_results">\"%1$s\" ಗಾಗಿ ಯಾವುದೇ ಸೆಟ್ಟಿಂಗ್‌ಗಳು ಸಿಗಲಿಲ್ಲ</string>
     <string name="cd_search_settings">ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಹುಡುಕಿ</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">ಶೀರ್ಷಿಕೆ ಇಲ್ಲದ ಈವೆಂಟ್</string>
     <string name="recurring_this_event">ಈ ಈವೆಂಟ್</string>
     <string name="recurring_all_events">ಎಲ್ಲಾ ಈವೆಂಟ್‌ಗಳು</string>
+    <string name="recurring_scope_move_not_expressible">ಪುನರಾವರ್ತನೆ ನಿಯಮವು ಈ ಬದಲಾವಣೆಯನ್ನು ಅನುಸರಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ</string>
+    <string name="event_form_move_not_expressible">ಪುನರಾವರ್ತನೆ ನಿಯಮವು ಈ ಬದಲಾವಣೆಯನ್ನು ಅನುಸರಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ. ಏನನ್ನೂ ಉಳಿಸಲಾಗಿಲ್ಲ.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">ಭಾಗವಹಿಸುವವರು</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">ಅತಿಥಿ:</string>
     <string name="search_keep_typing">ಹುಡುಕಲು ಟೈಪ್ ಮಾಡುತ್ತಿರಿ</string>
     <string name="search_no_matches">“%1$s” ಗೆ ಹೊಂದುವ ಈವೆಂಟ್‌ಗಳಿಲ್ಲ</string>
+    <string name="search_no_events_tagged">“%1$s” ಟ್ಯಾಗ್ ಮಾಡಿದ ಈವೆಂಟ್‌ಗಳಿಲ್ಲ</string>
     <string name="search_lookback_line">ಸಿಂಕ್ ಲುಕ್‌ಬ್ಯಾಕ್: %1$s</string>
     <string name="search_sync_settings">ಸಿಂಕ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳು</string>
     <string name="cd_search_sync_settings">ಸಿಂಕ್ ಲುಕ್‌ಬ್ಯಾಕ್ ಸೆಟ್ಟಿಂಗ್ ತೆರೆಯಿರಿ</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">ಈ ಫೀಡ್‌ನ ಸರ್ವರ್ ಪ್ರವೇಶವನ್ನು ನಿರಾಕರಿಸಿದೆ.</string>
     <string name="ics_feed_error_too_large">ಈ ಕ್ಯಾಲೆಂಡರ್ ಫೀಡ್ ಡೌನ್‌ಲೋಡ್ ಮಾಡಲು ತುಂಬಾ ದೊಡ್ಡದಾಗಿದೆ.</string>
     <string name="ics_feed_error_unreadable">ಈ ಫೀಡ್‌ನ ಈವೆಂಟ್‌ಗಳನ್ನು ತೋರಿಸಲಾಗಲಿಲ್ಲ.</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s” ಉಳಿಸಲಾಗಿಲ್ಲ.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d ಈವೆಂಟ್ ಉಳಿಸಲಾಗಿಲ್ಲ.</item>
+        <item quantity="other">%1$d ಈವೆಂಟ್‌ಗಳನ್ನು ಉಳಿಸಲಾಗಿಲ್ಲ.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">“%2$s” ಸೇರಿದಂತೆ %1$d ಈವೆಂಟ್ ಉಳಿಸಲಾಗಿಲ್ಲ.</item>
+        <item quantity="other">“%2$s” ಸೇರಿದಂತೆ %1$d ಈವೆಂಟ್‌ಗಳನ್ನು ಉಳಿಸಲಾಗಿಲ್ಲ.</item>
+    </plurals>
     <string name="insights_title">ಇನ್‌ಸೈಟ್ಸ್</string>
     <string name="insights_period_this_week">ವಾರ</string>
     <string name="insights_period_last_week">ಕಳೆದ ವಾರ</string>

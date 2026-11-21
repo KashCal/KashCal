@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d மேலும்</string>
     <string name="tags_autocomplete_create_new">\"%1$s\" உருவாக்கு</string>
     <string name="cd_tag">டேக்: %1$s</string>
+    <string name="tags_show_events_click_label">இந்த டேக்கின் நிகழ்வுகளைக் காட்டு</string>
+    <string name="tags_show_events">நிகழ்வுகளைக் காட்டு</string>
     <string name="cd_tags_move_menu">டேக்குகளை நகர்த்து</string>
     <string name="tags_move_above_notes">குறிப்புகளுக்கு மேலே நகர்த்து</string>
     <string name="tags_move_below_notes">குறிப்புகளுக்கு கீழே நகர்த்து</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">ஒத்திசைவு அமர்வுகளைக் காண் (கடந்த 48 மணி)</string>
     <string name="settings_import_subtitle">ICS கோப்பிலிருந்து நிகழ்வுகளை எந்த நாட்காட்டியிலும் சேர்</string>
     <string name="settings_birthday_reminder">பிறந்தநாள் நினைவூட்டல்</string>
-    <string name="settings_use_device_timezone">சாதன நேரமண்டலத்தைப் பயன்படுத்து</string>
     <string name="settings_section_calendars">நாள்காட்டிகள் &amp; கணக்குகள்</string>
     <string name="settings_section_appearance">தோற்றம்</string>
     <string name="settings_section_creating_events">நிகழ்வு விருப்பங்கள்</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">மறுநிகழ்வு</string>
     <string name="cd_enabled">இயக்கப்பட்டது</string>
     <string name="cd_sync_error">ஒத்திசைவுப் பிழை</string>
-    <string name="cd_select_label">%1$s தேர்வுசெய்</string>
     <string name="cd_wheel_picker">%1$d விருப்பங்களுடன் சக்கரத் தேர்வி</string>
     <string name="cd_time_entry_keyboard">சரியான நேரத்தை உள்ளிடவும்</string>
     <string name="time_entry_dialog_title">நேரத்தை உள்ளிடவும்</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">முடிவு</string>
     <string name="sheet_hint_change_end">முடிவை மாற்ற ஒரு நாளைத் தட்டவும்</string>
     <string name="label_timezone">நேர மண்டலம்</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">நகரம், நாடு அல்லது நேர மண்டலத்தைத் தேடுக</string>
+    <string name="timezone_section_this_event">இந்த நிகழ்வு</string>
+    <string name="timezone_section_device">சாதன நேர மண்டலம்</string>
+    <string name="timezone_section_recent">சமீபத்தியவை</string>
+    <string name="timezone_section_all">அனைத்து நேர மண்டலங்களும்</string>
+    <string name="timezone_offsets_on">%1$s அன்றைய ஆஃப்செட்கள்</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">நாட்காட்டியிலிருந்து: %1$s</string>
+    <string name="timezone_shown_in_device_time">சாதன நேரத்தில் காட்டப்படுகிறது</string>
+    <string name="timezone_loading">நேர மண்டலங்கள் ஏற்றப்படுகின்றன…</string>
+    <string name="timezone_no_match">எந்த நேர மண்டலமும் பொருந்தவில்லை</string>
+    <string name="timezone_no_match_hint">நகரம், நாடு அல்லது +5:30 போன்ற ஆஃப்செட்டை முயலவும்</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">எச்சரிக்கைகள்</string>
     <string name="label_add_alert">எச்சரிக்கை சேர்</string>
     <string name="label_recurrence_never">ஒருபோதும் இல்லை</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">புதிய நிகழ்வுகள் இந்த நாட்காட்டியில் உருவாக்கப்படும்</string>
     <string name="label_reminders_truncated">%1$d காட்டப்படவில்லை (%2$d மொத்தம், அதிகபட்சம் %3$d திருத்தக்கூடியவை)</string>
     <string name="label_found_events">கண்டறியப்பட்டவை: %1$d நிகழ்வுகள்</string>
-    <string name="placeholder_search">தேடு…</string>
     <string name="settings_search_placeholder">அமைப்புகளைத் தேடு…</string>
     <string name="settings_search_no_results">\"%1$s\" க்கான அமைப்புகள் எதுவும் இல்லை</string>
     <string name="cd_search_settings">அமைப்புகளைத் தேடு</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">தலைப்பில்லாத நிகழ்வு</string>
     <string name="recurring_this_event">இந்த நிகழ்வு</string>
     <string name="recurring_all_events">அனைத்து நிகழ்வுகளும்</string>
+    <string name="recurring_scope_move_not_expressible">மீண்டும் நிகழும் விதியால் இந்த மாற்றத்தைப் பின்பற்ற முடியாது</string>
+    <string name="event_form_move_not_expressible">மீண்டும் நிகழும் விதியால் இந்த மாற்றத்தைப் பின்பற்ற முடியாது. எதுவும் சேமிக்கப்படவில்லை.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">கலந்துகொள்வோர்</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">விருந்தினர்:</string>
     <string name="search_keep_typing">தேட தொடர்ந்து தட்டச்சு செய்யவும்</string>
     <string name="search_no_matches">“%1$s” உடன் பொருந்தும் நிகழ்வுகள் இல்லை</string>
+    <string name="search_no_events_tagged">“%1$s” என்று டேக் செய்யப்பட்ட நிகழ்வுகள் இல்லை</string>
     <string name="search_lookback_line">ஒத்திசைவு திரும்பப்பார்வை: %1$s</string>
     <string name="search_sync_settings">ஒத்திசைவு அமைப்புகள்</string>
     <string name="cd_search_sync_settings">ஒத்திசைவு திரும்பப்பார்வை அமைப்பைத் திற</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">இந்த ஊட்டத்தின் சர்வர் அணுகலை மறுத்தது.</string>
     <string name="ics_feed_error_too_large">இந்தக் காலெண்டர் ஊட்டம் பதிவிறக்க முடியாத அளவுக்குப் பெரியது.</string>
     <string name="ics_feed_error_unreadable">இந்த ஊட்டத்தின் நிகழ்வுகளைக் காட்ட முடியவில்லை.</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s” சேமிக்கப்படவில்லை.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d நிகழ்வு சேமிக்கப்படவில்லை.</item>
+        <item quantity="other">%1$d நிகழ்வுகள் சேமிக்கப்படவில்லை.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">“%2$s” உட்பட %1$d நிகழ்வு சேமிக்கப்படவில்லை.</item>
+        <item quantity="other">“%2$s” உட்பட %1$d நிகழ்வுகள் சேமிக்கப்படவில்லை.</item>
+    </plurals>
     <string name="insights_title">நுண்ணறிவுகள்</string>
     <string name="insights_period_this_week">வாரம்</string>
     <string name="insights_period_last_week">கடந்த வாரம்</string>

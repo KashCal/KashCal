@@ -25,6 +25,7 @@ object ExportablePreferences {
         PreferencesKeys.DAY_WEEK_BAR_EXPANDED.name to PrefKind.BOOL,
         PreferencesKeys.ALL_DAY_ROWS_EXPANDED.name to PrefKind.BOOL,
         PreferencesKeys.TAGS_ABOVE_NOTES.name to PrefKind.BOOL,
+        PreferencesKeys.RECENT_TIME_ZONES.name to PrefKind.STRING,
         PreferencesKeys.SHOW_DECLINED_EVENTS.name to PrefKind.BOOL,
         PreferencesKeys.SHOW_MULTIDAY_TIMED_IN_ALLDAY_STRIP.name to PrefKind.BOOL,
         PreferencesKeys.DEFAULT_EVENT_DURATION.name to PrefKind.INT,
@@ -75,6 +76,8 @@ object ExportablePreferences {
         // All-day strip expanded/collapsed in the time-grid views: a persistent display choice.
         PreferencesKeys.ALL_DAY_ROWS_EXPANDED,
         PreferencesKeys.TAGS_ABOVE_NOTES,
+        // Zone ids are portable across devices; unreadable ones are dropped on read.
+        PreferencesKeys.RECENT_TIME_ZONES,
         PreferencesKeys.SHOW_DECLINED_EVENTS,
         // Whether multi-day timed events show in the all-day strip: a persistent display choice.
         PreferencesKeys.SHOW_MULTIDAY_TIMED_IN_ALLDAY_STRIP,
@@ -125,8 +128,8 @@ object ExportablePreferences {
     ).also {
         // Bump this and the matching ExportablePreferencesTest assertion together
         // whenever a key is added to or removed from KEYS above.
-        require(it.size == 43) {
-            "KEYS size drifted; expected 43 allowed keys but got ${it.size}. Update ExportablePreferencesTest expectations too."
+        require(it.size == 44) {
+            "KEYS size drifted; expected 44 allowed keys but got ${it.size}. Update ExportablePreferencesTest expectations too."
         }
     }
 

@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.integration.multiserver
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.every
 import io.mockk.mockk
@@ -40,6 +40,7 @@ import org.onekash.kashcal.sync.strategy.PushResult
 import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.sync.strategy.PushStrategy
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.Instant
@@ -118,7 +119,7 @@ class MultiServerIcsInvitationImportTest(private val config: CalDavServerConfig)
         creds = pair.second
         assumeTrue("${config.name} server not reachable", CalDavTestServerLoader.isServerReachable(creds.davEndpoint))
         val context: Context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java).allowMainThreadQueries().build()
+        db = TestDatabases.inMemory(context).allowMainThreadQueries().build()
     }
 
     @After
@@ -337,6 +338,7 @@ class MultiServerIcsInvitationImportTest(private val config: CalDavServerConfig)
             inviteNotifier = mockk(relaxed = true),
             accountRepository = mockk(relaxed = true),
             reminderScheduler = mockk(relaxed = true),
+            icsSource = EventIcsStore(db),
         ).pull(db.calendarsDao().getById(calendar.id)!!, forceFullSync = true, client = client)
         println("ICS364|${config.name}|pull ${pulled::class.simpleName}")
     }
@@ -627,6 +629,7 @@ class MultiServerIcsInvitationImportTest(private val config: CalDavServerConfig)
         accountRepository = accountRepository(),
         attendeesDao = db.attendeesDao(),
         pendingCancelsDao = db.pendingCancelsDao(),
+        icsSource = EventIcsStore(db),
     )
 
     private fun accountRepository(): AccountRepository = AccountRepositoryImpl(

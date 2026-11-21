@@ -35,7 +35,7 @@ class IcsExporterEdgeCaseTest {
     @Test
     fun `serialize event with priority`() {
         val event = createBasicEvent().copy(priority = 1)
-        val ics = IcsPatcher.serialize(event)
+        val ics = IcsPatcher.serialize(event, null)
 
         assertTrue("Should contain VEVENT", ics.contains("BEGIN:VEVENT"))
         assertTrue("Should contain SUMMARY", ics.contains("SUMMARY:"))
@@ -47,7 +47,7 @@ class IcsExporterEdgeCaseTest {
             geoLat = 37.7749,
             geoLon = -122.4194
         )
-        val ics = IcsPatcher.serialize(event)
+        val ics = IcsPatcher.serialize(event, null)
 
         assertTrue("Should contain VEVENT", ics.contains("BEGIN:VEVENT"))
         // GEO property format: GEO:lat;lon
@@ -59,7 +59,7 @@ class IcsExporterEdgeCaseTest {
     @Test
     fun `serialize event with color`() {
         val event = createBasicEvent().copy(color = 0xFFFF0000.toInt())
-        val ics = IcsPatcher.serialize(event)
+        val ics = IcsPatcher.serialize(event, null)
 
         assertTrue("Should contain VEVENT", ics.contains("BEGIN:VEVENT"))
     }
@@ -67,7 +67,7 @@ class IcsExporterEdgeCaseTest {
     @Test
     fun `serialize event with url`() {
         val event = createBasicEvent().copy(url = "https://example.com/meeting")
-        val ics = IcsPatcher.serialize(event)
+        val ics = IcsPatcher.serialize(event, null)
 
         assertTrue("Should contain VEVENT", ics.contains("BEGIN:VEVENT"))
     }
@@ -75,7 +75,7 @@ class IcsExporterEdgeCaseTest {
     @Test
     fun `serialize event with categories`() {
         val event = createBasicEvent().copy(categories = listOf("Work", "Important", "Project-X"))
-        val ics = IcsPatcher.serialize(event)
+        val ics = IcsPatcher.serialize(event, null)
 
         assertTrue("Should contain VEVENT", ics.contains("BEGIN:VEVENT"))
     }
@@ -90,7 +90,7 @@ class IcsExporterEdgeCaseTest {
             url = "https://example.com/conference",
             categories = listOf("Conference", "Tech")
         )
-        val ics = IcsPatcher.serialize(event)
+        val ics = IcsPatcher.serialize(event, null)
 
         assertTrue("Should produce valid ICS", ics.contains("BEGIN:VCALENDAR"))
         assertTrue("Should contain event", ics.contains("BEGIN:VEVENT"))
@@ -104,7 +104,7 @@ class IcsExporterEdgeCaseTest {
         val longDescription = "A".repeat(10_000) + "\n" + "B".repeat(10_000)
         val event = createBasicEvent().copy(description = longDescription)
 
-        val ics = IcsPatcher.serialize(event)
+        val ics = IcsPatcher.serialize(event, null)
 
         assertTrue("Should contain VEVENT", ics.contains("BEGIN:VEVENT"))
         assertTrue("Should contain END:VEVENT", ics.contains("END:VEVENT"))
@@ -115,7 +115,7 @@ class IcsExporterEdgeCaseTest {
         val description = "Meeting; Notes: A, B, C\nLine 2\nPath\\to\\file"
         val event = createBasicEvent().copy(description = description)
 
-        val ics = IcsPatcher.serialize(event)
+        val ics = IcsPatcher.serialize(event, null)
 
         assertTrue("Should produce valid ICS", ics.contains("BEGIN:VCALENDAR"))
     }
@@ -141,7 +141,7 @@ class IcsExporterEdgeCaseTest {
             location = null,
             description = null
         )
-        val ics = IcsPatcher.serialize(event)
+        val ics = IcsPatcher.serialize(event, null)
 
         assertTrue("Should still produce valid ICS", ics.contains("BEGIN:VCALENDAR"))
         assertTrue("Should still contain VEVENT", ics.contains("BEGIN:VEVENT"))
@@ -190,7 +190,7 @@ class IcsExporterEdgeCaseTest {
             rrule = null
         )
 
-        val ics = IcsPatcher.serializeWithExceptions(masterEvent, listOf(exception))
+        val ics = IcsPatcher.serializeWithExceptions(masterEvent, null, listOf(exception))
 
         assertTrue("Should contain single VCALENDAR", ics.contains("BEGIN:VCALENDAR"))
         // Count VEVENT blocks

@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d ακόμη</string>
     <string name="tags_autocomplete_create_new">Δημιουργία «%1$s»</string>
     <string name="cd_tag">Ετικέτα: %1$s</string>
+    <string name="tags_show_events_click_label">Εμφάνιση συμβάντων με αυτήν την ετικέτα</string>
+    <string name="tags_show_events">Εμφάνιση συμβάντων</string>
     <string name="cd_tags_move_menu">Μετακίνηση ετικετών</string>
     <string name="tags_move_above_notes">Μετακίνηση πάνω από τις σημειώσεις</string>
     <string name="tags_move_below_notes">Μετακίνηση κάτω από τις σημειώσεις</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Προβολή συνεδριών συγχρονισμού (τελευταίες 48 ώρες)</string>
     <string name="settings_import_subtitle">Προσθήκη συμβάντων από αρχείο ICS σε οποιοδήποτε ημερολόγιο</string>
     <string name="settings_birthday_reminder">Υπενθύμιση γενεθλίων</string>
-    <string name="settings_use_device_timezone">Χρήση ζώνης ώρας συσκευής</string>
     <string name="settings_section_calendars">Ημερολόγια και λογαριασμοί</string>
     <string name="settings_section_appearance">Εμφάνιση</string>
     <string name="settings_section_creating_events">Προτιμήσεις συμβάντων</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">Επαναλαμβανόμενο</string>
     <string name="cd_enabled">Ενεργοποιημένο</string>
     <string name="cd_sync_error">Σφάλμα συγχρονισμού</string>
-    <string name="cd_select_label">Επιλογή %1$s</string>
     <string name="cd_wheel_picker">Τροχός επιλογής με %1$d επιλογές</string>
     <string name="cd_time_entry_keyboard">Εισαγωγή ακριβούς ώρας</string>
     <string name="time_entry_dialog_title">Εισαγωγή ώρας</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">Τέλος</string>
     <string name="sheet_hint_change_end">Πατήστε μια ημέρα για να αλλάξετε το τέλος</string>
     <string name="label_timezone">Ζώνη ώρας</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Αναζήτηση πόλης, χώρας ή ζώνης</string>
+    <string name="timezone_section_this_event">Αυτό το συμβάν</string>
+    <string name="timezone_section_device">Ζώνη ώρας συσκευής</string>
+    <string name="timezone_section_recent">Πρόσφατες</string>
+    <string name="timezone_section_all">Όλες οι ζώνες ώρας</string>
+    <string name="timezone_offsets_on">Διαφορές στις %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Από το ημερολόγιο: %1$s</string>
+    <string name="timezone_shown_in_device_time">Εμφανίζεται στην ώρα της συσκευής</string>
+    <string name="timezone_loading">Φόρτωση ζωνών ώρας…</string>
+    <string name="timezone_no_match">Καμία ζώνη ώρας δεν ταιριάζει</string>
+    <string name="timezone_no_match_hint">Δοκιμάστε μια πόλη, μια χώρα ή μια διαφορά όπως +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Ειδοποιήσεις</string>
     <string name="label_add_alert">Προσθήκη ειδοποίησης</string>
     <string name="label_recurrence_never">Ποτέ</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">Τα νέα συμβάντα θα δημιουργούνται σε αυτό το ημερολόγιο</string>
     <string name="label_reminders_truncated">%1$d δεν εμφανίζονται (%2$d σύνολο, μέγ. %3$d επεξεργάσιμα)</string>
     <string name="label_found_events">Βρέθηκαν: %1$d συμβάντα</string>
-    <string name="placeholder_search">Αναζήτηση…</string>
     <string name="settings_search_placeholder">Αναζήτηση ρυθμίσεων…</string>
     <string name="settings_search_no_results">Δεν βρέθηκαν ρυθμίσεις για \"%1$s\"</string>
     <string name="cd_search_settings">Αναζήτηση ρυθμίσεων</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">Συμβάν χωρίς τίτλο</string>
     <string name="recurring_this_event">Αυτό το συμβάν</string>
     <string name="recurring_all_events">Όλα τα συμβάντα</string>
+    <string name="recurring_scope_move_not_expressible">Ο κανόνας επανάληψης δεν μπορεί να ακολουθήσει αυτή την αλλαγή</string>
+    <string name="event_form_move_not_expressible">Ο κανόνας επανάληψης δεν μπορεί να ακολουθήσει αυτή την αλλαγή. Δεν αποθηκεύτηκε τίποτα.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Συμμετέχοντες</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">Προσκεκλημένος:</string>
     <string name="search_keep_typing">Συνεχίστε να πληκτρολογείτε για αναζήτηση</string>
     <string name="search_no_matches">Κανένα συμβάν δεν ταιριάζει με «%1$s»</string>
+    <string name="search_no_events_tagged">Κανένα συμβάν με ετικέτα «%1$s»</string>
     <string name="search_lookback_line">Αναδρομικός συγχρονισμός: %1$s</string>
     <string name="search_sync_settings">Ρυθμίσεις συγχρονισμού</string>
     <string name="cd_search_sync_settings">Άνοιγμα ρύθμισης αναδρομικού συγχρονισμού</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">Ο διακομιστής αυτής της ροής αρνήθηκε την πρόσβαση.</string>
     <string name="ics_feed_error_too_large">Αυτή η ροή ημερολογίου είναι πολύ μεγάλη για λήψη.</string>
     <string name="ics_feed_error_unreadable">Δεν ήταν δυνατή η εμφάνιση των συμβάντων αυτής της ροής.</string>
+    <string name="ics_feed_error_event_not_saved">Το «%1$s» δεν αποθηκεύτηκε.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d συμβάν δεν αποθηκεύτηκε.</item>
+        <item quantity="other">%1$d συμβάντα δεν αποθηκεύτηκαν.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d συμβάν δεν αποθηκεύτηκε: «%2$s».</item>
+        <item quantity="other">%1$d συμβάντα δεν αποθηκεύτηκαν, ανάμεσά τους το «%2$s».</item>
+    </plurals>
     <string name="insights_title">Στατιστικά</string>
     <string name="insights_period_this_week">Εβδομάδα</string>
     <string name="insights_period_last_week">Προηγ. εβδομάδα</string>

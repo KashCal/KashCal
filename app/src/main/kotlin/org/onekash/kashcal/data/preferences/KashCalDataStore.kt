@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import org.onekash.kashcal.util.zone.ZoneCatalog
 import java.io.IOException
 
 // A corrupt preferences file is replaced with empty preferences, so every setting reads its
@@ -126,6 +127,31 @@ class KashCalDataStore(
     suspend fun setTagsAboveNotes(above: Boolean) {
         setPreference(PreferencesKeys.TAGS_ABOVE_NOTES, above)
     }
+
+    /**
+     * Zones picked in the time zone sheet, newest first, at most [MAX_RECENT_TIME_ZONES]. Ids
+     * `ZoneId.of` rejects (from a backup made on other tzdata) are dropped on read.
+     */
+    val recentTimeZones: Flow<List<String>>
+        get() = getPreference(PreferencesKeys.RECENT_TIME_ZONES, "").map(::parseRecentTimeZones)
+
+    /**
+     * Puts [zoneId] first in [recentTimeZones], removing an earlier entry for the same zone
+     * ([ZoneCatalog.sameZone]). A pick of [deviceZoneId]'s zone, or an id `ZoneId.of` rejects,
+     * is not recorded.
+     */
+    suspend fun addRecentTimeZone(zoneId: String, deviceZoneId: String) {
+        if (!ZoneCatalog.isZoneId(zoneId) || ZoneCatalog.sameZone(zoneId, deviceZoneId)) return
+        dataStore.edit { preferences ->
+            val current = parseRecentTimeZones(preferences[PreferencesKeys.RECENT_TIME_ZONES].orEmpty())
+            val updated = (listOf(zoneId) + current.filterNot { ZoneCatalog.sameZone(it, zoneId) })
+                .take(MAX_RECENT_TIME_ZONES)
+            preferences[PreferencesKeys.RECENT_TIME_ZONES] = updated.joinToString(",")
+        }
+    }
+
+    private fun parseRecentTimeZones(value: String): List<String> =
+        value.split(',').map { it.trim() }.filter { it.isNotEmpty() && ZoneCatalog.isZoneId(it) }
 
     val showDeclinedEvents: Flow<Boolean>
         get() = getPreference(PreferencesKeys.SHOW_DECLINED_EVENTS, false)
@@ -976,6 +1002,9 @@ class KashCalDataStore(
     }
 
     companion object {
+        /** How many picks [recentTimeZones] keeps. */
+        const val MAX_RECENT_TIME_ZONES = 5
+
         const val REMINDER_OFF = -1  // no reminder set
         const val DEFAULT_REMINDER_MINUTES = 15
         // Signed minutes before start (the Android CalendarProvider convention): positive =

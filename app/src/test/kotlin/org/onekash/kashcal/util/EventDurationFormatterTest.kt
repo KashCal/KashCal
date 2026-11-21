@@ -51,4 +51,14 @@ class EventDurationFormatterTest {
         val startTs = 1704067200000L
         assertEquals("PT0M", computeDurationString(startTs, startTs, isAllDay = false))
     }
+
+    @Test
+    fun `all-day inclusive or exclusive end counts the last day`() {
+        val startTs = 1704067200000L
+        val day = 24 * 60 * 60 * 1000L
+        assertEquals("P1D", computeDurationString(startTs, startTs + day - 1, isAllDay = true))
+        assertEquals("P3D", computeDurationString(startTs, startTs + 3 * day - 1, isAllDay = true))
+        assertEquals("P7D", computeDurationString(startTs, startTs + 7 * day - 1, isAllDay = true))
+        assertEquals("P3D", computeDurationString(startTs, startTs + 3 * day, isAllDay = true))
+    }
 }

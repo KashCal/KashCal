@@ -1,7 +1,6 @@
 package org.onekash.kashcal.sync.integration
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -32,6 +31,7 @@ import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
 import org.onekash.kashcal.sync.integration.multiserver.CalDavTestServerLoader
 import org.onekash.kashcal.sync.provider.caldav.CalDavAccountDiscoveryService
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.net.URI
@@ -70,7 +70,7 @@ class NextcloudShareDowngradeTest {
         )
         assumeTrue("local Nextcloud only", URI(server!!).host in setOf("localhost", "127.0.0.1"))
         val context: Context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        db = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
     }

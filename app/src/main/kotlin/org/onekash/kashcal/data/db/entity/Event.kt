@@ -1,10 +1,10 @@
 package org.onekash.kashcal.data.db.entity
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.Index
-import androidx.room.PrimaryKey
+import androidx.room3.ColumnInfo
+import androidx.room3.Entity
+import androidx.room3.ForeignKey
+import androidx.room3.Index
+import androidx.room3.PrimaryKey
 
 /**
  * Stores one Room event (RFC 5545 VEVENT): a one-off, a recurring master (with [rrule]) or an
@@ -186,7 +186,8 @@ data class Event(
 
     /**
      * Reminder offsets from the start as a JSON array, e.g. `["-PT15M", "-PT1H"]`. A pull keeps
-     * at most 5, the ones closest to DTSTART; [alarmCount] and [rawIcal] cover the rest.
+     * at most 5, the ones closest to DTSTART; [alarmCount] and the
+     * [stored ICS][org.onekash.kashcal.data.db.EventIcsSource] cover the rest.
      */
     @ColumnInfo(name = "reminders")
     val reminders: List<String>? = null,
@@ -197,7 +198,7 @@ data class Event(
      * count the reminders they store. An import onto an existing event, a changed occurrence
      * (which takes the series row's count) and the event form's saves don't recount it, and a
      * create leaves 0.
-     * ReminderScheduler re-reads [rawIcal] when this exceeds 3, except for a file's copy
+     * ReminderScheduler re-reads the stored ICS when this exceeds 3, except for a file's copy
      * ([holdsFileCopy]), and the event form reports the alarms beyond 5.
      */
     @ColumnInfo(name = "alarm_count", defaultValue = "0")
@@ -205,7 +206,7 @@ data class Event(
 
     /**
      * Unknown iCal properties such as X- extensions, as a JSON object. An upload or export
-     * built from [rawIcal] writes the copy's own lines instead; this map is the source when
+     * built from the stored ICS writes the copy's own lines instead; this map is the source when
      * there is no copy to patch, for the outbox invitation body, and for a changed occurrence
      * the copy doesn't hold. The CalDAV pull and ICS subscriptions also keep their own
      * `X-KASHCAL-` markers here.
@@ -213,24 +214,14 @@ data class Event(
      * [org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper.toEntity] leaves out a value
      * longer than
      * [org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper.MAX_EXTRA_PROPERTY_VALUE_CHARS]
-     * (an inline attachment, an HTML description), because the row holds [rawIcal] too and
-     * Android can't read a row back once it passes its 2 MB cursor window; rows mapped before
+     * (an inline attachment, an HTML description): the stored ICS keeps it, and Android can't
+     * read a row back once it passes its 2 MB cursor window; rows mapped before
      * the limit, and maps copied from them, keep theirs. A row with a stored copy still uploads
      * such a value from that copy; a row without one (an ICS subscription, an import whose copy
      * couldn't be used) and the map-built bodies above lose it.
      */
     @ColumnInfo(name = "extra_properties")
     val extraProperties: Map<String, String>? = null,
-
-    /**
-     * The stored iCalendar resource this event came from: the server's copy for a synced event
-     * (the pull stores the whole resource on every row of it, a push the body it sent), or the
-     * imported file's text for its UID ([org.onekash.kashcal.data.ics.ImportedCopy]). IcsPatcher
-     * patches the row's fields onto it, so alarms, attendees and properties without a column
-     * survive an upload or an export. A file's copy follows [holdsFileCopy].
-     */
-    @ColumnInfo(name = "raw_ical")
-    val rawIcal: String? = null,
 
     // ========== iCal Required ==========
 
@@ -350,19 +341,20 @@ data class Event(
         get() = originalEventId != null
 
     /**
-     * True when [rawIcal] is an imported file's copy that no server refreshes: the row came from
-     * an ICS file import and isn't on a server (no [caldavUrl]), so it was never uploaded, its
-     * create was refused, or a move took it off its server. Nothing updates such a copy when the
-     * row changes, so it never supplies data the row holds: reminders come from [reminders]
-     * (ReminderScheduler), guests from the attendees table (AttendeeBackfill skips it) and a
-     * serialization given no attendee set writes none (IcsPatcher). Read from the row's own
-     * fields; an import gives a group's series and changed occurrences the same values.
+     * Returns true when [ics], this row's stored ICS (its own or its series',
+     * [org.onekash.kashcal.data.db.EventIcsSource.read]), is an imported file's copy that no
+     * server refreshes: the row came from an ICS file import and isn't on a server (no
+     * [caldavUrl]), so it was never uploaded, its create was refused, or a move took it off its
+     * server. Nothing updates such a copy when the row changes, so it never supplies data the row
+     * holds: reminders come from [reminders] (ReminderScheduler), guests from the attendees table
+     * (AttendeeBackfill skips it) and a serialization given no attendee set writes none
+     * (IcsPatcher). Decided by the row's own fields; an import gives a group's series and changed
+     * occurrences the same values.
      */
-    val holdsFileCopy: Boolean
-        get() = rawIcal != null && isUnsyncedImport
+    fun holdsFileCopy(ics: String?): Boolean = ics != null && isUnsyncedImport
 
     /**
-     * True for a row an ICS file import created that isn't on a server: the rows whose [rawIcal]
+     * True for a row an ICS file import created that isn't on a server: the rows whose stored ICS
      * a newer file may replace ([holdsFileCopy] once it has one).
      */
     val isUnsyncedImport: Boolean

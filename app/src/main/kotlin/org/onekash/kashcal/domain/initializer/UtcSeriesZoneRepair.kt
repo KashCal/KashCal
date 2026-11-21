@@ -1,9 +1,9 @@
 package org.onekash.kashcal.domain.initializer
 
 import android.util.Log
-import androidx.room.withTransaction
 import kotlinx.coroutines.CancellationException
 import org.onekash.icaldav.parser.ICalParser
+import org.onekash.kashcal.data.db.EventIcsSource
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.IcsSubscriptionsDao
@@ -50,6 +50,7 @@ class UtcSeriesZoneRepair @Inject constructor(
     private val eventReader: EventReader,
     private val widgetUpdateManager: WidgetUpdateManager,
     private val dataStore: KashCalDataStore,
+    private val icsSource: EventIcsSource,
 ) {
     /** Counts of one [run]: rows repaired, rows that failed, and whether the feed pass ran. */
     data class Outcome(val repaired: Int, val failed: Int, val feedsCleared: Boolean)
@@ -104,17 +105,19 @@ class UtcSeriesZoneRepair @Inject constructor(
      * changed the row but left it without a zone, so the caller counts it as failed.
      */
     private suspend fun repairRow(row: Event): Event? {
-        val copy = row.rawIcal ?: return null
+        val copy = icsSource.read(row) ?: return null
         val vevents = parser.parseAllEvents(copy).getOrNull() ?: return null
         val series = vevents.firstOrNull { it.recurrenceId == null && it.uid == row.uid }
             ?: vevents.firstOrNull { it.recurrenceId == null }
             ?: return null
         if (ICalEventMapper.storedZoneOf(series) != ICalEventMapper.UTC_SERIES_ZONE) return null
-        return database.withTransaction {
-            if (eventsDao.setTimezoneIfUnset(row.id, ICalEventMapper.UTC_SERIES_ZONE, copy) != 1) {
-                val now = eventsDao.getById(row.id) ?: return@withTransaction null
+        return database.runInTransaction {
+            // A write since the read (a pull, an import) may have replaced the copy this read.
+            val unchanged = icsSource.read(row) == copy
+            if (!unchanged || eventsDao.setTimezoneIfUnset(row.id, ICalEventMapper.UTC_SERIES_ZONE) != 1) {
+                val now = eventsDao.getById(row.id) ?: return@runInTransaction null
                 check(now.timezone != null) { "changed while repairing" }
-                return@withTransaction null
+                return@runInTransaction null
             }
             val fixed = requireNotNull(eventsDao.getById(row.id))
             occurrenceGenerator.regenerateOccurrences(fixed)

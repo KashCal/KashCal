@@ -3,6 +3,7 @@ package org.onekash.kashcal.ui.screens.settings
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.R
@@ -82,5 +83,36 @@ class IcsFeedErrorTextTest {
         for (stored in listOf("Unknown sync error", "Failed after 2 retries", "HTTP/1.1 header parser received no bytes")) {
             assertEquals(UiMessage.Literal(stored), icsFeedErrorMessage(stored))
         }
+    }
+
+    @Test
+    fun `one missing event is named`() {
+        assertEquals("“Team sync” wasn't saved.", shown(IcsFeedErrors.notSaved(1, listOf("Team sync"))))
+    }
+
+    @Test
+    fun `several missing events show the count and one title`() {
+        assertEquals(
+            UiMessage.Plural(R.plurals.ics_feed_error_events_not_saved_including, 3, listOf(3, "Team sync")),
+            icsFeedErrorMessage(IcsFeedErrors.notSaved(3, listOf("", "Team sync", "Work review")))
+        )
+        assertEquals(
+            "3 events weren't saved, including “Team sync”.",
+            shown(IcsFeedErrors.notSaved(3, listOf("Team sync", "Work review")))
+        )
+    }
+
+    @Test
+    fun `missing events without a title show the count`() {
+        assertEquals("1 event wasn't saved.", shown(IcsFeedErrors.notSaved(1, listOf(" "))))
+        assertEquals("2 events weren't saved.", shown(IcsFeedErrors.notSaved(2, emptyList())))
+    }
+
+    @Test
+    fun `a long or multi-line title is stored short and on one line`() {
+        val stored = IcsFeedErrors.notSaved(1, listOf("Line one\nline two " + "x".repeat(200)))
+        assertTrue(stored, stored.lines().size == 1)
+        val title = (icsFeedErrorMessage(stored) as UiMessage.ResId).args.single() as String
+        assertTrue(title, title.length <= 60 && title.startsWith("Line one line two"))
     }
 }

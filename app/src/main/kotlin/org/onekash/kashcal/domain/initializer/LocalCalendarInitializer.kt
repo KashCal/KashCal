@@ -1,6 +1,5 @@
 package org.onekash.kashcal.domain.initializer
 
-import androidx.room.withTransaction
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
@@ -49,7 +48,7 @@ class LocalCalendarInitializer @Inject constructor(
      * returns the built-in calendar's ID. Idempotent.
      */
     suspend fun ensureLocalCalendarExists(): Long {
-        return database.withTransaction {
+        return database.runInTransaction {
             val accountsDao = database.accountsDao()
             val calendarsDao = database.calendarsDao()
 
@@ -117,7 +116,7 @@ class LocalCalendarInitializer @Inject constructor(
      *   [LocalCalendarRefusal.DUPLICATE_NAME] or [LocalCalendarRefusal.SIMILAR_NAME]
      */
     suspend fun createCalendar(name: String, color: Int, builtInName: String): Long {
-        return database.withTransaction {
+        return database.runInTransaction {
             ensureLocalCalendarExists()
             val account = checkNotNull(
                 database.accountsDao().getByProviderAndEmail(AccountProvider.LOCAL, LOCAL_EMAIL)
@@ -148,9 +147,9 @@ class LocalCalendarInitializer @Inject constructor(
      *   [LocalCalendarRefusal.DUPLICATE_NAME] or [LocalCalendarRefusal.SIMILAR_NAME]
      */
     suspend fun renameCalendar(calendarId: Long, name: String, builtInName: String) {
-        database.withTransaction {
+        database.runInTransaction {
             val calendar = requireUserAddedCalendar(calendarId)
-            if (name.trim() == calendar.displayName) return@withTransaction
+            if (name.trim() == calendar.displayName) return@runInTransaction
             val trimmed = checkName(name, calendar.accountId, builtInName, renamingId = calendar.id)
             database.calendarsDao().updateDisplayName(calendar.id, trimmed)
         }
@@ -164,7 +163,7 @@ class LocalCalendarInitializer @Inject constructor(
      *   [LocalCalendarRefusal.NOT_LOCAL]
      */
     suspend fun recolorCalendar(calendarId: Long, color: Int) {
-        database.withTransaction {
+        database.runInTransaction {
             database.calendarsDao().updateColor(requireLocalCalendar(calendarId).id, color)
         }
     }
@@ -193,7 +192,7 @@ class LocalCalendarInitializer @Inject constructor(
      * @throws LocalCalendarException as [checkDeletable]
      */
     suspend fun deleteCalendar(calendarId: Long): Int {
-        return database.withTransaction {
+        return database.runInTransaction {
             val calendar = requireUserAddedCalendar(calendarId)
             val count = database.eventsDao().countUserEventsInCalendar(calendar.id)
             database.calendarsDao().deleteById(calendar.id)

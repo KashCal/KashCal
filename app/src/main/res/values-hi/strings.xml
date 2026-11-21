@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d और</string>
     <string name="tags_autocomplete_create_new">\"%1$s\" बनाएँ</string>
     <string name="cd_tag">टैग: %1$s</string>
+    <string name="tags_show_events_click_label">इस टैग वाले इवेंट दिखाएँ</string>
+    <string name="tags_show_events">इवेंट दिखाएँ</string>
     <string name="cd_tags_move_menu">टैग ले जाएँ</string>
     <string name="tags_move_above_notes">नोट्स के ऊपर ले जाएँ</string>
     <string name="tags_move_below_notes">नोट्स के नीचे ले जाएँ</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">सिंक सत्र देखें (पिछले 48 घंटे)</string>
     <string name="settings_import_subtitle">किसी भी कैलेंडर में ICS फ़ाइल से इवेंट जोड़ें</string>
     <string name="settings_birthday_reminder">जन्मदिन रिमाइंडर</string>
-    <string name="settings_use_device_timezone">डिवाइस टाइमज़ोन का उपयोग करें</string>
     <string name="settings_section_calendars">कैलेंडर और खाते</string>
     <string name="settings_section_appearance">दिखावट</string>
     <string name="settings_section_creating_events">इवेंट प्राथमिकताएँ</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">आवर्ती</string>
     <string name="cd_enabled">चालू</string>
     <string name="cd_sync_error">सिंक त्रुटि</string>
-    <string name="cd_select_label">%1$s चुनें</string>
     <string name="cd_wheel_picker">%1$d विकल्पों के साथ व्हील पिकर</string>
     <string name="cd_time_entry_keyboard">सटीक समय दर्ज करें</string>
     <string name="time_entry_dialog_title">समय दर्ज करें</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">समाप्ति</string>
     <string name="sheet_hint_change_end">अंत बदलने के लिए किसी दिन पर टैप करें</string>
     <string name="label_timezone">समय क्षेत्र</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">शहर, देश या समय क्षेत्र खोजें</string>
+    <string name="timezone_section_this_event">यह इवेंट</string>
+    <string name="timezone_section_device">डिवाइस का समय क्षेत्र</string>
+    <string name="timezone_section_recent">हाल के</string>
+    <string name="timezone_section_all">सभी समय क्षेत्र</string>
+    <string name="timezone_offsets_on">%1$s को ऑफ़सेट</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">कैलेंडर से: %1$s</string>
+    <string name="timezone_shown_in_device_time">डिवाइस के समय में दिखाया गया</string>
+    <string name="timezone_loading">समय क्षेत्र लोड हो रहे हैं…</string>
+    <string name="timezone_no_match">कोई समय क्षेत्र मेल नहीं खाता</string>
+    <string name="timezone_no_match_hint">कोई शहर, देश या +5:30 जैसा ऑफ़सेट आज़माएं</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">अलर्ट</string>
     <string name="label_add_alert">अलर्ट जोड़ें</string>
     <string name="label_recurrence_never">कभी नहीं</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">नए इवेंट इस कैलेंडर में बनाए जाएँगे</string>
     <string name="label_reminders_truncated">%1$d नहीं दिखाए (%2$d कुल, अधिकतम %3$d संपादन योग्य)</string>
     <string name="label_found_events">मिले: %1$d इवेंट</string>
-    <string name="placeholder_search">खोजें…</string>
     <string name="settings_search_placeholder">सेटिंग्स खोजें…</string>
     <string name="settings_search_no_results">\"%1$s\" के लिए कोई सेटिंग नहीं मिली</string>
     <string name="cd_search_settings">सेटिंग्स खोजें</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">बिना शीर्षक वाला इवेंट</string>
     <string name="recurring_this_event">यह इवेंट</string>
     <string name="recurring_all_events">सभी इवेंट</string>
+    <string name="recurring_scope_move_not_expressible">दोहराव का नियम इस बदलाव को नहीं अपना सकता</string>
+    <string name="event_form_move_not_expressible">दोहराव का नियम इस बदलाव को नहीं अपना सकता। कुछ भी सेव नहीं हुआ।</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">उपस्थित</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">अतिथि:</string>
     <string name="search_keep_typing">खोजने के लिए टाइप करते रहें</string>
     <string name="search_no_matches">“%1$s” से कोई इवेंट मेल नहीं खाता</string>
+    <string name="search_no_events_tagged">“%1$s” टैग वाले कोई इवेंट नहीं</string>
     <string name="search_lookback_line">सिंक लुकबैक: %1$s</string>
     <string name="search_sync_settings">सिंक सेटिंग्स</string>
     <string name="cd_search_sync_settings">सिंक लुकबैक सेटिंग खोलें</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">इस फ़ीड के सर्वर ने एक्सेस अस्वीकार कर दिया।</string>
     <string name="ics_feed_error_too_large">यह कैलेंडर फ़ीड डाउनलोड करने के लिए बहुत बड़ा है।</string>
     <string name="ics_feed_error_unreadable">इस फ़ीड के इवेंट नहीं दिखाए जा सके।</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s” सहेजा नहीं गया।</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d इवेंट सहेजा नहीं गया।</item>
+        <item quantity="other">%1$d इवेंट सहेजे नहीं गए।</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d इवेंट सहेजा नहीं गया, जिसमें “%2$s” शामिल है।</item>
+        <item quantity="other">%1$d इवेंट सहेजे नहीं गए, जिनमें “%2$s” शामिल है।</item>
+    </plurals>
     <string name="insights_title">अंतर्दृष्टि</string>
     <string name="insights_period_this_week">सप्ताह</string>
     <string name="insights_period_last_week">पिछला सप्ताह</string>

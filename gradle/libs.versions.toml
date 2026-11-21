@@ -16,7 +16,11 @@ biometric = "1.1.0"
 composeBom = "2026.09.00"
 
 # Room
-room = "2.8.5"
+room3 = "3.0.3"
+# androidx.sqlite at the version Room 3.0.3 declares; keep the two in step.
+sqlite = "2.7.1"
+# Room 2, which WorkManager uses for its own database; the app's code doesn't use it.
+room2ForWorkManager = "2.8.5"
 
 # Coroutines
 coroutines = "1.11.0"
@@ -99,10 +103,11 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 
 # Room
-androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
-androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
-androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
-androidx-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
+androidx-room3-runtime = { group = "androidx.room3", name = "room3-runtime", version.ref = "room3" }
+androidx-room3-compiler = { group = "androidx.room3", name = "room3-compiler", version.ref = "room3" }
+androidx-room3-testing = { group = "androidx.room3", name = "room3-testing", version.ref = "room3" }
+androidx-room2-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room2ForWorkManager" }
+androidx-sqlite-framework = { group = "androidx.sqlite", name = "sqlite-framework", version.ref = "sqlite" }
 
 # Coroutines
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }

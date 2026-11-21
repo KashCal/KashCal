@@ -46,7 +46,7 @@ class Rfc5545ComplianceAuditTest {
     fun `RFC 5545 §3-1 - long SUMMARY is folded so no line exceeds 75 octets`() {
         val long = "x".repeat(300)
         val event = baseEvent(title = long)
-        val ics = IcsPatcher.serialize(event)
+        val ics = IcsPatcher.serialize(event, null)
 
         ics.split("\r\n", "\n").forEach { line ->
             assertTrue(
@@ -58,7 +58,7 @@ class Rfc5545ComplianceAuditTest {
 
     @Test
     fun `RFC 5545 §3-1 - generator output uses CRLF as required line break`() {
-        val ics = IcsPatcher.serialize(baseEvent(title = "CRLF check"))
+        val ics = IcsPatcher.serialize(baseEvent(title = "CRLF check"), null)
         // RFC 5545 §3.1: "Content lines are delimited by a line break, which is a CRLF
         // sequence (CR character followed by LF character)."
         assertTrue(
@@ -71,7 +71,7 @@ class Rfc5545ComplianceAuditTest {
     fun `RFC 5545 §3-1 - parser unfolds CRLF+SPACE in round trip of long DESCRIPTION`() {
         val long = "y".repeat(400)
         val event = baseEvent(description = long)
-        val ics = IcsPatcher.serialize(event)
+        val ics = IcsPatcher.serialize(event, null)
         val reparsed = parseFirstEvent(ics)
         assertEquals(long, reparsed.description)
     }
@@ -84,7 +84,7 @@ class Rfc5545ComplianceAuditTest {
     fun `RFC 5545 §3-1-4 - UTF-8 emoji and CJK survive round trip without splitting code points`() {
         val text = "Lunch 🍕 with 田中 — fast and tasty!"
         val event = baseEvent(title = text)
-        val ics = IcsPatcher.serialize(event)
+        val ics = IcsPatcher.serialize(event, null)
         val reparsed = parseFirstEvent(ics)
         assertEquals(text, reparsed.summary)
     }
@@ -98,7 +98,7 @@ class Rfc5545ComplianceAuditTest {
         val zone = ZoneId.of("America/New_York")
         val start = ZonedDateTime.of(2026, 6, 15, 9, 30, 0, 0, zone).toInstant().toEpochMilli()
         val event = baseEvent(timezone = "America/New_York", startTs = start, endTs = start + 3_600_000)
-        val ics = IcsPatcher.serialize(event)
+        val ics = IcsPatcher.serialize(event, null)
         assertTrue(
             "DTSTART must include TZID parameter:\n$ics",
             Regex("DTSTART;TZID=America/New_York:20260615T093000").containsMatchIn(ics)
@@ -111,7 +111,7 @@ class Rfc5545ComplianceAuditTest {
 
     @Test
     fun `RFC 5545 §3-3-5 - DTSTAMP is always emitted in UTC Form 2`() {
-        val ics = IcsPatcher.serialize(baseEvent())
+        val ics = IcsPatcher.serialize(baseEvent(), null)
         // RFC 5545 §3.8.7.2: DTSTAMP is a DATE-TIME, and "The value MUST be specified in the
         // UTC time format." Looks for DTSTAMP:YYYYMMDDTHHMMSSZ.
         assertTrue(
@@ -128,7 +128,7 @@ class Rfc5545ComplianceAuditTest {
     fun `RFC 5545 §3-3-10 - RRULE round trip preserves FREQ=WEEKLY BYDAY=MO,WE,FR`() {
         val rrule = "FREQ=WEEKLY;BYDAY=MO,WE,FR"
         val event = baseEvent(rrule = rrule)
-        val ics = IcsPatcher.serialize(event)
+        val ics = IcsPatcher.serialize(event, null)
         val reparsed = parseFirstEvent(ics)
         val emitted = reparsed.rrule?.toICalString() ?: ""
         assertTrue(
@@ -150,7 +150,7 @@ class Rfc5545ComplianceAuditTest {
             originalEventId = 42L,
             originalInstanceTime = master.startTs + 86_400_000L
         )
-        val ics = IcsPatcher.serializeWithExceptions(master, listOf(exception))
+        val ics = IcsPatcher.serializeWithExceptions(master, null, listOf(exception))
         val veventBlocks = Regex("BEGIN:VEVENT.*?END:VEVENT", RegexOption.DOT_MATCHES_ALL).findAll(ics).toList()
         assertEquals("Master + 1 exception = 2 VEVENTs", 2, veventBlocks.size)
         val exceptionBlock = veventBlocks.first { it.value.contains("RECURRENCE-ID") }.value
@@ -168,7 +168,7 @@ class Rfc5545ComplianceAuditTest {
     fun `RFC 5545 §3-3-11 - DESCRIPTION with comma and semicolon and backslash and newline survives round trip`() {
         val description = "Line 1, with comma; and semicolon\nand backslash \\\\ end"
         val event = baseEvent(description = description)
-        val ics = IcsPatcher.serialize(event)
+        val ics = IcsPatcher.serialize(event, null)
         val reparsed = parseFirstEvent(ics)
         assertEquals(description, reparsed.description)
     }
@@ -231,7 +231,7 @@ END:VCALENDAR
             startTs = day,
             endTs = day + 86_400_000L - 1L
         )
-        val ics = IcsPatcher.serialize(event)
+        val ics = IcsPatcher.serialize(event, null)
         assertTrue(
             "All-day DTSTART must be VALUE=DATE form:\n$ics",
             ics.contains("DTSTART;VALUE=DATE:20260305")
@@ -256,7 +256,7 @@ END:VCALENDAR
             endTs = start + 3_600_000L,
             rrule = "FREQ=WEEKLY;COUNT=10"
         )
-        val ics = IcsPatcher.serialize(event)
+        val ics = IcsPatcher.serialize(event, null)
         assertTrue(
             "Recurring event should emit DTEND:\n$ics",
             Regex("(?m)^DTEND[:;]").containsMatchIn(ics)
@@ -273,7 +273,7 @@ END:VCALENDAR
 
     @Test
     fun `RFC 5545 §3-7-3 and §3-7-4 - VCALENDAR carries PRODID and VERSION 2-0`() {
-        val ics = IcsPatcher.serialize(baseEvent())
+        val ics = IcsPatcher.serialize(baseEvent(), null)
         assertTrue("PRODID required:\n$ics", Regex("(?m)^PRODID:").containsMatchIn(ics))
         assertTrue("VERSION:2.0 required:\n$ics", ics.contains("VERSION:2.0"))
     }
@@ -284,7 +284,7 @@ END:VCALENDAR
 
     @Test
     fun `RFC 5545 §3-8-1-7 - default TRANSP is OPAQUE and is omitted on the wire to match default`() {
-        val ics = IcsPatcher.serialize(baseEvent(transp = "OPAQUE"))
+        val ics = IcsPatcher.serialize(baseEvent(transp = "OPAQUE"), null)
         // The generator omits TRANSP when it is OPAQUE, the RFC default, so the parser must
         // read the absence as OPAQUE. Both halves are asserted.
         assertFalse("Default OPAQUE should not be emitted:\n$ics", ics.contains("TRANSP:OPAQUE"))
@@ -295,7 +295,7 @@ END:VCALENDAR
     @Test
     fun `RFC 5545 §3-8-1-7 - TRANSPARENT is emitted explicitly and round trips into Event entity`() {
         val ev = baseEvent(transp = "TRANSPARENT")
-        val ics = IcsPatcher.serialize(ev)
+        val ics = IcsPatcher.serialize(ev, null)
         assertTrue("TRANSPARENT must be emitted:\n$ics", ics.contains("TRANSP:TRANSPARENT"))
         val parsed = parseFirstEvent(ics)
         assertEquals(Transparency.TRANSPARENT, parsed.transparency)
@@ -337,7 +337,7 @@ END:VCALENDAR
     fun `RFC 5545 §3-8-1-3 - CLASS round-trips PUBLIC PRIVATE and CONFIDENTIAL`() {
         listOf("PUBLIC", "PRIVATE", "CONFIDENTIAL").forEach { cls ->
             val ev = baseEvent(classification = cls)
-            val ics = IcsPatcher.serialize(ev)
+            val ics = IcsPatcher.serialize(ev, null)
             val parsed = parseFirstEvent(ics)
             val entity = ICalEventMapper.toEntity(parsed, ics, 1L, null, null).event
             assertEquals("CLASS $cls must round-trip", cls, entity.classification)
@@ -348,13 +348,13 @@ END:VCALENDAR
     fun `RFC 5545 §3-8-1-9 - PRIORITY 1 through 9 round trips and 0 means undefined`() {
         for (p in 1..9) {
             val ev = baseEvent(priority = p)
-            val ics = IcsPatcher.serialize(ev)
+            val ics = IcsPatcher.serialize(ev, null)
             assertTrue("PRIORITY:$p missing for $p:\n$ics", ics.contains("PRIORITY:$p"))
             val parsed = parseFirstEvent(ics)
             assertEquals(p, parsed.priority)
         }
         val zero = baseEvent(priority = 0)
-        val icsZero = IcsPatcher.serialize(zero)
+        val icsZero = IcsPatcher.serialize(zero, null)
         assertFalse(
             "PRIORITY:0 (undefined) should not be emitted as a wire property:\n$icsZero",
             Regex("(?m)^PRIORITY:0\\b").containsMatchIn(icsZero)
@@ -364,7 +364,7 @@ END:VCALENDAR
     @Test
     fun `RFC 5545 §3-8-1-6 - GEO round-trips lat-semi-lon to entity`() {
         val ev = baseEvent(geoLat = 37.386013, geoLon = -122.082932)
-        val ics = IcsPatcher.serialize(ev)
+        val ics = IcsPatcher.serialize(ev, null)
         assertTrue("GEO must use semicolon separator:\n$ics", ics.contains("GEO:37.386013;-122.082932"))
         val parsed = parseFirstEvent(ics)
         val entity = ICalEventMapper.toEntity(parsed, ics, 1L, null, null).event
@@ -380,7 +380,7 @@ END:VCALENDAR
     fun `RFC 5545 §3-8-4-7 - UID is preserved exactly through round trip`() {
         val tricky = "audit-UID-with.dots+plus_under-and-dash@example.com"
         val ev = baseEvent(uid = tricky)
-        val ics = IcsPatcher.serialize(ev)
+        val ics = IcsPatcher.serialize(ev, null)
         val parsed = parseFirstEvent(ics)
         assertEquals(tricky, parsed.uid)
     }
@@ -394,7 +394,7 @@ END:VCALENDAR
             originalInstanceTime = master.startTs + 86_400_000L,
             title = "Different title"
         )
-        val ics = IcsPatcher.serializeWithExceptions(master, listOf(exception))
+        val ics = IcsPatcher.serializeWithExceptions(master, null, listOf(exception))
         val uidMatches = Regex("(?m)^UID:(.+)$").findAll(ics).map { it.groupValues[1].trim() }.toList()
         assertEquals("Both VEVENTs must carry a UID", 2, uidMatches.size)
         assertEquals(
@@ -416,7 +416,7 @@ END:VCALENDAR
             originalEventId = 1L,
             originalInstanceTime = master.startTs + 7L * 86_400_000L
         )
-        val ics = IcsPatcher.serializeWithExceptions(master, listOf(exception))
+        val ics = IcsPatcher.serializeWithExceptions(master, null, listOf(exception))
         val veventBlocks = Regex("BEGIN:VEVENT.*?END:VEVENT", RegexOption.DOT_MATCHES_ALL).findAll(ics).toList()
         val masterBlock = veventBlocks.first { !it.value.contains("RECURRENCE-ID") }.value
         val exceptionBlock = veventBlocks.first { it.value.contains("RECURRENCE-ID") }.value
@@ -439,7 +439,7 @@ END:VCALENDAR
             rrule = "FREQ=WEEKLY;COUNT=3",
             exdate = excluded.toString()
         )
-        val ics = IcsPatcher.serialize(ev)
+        val ics = IcsPatcher.serialize(ev, null)
         assertTrue(
             "EXDATE must be present on the wire when the entity has one:\n$ics",
             Regex("(?m)^EXDATE[:;]").containsMatchIn(ics)
@@ -457,7 +457,7 @@ END:VCALENDAR
             rrule = "FREQ=WEEKLY;COUNT=3",
             rdate = extra.toString()
         )
-        val ics = IcsPatcher.serialize(ev)
+        val ics = IcsPatcher.serialize(ev, null)
         assertTrue(
             "RDATE must be present on the wire when the entity has one:\n$ics",
             Regex("(?m)^RDATE[:;]").containsMatchIn(ics)
@@ -470,7 +470,7 @@ END:VCALENDAR
 
     @Test
     fun `RFC 5545 §3-8-7-2 - every VEVENT carries DTSTAMP`() {
-        val ics = IcsPatcher.serialize(baseEvent())
+        val ics = IcsPatcher.serialize(baseEvent(), null)
         assertTrue(
             "DTSTAMP is REQUIRED by RFC 5545 §3.6.1 / §3.8.7.2:\n$ics",
             Regex("(?m)^DTSTAMP:").containsMatchIn(ics)
@@ -481,13 +481,13 @@ END:VCALENDAR
     fun `RFC 5545 §3-8-7-4 - SEQUENCE round-trips and defaults to 0 when absent`() {
         val zero = baseEvent(sequence = 0)
         val seven = baseEvent(sequence = 7)
-        assertEquals(0, parseFirstEvent(IcsPatcher.serialize(zero)).sequence)
-        assertEquals(7, parseFirstEvent(IcsPatcher.serialize(seven)).sequence)
+        assertEquals(0, parseFirstEvent(IcsPatcher.serialize(zero, null)).sequence)
+        assertEquals(7, parseFirstEvent(IcsPatcher.serialize(seven, null)).sequence)
     }
 
     @Test
     fun `RFC 5545 §3-8-7 - DTSTAMP CREATED and LAST-MODIFIED are all UTC when emitted`() {
-        val ics = IcsPatcher.serialize(baseEvent())
+        val ics = IcsPatcher.serialize(baseEvent(), null)
         listOf("DTSTAMP", "CREATED", "LAST-MODIFIED").forEach { prop ->
             val match = Regex("(?m)^$prop:([^\r\n]+)").find(ics)
             if (match != null) {
@@ -521,7 +521,7 @@ END:VCALENDAR
                 title = "Day 4 override"
             )
         )
-        val ics = IcsPatcher.serializeWithExceptions(master, exceptions)
+        val ics = IcsPatcher.serializeWithExceptions(master, null, exceptions)
         val vcalCount = Regex("BEGIN:VCALENDAR").findAll(ics).count()
         val veventCount = Regex("BEGIN:VEVENT").findAll(ics).count()
         assertEquals("Exactly one VCALENDAR envelope (RFC 5545 §3.4)", 1, vcalCount)

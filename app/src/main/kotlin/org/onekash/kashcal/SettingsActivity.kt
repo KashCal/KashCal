@@ -38,6 +38,7 @@ import org.onekash.kashcal.ui.viewmodels.DebugReportEvent
 import org.onekash.kashcal.ui.viewmodels.DebugReportViewModel
 import org.onekash.kashcal.ui.viewmodels.OnboardingRoute
 import org.onekash.kashcal.util.IcsFileReader
+import org.onekash.kashcal.util.SearchIntentRouter
 import org.onekash.kashcal.util.ShareChooser
 import javax.inject.Inject
 
@@ -141,6 +142,11 @@ class SettingsActivity : FragmentActivity() {
                 initialAccentSeed = initialAccentSeed,
                 syncSessionStore = syncSessionStore,
                 openTagsInitially = openTags,
+                // Back to the calendar with search open on the tag; Settings closes.
+                onShowTagEvents = { name ->
+                    startActivity(SearchIntentRouter.tagSearchIntent(this, name))
+                    finish()
+                },
                 openDeviceCalendarsInitially = route == OnboardingRoute.DEVICE_CALENDARS,
                 onFinish = { finish() },
                 calendarExportViewModel = calendarExportViewModel,

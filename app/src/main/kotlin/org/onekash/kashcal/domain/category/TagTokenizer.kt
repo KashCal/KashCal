@@ -4,21 +4,29 @@ package org.onekash.kashcal.domain.category
  * Owns the "#tag" grammar, shared by Quick Add extraction and the event form's inline "#"
  * autocomplete so both agree on what a tag token looks like.
  *
- * An accepted tag is `#` followed by 1 to 64 letters, digits, `_` or `-` (Unicode-aware).
+ * An accepted tag is `#` followed by 1 to 64 [NAME_CHAR] (Unicode-aware).
  * Extraction runs on the raw Quick Add input, before the Quick Add normalizer's character
  * cleanup strips the `#` marker; a parse rule that ran after normalization could never see it.
  */
 object TagTokenizer {
 
     /**
-     * `#` and one or more letters, digits, underscores or hyphens. Unbounded on purpose: the
+     * One character of a `#tag` name: a letter, a combining mark (the vowel signs of Hindi,
+     * Thai and other scripts, without which `#काम` would end after its first letter), a digit,
+     * `_` or `-`.
+     * [org.onekash.kashcal.domain.search.SearchQuery] reads search tags with it.
+     */
+    const val NAME_CHAR = """[\p{L}\p{M}\p{N}_-]"""
+
+    /**
+     * `#` and one or more [NAME_CHAR]. Unbounded on purpose: the
      * length limit is the validator's, so an over-long `#word` is rejected (the form's `TOO_LONG`
      * error) instead of silently truncated to a 64-char tag.
      */
-    private val TAG = Regex("""#([\p{L}\p{N}_-]+)""")
+    private val TAG = Regex("""#($NAME_CHAR+)""")
 
     /** A partial, still-being-typed tag anchored to the end of the input. */
-    private val TRAILING = Regex("""#([\p{L}\p{N}_-]*)$""")
+    private val TRAILING = Regex("""#($NAME_CHAR*)$""")
 
     private val WHITESPACE = Regex("""\s+""")
 

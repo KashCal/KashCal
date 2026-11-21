@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.every
@@ -43,6 +43,7 @@ import org.onekash.kashcal.sync.session.SyncSessionBuilder
 import org.onekash.kashcal.sync.session.SyncTrigger
 import org.onekash.kashcal.sync.session.SyncType
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -88,7 +89,7 @@ class PullStrategyPoisonEventIsolationTest {
     @Before
     fun setup() = runTest {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .addCallback(PendingOperationTriggers.callback())
             .allowMainThreadQueries()
             .build()
@@ -118,7 +119,8 @@ class PullStrategyPoisonEventIsolationTest {
             dataStore = dataStore,
             inviteNotifier = inviteNotifier,
             accountRepository = accountRepository,
-            reminderScheduler = reminderScheduler
+            reminderScheduler = reminderScheduler,
+            icsSource = EventIcsStore(database),
         )
         coEvery { accountRepository.getAccountById(account.id) } returns account
     }

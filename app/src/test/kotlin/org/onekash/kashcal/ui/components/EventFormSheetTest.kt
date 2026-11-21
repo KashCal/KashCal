@@ -1126,23 +1126,34 @@ class EventFormSheetTest {
         }
 
     @Test
-    fun `picking a new timezone keeps the event at the same moment inside a repeated hour`() =
+    fun `picking a new timezone keeps the date and clock time`() =
         withDeviceTimeZone("America/Los_Angeles") {
-            val start = 1_730_619_000_000L // 02:30 EST Nov 3 = 01:30 CST, Chicago's second 01:30
+            val start = 1_709_650_800_000L // 2024-03-05 10:00 New York
             val moved = loadedForm(start, start + oneHourMs).withTimezone("America/Chicago")
-            assertEquals(start to start + oneHourMs, moved.toStartEndTs())
-            assertEquals(1, moved.startHour)
-            assertEquals(30, moved.startMinute)
+            assertEquals(10, moved.startHour)
+            assertEquals(0, moved.startMinute)
+            // 10:00 Chicago, an hour after 10:00 New York.
+            assertEquals(start + oneHourMs to start + 2 * oneHourMs, moved.toStartEndTs())
         }
 
     @Test
-    fun `picking a new timezone keeps the event at the same moment when the phone is ahead of the event`() =
+    fun `picking a new timezone keeps the date when the phone is ahead of the event`() =
         withDeviceTimeZone("Asia/Tokyo") {
             val start = 1_709_647_200_000L // 2024-03-05 09:00 New York (23:00 in Tokyo)
             val moved = loadedForm(start, start + oneHourMs).withTimezone("America/Chicago")
-            assertEquals(start to start + oneHourMs, moved.toStartEndTs())
-            assertEquals(8, moved.startHour)
+            assertEquals(9, moved.startHour)
             assertEquals(day(2024, 3, 5), phoneLocalDate(moved.dateMillis))
+            assertEquals(start + oneHourMs to start + 2 * oneHourMs, moved.toStartEndTs())
+        }
+
+    @Test
+    fun `picking a zone and then the event's own zone keeps the second repeated clock time`() =
+        withDeviceTimeZone("America/New_York") {
+            val second130 = 1_730_615_400_000L // 2024-11-03 06:30Z = the second 01:30 in New York (EST)
+            val loaded = loadedForm(second130, second130 + oneHourMs)
+            val back = loaded.withZonePick(org.onekash.kashcal.ui.components.pickers.ZonePick.Set("Asia/Tokyo"), newYork)
+                .withZonePick(org.onekash.kashcal.ui.components.pickers.ZonePick.Device, newYork)
+            assertEquals(second130 to second130 + oneHourMs, back.toStartEndTs())
         }
 
     @Test

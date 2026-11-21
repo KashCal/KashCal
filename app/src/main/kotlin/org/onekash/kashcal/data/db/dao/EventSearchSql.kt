@@ -1,6 +1,8 @@
 package org.onekash.kashcal.data.db.dao
 
-import androidx.sqlite.db.SimpleSQLiteQuery
+import androidx.room3.RoomRawQuery
+import androidx.sqlite.SQLiteStatement
+import kotlinx.serialization.json.Json
 import org.onekash.kashcal.domain.search.SearchQuery
 
 /**
@@ -10,11 +12,15 @@ import org.onekash.kashcal.domain.search.SearchQuery
  * An event matches when every word of the [SearchQuery] appears (`LIKE '%word%' ESCAPE '#'`,
  * case folded by SQLite) in its title, location or description, in an attendee's display name,
  * or in an attendee address that [SearchQuery.emailShapedAddress] accepts, with any `mailto:`
- * removed. The platform matches guests through one comma-joined string of all names and one of
- * all emails, so a quoted phrase that spans two guests can match there and not here.
+ * removed, and every tag of the query is one of its tags. The platform matches guests through
+ * one comma-joined string of all names and one of all emails, so a quoted phrase that spans two
+ * guests can match there and not here.
  *
- * Every word is a bound argument; user text never enters the SQL. Each value is bound once as a
- * numbered parameter and reused by the five columns it is matched against.
+ * A tag is matched against the JSON array in `events.categories` ([tagPatterns]), not with
+ * JSON functions: the phone's SQLite on Android 12 has no `json_each`.
+ *
+ * Every word and tag is a bound argument; user text never enters the SQL. Each value is bound
+ * once as a numbered parameter and reused by the columns it is matched against.
  */
 object EventSearchSql {
 
@@ -43,26 +49,55 @@ object EventSearchSql {
 
     /** Collects bound values and hands out their numbered parameters. */
     private class Args {
-        val values = mutableListOf<Any>()
-        fun bind(value: Any): String {
-            values += value
-            return "?${values.size}"
+        private val binders = mutableListOf<(SQLiteStatement, Int) -> Unit>()
+
+        fun bind(value: String): String = add { statement, index -> statement.bindText(index, value) }
+        fun bind(value: Long): String = add { statement, index -> statement.bindLong(index, value) }
+        fun bind(value: Int): String = bind(value.toLong())
+
+        /** Binds each value to its numbered parameter, in the order [bind] handed them out. */
+        fun bindAll(statement: SQLiteStatement) {
+            binders.forEachIndexed { i, binder -> binder(statement, i + 1) }
+        }
+
+        private fun add(binder: (SQLiteStatement, Int) -> Unit): String {
+            binders += binder
+            return "?${binders.size}"
         }
     }
 
     /**
-     * Returns the WHERE condition that matches every word of [query] for events aliased `e`,
-     * binding the patterns through [args].
+     * Returns the two LIKE patterns that find the tag [name] as a whole element of the
+     * `events.categories` JSON array: the element first (`[` before it) or later (`,` before
+     * it). The name is encoded by the same default [Json] that stores the column
+     * ([org.onekash.kashcal.data.db.converter.Converters.fromStringList]), so quotes and
+     * backslashes are escaped as stored; inside a JSON string every quote is escaped, so `["`
+     * and `,"` occur only where an element starts, and `#work` never matches `Teamwork` or a
+     * tag like `x"work`. Case folds as LIKE folds it.
+     */
+    private fun tagPatterns(name: String): Pair<String, String> {
+        val element = SearchQuery.escapeLike(Json.encodeToString(name))
+        return "%[$element%" to "%,$element%"
+    }
+
+    /**
+     * Returns the WHERE condition that matches every word and every tag of [query] for events
+     * aliased `e`, binding the patterns through [args].
      */
     private fun matchCondition(query: SearchQuery, args: Args): String {
-        require(query.words.isNotEmpty()) { "a search needs at least one word" }
+        require(!query.isEmpty) { "a search needs a word or a tag" }
         val escape = "ESCAPE '${SearchQuery.LIKE_ESCAPE}'"
-        return query.likePatterns.joinToString(" AND ") { pattern ->
+        val words = query.likePatterns.map { pattern ->
             val p = args.bind(pattern)
             "(e.title LIKE $p $escape OR e.location LIKE $p $escape OR e.description LIKE $p $escape" +
                 " OR EXISTS (SELECT 1 FROM attendees a WHERE a.event_id = e.id" +
                 " AND (a.display_name LIKE $p $escape OR ($EMAIL_SHAPED AND $BARE_ADDRESS LIKE $p $escape))))"
         }
+        val tags = query.tags.map { name ->
+            val (first, later) = tagPatterns(name)
+            "(e.categories LIKE ${args.bind(first)} $escape OR e.categories LIKE ${args.bind(later)} $escape)"
+        }
+        return (words + tags).joinToString(" AND ")
     }
 
     /**
@@ -91,7 +126,7 @@ object EventSearchSql {
      * `has_occurrences` is whether any row, cancelled or linked, belongs to the event, so a
      * match with none can still be dated by its own start.
      */
-    fun nextAndLast(query: SearchQuery, now: Long, todayDayCode: Int, range: LongRange? = null): SimpleSQLiteQuery {
+    fun nextAndLast(query: SearchQuery, now: Long, todayDayCode: Int, range: LongRange? = null): RoomRawQuery {
         val args = Args()
         val match = matchCondition(query, args)
         val nowArg = args.bind(now)
@@ -120,6 +155,6 @@ object EventSearchSql {
               CASE WHEN next_occurrence_id IS NOT NULL THEN e.start_ts ELSE -e.start_ts END ASC
             LIMIT $LIMIT
         """
-        return SimpleSQLiteQuery(sql.trimIndent(), args.values.toTypedArray())
+        return RoomRawQuery(sql.trimIndent()) { statement -> args.bindAll(statement) }
     }
 }

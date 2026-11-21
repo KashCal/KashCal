@@ -1,7 +1,6 @@
 package org.onekash.kashcal.data.ics
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.every
 import io.mockk.mockk
@@ -18,6 +17,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.icaldav.model.ICalEvent
 import org.onekash.icaldav.parser.ICalParser
+import org.onekash.kashcal.data.db.EventIcsStore
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.preferences.KashCalDataStore
@@ -25,11 +25,13 @@ import org.onekash.kashcal.data.repository.AccountRepositoryImpl
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.initializer.LocalCalendarInitializer
+import org.onekash.kashcal.domain.model.EventExport
 import org.onekash.kashcal.domain.reader.AttendeeBackfill
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.onekash.kashcal.util.IcsExporter
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -61,7 +63,7 @@ class ImportedUnknownPropertiesExportTest {
     @Before
     fun setUp() {
         context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        db = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
         val generator = OccurrenceGenerator(db, db.occurrencesDao(), db.eventsDao(), TestDataStoreFactory.createDefault())
@@ -218,12 +220,12 @@ class ImportedUnknownPropertiesExportTest {
 
         val shown = db.occurrencesDao().getOccurrencesWithEventsInRange(0, Long.MAX_VALUE).first()
             .first { it.eventId == series.id }.event
-        assertNull("the occurrence query leaves the copy out", shown.rawIcal)
 
-        val (event, exceptions) = requireNotNull(coordinator.getEventForExport(shown.id))
-        assertEquals(series.rawIcal, event.rawIcal)
-        assertEquals(1, exceptions.size)
-        val (seriesBlock, occurrenceBlock) = seriesAndOccurrence(exportEvent(event, exceptions), "quick view")
+        val export = requireNotNull(coordinator.getEventForExport(shown.id))
+        val stored = requireNotNull(EventIcsStore(db).read(series)) { "the import stored the file's text" }
+        assertEquals("the export carries the series' stored ICS", stored, export.icsByEventId[series.id])
+        assertEquals(1, export.exceptions.size)
+        val (seriesBlock, occurrenceBlock) = seriesAndOccurrence(exportEvent(export), "quick view")
         assertEquals(SERIES_LINES, unknownLines(seriesBlock))
         assertEquals(OCCURRENCE_LINES, unknownLines(occurrenceBlock))
     }
@@ -329,16 +331,19 @@ class ImportedUnknownPropertiesExportTest {
         import(singleFile, caldav)
         val row = db.eventsDao().getAllMasterEventsForCalendar(caldav).single()
         // The upload stores the body it sent with the resource URL, as the push does.
-        db.eventsDao().markCreatedOnServerWithCopy(
-            row.id, "https://dav.example.test/cal/personal/${row.uid}.ics", "\"e1\"",
-            org.onekash.kashcal.sync.parser.icaldav.IcsPatcher.serialize(row), System.currentTimeMillis(),
+        val store = EventIcsStore(db)
+        val sent = org.onekash.kashcal.sync.parser.icaldav.IcsPatcher.serialize(row, store.read(row))
+        db.eventsDao().markCreatedOnServer(
+            row.id, "https://dav.example.test/cal/personal/${row.uid}.ics", "\"e1\"", System.currentTimeMillis(),
         )
-        assertFalse("on its server the copy is the server's", db.eventsDao().getById(row.id)!!.holdsFileCopy)
+        store.write(row.id, sent)
+        val uploaded = db.eventsDao().getById(row.id)!!
+        assertFalse("on its server the copy is the server's", uploaded.holdsFileCopy(store.read(uploaded)))
         val offline = localCalendars.ensureLocalCalendarExists()
         coordinator.moveEventToCalendar(row.id, offline)
 
         val moved = db.eventsDao().getById(row.id)!!
-        assertTrue("off its server nobody refreshes the copy", moved.holdsFileCopy)
+        assertTrue("off its server nobody refreshes the copy", moved.holdsFileCopy(store.read(moved)))
         assertEquals(SINGLE_LINES, unknownLines(veventBlocks(exportEvent(moved)).single()))
     }
 
@@ -349,20 +354,23 @@ class ImportedUnknownPropertiesExportTest {
             val parsed = ICalParser().parseAllEvents(singleFile).getOrNull()!!.single()
             val synced = org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper.toEntity(
                 parsed, singleFile, caldav, "https://dav.example.test/cal/personal/${parsed.uid}.ics", "\"e1\"",
-            ).event
-            val id = db.eventsDao().insert(synced)
+            )
+            val id = db.eventsDao().insert(synced.event)
+            val store = EventIcsStore(db)
+            store.write(id, synced.ics)
             val offline = localCalendars.ensureLocalCalendarExists()
             coordinator.moveEventToCalendar(id, offline)
             val before = db.eventsDao().getById(id)!!
-            assertTrue("the moved row keeps the server's copy", before.rawIcal != null)
+            val beforeIcs = store.read(before)
+            assertTrue("the moved row keeps the server's copy", beforeIcs != null)
 
             val newer = singleFile.replace("SUMMARY:Visitor tour", "SUMMARY:Visitor tour (new)\r\nSEQUENCE:1")
                 .replace("RESOURCES:Whiteboard", "RESOURCES:Easel")
             assertEquals(1, import(newer, offline).updated)
             val after = db.eventsDao().getById(id)!!
             assertEquals("Visitor tour (new)", after.title)
-            assertEquals("the server copy stays", before.rawIcal, after.rawIcal)
-            assertFalse("not a file copy", after.holdsFileCopy)
+            assertEquals("the server copy stays", beforeIcs, store.read(after))
+            assertFalse("not a file copy", after.holdsFileCopy(store.read(after)))
         }
 
     // ---- re-importing ----
@@ -436,12 +444,14 @@ class ImportedUnknownPropertiesExportTest {
         val calendarId = localCalendars.ensureLocalCalendarExists()
         import(seriesFile(SERIES_UID), calendarId)
         val series = db.eventsDao().getAllMasterEventsForCalendar(calendarId).single()
+        val store = EventIcsStore(db)
+        val storedBefore = requireNotNull(store.readOwn(series.id))
         EventWriter(db, generator).applyImportedUpdate(
-            series.id, series.copy(title = "Weekly review (newer)", sequence = 1, rawIcal = null), emptyList(),
+            series.id, series.copy(title = "Weekly review (newer)", sequence = 1), emptyList(), ics = null,
         )
         val after = db.eventsDao().getById(series.id)!!
         assertEquals("Weekly review (newer)", after.title)
-        assertEquals(series.rawIcal, after.rawIcal)
+        assertEquals(storedBefore, store.readOwn(series.id))
     }
 
     @Test
@@ -505,11 +515,14 @@ class ImportedUnknownPropertiesExportTest {
             ),
         )
         val parsed = ICalParser().parseAllEvents(body).getOrNull()!!.single()
-        val mapped = org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper.toEntity(
+        val entity = org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper.toEntity(
             parsed, body, calendarId, "https://dav.example.test/cal/personal/synced-alarms.ics", "\"e1\"",
-        ).event
+        )
+        val mapped = entity.event
         assertTrue("the row holds at most 5 reminders", mapped.reminders!!.size <= 5)
         val id = db.eventsDao().insert(mapped)
+        // The pull keeps the server's body on the row, as it does for every pulled series.
+        org.onekash.kashcal.data.db.EventIcsStore(db).write(id, entity.ics)
         generator.generateOccurrences(mapped.copy(id = id), start - HOUR, start + 2 * HOUR)
         scheduler.scheduleUpcomingReminders()
 
@@ -532,7 +545,7 @@ class ImportedUnknownPropertiesExportTest {
         val row = db.eventsDao().getAllMasterEventsForCalendar(calendarId).single()
         coordinator.updateEvent(row, attendees = emptyList())
 
-        assertEquals(0, AttendeeBackfill(db.attendeesDao(), db.eventsDao()).backfillIfEmpty(row.id))
+        assertEquals(0, AttendeeBackfill(db.attendeesDao(), db.eventsDao(), EventIcsStore(db)).backfillIfEmpty(row.id))
         assertTrue(db.attendeesDao().getForEventOnce(row.id).isEmpty())
         assertTrue(unfold(exportEvent(db.eventsDao().getById(row.id)!!)).lines().none { it.startsWith("ATTENDEE") })
     }
@@ -556,7 +569,7 @@ class ImportedUnknownPropertiesExportTest {
         assertEquals(1, import(orphan, calendarId).created)
         val rows = db.eventsDao().getAllMasterEventsForCalendar(calendarId)
         assertEquals(3, rows.size)
-        rows.forEach { assertNull("${it.title} keeps no copy", it.rawIcal) }
+        rows.forEach { assertNull("${it.title} keeps no copy", EventIcsStore(db).read(it)) }
     }
 
     @Test
@@ -660,10 +673,14 @@ class ImportedUnknownPropertiesExportTest {
     private suspend fun import(text: String, calendarId: Long) =
         coordinator.importIcsFile(requireNotNull(IcsParserService.parseForImport(text)), calendarId)
 
-    private fun exportEvent(event: Event, exceptions: List<Event> = emptyList()): String {
+    /** Exports [event] and [exceptions] with their stored ICS, no attendee rows given. */
+    private suspend fun exportEvent(event: Event, exceptions: List<Event> = emptyList()): String =
+        exportEvent(EventExport(event, exceptions, emptyMap(), EventReader(db).getIcsForExport(event, exceptions)))
+
+    private fun exportEvent(export: EventExport): String {
         val shared = File(context.cacheDir, "shared").apply { deleteRecursively() }
         // The file is written before the FileProvider lookup, which has no provider here.
-        IcsExporter().exportEvent(context, event, exceptions)
+        IcsExporter().exportEvent(context, export)
         return shared.listFiles()!!.single().readText()
     }
 

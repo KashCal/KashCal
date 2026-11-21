@@ -134,6 +134,20 @@ class PendingActionTest {
         assertEquals(action1, action2)
     }
 
+    // ==================== OpenTagSearch Tests ====================
+
+    @Test
+    fun `OpenTagSearch carries the tag name and compares by it`() {
+        assertEquals(PendingAction.OpenTagSearch("Work"), PendingAction.OpenTagSearch("Work"))
+        assertEquals("Work", PendingAction.OpenTagSearch("Work").name)
+        assertTrue(PendingAction.OpenTagSearch("Work") != PendingAction.OpenTagSearch("Home"))
+    }
+
+    @Test
+    fun `OpenTagSearch logs without the tag name`() {
+        assertEquals("OpenTagSearch", PendingAction.OpenTagSearch("Private tag").toString())
+    }
+
     // ==================== OpenSearch Tests ====================
 
     @Test
@@ -201,6 +215,7 @@ class PendingActionTest {
             is PendingAction.ShowEventQuickView -> "quick_view"
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
+            is PendingAction.OpenTagSearch -> "tag_search"
             is PendingAction.GoToToday -> "today"
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
@@ -223,6 +238,7 @@ class PendingActionTest {
             is PendingAction.ShowEventQuickView -> "quick_view"
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
+            is PendingAction.OpenTagSearch -> "tag_search"
             is PendingAction.GoToToday -> "today"
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
@@ -245,6 +261,7 @@ class PendingActionTest {
             is PendingAction.ShowEventQuickView -> "quick_view"
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
+            is PendingAction.OpenTagSearch -> "tag_search"
             is PendingAction.GoToToday -> "today"
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
@@ -267,6 +284,7 @@ class PendingActionTest {
             is PendingAction.ShowEventQuickView -> "quick_view"
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
+            is PendingAction.OpenTagSearch -> "tag_search"
             is PendingAction.GoToToday -> "today"
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
@@ -289,6 +307,7 @@ class PendingActionTest {
             is PendingAction.ShowEventQuickView -> "quick_view"
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
+            is PendingAction.OpenTagSearch -> "tag_search"
             is PendingAction.GoToToday -> "today"
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
@@ -311,6 +330,7 @@ class PendingActionTest {
             is PendingAction.ShowEventQuickView -> "quick_view"
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
+            is PendingAction.OpenTagSearch -> "tag_search"
             is PendingAction.GoToToday -> "today"
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
@@ -340,6 +360,7 @@ class PendingActionTest {
             is PendingAction.ShowEventQuickView -> "quick_view"
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
+            is PendingAction.OpenTagSearch -> "tag_search"
             is PendingAction.GoToToday -> "today"
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
@@ -369,6 +390,7 @@ class PendingActionTest {
             is PendingAction.ShowEventQuickView -> "quick_view"
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
+            is PendingAction.OpenTagSearch -> "tag_search"
             is PendingAction.GoToToday -> "today"
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
@@ -435,6 +457,7 @@ class PendingActionTest {
             is PendingAction.ShowEventQuickView -> "quick_view"
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
+            is PendingAction.OpenTagSearch -> "tag_search"
             is PendingAction.GoToToday -> "today"
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
@@ -457,6 +480,7 @@ class PendingActionTest {
             is PendingAction.ShowEventQuickView -> "quick_view"
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
+            is PendingAction.OpenTagSearch -> "tag_search"
             is PendingAction.GoToToday -> "today"
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
@@ -479,6 +503,7 @@ class PendingActionTest {
             is PendingAction.ShowEventQuickView -> "quick_view"
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
+            is PendingAction.OpenTagSearch -> "tag_search"
             is PendingAction.GoToToday -> "today"
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"

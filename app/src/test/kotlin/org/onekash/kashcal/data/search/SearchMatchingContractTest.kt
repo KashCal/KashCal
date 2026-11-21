@@ -24,6 +24,7 @@ abstract class SearchMatchingContractTest {
         location: String? = null,
         notes: String? = null,
         guests: List<Guest> = emptyList(),
+        tags: List<String> = emptyList(),
     )
 
     /** Returns the titles [text] finds, sorted. */
@@ -112,12 +113,12 @@ abstract class SearchMatchingContractTest {
         seed("500 off")
         seed("ab_c")
         seed("abxc")
-        seed("Room #4")
-        seed("Room 4")
+        seed("Room x#4")
+        seed("Room x4")
 
         assertEquals(listOf("50% off"), search("50%"))
         assertEquals(listOf("ab_c"), search("ab_c"))
-        assertEquals(listOf("Room #4"), search("#4"))
+        assertEquals(listOf("Room x#4"), search("x#4"))
     }
 
     @Test
@@ -126,5 +127,61 @@ abstract class SearchMatchingContractTest {
         seed("Brien Kim")
 
         assertEquals(listOf("Call O'Brien"), search("O'Brien"))
+    }
+
+    @Test
+    fun `a tag finds the events carrying it`() {
+        seed("Checkup", tags = listOf("Doctor"))
+        seed("Dentist", tags = listOf("Family", "doctor"))
+        seed("Lunch", tags = listOf("Family"))
+        seed("Doctor Who night")
+
+        assertEquals(listOf("Checkup", "Dentist"), search("#doctor"))
+    }
+
+    @Test
+    fun `a tag matches the whole name only`() {
+        seed("Team", tags = listOf("Teamwork"))
+        seed("Gym", tags = listOf("Workout"))
+        seed("Office", tags = listOf("Work"))
+
+        assertEquals(listOf("Office"), search("#work"))
+    }
+
+    @Test
+    fun `a tag folds case beyond ASCII and keeps accents`() {
+        seed("Russian", tags = listOf("Работа"))
+        seed("Cafe", tags = listOf("Café"))
+
+        assertEquals(listOf("Russian"), search("#работа"))
+        assertEquals(emptyList<String>(), search("#cafe"))
+    }
+
+    @Test
+    fun `a quoted tag name may hold spaces`() {
+        seed("Planning", tags = listOf("Team Meeting"))
+        seed("Lunch", tags = listOf("Team"))
+
+        assertEquals(listOf("Planning"), search("#\"team meeting\""))
+    }
+
+    @Test
+    fun `tags and words must all match`() {
+        seed("Kids checkup", tags = listOf("Doctor"))
+        seed("Adult checkup", tags = listOf("Doctor"))
+        seed("Kids party", tags = listOf("Fun"))
+        seed("Kids flu shot", tags = listOf("Doctor", "Kids"))
+
+        assertEquals(listOf("Kids checkup", "Kids flu shot"), search("#doctor kids"))
+        assertEquals(listOf("Kids flu shot"), search("#doctor #kids"))
+        assertEquals(listOf("Kids flu shot"), search("kids #KIDS"))
+    }
+
+    @Test
+    fun `a tag no event carries finds nothing`() {
+        seed("Checkup", tags = listOf("Doctor"))
+
+        assertEquals(emptyList<String>(), search("#dentist"))
+        assertEquals(emptyList<String>(), search("#dentist checkup"))
     }
 }

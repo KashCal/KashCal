@@ -1,3 +1,35 @@
+## [2026.11.20]
+
+Kash comes from a small planet with one long season and no calendars. So when it landed in KashCal, it fell for calendars at once. It waves at everyone who opens the app for the first time, holds an armful of calendars on the About page, and sits with you on empty days. On its home planet, every day was an empty day.
+
+Earth suited Kash, apart from two things.
+
+The first was birthdays. Kash has a large family back home, and fluffballs take birthdays seriously. Within a month on Earth it had missed three. Kash added the whole family to its contacts and took the problem to [OneKash Labs](https://onekash.org). The answer was [KashCake](https://kashcake.onekash.org), which sends a reminder before every birthday and anniversary in your contacts.
+
+The second was its ship. Kash had written the ship's password on a sticky note and left the note inside the ship. The answer to that was [KashPass](https://kashpass.onekash.org), which keeps your KeePass vault on your phone. You can find a login, copy the password, and edit entries in the same file KeePass 2 opens on your computer.
+
+Calling home will have to wait: neither app has internet access, so neither sends your contacts or passwords anywhere.
+
+Both apps are free and open source. Get them on Google Play: [KashCake](https://kashcake.onekash.org/beta/) and [KashPass](https://kashpass.onekash.org/beta/).
+
+Kash's mother got her birthday message on time this year. KashCake sent the reminder, and the messaging app did the rest.
+
+### Everything in this release
+
+- Fixed moving a repeating event (new time, date or time zone, in the form or by dragging): changed and deleted occurrences now move with it, and the series keeps its last day
+- Fixed dragging an occurrence you had already changed; it showed twice and didn't sync
+- Fixed an alert staying at the old time after moving a changed occurrence
+- Changed: when a repeat rule can't follow a move, `All events` and `This and future` are greyed out with the reason
+- Added time zone search in the event form, by city, country, abbreviation or offset
+- Changed a time zone change to keep the time shown: 10:00 New York becomes 10:00 Tokyo
+- Fixed `Device time zone` not changing an existing event's time zone
+- Added search by tag, such as `#doctor`; tap a tag on an event to search it (#348)
+- Fixed Microsoft 365 and Exchange calendar feeds showing no events, or events at the wrong time (#441)
+- Fixed a feed of only cancelled events showing an error
+- Fixed the app not opening when one event was too large; events with large attachments now open and sync
+- Fixed Quick Add tags in Hindi, Thai, Tamil and similar scripts being cut short
+- Fixed a repeating all-day event over several days in a device calendar losing its last day (#444)
+
 ## [2026.11.12]
 
 How long since your last haircut? Search said "No events found" and left the mirror to answer. The appointment was there all along; search only looked ahead.

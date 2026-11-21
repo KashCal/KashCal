@@ -1,6 +1,5 @@
 package org.onekash.kashcal.data.search
 
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -16,6 +15,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.search.SearchQuery
 import java.util.UUID
+import org.onekash.kashcal.testutil.TestDatabases
 
 /**
  * Runs the matching contract against the Room search ([EventSearchSql] through
@@ -30,7 +30,7 @@ class RoomSearchMatchingContractTest : SearchMatchingContractTest() {
 
     @Before
     fun setup() {
-        database = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(ApplicationProvider.getApplicationContext())
             .allowMainThreadQueries()
             .build()
         runBlocking {
@@ -46,8 +46,8 @@ class RoomSearchMatchingContractTest : SearchMatchingContractTest() {
         database.close()
     }
 
-    override fun seed(title: String, location: String?, notes: String?, guests: List<Guest>) {
-        seedWithAddresses(title, location, notes, guests.map { it.name to "mailto:${it.email}" })
+    override fun seed(title: String, location: String?, notes: String?, guests: List<Guest>, tags: List<String>) {
+        seedWithAddresses(title, location, notes, guests.map { it.name to "mailto:${it.email}" }, tags)
     }
 
     private fun seedWithAddresses(
@@ -55,6 +55,7 @@ class RoomSearchMatchingContractTest : SearchMatchingContractTest() {
         location: String? = null,
         notes: String? = null,
         guests: List<Pair<String?, String>> = emptyList(),
+        tags: List<String> = emptyList(),
     ): Unit = runBlocking {
         val id = database.eventsDao().insert(
             Event(
@@ -66,6 +67,7 @@ class RoomSearchMatchingContractTest : SearchMatchingContractTest() {
                 startTs = T0,
                 endTs = T0 + 3_600_000,
                 dtstamp = T0,
+                categories = tags.ifEmpty { null },
             )
         )
         database.attendeesDao().insertAll(guests.map { (name, address) -> Attendee(eventId = id, address = address, displayName = name) })

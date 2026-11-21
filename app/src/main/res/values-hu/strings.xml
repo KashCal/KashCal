@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d további</string>
     <string name="tags_autocomplete_create_new">„%1$s” létrehozása</string>
     <string name="cd_tag">Címke: %1$s</string>
+    <string name="tags_show_events_click_label">Események megjelenítése ezzel a címkével</string>
+    <string name="tags_show_events">Események megjelenítése</string>
     <string name="cd_tags_move_menu">Címkék áthelyezése</string>
     <string name="tags_move_above_notes">Áthelyezés a jegyzetek fölé</string>
     <string name="tags_move_below_notes">Áthelyezés a jegyzetek alá</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Szinkronizálási munkamenetek megtekintése (utolsó 48 óra)</string>
     <string name="settings_import_subtitle">Események hozzáadása ICS fájlból bármelyik naptárhoz</string>
     <string name="settings_birthday_reminder">Születésnapi emlékeztető</string>
-    <string name="settings_use_device_timezone">Eszköz időzónájának használata</string>
     <string name="settings_section_calendars">Naptárak és fiókok</string>
     <string name="settings_section_appearance">Megjelenés</string>
     <string name="settings_section_creating_events">Eseménybeállítások</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">Ismétlődő</string>
     <string name="cd_enabled">Engedélyezve</string>
     <string name="cd_sync_error">Szinkronizálási hiba</string>
-    <string name="cd_select_label">%1$s kiválasztása</string>
     <string name="cd_wheel_picker">Görgős választó %1$d lehetőséggel</string>
     <string name="cd_time_entry_keyboard">Pontos idő megadása</string>
     <string name="time_entry_dialog_title">Idő megadása</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">Befejezés</string>
     <string name="sheet_hint_change_end">Koppints egy napra a vég módosításához</string>
     <string name="label_timezone">Időzóna</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Város, ország vagy zóna keresése</string>
+    <string name="timezone_section_this_event">Ez az esemény</string>
+    <string name="timezone_section_device">Az eszköz időzónája</string>
+    <string name="timezone_section_recent">Legutóbbiak</string>
+    <string name="timezone_section_all">Minden időzóna</string>
+    <string name="timezone_offsets_on">Eltérések ekkor: %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">A naptár szerint: %1$s</string>
+    <string name="timezone_shown_in_device_time">Az eszköz idejében látható</string>
+    <string name="timezone_loading">Időzónák betöltése…</string>
+    <string name="timezone_no_match">Nincs egyező időzóna</string>
+    <string name="timezone_no_match_hint">Próbálj egy várost, országot vagy egy eltérést, például +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Figyelmeztetések</string>
     <string name="label_add_alert">Figyelmeztetés hozzáadása</string>
     <string name="label_recurrence_never">Soha</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">Az új események ebben a naptárban jönnek létre</string>
     <string name="label_reminders_truncated">%1$d nem látható (%2$d összesen, max. %3$d szerkeszthető)</string>
     <string name="label_found_events">Találat: %1$d esemény</string>
-    <string name="placeholder_search">Keresés…</string>
     <string name="settings_search_placeholder">Beállítások keresése…</string>
     <string name="settings_search_no_results">Nincs találat erre: \"%1$s\"</string>
     <string name="cd_search_settings">Beállítások keresése</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">Névtelen esemény</string>
     <string name="recurring_this_event">Ez az esemény</string>
     <string name="recurring_all_events">Összes esemény</string>
+    <string name="recurring_scope_move_not_expressible">Az ismétlési szabály nem tudja követni ezt a módosítást</string>
+    <string name="event_form_move_not_expressible">Az ismétlési szabály nem tudja követni ezt a módosítást. Semmi sem lett mentve.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Résztvevők</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">Vendég:</string>
     <string name="search_keep_typing">Írj tovább a kereséshez</string>
     <string name="search_no_matches">Egy esemény sem egyezik ezzel: „%1$s”</string>
+    <string name="search_no_events_tagged">Nincs „%1$s” címkéjű esemény</string>
     <string name="search_lookback_line">Szinkronizálási visszatekintés: %1$s</string>
     <string name="search_sync_settings">Szinkronizálási beállítások</string>
     <string name="cd_search_sync_settings">Szinkronizálási visszatekintés beállítás megnyitása</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">A csatorna kiszolgálója megtagadta a hozzáférést.</string>
     <string name="ics_feed_error_too_large">Ez a naptárcsatorna túl nagy a letöltéshez.</string>
     <string name="ics_feed_error_unreadable">Nem sikerült megjeleníteni a csatorna eseményeit.</string>
+    <string name="ics_feed_error_event_not_saved">„%1$s” nem lett elmentve.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d esemény nem lett elmentve.</item>
+        <item quantity="other">%1$d esemény nem lett elmentve.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d esemény nem lett elmentve: „%2$s”.</item>
+        <item quantity="other">%1$d esemény nem lett elmentve, köztük „%2$s”.</item>
+    </plurals>
     <string name="insights_title">Áttekintés</string>
     <string name="insights_period_this_week">Hét</string>
     <string name="insights_period_last_week">Múlt hét</string>

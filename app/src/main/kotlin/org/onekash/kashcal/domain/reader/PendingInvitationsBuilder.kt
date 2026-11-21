@@ -1,6 +1,6 @@
 package org.onekash.kashcal.domain.reader
 
-import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
+import org.onekash.kashcal.data.db.dao.PendingInvitationRow
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Calendar
@@ -11,7 +11,7 @@ import org.onekash.kashcal.util.AddressNormalizer
  * Builds the inbox's [PendingInvitation] list, sorted by next occurrence start.
  *
  * Inputs are already filtered in SQL:
- * - [eventsWithNext]: masters and one-off events with an occurrence not yet ended and not
+ * - [invitationRows]: masters and one-off events with an occurrence not yet ended and not
  *   cancelled, excluding PENDING_DELETE rows
  *   ([org.onekash.kashcal.data.db.dao.EventsDao.getMasterEventsWithFutureOccurrenceFlow]).
  * - [needsActionAttendees]: those events' `partstat = NEEDS-ACTION` attendee rows
@@ -29,43 +29,45 @@ import org.onekash.kashcal.util.AddressNormalizer
  * shares one of account A's addresses is checked against B and never shows in A's inbox.
  */
 fun buildPendingInvitations(
-    eventsWithNext: List<EventWithNextOccurrence>,
+    invitationRows: List<PendingInvitationRow>,
     needsActionAttendees: List<Attendee>,
     accountsById: Map<Long, Account>,
     calendarsById: Map<Long, Calendar>
 ): List<PendingInvitation> {
-    if (eventsWithNext.isEmpty()) return emptyList()
+    if (invitationRows.isEmpty()) return emptyList()
 
     val attendeesByEvent: Map<Long, List<Attendee>> =
         needsActionAttendees.groupBy { it.eventId }
 
     val out = mutableListOf<PendingInvitation>()
-    for (ewn in eventsWithNext) {
-        val event = ewn.event
-        if (event.originalEventId != null) continue
-        val calendar = calendarsById[event.calendarId] ?: continue
+    for (row in invitationRows) {
+        if (row.originalEventId != null) continue
+        val calendar = calendarsById[row.calendarId] ?: continue
         val account = accountsById[calendar.accountId] ?: continue
 
-        val rows = attendeesByEvent[event.id].orEmpty()
-        val ownerAttendee = rows.firstOrNull { account.matchesAttendee(it.address) }
+        val attendeeRows = attendeesByEvent[row.id].orEmpty()
+        val ownerAttendee = attendeeRows.firstOrNull { account.matchesAttendee(it.address) }
             ?: continue
 
-        val organizerEmail = event.organizerEmail
+        val organizerEmail = row.organizerEmail
         if (!organizerEmail.isNullOrBlank() && account.matchesAttendee(organizerEmail)) {
             continue
         }
 
-        val nextStart = ewn.nextOccurrenceTs ?: event.startTs
-        val duration = (event.endTs - event.startTs).coerceAtLeast(0L)
+        val nextStart = row.nextOccurrenceTs ?: row.startTs
+        val duration = (row.endTs - row.startTs).coerceAtLeast(0L)
         val nextEnd = nextStart + duration
 
         out += PendingInvitation(
-            event = event,
+            eventId = row.id,
+            title = row.title,
+            location = row.location,
+            isAllDay = row.isAllDay,
             occurrenceStartTs = nextStart,
             occurrenceEndTs = nextEnd,
             accountId = account.id,
             calendarColor = calendar.localColorOverride ?: calendar.color,
-            organizerLabel = organizerLabel(event.organizerName, organizerEmail, ownerAttendee)
+            organizerLabel = organizerLabel(row.organizerName, organizerEmail, ownerAttendee)
         )
     }
     return out.sortedBy { it.occurrenceStartTs }

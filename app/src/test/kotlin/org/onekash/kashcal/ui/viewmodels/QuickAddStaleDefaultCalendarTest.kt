@@ -2,7 +2,6 @@ package org.onekash.kashcal.ui.viewmodels
 
 import android.content.Context
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.every
@@ -50,6 +49,7 @@ import org.onekash.kashcal.sync.provider.caldav.CalDavAccountDiscoveryService
 import org.onekash.kashcal.sync.provider.icloud.ICloudAccountDiscoveryService
 import org.onekash.kashcal.sync.provider.icloud.ICloudCredentialProvider
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.io.File
@@ -94,7 +94,7 @@ class QuickAddStaleDefaultCalendarTest {
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         val context: Context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        db = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
         dataStoreScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())

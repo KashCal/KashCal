@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d ਹੋਰ</string>
     <string name="tags_autocomplete_create_new">\"%1$s\" ਬਣਾਓ</string>
     <string name="cd_tag">ਟੈਗ: %1$s</string>
+    <string name="tags_show_events_click_label">ਇਸ ਟੈਗ ਵਾਲੀਆਂ ਘਟਨਾਵਾਂ ਦਿਖਾਓ</string>
+    <string name="tags_show_events">ਘਟਨਾਵਾਂ ਦਿਖਾਓ</string>
     <string name="cd_tags_move_menu">ਟੈਗ ਲੈ ਜਾਓ</string>
     <string name="tags_move_above_notes">ਨੋਟਾਂ ਤੋਂ ਉੱਪਰ ਲੈ ਜਾਓ</string>
     <string name="tags_move_below_notes">ਨੋਟਾਂ ਤੋਂ ਹੇਠਾਂ ਲੈ ਜਾਓ</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">ਸਿੰਕ ਸੈਸ਼ਨ ਦੇਖੋ (ਪਿਛਲੇ 48 ਘੰਟੇ)</string>
     <string name="settings_import_subtitle">ICS ਫ਼ਾਈਲ ਤੋਂ ਕਿਸੇ ਵੀ ਕੈਲੰਡਰ ਵਿੱਚ ਘਟਨਾਵਾਂ ਸ਼ਾਮਲ ਕਰੋ</string>
     <string name="settings_birthday_reminder">ਜਨਮਦਿਨ ਯਾਦ-ਦਹਾਨੀ</string>
-    <string name="settings_use_device_timezone">ਡਿਵਾਈਸ ਟਾਈਮਜ਼ੋਨ ਵਰਤੋ</string>
     <string name="settings_section_calendars">ਕੈਲੰਡਰ &amp; ਖਾਤੇ</string>
     <string name="settings_section_appearance">ਦਿੱਖ</string>
     <string name="settings_section_creating_events">ਘਟਨਾ ਤਰਜੀਹਾਂ</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">ਦੁਹਰਾਉਣ ਵਾਲਾ</string>
     <string name="cd_enabled">ਸਮਰੱਥ</string>
     <string name="cd_sync_error">ਸਿੰਕ ਗਲਤੀ</string>
-    <string name="cd_select_label">%1$s ਚੁਣੋ</string>
     <string name="cd_wheel_picker">%1$d ਵਿਕਲਪਾਂ ਵਾਲਾ ਵ੍ਹੀਲ ਪਿਕਰ</string>
     <string name="cd_time_entry_keyboard">ਸਹੀ ਸਮਾਂ ਦਾਖਲ ਕਰੋ</string>
     <string name="time_entry_dialog_title">ਸਮਾਂ ਦਾਖਲ ਕਰੋ</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">ਖ਼ਤਮ ਹੁੰਦਾ ਹੈ</string>
     <string name="sheet_hint_change_end">ਅੰਤ ਬਦਲਣ ਲਈ ਕਿਸੇ ਦਿਨ \'ਤੇ ਟੈਪ ਕਰੋ</string>
     <string name="label_timezone">ਸਮਾਂ ਖੇਤਰ</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">ਸ਼ਹਿਰ, ਦੇਸ਼ ਜਾਂ ਖੇਤਰ ਖੋਜੋ</string>
+    <string name="timezone_section_this_event">ਇਹ ਘਟਨਾ</string>
+    <string name="timezone_section_device">ਡਿਵਾਈਸ ਦਾ ਸਮਾਂ ਖੇਤਰ</string>
+    <string name="timezone_section_recent">ਹਾਲੀਆ</string>
+    <string name="timezone_section_all">ਸਾਰੇ ਸਮਾਂ ਖੇਤਰ</string>
+    <string name="timezone_offsets_on">%1$s ਨੂੰ ਆਫ਼ਸੈੱਟ</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">ਕੈਲੰਡਰ ਤੋਂ: %1$s</string>
+    <string name="timezone_shown_in_device_time">ਡਿਵਾਈਸ ਦੇ ਸਮੇਂ ਵਿੱਚ ਦਿਖਾਇਆ ਗਿਆ</string>
+    <string name="timezone_loading">ਸਮਾਂ ਖੇਤਰ ਲੋਡ ਹੋ ਰਹੇ ਹਨ…</string>
+    <string name="timezone_no_match">ਕੋਈ ਸਮਾਂ ਖੇਤਰ ਮੇਲ ਨਹੀਂ ਖਾਂਦਾ</string>
+    <string name="timezone_no_match_hint">ਕੋਈ ਸ਼ਹਿਰ, ਦੇਸ਼ ਜਾਂ +5:30 ਵਰਗਾ ਆਫ਼ਸੈੱਟ ਅਜ਼ਮਾਓ</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">ਚੇਤਾਵਨੀਆਂ</string>
     <string name="label_add_alert">ਚੇਤਾਵਨੀ ਜੋੜੋ</string>
     <string name="label_recurrence_never">ਕਦੇ ਨਹੀਂ</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">ਨਵੀਆਂ ਘਟਨਾਵਾਂ ਇਸ ਕੈਲੰਡਰ ਵਿੱਚ ਬਣਾਈਆਂ ਜਾਣਗੀਆਂ</string>
     <string name="label_reminders_truncated">%1$d ਨਹੀਂ ਦਿਖਾਈਆਂ (%2$d ਕੁੱਲ, ਅਧਿਕਤਮ %3$d ਸੰਪਾਦਨਯੋਗ)</string>
     <string name="label_found_events">ਮਿਲੀਆਂ: %1$d ਘਟਨਾਵਾਂ</string>
-    <string name="placeholder_search">ਖੋਜੋ…</string>
     <string name="settings_search_placeholder">ਸੈਟਿੰਗਾਂ ਖੋਜੋ…</string>
     <string name="settings_search_no_results">\"%1$s\" ਲਈ ਕੋਈ ਸੈਟਿੰਗ ਨਹੀਂ ਮਿਲੀ</string>
     <string name="cd_search_settings">ਸੈਟਿੰਗਾਂ ਖੋਜੋ</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">ਬਿਨਾਂ ਸਿਰਲੇਖ ਵਾਲੀ ਘਟਨਾ</string>
     <string name="recurring_this_event">ਇਹ ਘਟਨਾ</string>
     <string name="recurring_all_events">ਸਾਰੀਆਂ ਘਟਨਾਵਾਂ</string>
+    <string name="recurring_scope_move_not_expressible">ਦੁਹਰਾਉਣ ਦਾ ਨਿਯਮ ਇਸ ਬਦਲਾਅ ਨੂੰ ਨਹੀਂ ਅਪਣਾ ਸਕਦਾ</string>
+    <string name="event_form_move_not_expressible">ਦੁਹਰਾਉਣ ਦਾ ਨਿਯਮ ਇਸ ਬਦਲਾਅ ਨੂੰ ਨਹੀਂ ਅਪਣਾ ਸਕਦਾ। ਕੁਝ ਵੀ ਸੇਵ ਨਹੀਂ ਹੋਇਆ।</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">ਹਾਜ਼ਰੀਨ</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">ਮਹਿਮਾਨ:</string>
     <string name="search_keep_typing">ਖੋਜਣ ਲਈ ਟਾਈਪ ਕਰਦੇ ਰਹੋ</string>
     <string name="search_no_matches">“%1$s” ਨਾਲ ਕੋਈ ਘਟਨਾ ਮੇਲ ਨਹੀਂ ਖਾਂਦੀ</string>
+    <string name="search_no_events_tagged">“%1$s” ਟੈਗ ਵਾਲੀ ਕੋਈ ਘਟਨਾ ਨਹੀਂ</string>
     <string name="search_lookback_line">ਸਿੰਕ ਲੁੱਕਬੈਕ: %1$s</string>
     <string name="search_sync_settings">ਸਿੰਕ ਸੈਟਿੰਗਾਂ</string>
     <string name="cd_search_sync_settings">ਸਿੰਕ ਲੁੱਕਬੈਕ ਸੈਟਿੰਗ ਖੋਲ੍ਹੋ</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">ਇਸ ਫੀਡ ਦੇ ਸਰਵਰ ਨੇ ਪਹੁੰਚ ਤੋਂ ਇਨਕਾਰ ਕਰ ਦਿੱਤਾ।</string>
     <string name="ics_feed_error_too_large">ਇਹ ਕੈਲੰਡਰ ਫੀਡ ਡਾਊਨਲੋਡ ਕਰਨ ਲਈ ਬਹੁਤ ਵੱਡੀ ਹੈ।</string>
     <string name="ics_feed_error_unreadable">ਇਸ ਫੀਡ ਦੀਆਂ ਘਟਨਾਵਾਂ ਦਿਖਾਈਆਂ ਨਹੀਂ ਜਾ ਸਕੀਆਂ।</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s” ਸੁਰੱਖਿਅਤ ਨਹੀਂ ਹੋਇਆ।</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d ਘਟਨਾ ਸੁਰੱਖਿਅਤ ਨਹੀਂ ਕੀਤੀ ਗਈ।</item>
+        <item quantity="other">%1$d ਘਟਨਾਵਾਂ ਸੁਰੱਖਿਅਤ ਨਹੀਂ ਕੀਤੀਆਂ ਗਈਆਂ।</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">“%2$s” ਸਮੇਤ %1$d ਘਟਨਾ ਸੁਰੱਖਿਅਤ ਨਹੀਂ ਕੀਤੀ ਗਈ।</item>
+        <item quantity="other">“%2$s” ਸਮੇਤ %1$d ਘਟਨਾਵਾਂ ਸੁਰੱਖਿਅਤ ਨਹੀਂ ਕੀਤੀਆਂ ਗਈਆਂ।</item>
+    </plurals>
     <string name="insights_title">ਸੂਝ</string>
     <string name="insights_period_this_week">ਹਫ਼ਤਾ</string>
     <string name="insights_period_last_week">ਪਿਛਲਾ ਹਫ਼ਤਾ</string>

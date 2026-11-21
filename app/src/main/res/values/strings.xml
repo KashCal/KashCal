@@ -182,6 +182,10 @@
     <string name="tags_autocomplete_create_new">Create \"%1$s\"</string>
     <!-- Accessibility label for a tag chip; %1$s is the tag name -->
     <string name="cd_tag">Tag: %1$s</string>
+    <!-- Accessibility action on a tag chip in an event's quick view: tapping it opens search on that tag -->
+    <string name="tags_show_events_click_label">Show events with this tag</string>
+    <!-- Tags settings screen, a tag's menu item: opens search listing every event with that tag -->
+    <string name="tags_show_events">Show events</string>
     <!-- Accessibility label for the overflow button that moves the tag row -->
     <string name="cd_tags_move_menu">Move tags</string>
     <!-- Menu action: move the tag row above the notes and attendees -->
@@ -306,7 +310,6 @@
     <!-- Keep ".ics" untranslated (file extension) -->
     <string name="settings_import_subtitle">Add events from an ICS file to any calendar</string>
     <string name="settings_birthday_reminder">Birthday Reminder</string>
-    <string name="settings_use_device_timezone">Use device timezone</string>
     <!-- Section headers in Settings screen -->
     <string name="settings_section_calendars">Calendars &amp; accounts</string>
     <string name="settings_section_appearance">Appearance</string>
@@ -717,8 +720,6 @@
     <!-- State: feature is turned on (past participle/adjective) -->
     <string name="cd_enabled">Enabled</string>
     <string name="cd_sync_error">Sync error</string>
-    <!-- %1$s = label name (e.g., "date", "time") -->
-    <string name="cd_select_label">Select %1$s</string>
     <!-- %1$d = number of options -->
     <string name="cd_wheel_picker">Wheel picker with %1$d options</string>
     <string name="cd_time_entry_keyboard">Enter exact time</string>
@@ -1220,7 +1221,6 @@
     <string name="cd_remove_alert">Remove alert</string>
     <string name="cd_warning">Warning</string>
     <string name="cd_refresh_calendars">Refresh calendars</string>
-    <!-- %1$s = timezone abbreviation -->
     <!-- %1$d = day of month, %2$d = event count -->
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
@@ -1235,7 +1235,40 @@
     <string name="sheet_hint_change_end">Tap a day to change the end</string>
     <!-- Event form: timezone row label -->
     <string name="label_timezone">Time zone</string>
-    <!-- Event form: shown in the timezone row when the event uses the device's default timezone -->
+    <!-- Event form time zone row: %1$s = city, %2$s = zone abbreviation, or the GMT offset when it has none (Berlin (CET), Tokyo (GMT+09:00)) -->
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <!-- Screen reader text of the time zone row: %1$s = city, %2$s = zone name (Central European Time), %3$s = GMT offset -->
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <!-- Screen reader text of the time zone row for a zone with no name: %1$s = city, %2$s = GMT offset -->
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <!-- Time zone sheet: search field placeholder -->
+    <string name="timezone_search_hint">Search city, country or zone</string>
+    <!-- Time zone sheet section: the zone the event uses now -->
+    <string name="timezone_section_this_event">This event</string>
+    <!-- Time zone sheet section: the phone's own time zone -->
+    <string name="timezone_section_device">Device time zone</string>
+    <!-- Time zone sheet section: zones the user picked before -->
+    <string name="timezone_section_recent">Recent</string>
+    <!-- Time zone sheet section: every time zone -->
+    <string name="timezone_section_all">All time zones</string>
+    <!-- Time zone sheet, after the All time zones header: offsets are shown for the event's date. %1$s = date (Jan 15, 2026) -->
+    <string name="timezone_offsets_on">Offsets on %1$s</string>
+    <!-- Time zone sheet row, second line: %1$s = country, %2$s = zone name (Germany · Central European Time) -->
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <!-- Time zone sheet row, trailing text: %1$s = zone abbreviation, %2$s = GMT offset (CET · GMT+01:00) -->
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <!-- Time zone sheet, under the event's zone when the calendar named it differently from the list. %1$s = the calendar's zone name (US/Pacific) -->
+    <string name="timezone_from_calendar">From the calendar: %1$s</string>
+    <!-- Time zone sheet, under a zone name the app can't read: the event is shown in the phone's time zone -->
+    <string name="timezone_shown_in_device_time">Shown in device time</string>
+    <!-- Time zone sheet: shown while the list of time zones is being built -->
+    <string name="timezone_loading">Loading time zones…</string>
+    <!-- Time zone sheet: no zone matches the search -->
+    <string name="timezone_no_match">No time zones match</string>
+    <!-- Time zone sheet: hint under "No time zones match" -->
+    <string name="timezone_no_match_hint">Try a city, a country or an offset like +5:30</string>
+    <!-- Screen reader text of a time zone sheet row: joins two parts of it, e.g. %1$s = "Berlin, Germany", %2$s = "Central European Time" -->
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <!-- Event form section: reminder alerts -->
     <string name="label_alerts">Alerts</string>
     <!-- Button: add another reminder alert to the event -->
@@ -1250,7 +1283,6 @@
     <string name="label_reminders_truncated">%1$d not shown (%2$d total, max %3$d editable)</string>
     <!-- %1$d = event count found from ICS fetch -->
     <string name="label_found_events">Found: %1$d events</string>
-    <string name="placeholder_search">Search…</string>
     <string name="settings_search_placeholder">Search settings…</string>
     <string name="settings_search_no_results">No settings found for \"%1$s\"</string>
     <string name="cd_search_settings">Search settings</string>
@@ -1554,6 +1586,10 @@
     <string name="event_untitled">Untitled event</string>
     <string name="recurring_this_event">This event</string>
     <string name="recurring_all_events">All events</string>
+    <!-- Recurring scope sheet: under All events or This and future when the repeat rule can't express the edit (e.g. a monthly "2nd Tuesday" moved to a Wednesday) -->
+    <string name="recurring_scope_move_not_expressible">The repeat rule can\'t follow this change</string>
+    <!-- Event form: a series edit the repeat rule can't express was refused; nothing was saved -->
+    <string name="event_form_move_not_expressible">The repeat rule can\'t follow this change. Nothing was saved.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <!-- Title of the full attendee list sheet, opened by tapping the caret on the InviteesBlock. -->
@@ -1697,6 +1733,8 @@
     <string name="search_keep_typing">Keep typing to search</string>
     <!-- Search: nothing matched at all; %1$s is what the user typed -->
     <string name="search_no_matches">No events match “%1$s”</string>
+    <!-- Search: a search of tags only (words starting with #) matched nothing; %1$s is what the user typed, for example "#work #kids" -->
+    <string name="search_no_events_tagged">No events tagged “%1$s”</string>
     <!-- Search, under "No events match": the Sync lookback setting's name and %1$s its value in
          the Settings wording, e.g. "3 months" or "1 year" -->
     <string name="search_lookback_line">Sync lookback: %1$s</string>
@@ -2122,6 +2160,18 @@
     <string name="ics_feed_error_access_denied">This feed\'s server refused access.</string>
     <string name="ics_feed_error_too_large">This calendar feed is too large to download.</string>
     <string name="ics_feed_error_unreadable">This feed\'s events couldn\'t be shown.</string>
+    <!-- A refresh stored the feed except one event; %1$s = that event's title from the feed -->
+    <string name="ics_feed_error_event_not_saved">“%1$s” wasn\'t saved.</string>
+    <!-- A refresh stored the feed except %1$d events, none with a title -->
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d event wasn\'t saved.</item>
+        <item quantity="other">%1$d events weren\'t saved.</item>
+    </plurals>
+    <!-- A refresh stored the feed except %1$d events; %2$s = the title of one of them -->
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d event wasn\'t saved, including “%2$s”.</item>
+        <item quantity="other">%1$d events weren\'t saved, including “%2$s”.</item>
+    </plurals>
     <!-- Insights -->
     <string name="insights_title">Insights</string>
     <string name="insights_period_this_week">Week</string>

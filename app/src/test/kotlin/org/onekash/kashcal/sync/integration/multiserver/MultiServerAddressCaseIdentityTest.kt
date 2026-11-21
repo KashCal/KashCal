@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.integration.multiserver
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -28,6 +28,7 @@ import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.onekash.kashcal.ui.components.attendees.AttendeeUiModel
 import org.onekash.kashcal.util.AddressNormalizer
 import org.robolectric.ParameterizedRobolectricTestRunner
@@ -98,7 +99,7 @@ class MultiServerAddressCaseIdentityTest(
     @Before
     fun setup() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries().build()
         CalDavTestServerLoader.createClient(config)?.let {
             client = it.first; creds = it.second
@@ -199,6 +200,7 @@ END:VCALENDAR
         )
         val eventId = database.eventsDao().upsert(mapped.event.copy(syncStatus = SyncStatus.SYNCED))
         database.attendeesDao().replaceForEvent(eventId, mapped.attendees.map { it.copy(eventId = eventId) })
+        EventIcsStore(database).write(eventId, mapped.ics)
         val event = database.eventsDao().getById(eventId)!!
         OccurrenceGenerator(
             database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault()
@@ -214,7 +216,7 @@ END:VCALENDAR
         val pending = EventReader(database).getPendingInvitations(now = 0L).first()
         assertTrue(
             "${config.name}: own event surfaced as a pending invitation",
-            pending.none { it.event.id == eventId }
+            pending.none { it.eventId == eventId }
         )
 
         // The login is only used as an address when it is email-shaped.
@@ -235,7 +237,7 @@ END:VCALENDAR
             println("CASE-ECHO ${config.name}: self ATTENDEE not echoed; RSVP patch not applicable")
             return@runBlocking
         }
-        val patched = IcsPatcher.patchAttendeeReply(rawIcal = event.rawIcal, account = account, partstat = "ACCEPTED")
+        val patched = IcsPatcher.patchAttendeeReply(rawIcal = EventIcsStore(database).read(event), account = account, partstat = "ACCEPTED")
         assertNotNull("${config.name}: RSVP patch did not find the account's attendee row", patched)
         val patchedSelf = (parser.parse(patched!!) as ParseResult.Success).value.events.single()
             .attendees.single { it.email.equals(ownBare, ignoreCase = true) }

@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d ďalších</string>
     <string name="tags_autocomplete_create_new">Vytvoriť \"%1$s\"</string>
     <string name="cd_tag">Štítok: %1$s</string>
+    <string name="tags_show_events_click_label">Zobraziť udalosti s týmto štítkom</string>
+    <string name="tags_show_events">Zobraziť udalosti</string>
     <string name="cd_tags_move_menu">Presunúť štítky</string>
     <string name="tags_move_above_notes">Presunúť nad poznámky</string>
     <string name="tags_move_below_notes">Presunúť pod poznámky</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Zobraziť relácie synchronizácie (posledných 48 hodín)</string>
     <string name="settings_import_subtitle">Pridať udalosti zo súboru ICS do ľubovoľného kalendára</string>
     <string name="settings_birthday_reminder">Pripomienka narodenín</string>
-    <string name="settings_use_device_timezone">Použiť časové pásmo zariadenia</string>
     <string name="settings_section_calendars">Kalendáre a účty</string>
     <string name="settings_section_appearance">Vzhľad</string>
     <string name="settings_section_creating_events">Predvoľby udalostí</string>
@@ -464,7 +465,6 @@
     <string name="cd_recurring">Opakujúce sa</string>
     <string name="cd_enabled">Povolené</string>
     <string name="cd_sync_error">Chyba synchronizácie</string>
-    <string name="cd_select_label">Vybrať %1$s</string>
     <string name="cd_wheel_picker">Koliesko výberu s %1$d možnosťami</string>
     <string name="cd_time_entry_keyboard">Zadať presný čas</string>
     <string name="time_entry_dialog_title">Zadať čas</string>
@@ -858,6 +858,23 @@
     <string name="label_ends">Končí</string>
     <string name="sheet_hint_change_end">Ťuknutím na deň zmeníš koniec</string>
     <string name="label_timezone">Časové pásmo</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Hľadať mesto, krajinu alebo pásmo</string>
+    <string name="timezone_section_this_event">Táto udalosť</string>
+    <string name="timezone_section_device">Časové pásmo zariadenia</string>
+    <string name="timezone_section_recent">Nedávne</string>
+    <string name="timezone_section_all">Všetky časové pásma</string>
+    <string name="timezone_offsets_on">Posuny k dátumu %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Z kalendára: %1$s</string>
+    <string name="timezone_shown_in_device_time">Zobrazené v čase zariadenia</string>
+    <string name="timezone_loading">Načítavajú sa časové pásma…</string>
+    <string name="timezone_no_match">Žiadne časové pásmo nezodpovedá</string>
+    <string name="timezone_no_match_hint">Skúste mesto, krajinu alebo posun, napr. +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Upozornenia</string>
     <string name="label_add_alert">Pridať upozornenie</string>
     <string name="label_recurrence_never">Nikdy</string>
@@ -867,7 +884,6 @@
     <string name="label_default_calendar_hint">Nové udalosti budú vytvorené v tomto kalendári</string>
     <string name="label_reminders_truncated">%1$d nezobrazených (%2$d celkovo, max %3$d editovateľných)</string>
     <string name="label_found_events">Nájdených: %1$d udalostí</string>
-    <string name="placeholder_search">Hľadať…</string>
     <string name="settings_search_placeholder">Hľadať v nastaveniach…</string>
     <string name="settings_search_no_results">Pre \"%1$s\" sa nenašli žiadne nastavenia</string>
     <string name="cd_search_settings">Hľadať v nastaveniach</string>
@@ -1199,6 +1215,8 @@
     <string name="event_untitled">Udalosť bez názvu</string>
     <string name="recurring_this_event">Túto udalosť</string>
     <string name="recurring_all_events">Všetky udalosti</string>
+    <string name="recurring_scope_move_not_expressible">Pravidlo opakovania nedokáže vyjadriť túto zmenu</string>
+    <string name="event_form_move_not_expressible">Pravidlo opakovania nedokáže vyjadriť túto zmenu. Nič sa neuložilo.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Účastníci</string>
@@ -1295,6 +1313,7 @@
     <string name="search_reason_guest">Hosť:</string>
     <string name="search_keep_typing">Na vyhľadanie píšte ďalej</string>
     <string name="search_no_matches">Výrazu „%1$s“ nezodpovedajú žiadne udalosti</string>
+    <string name="search_no_events_tagged">Žiadne udalosti označené „%1$s“</string>
     <string name="search_lookback_line">Rozsah synchronizácie späť: %1$s</string>
     <string name="search_sync_settings">Nastavenia synchronizácie</string>
     <string name="cd_search_sync_settings">Otvoriť rozsah synchronizácie späť</string>
@@ -1627,6 +1646,19 @@
     <string name="ics_feed_error_access_denied">Server tohto kanála odmietol prístup.</string>
     <string name="ics_feed_error_too_large">Tento kanál kalendára je príliš veľký na stiahnutie.</string>
     <string name="ics_feed_error_unreadable">Udalosti z tohto kanála sa nepodarilo zobraziť.</string>
+    <string name="ics_feed_error_event_not_saved">Udalosť „%1$s“ sa neuložila.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d udalosť sa neuložila.</item>
+        <item quantity="few">%1$d udalosti sa neuložili.</item>
+        <item quantity="many">%1$d udalostí sa neuložilo.</item>
+        <item quantity="other">%1$d udalostí sa neuložilo.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d udalosť sa neuložila, vrátane „%2$s“.</item>
+        <item quantity="few">%1$d udalosti sa neuložili, vrátane „%2$s“.</item>
+        <item quantity="many">%1$d udalostí sa neuložilo, vrátane „%2$s“.</item>
+        <item quantity="other">%1$d udalostí sa neuložilo, vrátane „%2$s“.</item>
+    </plurals>
     <string name="insights_title">Prehľady</string>
     <string name="insights_period_this_week">Týždeň</string>
     <string name="insights_period_last_week">Min. týždeň</string>

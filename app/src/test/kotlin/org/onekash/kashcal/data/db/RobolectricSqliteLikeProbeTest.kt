@@ -2,6 +2,7 @@ package org.onekash.kashcal.data.db
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.onekash.kashcal.testutil.TestDatabases
 import org.onekash.kashcal.data.db.dao.BaseDaoTest
 
 /**
@@ -18,7 +19,7 @@ import org.onekash.kashcal.data.db.dao.BaseDaoTest
 class RobolectricSqliteLikeProbeTest : BaseDaoTest() {
 
     private fun like(value: String, pattern: String): Int =
-        database.openHelper.readableDatabase
+        TestDatabases.raw(database)
             .query("SELECT ? LIKE ?", arrayOf(value, pattern))
             .use { c -> c.moveToFirst(); c.getInt(0) }
 

@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.integration.multiserver
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.every
 import io.mockk.mockk
@@ -43,6 +43,7 @@ import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.sync.strategy.PushResult
 import org.onekash.kashcal.sync.strategy.PushStrategy
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.net.URI
@@ -393,7 +394,7 @@ class MultiServerSeriesTimesRoundTripTest(private val config: CalDavServerConfig
 
     private fun newDatabase(): KashCalDatabase {
         val context: Context = ApplicationProvider.getApplicationContext()
-        return Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java).allowMainThreadQueries().build()
+        return TestDatabases.inMemory(context).allowMainThreadQueries().build()
             .also { databases += it }
     }
 
@@ -434,6 +435,7 @@ class MultiServerSeriesTimesRoundTripTest(private val config: CalDavServerConfig
         accountRepository = accountRepository(db),
         attendeesDao = db.attendeesDao(),
         pendingCancelsDao = db.pendingCancelsDao(),
+        icsSource = EventIcsStore(db),
     )
 
     private fun pullStrategy(db: KashCalDatabase): PullStrategy {
@@ -452,6 +454,7 @@ class MultiServerSeriesTimesRoundTripTest(private val config: CalDavServerConfig
             inviteNotifier = mockk(relaxed = true),
             accountRepository = accountRepository(db),
             reminderScheduler = mockk(relaxed = true),
+            icsSource = EventIcsStore(db),
         )
     }
 

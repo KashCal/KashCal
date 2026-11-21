@@ -1,7 +1,6 @@
 package org.onekash.kashcal.data.ics
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -18,6 +17,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -44,7 +44,7 @@ class IcsSubscriptionRepositoryDuplicateUidIntegrationTest {
     @Before
     fun setup() = runBlocking {
         val context: Context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        db = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .addCallback(KashCalDatabase.testCallback())
             .build()
@@ -77,7 +77,7 @@ class IcsSubscriptionRepositoryDuplicateUidIntegrationTest {
 
     @Test
     fun `master uniqueness trigger is installed by testCallback`() {
-        val cursor = db.openHelper.readableDatabase.query(
+        val cursor = TestDatabases.raw(db).query(
             "SELECT name FROM sqlite_master WHERE type='trigger' AND name='trigger_master_event_unique_insert'"
         )
         cursor.use {

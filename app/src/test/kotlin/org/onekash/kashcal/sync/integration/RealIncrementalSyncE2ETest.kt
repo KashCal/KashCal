@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.integration
 
 import io.mockk.clearAllMocks
+import org.onekash.kashcal.testutil.FakeEventIcsSource
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -147,7 +148,8 @@ class RealIncrementalSyncE2ETest {
             dataStore = dataStore,
             inviteNotifier = mockk(relaxed = true),
             accountRepository = mockk(relaxed = true),
-            reminderScheduler = mockk(relaxed = true)
+            reminderScheduler = mockk(relaxed = true),
+            icsSource = FakeEventIcsSource(),
         )
     }
 

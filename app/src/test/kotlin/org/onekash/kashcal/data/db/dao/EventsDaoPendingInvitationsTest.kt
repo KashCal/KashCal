@@ -12,11 +12,13 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.domain.reader.OVERSIZED_ROW_CHARS
 
 /**
  * Tests the SQL filter of [EventsDao.getMasterEventsWithFutureOccurrenceFlow]: masters and
  * one-off events only (no exceptions), a non-cancelled occurrence ending at or after now, not
- * PENDING_DELETE, sorted by next occurrence ascending.
+ * PENDING_DELETE, sorted by next occurrence ascending; and that a row too large for the cursor
+ * window still reads.
  */
 class EventsDaoPendingInvitationsTest : BaseDaoTest() {
 
@@ -51,7 +53,9 @@ class EventsDaoPendingInvitationsTest : BaseDaoTest() {
         endTs: Long = startTs + 3600_000L,
         syncStatus: SyncStatus = SyncStatus.SYNCED,
         originalEventId: Long? = null,
-        cancelled: Boolean = false
+        cancelled: Boolean = false,
+        description: String? = null,
+        isAllDay: Boolean = false
     ): Long {
         val eventId = eventsDao.insert(
             Event(
@@ -62,7 +66,9 @@ class EventsDaoPendingInvitationsTest : BaseDaoTest() {
                 endTs = endTs,
                 dtstamp = 0L,
                 syncStatus = syncStatus,
-                originalEventId = originalEventId
+                originalEventId = originalEventId,
+                description = description,
+                isAllDay = isAllDay
             )
         )
         occurrencesDao.insert(
@@ -86,7 +92,7 @@ class EventsDaoPendingInvitationsTest : BaseDaoTest() {
 
         val rows = eventsDao.getMasterEventsWithFutureOccurrenceFlow(now).first()
         assertEquals(1, rows.size)
-        assertEquals("future", rows[0].event.uid)
+        assertEquals("T-future", rows[0].title)
     }
 
     @Test
@@ -110,7 +116,7 @@ class EventsDaoPendingInvitationsTest : BaseDaoTest() {
 
         val rows = eventsDao.getMasterEventsWithFutureOccurrenceFlow(now).first()
         assertEquals(1, rows.size)
-        assertEquals("master", rows[0].event.uid)
+        assertEquals("T-master", rows[0].title)
     }
 
     @Test
@@ -143,6 +149,25 @@ class EventsDaoPendingInvitationsTest : BaseDaoTest() {
         insertEventWithOccurrence(uid = "middle", startTs = 30_000L)
 
         val rows = eventsDao.getMasterEventsWithFutureOccurrenceFlow(now).first()
-        assertEquals(listOf("earlier", "middle", "later"), rows.map { it.event.uid })
+        assertEquals(listOf("T-earlier", "T-middle", "T-later"), rows.map { it.title })
+    }
+
+    @Test
+    fun `row with a description over the cursor window still reads`() = runTest {
+        val now = 1_000L
+        insertEventWithOccurrence(uid = "big", startTs = 5_000L, description = "A".repeat(OVERSIZED_ROW_CHARS))
+
+        val rows = eventsDao.getMasterEventsWithFutureOccurrenceFlow(now).first()
+        assertEquals(listOf("T-big"), rows.map { it.title })
+    }
+
+    @Test
+    fun `row carries the event's all-day flag`() = runTest {
+        val now = 1_000L
+        insertEventWithOccurrence(uid = "all-day", startTs = 5_000L, isAllDay = true)
+        insertEventWithOccurrence(uid = "timed", startTs = 6_000L)
+
+        val rows = eventsDao.getMasterEventsWithFutureOccurrenceFlow(now).first()
+        assertEquals(listOf(true, false), rows.map { it.isAllDay })
     }
 }

@@ -115,6 +115,13 @@ data class HomeUiState(
     val isSearchActive: Boolean = false,
     /** Current search query. */
     val searchQuery: String = "",
+    /**
+     * Whether opening search focuses the field and brings up the keyboard; false for a search
+     * opened on a tag ([HomeViewModel.openTagSearch]), whose results are what the user wants.
+     */
+    val searchFocusOnOpen: Boolean = true,
+    /** Counts searches opened on a tag, so a second one closes the keyboard again. */
+    val tagSearchOpens: Int = 0,
     /** What the search results area shows for [searchQuery]. */
     val searchState: SearchResultsState = SearchResultsState.Idle,
     /** The Upcoming or Past list; a picked [searchDateFilter] shows its own list instead. */
@@ -278,6 +285,12 @@ data class HomeUiState(
      */
     val formSaveFailedTick: Int = 0,
 
+    /**
+     * The form's inline error for a series edit the repeat rule can't express (nothing was
+     * saved); cleared when the next save starts and when the form closes.
+     */
+    val formSaveError: String? = null,
+
     // === DISPLAY PREFERENCES ===
     /** Whether event titles show auto-detected emojis. */
     val showEventEmojis: Boolean = true,
@@ -380,6 +393,12 @@ sealed class PendingAction {
 
     /** Opens search, from the Search app shortcut. */
     data object OpenSearch : PendingAction()
+
+    /** Opens search on the events tagged [name], from the Tags screen's "Show events". */
+    data class OpenTagSearch(val name: String) : PendingAction() {
+        /** Leaves the tag name out, since the action is logged and the debug report reads logs. */
+        override fun toString(): String = "OpenTagSearch"
+    }
 
     /** Opens the import sheet for a shared or opened ICS file at [uri] (content or file). */
     data class ImportIcsFile(val uri: Uri) : PendingAction()
@@ -564,6 +583,12 @@ data class PendingFormSave(
      * day; see [ScopeContext.occurrenceDateChanged].
      */
     val occurrenceDateChanged: Boolean = false,
+    /**
+     * The series scopes the repeat rule can't express this edit for (a Room series' move,
+     * checked off the main thread against the stored series), or null while that check runs:
+     * the sheet greys both series scopes until it lands.
+     */
+    val blockedScopes: Set<EditScope>? = emptySet(),
 )
 
 /**

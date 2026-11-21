@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -38,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
@@ -47,6 +49,7 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.category.CategoryName
 import org.onekash.kashcal.domain.category.CategoryNameError
 import org.onekash.kashcal.domain.category.CategoryNameValidator
+import org.onekash.kashcal.domain.search.SearchQuery
 import org.onekash.kashcal.ui.components.LocalTextFieldGestureMarker
 
 /**
@@ -62,6 +65,9 @@ import org.onekash.kashcal.ui.components.LocalTextFieldGestureMarker
  * and doesn't commit.
  *
  * In [readOnly] mode (the quick views) the chips have no "x" and there is no add affordance.
+ * With [onTagClick] a read-only chip is a button that passes its name on (the quick views open
+ * a search for the tag); a chip whose name no search text can hold
+ * ([SearchQuery.tagText] is null), or any chip without [onTagClick], is plain text.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -72,6 +78,7 @@ fun TagChipRow(
     onAdd: (String) -> Unit,
     modifier: Modifier = Modifier,
     readOnly: Boolean = false,
+    onTagClick: ((String) -> Unit)? = null,
 ) {
     // Applied tags live in the caller's state (via onAdd/onToggle); only the draft is local.
     // Moving the row while a draft is half-typed (the form lets the user place the tag row
@@ -83,6 +90,7 @@ fun TagChipRow(
 
     val cdTemplate = stringResource(R.string.cd_tag)
     val addLabel = stringResource(R.string.tags_new)
+    val showEventsLabel = stringResource(R.string.tags_show_events_click_label)
 
     // Empty when unprovided (previews, tests), so every chip falls back to its hash color.
     val tagColors = LocalTagColors.current
@@ -119,14 +127,18 @@ fun TagChipRow(
                 val tagColor = colorFor(tagColors, tag)
                 val bg = Color(tagColor)
                 val fg = Color(onColorFor(tagColor))
+                if (readOnly) {
+                    val searchable = remember(tag) { SearchQuery.tagText(tag) != null }
+                    val onClick = onTagClick?.takeIf { searchable }
+                    ReadOnlyTagChip(tag, bg, fg, cdTemplate.format(tag), showEventsLabel, onClick?.let { { it(tag) } })
+                    return@forEach
+                }
                 FilterChip(
                     selected = true,
-                    onClick = { if (!readOnly) onToggle(tag) },
+                    onClick = { onToggle(tag) },
                     label = { Text(tag) },
                     leadingIcon = null,
-                    trailingIcon = if (!readOnly) {
-                        { Icon(Icons.Default.Close, contentDescription = null) }
-                    } else null,
+                    trailingIcon = { Icon(Icons.Default.Close, contentDescription = null) },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = bg,
                         selectedLabelColor = fg,
@@ -243,4 +255,38 @@ internal fun CategoryNameError.toMessageRes(): Int = when (this) {
     CategoryNameError.EMPTY -> R.string.tags_empty_reject
     CategoryNameError.COMMA -> R.string.tags_comma_reject
     CategoryNameError.TOO_LONG -> R.string.tags_too_long
+}
+
+/**
+ * One tag in a read-only row: a button calling [onClick] (announced with [clickLabel]) when
+ * given, else plain text. Neither is announced as selected, unlike the form's chips.
+ */
+@Composable
+private fun ReadOnlyTagChip(
+    tag: String,
+    background: Color,
+    content: Color,
+    description: String,
+    clickLabel: String,
+    onClick: (() -> Unit)?,
+) {
+    val shape = FilterChipDefaults.shape
+    Box(
+        modifier = Modifier
+            .heightIn(min = FilterChipDefaults.Height)
+            .clip(shape)
+            .background(background, shape)
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable(onClickLabel = clickLabel, role = Role.Button, onClick = onClick)
+                } else {
+                    Modifier
+                }
+            )
+            .semantics(mergeDescendants = true) { contentDescription = description }
+            .padding(horizontal = 12.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(tag, color = content, style = MaterialTheme.typography.labelLarge)
+    }
 }

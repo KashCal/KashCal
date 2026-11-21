@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+dar %1$d</string>
     <string name="tags_autocomplete_create_new">Sukurti „%1$s“</string>
     <string name="cd_tag">Žyma: %1$s</string>
+    <string name="tags_show_events_click_label">Rodyti įvykius su šia žyma</string>
+    <string name="tags_show_events">Rodyti įvykius</string>
     <string name="cd_tags_move_menu">Perkelti žymas</string>
     <string name="tags_move_above_notes">Perkelti virš pastabų</string>
     <string name="tags_move_below_notes">Perkelti po pastabomis</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Peržiūrėti sinchronizavimo seansus (per 48 val.)</string>
     <string name="settings_import_subtitle">Pridėti įvykius iš ICS failo į bet kurį kalendorių</string>
     <string name="settings_birthday_reminder">Gimtadienio priminimas</string>
-    <string name="settings_use_device_timezone">Įrenginio laiko juosta</string>
     <string name="settings_section_calendars">Kalendoriai ir paskyros</string>
     <string name="settings_section_appearance">Išvaizda</string>
     <string name="settings_section_creating_events">Įvykių nustatymai</string>
@@ -464,7 +465,6 @@
     <string name="cd_recurring">Pasikartojantis</string>
     <string name="cd_enabled">Įjungta</string>
     <string name="cd_sync_error">Sinchronizavimo klaida</string>
-    <string name="cd_select_label">Pasirinkti %1$s</string>
     <string name="cd_wheel_picker">Pasirinkimo ratukas, parinkčių: %1$d</string>
     <string name="cd_time_entry_keyboard">Įvesti tikslų laiką</string>
     <string name="time_entry_dialog_title">Įvesti laiką</string>
@@ -858,6 +858,23 @@
     <string name="label_ends">Baigiasi</string>
     <string name="sheet_hint_change_end">Bakstelėk dieną, kad pakeistum pabaigą</string>
     <string name="label_timezone">Laiko juosta</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Ieškoti miesto, šalies ar juostos</string>
+    <string name="timezone_section_this_event">Šis įvykis</string>
+    <string name="timezone_section_device">Įrenginio laiko juosta</string>
+    <string name="timezone_section_recent">Naujausios</string>
+    <string name="timezone_section_all">Visos laiko juostos</string>
+    <string name="timezone_offsets_on">Poslinkiai %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Iš kalendoriaus: %1$s</string>
+    <string name="timezone_shown_in_device_time">Rodoma įrenginio laiku</string>
+    <string name="timezone_loading">Įkeliamos laiko juostos…</string>
+    <string name="timezone_no_match">Atitinkančių laiko juostų nėra</string>
+    <string name="timezone_no_match_hint">Pabandykite miestą, šalį arba poslinkį, pvz., +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Priminimai</string>
     <string name="label_add_alert">Pridėti priminimą</string>
     <string name="label_recurrence_never">Niekada</string>
@@ -867,7 +884,6 @@
     <string name="label_default_calendar_hint">Nauji įvykiai kuriami šiame kalendoriuje</string>
     <string name="label_reminders_truncated">%1$d nerodomi (%2$d iš viso, maks. %3$d redaguojamų)</string>
     <string name="label_found_events">Rasta: %1$d įvykių</string>
-    <string name="placeholder_search">Paieška…</string>
     <string name="settings_search_placeholder">Ieškoti nustatymuose…</string>
     <string name="settings_search_no_results">Pagal užklausą \"%1$s\" nustatymų nerasta</string>
     <string name="cd_search_settings">Ieškoti nustatymuose</string>
@@ -1199,6 +1215,8 @@
     <string name="event_untitled">Įvykis be pavadinimo</string>
     <string name="recurring_this_event">Šis įvykis</string>
     <string name="recurring_all_events">Visi įvykiai</string>
+    <string name="recurring_scope_move_not_expressible">Kartojimo taisyklė negali atspindėti šio pakeitimo</string>
+    <string name="event_form_move_not_expressible">Kartojimo taisyklė negali atspindėti šio pakeitimo. Niekas neišsaugota.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Dalyviai</string>
@@ -1295,6 +1313,7 @@
     <string name="search_reason_guest">Svečias:</string>
     <string name="search_keep_typing">Rašyk toliau, kad pradėtum paiešką</string>
     <string name="search_no_matches">Nėra įvykių, atitinkančių „%1$s“</string>
+    <string name="search_no_events_tagged">Nėra įvykių su žymomis „%1$s“</string>
     <string name="search_lookback_line">Sinchronizavimo gylis: %1$s</string>
     <string name="search_sync_settings">Sinchronizavimo nustatymai</string>
     <string name="cd_search_sync_settings">Atidaryti sinchronizavimo gylio nustatymą</string>
@@ -1627,6 +1646,19 @@
     <string name="ics_feed_error_access_denied">Šio srauto serveris atsisakė suteikti prieigą.</string>
     <string name="ics_feed_error_too_large">Šis kalendoriaus srautas per didelis atsisiųsti.</string>
     <string name="ics_feed_error_unreadable">Nepavyko parodyti šio srauto įvykių.</string>
+    <string name="ics_feed_error_event_not_saved">„%1$s“ neišsaugotas.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d įvykis neišsaugotas.</item>
+        <item quantity="few">%1$d įvykiai neišsaugoti.</item>
+        <item quantity="many">%1$d įvykio neišsaugota.</item>
+        <item quantity="other">%1$d įvykių neišsaugota.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d įvykis neišsaugotas, įskaitant „%2$s“.</item>
+        <item quantity="few">%1$d įvykiai neišsaugoti, įskaitant „%2$s“.</item>
+        <item quantity="many">%1$d įvykio neišsaugota, įskaitant „%2$s“.</item>
+        <item quantity="other">%1$d įvykių neišsaugota, įskaitant „%2$s“.</item>
+    </plurals>
     <string name="insights_title">Statistika</string>
     <string name="insights_period_this_week">Savaitė</string>
     <string name="insights_period_last_week">Praėjusi sav.</string>

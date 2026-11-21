@@ -81,7 +81,6 @@ class DurationFreshPathTest {
         originalEventId = originalEventId,
         originalInstanceTime = originalInstanceTime,
         sequence = 0,
-        rawIcal = null,
         dtstamp = 0L,
         createdAt = 1_579_089_600_000L,
         updatedAt = 1_718_440_200_000L,

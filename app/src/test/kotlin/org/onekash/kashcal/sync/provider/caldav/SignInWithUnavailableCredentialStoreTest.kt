@@ -1,7 +1,6 @@
 package org.onekash.kashcal.sync.provider.caldav
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
@@ -24,6 +23,7 @@ import org.onekash.kashcal.data.repository.CalendarRepositoryImpl
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.discovery.DiscoveredCalendar
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -50,7 +50,7 @@ class SignInWithUnavailableCredentialStoreTest {
     @Before
     fun setUp() {
         context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        db = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
     }

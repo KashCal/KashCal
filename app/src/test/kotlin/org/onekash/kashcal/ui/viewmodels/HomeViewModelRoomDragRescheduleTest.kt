@@ -1,7 +1,6 @@
 package org.onekash.kashcal.ui.viewmodels
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -18,7 +17,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository
@@ -28,6 +26,7 @@ import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.repository.AccountRepositoryImpl
@@ -39,6 +38,7 @@ import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.Instant
@@ -84,7 +84,7 @@ class HomeViewModelRoomDragRescheduleTest {
         TimeZone.setDefault(TimeZone.getTimeZone(NEW_YORK))
         Dispatchers.setMain(dispatcher)
         val context: Context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        db = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
         generator = OccurrenceGenerator(db, db.occurrencesDao(), db.eventsDao(), TestDataStoreFactory.createDefault())
@@ -122,6 +122,59 @@ class HomeViewModelRoomDragRescheduleTest {
         db.close()
         Dispatchers.resetMain()
         TimeZone.setDefault(savedZone)
+    }
+
+    // ---- a changed occurrence ----
+
+    @Test
+    fun `dragging a changed occurrence moves it on its series and queues the series`() = runTest(dispatcher) {
+        val id = seedWeeklySeries()
+        coordinator.editSingleOccurrence(id, occurrence(2)) { it.copy(title = "Renamed") }
+        // As after the push that uploaded the rename.
+        db.pendingOperationsDao().deleteAll()
+        db.eventsDao().update(event(id).copy(syncStatus = SyncStatus.SYNCED))
+        val before = db.eventsDao().getExceptionsForMaster(id).single()
+        val linked = db.occurrencesDao().getForEvent(id).single { it.exceptionEventId == before.id }
+
+        viewModel.rescheduleEvent(DisplayEvent.Room(event = before, occurrence = linked, calendar = null), LocalDate.of(2024, 3, 12), 15 * 60)
+        advanceUntilIdle()
+        settle()
+
+        val after = db.eventsDao().getExceptionsForMaster(id).single()
+        val moved = newYork(LocalDate.of(2024, 3, 12), 15, 0)
+        assertEquals("the same changed occurrence", before.id, after.id)
+        assertEquals("its key stays the original start", occurrence(2), after.originalInstanceTime)
+        assertEquals(moved, after.startTs)
+        assertEquals("Renamed", after.title)
+        assertTrue("SEQUENCE raised", after.sequence > before.sequence)
+        assertEquals(SyncStatus.SYNCED, after.syncStatus)
+        assertEquals("one UPDATE, on the series", listOf(PendingOperation.OPERATION_UPDATE), operations(id))
+        assertEquals("none on the changed occurrence", emptyList<String>(), operations(after.id))
+        val rows = db.occurrencesDao().getForEvent(id).filter { it.exceptionEventId == after.id }
+        assertEquals(listOf(moved), rows.map { it.startTs })
+        assertEquals("no standalone copy", emptyList<Long>(), occurrenceStarts(after.id))
+    }
+
+    @Test
+    fun `a changed occurrence with no stored key is not moved by a drag`() = runTest(dispatcher) {
+        // Without its key the occurrence can't be found in its series; a write would add a second.
+        val id = seedWeeklySeries()
+        val master = event(id)
+        val keyless = master.copy(
+            id = 0, title = "Keyless", rrule = null, originalEventId = id, originalInstanceTime = null,
+            startTs = occurrence(2), endTs = occurrence(2) + HOUR_MS, caldavUrl = null,
+        ).let { it.copy(id = db.eventsDao().insert(it)) }
+        generator.regenerateOccurrences(keyless)
+        val own = db.occurrencesDao().getForEvent(keyless.id).single()
+
+        viewModel.rescheduleEvent(DisplayEvent.Room(event = keyless, occurrence = own, calendar = null), LocalDate.of(2024, 3, 12), 15 * 60)
+        advanceUntilIdle()
+        settle()
+
+        assertEquals("the row is as it was", keyless, db.eventsDao().getById(keyless.id))
+        assertEquals("no other changed occurrence", listOf(keyless.id), db.eventsDao().getExceptionsForMaster(id).map { it.id })
+        assertEquals(emptyList<String>(), operations(id) + operations(keyless.id))
+        assertEquals("${DeviceHomeViewModelTestFactory.CHANGED_ELSEWHERE_MESSAGE}:Keyless", viewModel.uiState.value.pendingSnackbarMessage)
     }
 
     // ---- this event, same-day and one-off drags ----
@@ -360,13 +413,26 @@ class HomeViewModelRoomDragRescheduleTest {
     // ---- when the scope sheet knows ----
 
     @Test
-    fun `a same-day drop is staged with nothing blocked straight away`() = runTest(dispatcher) {
+    fun `a same-day drop is checked and then blocks nothing for a plain series`() = runTest(dispatcher) {
         val id = seedWeeklySeries()
         coordinator.deleteSingleOccurrence(id, occurrence(4))
         val e = event(id)
         viewModel.rescheduleEvent(shown(e, occurrence(2)), LocalDate.of(2024, 3, 11), 11 * 60)
+        assertNull("checked against the stored series first", viewModel.uiState.value.pendingDragReschedule!!.blockedScopes)
 
-        assertEquals("known without waiting", emptySet<EditScope>(), viewModel.uiState.value.pendingDragReschedule!!.blockedScopes)
+        awaitUntil("the check") { viewModel.uiState.value.pendingDragReschedule?.blockedScopes != null }
+
+        assertEquals(emptySet<EditScope>(), viewModel.uiState.value.pendingDragReschedule!!.blockedScopes)
+    }
+
+    @Test
+    fun `a same-day drop of a fixed-hour series blocks the series scopes`() = runTest(dispatcher) {
+        // BYHOUR pins the occurrences' clock times, so a new time can't be expressed.
+        val id = seedWeeklySeries().also { db.eventsDao().update(event(it).copy(rrule = "FREQ=WEEKLY;BYHOUR=10;COUNT=4")) }
+        viewModel.rescheduleEvent(shown(event(id), occurrence(2)), LocalDate.of(2024, 3, 11), 11 * 60)
+        awaitUntil("the check") { viewModel.uiState.value.pendingDragReschedule?.blockedScopes != null }
+
+        assertEquals(setOf(EditScope.ALL_EVENTS, EditScope.THIS_AND_FUTURE), viewModel.uiState.value.pendingDragReschedule!!.blockedScopes)
     }
 
     @Test
@@ -423,9 +489,8 @@ class HomeViewModelRoomDragRescheduleTest {
         assertEquals("the earlier drop's result didn't land", emptySet<EditScope>(), pending.blockedScopes)
     }
 
-    // ---- same-day all-events drags: known gaps, ignored ----
+    // ---- same-day all-events drags keep changed occurrences and the end ----
 
-    @Ignore("A same-day time drag of all events moves the series start but not the edited occurrence's original time, so the edit no longer matches any occurrence of the series")
     @Test
     fun `a same-day time drag of all events keeps an edited occurrence attached to the series`() = runTest(dispatcher) {
         val id = seedWeeklySeries()
@@ -438,7 +503,6 @@ class HomeViewModelRoomDragRescheduleTest {
         assertEquals("the edit follows its occurrence to 11:00", occurrence(3, hour = 11), exception.originalInstanceTime)
     }
 
-    @Ignore("A same-day later-time drag of all events keeps an UNTIL equal to the old last occurrence, so the moved last occurrence falls after it and disappears")
     @Test
     fun `a same-day later-time drag of all events keeps the last occurrence of an until series`() = runTest(dispatcher) {
         // UNTIL is exactly the last 10:00 occurrence, the form servers commonly write.

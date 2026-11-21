@@ -3,7 +3,7 @@ package org.onekash.kashcal.data.search
 import android.icu.lang.UCharacter
 import android.provider.CalendarContract.Attendees
 import android.provider.CalendarContract.Events
-import androidx.room.Room
+import android.provider.CalendarContract.ExtendedProperties
 import androidx.test.core.app.ApplicationProvider
 import io.kotest.property.arbitrary.arbitrary
 import io.kotest.property.checkAll
@@ -14,6 +14,8 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.calendar_provider.AndroidCalendarProviderRepository
+import org.onekash.kashcal.data.calendar_provider.EXTNAME_CATEGORIES
+import org.onekash.kashcal.data.calendar_provider.encodeCategories
 import org.onekash.kashcal.data.calendar_provider.SqliteCalendarProvider
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.EventSearchSql
@@ -24,6 +26,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.search.SearchQuery
 import org.onekash.kashcal.testutil.PropertyRuns
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.util.TimeZone
@@ -36,7 +39,9 @@ import kotlin.random.Random
  * ([SqliteCalendarProvider] read through [AndroidCalendarProviderRepository.searchInstances] with
  * [SearchQuery.toProviderQuery]) find the same events, and both find what [referenceMatches]
  * finds: every word of [SearchQuery.of] is a substring, case folded per code point and accents
- * kept, of the title, location, description, a guest's name or a guest's email.
+ * kept, of the title, location, description, a guest's name or a guest's email, and every tag
+ * of the query equals one of the event's tags, folded the same way. The device side runs through
+ * [AndroidCalendarProviderRepository.searchTaggedInstances].
  *
  * Generation stays where both sides are defined to agree; each documented difference is
  * excluded where the generator applies it. [SearchMatchingContractTest] pins the rule with named
@@ -56,7 +61,7 @@ class SearchMatchingPropertiesTest {
     fun setUp() {
         savedZone = TimeZone.getDefault()
         TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
-        database = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(ApplicationProvider.getApplicationContext())
             .allowMainThreadQueries()
             .build()
         runBlocking {
@@ -85,6 +90,7 @@ class SearchMatchingPropertiesTest {
         val location: String?,
         val description: String?,
         val guests: List<Guest>,
+        val tags: List<String>,
     )
 
     private data class Case(val events: List<GeneratedEvent>, val queries: List<String>)
@@ -92,9 +98,9 @@ class SearchMatchingPropertiesTest {
     private val cases = arbitrary { rs ->
         val r = rs.random
         val events = List(r.nextInt(1, 7)) { generateEvent(r) }
-        // A query without words is not a search: the app never sends one.
+        // A query without words or tags is not a search: the app never sends one.
         val queries = List(20) { generateQuery(r, events) }
-            .filter { SearchQuery.of(it).words.isNotEmpty() }
+            .filterNot { SearchQuery.of(it).isEmpty }
             .take(3)
         Case(events, queries)
     }
@@ -107,27 +113,28 @@ class SearchMatchingPropertiesTest {
             val deviceKeys = seedDevice(case.events)
             for (text in case.queries) {
                 val query = SearchQuery.of(text)
-                val expected = case.events.indices.filter { referenceMatches(case.events[it], query.words) }
+                val expected = case.events.indices.filter { referenceMatches(case.events[it], query) }
                 val room = database.eventsDao()
                     .searchMatches(EventSearchSql.nextAndLast(query, T0, DAY))
                     .map { roomKeys.getValue(it.event.uid) }
                     .sorted()
-                val device = repo.searchInstances(query.toProviderQuery(), DAY, DAY, setOf(CAL))
+                val context = describe(case.events, text, query)
+                assertEquals("room search\n$context", expected, room)
+                val device = repo.searchTaggedInstances(query.tags, query.toProviderQuery(), DAY, DAY, setOf(CAL))
                     .map { deviceKeys.getValue(it.eventId) }
                     .sorted()
-                val context = describe(case.events, text, query.words)
-                assertEquals("room search\n$context", expected, room)
                 assertEquals("device search\n$context", expected, device)
             }
         }
     }
 
     private fun clearStores() {
-        database.openHelper.writableDatabase.apply {
+        TestDatabases.raw(database).apply {
             execSQL("DELETE FROM attendees")
             execSQL("DELETE FROM events")
         }
         provider.db.delete(SqliteCalendarProvider.ATTENDEES, null, null)
+        provider.db.delete(SqliteCalendarProvider.EXTENDED_PROPERTIES, null, null)
         provider.db.delete(SqliteCalendarProvider.EVENTS, null, null)
     }
 
@@ -145,6 +152,7 @@ class SearchMatchingPropertiesTest {
                     startTs = T0,
                     endTs = T0 + HOUR,
                     dtstamp = T0,
+                    categories = e.tags.ifEmpty { null },
                 )
             )
             database.attendeesDao().insertAll(
@@ -173,22 +181,32 @@ class SearchMatchingPropertiesTest {
                     Attendees.EVENT_ID to id, Attendees.ATTENDEE_EMAIL to it.email, Attendees.ATTENDEE_NAME to it.name,
                 )
             }
+            // Stored as the app's own device write stores them.
+            encodeCategories(e.tags)?.let { value ->
+                provider.insertRow(
+                    SqliteCalendarProvider.EXTENDED_PROPERTIES,
+                    ExtendedProperties.EVENT_ID to id, ExtendedProperties.NAME to EXTNAME_CATEGORIES,
+                    ExtendedProperties.VALUE to value,
+                )
+            }
             id to index
         }
 
-    private fun referenceMatches(event: GeneratedEvent, words: List<String>): Boolean {
+    private fun referenceMatches(event: GeneratedEvent, query: SearchQuery): Boolean {
         val fields = listOfNotNull(event.title, event.location, event.description) +
             event.guests.flatMap { listOf(it.name, it.email) }
         val folded = fields.map(::fold)
-        return words.all { word -> fold(word).let { w -> folded.any { it.contains(w) } } }
+        val tags = event.tags.map(::fold)
+        return query.words.all { word -> fold(word).let { w -> folded.any { it.contains(w) } } } &&
+            query.tags.all { fold(it) in tags }
     }
 
     private fun fold(value: String): String = buildString(value.length) {
         value.codePoints().forEach { appendCodePoint(UCharacter.foldCase(it, UCharacter.FOLD_CASE_DEFAULT)) }
     }
 
-    private fun describe(events: List<GeneratedEvent>, text: String, words: List<String>): String =
-        "query <$text> words $words\n" + events.withIndex().joinToString("\n") { (i, e) -> "  $i: $e" }
+    private fun describe(events: List<GeneratedEvent>, text: String, query: SearchQuery): String =
+        "query <$text> words ${query.words} tags ${query.tags}\n" + events.withIndex().joinToString("\n") { (i, e) -> "  $i: $e" }
 
     private fun generateEvent(r: Random): GeneratedEvent = GeneratedEvent(
         title = text(r, ALPHABET, 1, 12),
@@ -208,6 +226,8 @@ class SearchMatchingPropertiesTest {
                 roomPrefix = ROOM_PREFIXES[r.nextInt(ROOM_PREFIXES.size)],
             )
         },
+        // Trimmed, as every writer stores them (the form, the pull's comma split, the device read).
+        tags = List(r.nextInt(0, 4)) { text(r, TAG_CHARS, 1, 6).trim().ifEmpty { "a" } },
     )
 
     /** One to three words, each a piece of a generated text or a few random characters. */
@@ -221,6 +241,13 @@ class SearchMatchingPropertiesTest {
             // string of all names and one of all emails, so a phrase spanning two guests could
             // match there and not in Room.
             words[r.nextInt(words.size)] = "\"" + piece(r, texts, 9).replace(",", "") + "\""
+        }
+        val tags = events.flatMap { it.tags }
+        if (tags.isNotEmpty() && r.nextInt(2) == 0) {
+            // A tag of a generated event, its case flipped at random, sometimes in quotes.
+            val tag = tags[r.nextInt(tags.size)].map { if (r.nextBoolean()) otherCase(it) else it }.joinToString("")
+            words.add(r.nextInt(words.size + 1), if (' ' in tag || r.nextInt(4) == 0) "#\"$tag\"" else "#$tag")
+            if (r.nextInt(3) == 0) words.removeAt(words.indexOfFirst { !it.startsWith("#") }.coerceAtLeast(0))
         }
         return words.joinToString(" ")
     }
@@ -258,5 +285,8 @@ class SearchMatchingPropertiesTest {
         val EMAIL_CHARS: List<Char> = ALPHABET - listOf(' ', ',')
 
         val ROOM_PREFIXES = listOf("mailto:", "MAILTO:", "")
+
+        /** Characters for a tag: Quick Add's letters, digits, `_` and `-`, plus a space. */
+        val TAG_CHARS: List<Char> = ('a'..'e') + ('A'..'E') + ('0'..'2') + listOf('_', '-', 'ä', 'Ä', 'д', 'Д', ' ')
     }
 }

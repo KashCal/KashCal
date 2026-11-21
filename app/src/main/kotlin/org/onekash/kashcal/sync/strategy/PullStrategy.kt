@@ -12,6 +12,7 @@ import org.onekash.icaldav.model.ICalDateTime
 import org.onekash.icaldav.model.ICalEvent
 import org.onekash.icaldav.model.ParseResult
 import org.onekash.icaldav.parser.ICalParser
+import org.onekash.kashcal.data.db.EventIcsSource
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.EventsDao
@@ -119,7 +120,8 @@ class PullStrategy @Inject constructor(
     private val dataStore: KashCalDataStore,
     private val inviteNotifier: org.onekash.kashcal.sync.notification.InviteNotifier,
     private val accountRepository: org.onekash.kashcal.data.repository.AccountRepository,
-    private val reminderScheduler: org.onekash.kashcal.reminder.scheduler.ReminderScheduler
+    private val reminderScheduler: org.onekash.kashcal.reminder.scheduler.ReminderScheduler,
+    private val icsSource: EventIcsSource,
 ) {
     private val icalParser = ICalParser()
 
@@ -189,7 +191,7 @@ class PullStrategy @Inject constructor(
             extraProperties = e.extraProperties?.takeIf { it.isNotEmpty() },
             categories = e.categories?.takeIf { it.isNotEmpty() },
             id = 0, etag = null, syncStatus = SyncStatus.SYNCED,
-            caldavUrl = null, rawIcal = null, dtstamp = 0,
+            caldavUrl = null, dtstamp = 0,
             importId = null, originalEventId = null, originalInstanceTime = null,
             originalSyncId = null, calendarId = 0, uid = "",
             createdAt = 0, updatedAt = 0, localModifiedAt = null,
@@ -1291,6 +1293,10 @@ class PullStrategy @Inject constructor(
 
                         seedCategories(saved)
 
+                        // The resource's body, stored once on its series row; occurrences pulled
+                        // from it drop their own copies.
+                        icsSource.writeResource(saved.id, meta.caldavUrl, mapped.ics)
+
                         // Read before the replace so the decline check can detect an uninvite.
                         val priorAttendees = attendeesDao.getForEventOnce(saved.id)
 
@@ -1616,6 +1622,15 @@ class PullStrategy @Inject constructor(
                         val saved = event.copy(id = if (eventId != -1L) eventId else event.id)
 
                         seedCategories(saved)
+
+                        // A pulled occurrence reads its resource's body from the series row. The
+                        // master pass stored it there; only a pull placeholder, which no master
+                        // pass writes, takes it here. A series the master pass skipped (pending
+                        // changes, a recent push) keeps the body its pending edit is based on.
+                        icsSource.delete(saved.id)
+                        if (masterEvent.isPullSyntheticMaster && !masterEvent.hasPendingChanges()) {
+                            icsSource.writeResource(masterEvent.id, meta.caldavUrl, mappedException.ics)
+                        }
 
                         val priorAttendees = attendeesDao.getForEventOnce(saved.id)
 

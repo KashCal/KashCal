@@ -96,6 +96,8 @@ import java.time.ZoneId
  *   persists its dismissal.
  * @param onShareCardTooltipDismissed called when the tooltip counts as shown: after its first
  *   display or the first tap on the Share icon.
+ * @param onTagClick called with a tag's name when its chip is tapped; null leaves the chips
+ *   as text.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -118,6 +120,7 @@ fun EventQuickViewSheet(
     onShareAsCard: () -> Unit = {},
     showShareCardTooltip: Boolean = false,
     onShareCardTooltipDismissed: () -> Unit = {},
+    onTagClick: ((String) -> Unit)? = null,
     onRsvp: (org.onekash.kashcal.ui.components.attendees.AttendeeStatus) -> Unit = {},
     timeFormat: String = "system"
 ) {
@@ -300,7 +303,8 @@ fun EventQuickViewSheet(
                                         suggestions = emptyList(),
                                         onToggle = {},
                                         onAdd = {},
-                                        readOnly = true
+                                        readOnly = true,
+                                        onTagClick = onTagClick,
                                     )
                                 }
                             }

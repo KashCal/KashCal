@@ -312,9 +312,20 @@ class EventCoordinator @Inject constructor(
             reminderScheduler.reconcileRemindersForEvent(event)
             scheduleRemindersForEvent(event)
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Log.e(TAG, "Failed to reschedule reminders for event ${event.id}, " +
                 "ReminderRefreshWorker will recover", e)
         }
+    }
+
+    /**
+     * Re-arms the reminders of a series' changed occurrences: a moved series moves the ones
+     * whose time the user never edited ([EventWriter.updateEvent]), and their alarms are stored
+     * under their own ids, which [rescheduleRemindersForEvent] on the master doesn't reach.
+     */
+    private suspend fun rescheduleMovedExceptionReminders(master: Event) {
+        if (master.rrule == null || master.originalEventId != null) return
+        eventReader.getExceptionsForMaster(master.id).forEach { rescheduleRemindersForEvent(it) }
     }
 
     // ========== Create Operations ==========
@@ -418,10 +429,13 @@ class EventCoordinator @Inject constructor(
     // ========== Update Operations ==========
 
     /**
-     * Updates [event] and re-arms its reminders.
+     * Updates [event] and re-arms its reminders, and those of a series' changed occurrences
+     * the save moved ([EventWriter.updateEvent]).
      *
      * @param attendees the edited attendee set, or null to leave the stored set as it is.
      * @throws IllegalArgumentException when the event ends before it starts or doesn't exist.
+     * @throws org.onekash.kashcal.domain.rrule.MoveNotExpressibleException when the repeat rule
+     *   can't follow a series' move; nothing is written.
      */
     suspend fun updateEvent(
         event: Event,
@@ -439,6 +453,7 @@ class EventCoordinator @Inject constructor(
 
         // Time or reminders may have changed.
         rescheduleRemindersForEvent(result)
+        rescheduleMovedExceptionReminders(result)
 
         triggerWidgetUpdate()
 
@@ -449,7 +464,8 @@ class EventCoordinator @Inject constructor(
      * Edits the occurrence of [masterEventId] at [occurrenceTimeMs] as an exception.
      *
      * @param changes applied to the master projected onto that occurrence
-     *   ([Event.projectOntoOccurrence]), with its recurrence cleared.
+     *   ([Event.projectOntoOccurrence]), with its recurrence cleared; it may return the
+     *   occurrence's own row instead (a drag of an occurrence already changed).
      * @param attendees this occurrence's attendee set, or null to leave attendees alone
      *   ([EventWriter.editSingleOccurrence]).
      * @return the exception event.
@@ -480,10 +496,11 @@ class EventCoordinator @Inject constructor(
         triggerImmediatePushIfNeeded(isLocal)
 
         // The exception replaces this occurrence. Cancel its reminders before arming the
-        // exception's, or both fire.
+        // exception's, or both fire. An occurrence changed before keeps its alarms under its
+        // own id at its earlier start, which the reconcile drops when it moved.
         reminderScheduler.cancelReminderForOccurrence(masterEventId, occurrenceTimeMs)
 
-        scheduleRemindersForEvent(result)
+        rescheduleRemindersForEvent(result)
 
         triggerWidgetUpdate()
 
@@ -497,6 +514,8 @@ class EventCoordinator @Inject constructor(
      * @return the new series, or the master updated in place when [EventWriter.splitSeries]
      *   takes that path (a split at or before the first occurrence, or a COUNT split that
      *   would leave one side empty).
+     * @throws org.onekash.kashcal.domain.rrule.MoveNotExpressibleException when the repeat rule
+     *   can't follow the move; nothing is written.
      */
     suspend fun editThisAndFuture(
         masterEventId: Long,
@@ -529,6 +548,8 @@ class EventCoordinator @Inject constructor(
         reminderScheduler.cancelRemindersForOccurrencesAfter(masterEventId, splitTimeMs)
 
         scheduleRemindersForEvent(result)
+        // An in-place edit returns the master, whose changed occurrences may have moved.
+        if (result.id == masterEventId) rescheduleMovedExceptionReminders(result)
 
         triggerWidgetUpdate()
 
@@ -1141,6 +1162,7 @@ class EventCoordinator @Inject constructor(
                 action.component.event,
                 updatedAttendeeRows(context, action.component, master.projectOntoOccurrence(instanceTime)),
                 keepUserFields = !context.isLocal,
+                ics = action.component.ics,
             )
             effects.armed += created
             IcsImportResult(updated = 1, firstStartTs = created.startTs)
@@ -1177,6 +1199,7 @@ class EventCoordinator @Inject constructor(
         val updated = eventWriter.applyImportedUpdate(
             eventId, component.event, updatedAttendeeRows(context, component, existing),
             keepUserFields = !context.isLocal,
+            ics = component.ics,
         )
         effects.armed += updated
         return IcsImportResult(updated = 1, firstStartTs = updated.startTs)
@@ -1222,15 +1245,14 @@ class EventCoordinator @Inject constructor(
             val uid = if (action.freshUid) "${UUID.randomUUID()}@kashcal.onekash.org" else group.uid
             // The group's copy names the file's UID; a fresh UID is written into it too, so the
             // copy's changed occurrences still match the series.
-            val copy = master.event.rawIcal?.let { if (action.freshUid) ImportedCopy.withUid(it, group.uid, uid) else it }
+            val copy = master.ics?.let { if (action.freshUid) ImportedCopy.withUid(it, group.uid, uid) else it }
             val masterReminders = remindersFor(master)
             val masterEvent = master.event.asImported(calendarId, uid, masterReminders).copy(
                 importSource = Event.IMPORT_SOURCE_ICS_FILE,
                 alarmCount = masterReminders?.size ?: 0,
-                rawIcal = copy,
             )
             if (group.exceptions.isEmpty()) {
-                val created = eventWriter.createEvent(masterEvent, context.isLocal, attendeeRows(context, master))
+                val created = eventWriter.createEvent(masterEvent, context.isLocal, attendeeRows(context, master), copy)
                 effects.armed += created
                 return IcsImportResult(created = 1, firstStartTs = created.startTs)
             }
@@ -1241,13 +1263,14 @@ class EventCoordinator @Inject constructor(
                     id = 0, calendarId = calendarId, uid = uid, caldavUrl = null, etag = null,
                     lastSyncError = null, syncRetryCount = 0, reminders = reminders,
                     alarmCount = reminders?.size ?: 0, originalSyncId = null,
-                    importSource = Event.IMPORT_SOURCE_ICS_FILE, rawIcal = copy,
+                    importSource = Event.IMPORT_SOURCE_ICS_FILE,
                 )
             }
             val series = eventWriter.createImportedSeries(
                 masterEvent, exceptions, context.isLocal,
                 masterAttendees = attendeeRows(context, master),
                 exceptionAttendees = group.exceptions.map { attendeeRows(context, it) },
+                ics = copy,
             )
             effects.armed += series.master
             effects.armed += series.exceptions
@@ -1261,7 +1284,7 @@ class EventCoordinator @Inject constructor(
         for (component in group.components.filterNot { it.isCancelled }) {
             val reminders = remindersFor(component)
             val event = component.event.asImported(calendarId, "${UUID.randomUUID()}@kashcal.onekash.org", reminders)
-                .copy(importSource = Event.IMPORT_SOURCE_ICS_FILE, alarmCount = reminders?.size ?: 0, rawIcal = null)
+                .copy(importSource = Event.IMPORT_SOURCE_ICS_FILE, alarmCount = reminders?.size ?: 0)
             val created = eventWriter.createEvent(event, context.isLocal, attendeeRows(context, component))
             effects.armed += created
             result += IcsImportResult(created = 1, firstStartTs = created.startTs)
@@ -1325,19 +1348,19 @@ class EventCoordinator @Inject constructor(
 
     /**
      * Returns event [eventId] as stored, with its exceptions when it is a recurring master and
-     * the attendee rows of each, for a single-event export; null when it doesn't exist. An event
-     * shown from an occurrence query lacks its stored copy ([Event.rawIcal]), which the export
-     * needs, so the export reads it here by id.
+     * the attendee rows and stored ICS of each, for a single-event export; null when it doesn't
+     * exist. An event shown from an occurrence query carries neither, so the export reads them
+     * here by id.
      */
     suspend fun getEventForExport(eventId: Long): EventExport? {
         val (event, exceptions) = eventReader.getEventWithExceptions(eventId) ?: return null
         val attendees = eventReader.getAttendeesForEventsOnce(listOf(event.id) + exceptions.map { it.id })
-        return EventExport(event, exceptions, attendees)
+        return EventExport(event, exceptions, attendees, eventReader.getIcsForExport(event, exceptions))
     }
 
     /**
-     * Returns every master in calendar [calendarId] with its exceptions and the attendee rows of
-     * each, for ICS export to bundle each series into one VCALENDAR (RFC 5545).
+     * Returns every master in calendar [calendarId] with its exceptions and the attendee rows and
+     * stored ICS of each, for ICS export to bundle each series into one VCALENDAR (RFC 5545).
      */
     suspend fun getCalendarEventsForExport(calendarId: Long): List<EventExport> {
         val masterEvents = eventReader.getAllMasterEventsForCalendar(calendarId)
@@ -1350,7 +1373,8 @@ class EventCoordinator @Inject constructor(
         val eventIds = masterEvents.map { it.id } + exceptionsByMaster.values.flatten().map { it.id }
         val attendees = eventReader.getAttendeesForEventsOnce(eventIds)
         return masterEvents.map { master ->
-            EventExport(master, exceptionsByMaster[master.id].orEmpty(), attendees)
+            val exceptions = exceptionsByMaster[master.id].orEmpty()
+            EventExport(master, exceptions, attendees, eventReader.getIcsForExport(master, exceptions))
         }
     }
 

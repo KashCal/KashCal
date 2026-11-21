@@ -3,6 +3,7 @@ package org.onekash.kashcal.sync.strategy
 import android.util.Log
 import kotlinx.coroutines.CancellationException
 import org.onekash.icaldav.parser.ICalParser
+import org.onekash.kashcal.data.db.EventIcsSource
 import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.PendingCancelsDao
@@ -54,7 +55,8 @@ class PushStrategy @Inject constructor(
     private val pendingOperationsDao: PendingOperationsDao,
     private val accountRepository: AccountRepository,
     private val attendeesDao: AttendeesDao,
-    private val pendingCancelsDao: PendingCancelsDao
+    private val pendingCancelsDao: PendingCancelsDao,
+    private val icsSource: EventIcsSource,
 ) {
     private val icalParser = ICalParser()
 
@@ -485,9 +487,10 @@ class PushStrategy @Inject constructor(
                 val (url, etag) = result.getOrNull()
                     ?: return SinglePushResult.Error(-1, "Unexpected null result from create", false)
 
-                eventsDao.markCreatedOnServerWithCopy(event.id, url, etag, icalData, System.currentTimeMillis())
-
-                markBundledExceptionsSynced(serializedExceptions, url, etag, icalData)
+                storeSentResource(event.id, etag, icalData, serializedExceptions) {
+                    eventsDao.markCreatedOnServer(event.id, url, etag, System.currentTimeMillis())
+                    url
+                }
 
                 // Capture the server's scheduling decision (RFC 6638 §3.2.1).
                 readBackScheduleStatus(event, url, clientToUse, serializedExceptions)
@@ -596,10 +599,10 @@ class PushStrategy @Inject constructor(
                 val newEtag = result.getOrNull()
                     ?: return SinglePushResult.Error(-1, "Unexpected null result from update", false)
 
-                eventsDao.markSyncedWithCopy(event.id, newEtag, icalData, System.currentTimeMillis())
-                val storedUrl = adoptRedirectedUrl(event.id, caldavUrl, result)
-
-                markBundledExceptionsSynced(serializedExceptions, storedUrl, newEtag, icalData)
+                val storedUrl = storeSentResource(event.id, newEtag, icalData, serializedExceptions) {
+                    eventsDao.markSynced(event.id, newEtag, System.currentTimeMillis())
+                    adoptRedirectedUrl(event.id, caldavUrl, result)
+                }
 
                 // Capture the server's scheduling decision (RFC 6638 §3.2.1).
                 readBackScheduleStatus(event, storedUrl, clientToUse, serializedExceptions)
@@ -669,7 +672,7 @@ class PushStrategy @Inject constructor(
         val account = calendarRepository.getCalendarById(event.calendarId)
             ?.let { accountRepository.getAccountById(it.accountId) }
         val merged = ServerChangeMerge.merge(
-            baseline = event.rawIcal,
+            baseline = icsSource.read(event),
             series = event,
             seriesAttendees = attendeesDao.getForEventOnce(event.id),
             occurrences = serializedExceptions.map { it to attendeesDao.getForEventOnce(it.id) },
@@ -682,7 +685,7 @@ class PushStrategy @Inject constructor(
             retryResult.isSuccess() -> {
                 eventsDao.markSynced(event.id, storedEtag, System.currentTimeMillis())
                 val storedUrl = adoptRedirectedUrl(event.id, caldavUrl, retryResult)
-                markBundledExceptionsSynced(merged.occurrences, storedUrl, storedEtag, null)
+                markBundledExceptionsSynced(merged.occurrences, storedUrl, storedEtag)
                 // Capture the server's scheduling decision (RFC 6638 §3.2.1), from the merged
                 // fields and SEQUENCE the server now holds.
                 readBackScheduleStatus(merged.series, storedUrl, clientToUse, merged.occurrences)
@@ -731,7 +734,8 @@ class PushStrategy @Inject constructor(
      * §3.8.4.4), so an occurrence reply is patched into the series row's
      * stored copy and sent to that resource. When the series row is a
      * placeholder pull made for a file holding only changed occurrences, the
-     * occurrence row's own stored copy (the same resource) is used.
+     * occurrence's reply reads the resource that placeholder stores
+     * ([EventIcsSource.read] of the occurrence).
      *
      * Which copy a reply starts from: a reply already written to this resource in this push
      * ([sentReplies]) wins; otherwise the row as loaded at the start of the push, whose old etag
@@ -740,7 +744,8 @@ class PushStrategy @Inject constructor(
      * database, where no write of this push can have changed it.
      *
      * After a first-attempt success, every row of the resource stores the
-     * returned etag with the body just sent, so a later reply starts from the
+     * returned etag and the series stores the body just sent
+     * ([EventIcsSource.writeResource]), so a later reply starts from the
      * answers this app last sent; a reply built on a retried one is the exception
      * (step 1 below).
      *
@@ -802,10 +807,10 @@ class PushStrategy @Inject constructor(
 
         val sent = sentReplies[caldavUrl]
         val firstBody = IcsPatcher.patchAttendeeReply(
-            sent?.body ?: resourceRow.rawIcal, account, partstatTarget, occurrence
+            sent?.body ?: icsSource.read(resourceRow), account, partstatTarget, occurrence
         ) ?: return SinglePushResult.Error(
             -1,
-            "Could not patch RSVP body (rawIcal missing, occurrence absent, or self attendee absent)",
+            "Could not patch RSVP body (stored ICS missing, occurrence absent, or self attendee absent)",
             false
         )
 
@@ -841,11 +846,14 @@ class PushStrategy @Inject constructor(
             firstResult.isSuccess() -> {
                 val newEtag = firstResult.getOrNull()
                     ?: return SinglePushResult.Error(-1, "Null etag from RSVP PUT", false)
-                eventsDao.markSynced(event.id, newEtag, System.currentTimeMillis())
                 val storedUrl = redirectedUrl(firstResult) ?: caldavUrl
-                // One statement: URL, etag and body move together, so a crash between writes
+                // One transaction: URL, etag and body move together, so a crash between writes
                 // can't leave a row pairing one with a stale other.
-                eventsDao.updateResourceCopy(seriesId, caldavUrl, storedUrl, newEtag, firstBody)
+                icsSource.inTransaction {
+                    eventsDao.markSynced(event.id, newEtag, System.currentTimeMillis())
+                    eventsDao.updateResourceEtag(seriesId, caldavUrl, storedUrl, newEtag)
+                    icsSource.writeResource(seriesId, storedUrl, firstBody)
+                }
                 rememberReply(sentReplies, caldavUrl, storedUrl, SentReply(firstBody, newEtag))
                 if (imported) readBackReplyReceipt(event, account, storedUrl, clientToUse)
                 SinglePushResult.Success(newEtag = newEtag)
@@ -945,9 +953,8 @@ class PushStrategy @Inject constructor(
      * Only [serializedExceptions] are touched: an exception created while the request was in
      * flight wasn't in the body, so it keeps its pending state.
      *
-     * [sentBody] is the body the write sent, stored with [etag] on each row as pull stores the
-     * whole resource on every row of it ([EventsDao.markCreatedOnServerWithCopy]); null leaves
-     * each row's stored copy as it was.
+     * A caller that stores the body sent does it once, on the series ([storeSentResource]); the
+     * 412 merge retry stores none, so the rows keep the body their old etag goes with.
      *
      * One statement per row, not etag then URL: a crash between two writes would leave the
      * stale-URL state this prevents.
@@ -955,19 +962,34 @@ class PushStrategy @Inject constructor(
     private suspend fun markBundledExceptionsSynced(
         serializedExceptions: List<Event>,
         masterUrl: String,
-        etag: String?,
-        sentBody: String?
+        etag: String?
     ) {
         if (serializedExceptions.isEmpty()) return
         val now = System.currentTimeMillis()
         for (exception in serializedExceptions) {
-            if (sentBody != null) {
-                eventsDao.markCreatedOnServerWithCopy(exception.id, masterUrl, etag, sentBody, now)
-            } else {
-                eventsDao.markCreatedOnServer(exception.id, masterUrl, etag, now)
-            }
+            eventsDao.markCreatedOnServer(exception.id, masterUrl, etag, now)
         }
         Log.d(TAG, "Synced ${serializedExceptions.size} bundled exceptions to the master's resource")
+    }
+
+    /**
+     * Records a write of series [seriesId]'s resource in one transaction: [markSeries] marks the
+     * series row and returns the URL it is stored at, the bundled exceptions move to that URL
+     * and etag, and [body], the body the write sent, becomes the resource's stored ICS. The
+     * stored body is what a later reply patches and what a 412 merge diffs the rows against, so
+     * it must never pair with another etag. Returns the URL.
+     */
+    private suspend fun storeSentResource(
+        seriesId: Long,
+        etag: String?,
+        body: String,
+        serializedExceptions: List<Event>,
+        markSeries: suspend () -> String,
+    ): String = icsSource.inTransaction {
+        val storedUrl = markSeries()
+        markBundledExceptionsSynced(serializedExceptions, storedUrl, etag)
+        icsSource.writeResource(seriesId, storedUrl, body)
+        storedUrl
     }
 
     /**
@@ -1239,9 +1261,11 @@ class PushStrategy @Inject constructor(
                 val (url, etag) = createResult.getOrNull()
                     ?: return SinglePushResult.Error(-1, "Null result from create", false)
 
-                eventsDao.markCreatedOnServerWithCopy(event.id, url, etag, icalData, System.currentTimeMillis())
                 // The exceptions in this body live in the new resource too.
-                markBundledExceptionsSynced(serializedExceptions, url, etag, icalData)
+                storeSentResource(event.id, etag, icalData, serializedExceptions) {
+                    eventsDao.markCreatedOnServer(event.id, url, etag, System.currentTimeMillis())
+                    url
+                }
                 Log.d(TAG, "MOVE Phase 1: Event created successfully at $url")
 
                 // No SCHEDULE-STATUS read-back: a move is a relocation, not a re-invite. The
@@ -1709,14 +1733,14 @@ class PushStrategy @Inject constructor(
         event: Event,
         answeringAccount: Account? = null
     ): Pair<String, List<Event>> {
-        // Attendees come from the attendees table, not rawIcal: locally created events have
-        // no rawIcal, and exception VEVENTs carry their own attendees the master's body lacks.
+        // Attendees come from the attendees table, not the stored ICS: locally created events
+        // have none, and exception VEVENTs carry their own attendees the master's body lacks.
         //
         // An empty table doesn't mean "no attendees": an event synced before the table
         // existed, whose etag hasn't changed since (so the pull never backfilled it), keeps
-        // its ATTENDEEs only in rawIcal. Passing empty would tell IcsPatcher to clear them,
-        // silently uninviting everyone on a cosmetic edit, so empty becomes null (keep the
-        // rawIcal block). An imported file's copy is not such a block: IcsPatcher writes no
+        // its ATTENDEEs only in the stored ICS. Passing empty would tell IcsPatcher to clear
+        // them, silently uninviting everyone on a cosmetic edit, so empty becomes null (keep the
+        // stored block). An imported file's copy is not such a block: IcsPatcher writes no
         // guests for null there ([Event.holdsFileCopy]).
         //
         // [answeringAccount], when set, sends that account's own rows at NEEDS-ACTION: the answer
@@ -1736,14 +1760,19 @@ class PushStrategy @Inject constructor(
             val exceptionsWithAttendees = exceptions.map { exception ->
                 exception to authoritative(attendeesDao.getForEventOnce(exception.id))
             }
+            val ownIcs = buildMap {
+                for (exception in exceptions) icsSource.readOwn(exception.id)?.let { put(exception.id, it) }
+            }
             val icalData = IcsPatcher.serializeWithExceptions(
                 master = event,
+                masterIcs = icsSource.read(event),
                 masterAttendees = masterAttendees,
-                exceptionsWithAttendees = exceptionsWithAttendees
+                exceptionsWithAttendees = exceptionsWithAttendees,
+                ownIcs = ownIcs
             )
             icalData to exceptions
         } else {
-            IcsPatcher.serialize(event, masterAttendees) to emptyList()
+            IcsPatcher.serialize(event, icsSource.read(event), masterAttendees) to emptyList()
         }
     }
 
@@ -1774,7 +1803,7 @@ class PushStrategy @Inject constructor(
             SinglePushResult.Error(-1, "The cancelled event isn't on the server", false)
         }
 
-        var body = master.rawIcal
+        var body = icsSource.read(master)
         var etag = master.etag
         if (body == null || etag.isNullOrEmpty()) {
             when (val fetched = clientToUse.fetchEvent(url)) {
@@ -1820,7 +1849,7 @@ class PushStrategy @Inject constructor(
         }
     }
 
-    /** Stores the copy a sent cancel wrote on every row of the resource. */
+    /** Stores the body a sent cancel wrote as the resource's ICS, with its etag on every row. */
     private suspend fun finishAttendeeCancel(
         master: Event,
         url: String,
@@ -1828,7 +1857,11 @@ class PushStrategy @Inject constructor(
         sent: String
     ): SinglePushResult {
         val newEtag = result.getOrNull() ?: return SinglePushResult.Error(-1, "Null etag from the cancel", false)
-        eventsDao.updateResourceCopy(master.id, url, redirectedUrl(result) ?: url, newEtag, sent)
+        val storedUrl = redirectedUrl(result) ?: url
+        icsSource.inTransaction {
+            eventsDao.updateResourceEtag(master.id, url, storedUrl, newEtag)
+            icsSource.writeResource(master.id, storedUrl, sent)
+        }
         return SinglePushResult.Success(newEtag = newEtag)
     }
 
@@ -1853,7 +1886,10 @@ class PushStrategy @Inject constructor(
                 exception.importSource == Event.IMPORT_SOURCE_ICS_CANCEL -> eventsDao.deleteById(exception.id)
             }
         }
-        eventsDao.updateResourceCopy(master.id, url, url, etag, serverCopy)
+        icsSource.inTransaction {
+            eventsDao.updateResourceEtag(master.id, url, url, etag)
+            icsSource.writeResource(master.id, url, serverCopy)
+        }
         return SinglePushResult.Success(
             warning = "Server kept its copy of ${master.title}; the cancellation wasn't applied (HTTP $code)"
         )

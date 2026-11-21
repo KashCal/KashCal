@@ -451,7 +451,7 @@ class IcsPatcherTest {
 
     @Test
     fun `patch with explicit attendees REPLACES the rawIcal attendee set`() {
-        // Editing attendees on a server-synced event (which has rawIcal) must reach the wire:
+        // Editing attendees on a server-synced event (which has a stored ICS) must reach the wire:
         // a non-null attendee set from the caller replaces the original ATTENDEE block.
         val originalIcs = """
             BEGIN:VCALENDAR
@@ -522,7 +522,7 @@ class IcsPatcherTest {
 
     @Test
     fun `patch emits organizer from event when rawIcal had none and attendees are added`() {
-        // An event created without invitees synced to the server, so its stored rawIcal has
+        // An event created without invitees synced to the server, so its stored ICS has
         // no ORGANIZER. Later the user adds an attendee and the coordinator stamps
         // Event.organizerEmail. The patch must put that organizer on the wire; otherwise the
         // server has no ORGANIZER to schedule with (RFC 6638 §3) and no invite is delivered.
@@ -766,8 +766,9 @@ class IcsPatcherTest {
 
     @Test
     fun `patch uses Event entity UID when rawIcal has no UID`() {
-        // rawIcal from a non-compliant server has no UID. ICalParser gives it a random UUID on
-        // every parse, so IcsPatcher must write the entity's UID, stable since the first pull.
+        // The stored ICS from a non-compliant server has no UID. ICalParser gives it a random
+        // UUID on every parse, so IcsPatcher must write the entity's UID, stable since the first
+        // pull.
         val originalIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -1075,7 +1076,7 @@ class IcsPatcherTest {
 
         // Serialize with every exception
         val serialized = IcsPatcher.serializeWithExceptions(
-            master,
+            master, null,
             listOf(exception1, exception2, exception3)
         )
 
@@ -1139,7 +1140,7 @@ class IcsPatcherTest {
         )
 
         // Serialize
-        val serialized = IcsPatcher.serializeWithExceptions(master, listOf(cancelledException))
+        val serialized = IcsPatcher.serializeWithExceptions(master, null, listOf(cancelledException))
 
         // Parse
         val parsed = parser.parseAllEvents(serialized).getOrNull()!!
@@ -1172,7 +1173,7 @@ class IcsPatcherTest {
             timezone = "America/New_York"
         )
 
-        val ics = IcsPatcher.serializeWithExceptions(master, listOf(ex1))
+        val ics = IcsPatcher.serializeWithExceptions(master, null, listOf(ex1))
 
         val vtimezoneBlockCount = Regex("BEGIN:VTIMEZONE").findAll(ics).count()
         assertEquals("Expected exactly 1 VTIMEZONE block (deduped), got:\n$ics", 1, vtimezoneBlockCount)
@@ -1201,7 +1202,7 @@ class IcsPatcherTest {
             timezone = "Asia/Tokyo"
         )
 
-        val ics = IcsPatcher.serializeWithExceptions(master, listOf(exceptionInTokyo))
+        val ics = IcsPatcher.serializeWithExceptions(master, null, listOf(exceptionInTokyo))
 
         assertTrue(
             "Expected BEGIN:VTIMEZONE for Asia/Tokyo but output had none:\n$ics",
@@ -1253,7 +1254,7 @@ class IcsPatcherTest {
         )
 
         val serialized = IcsPatcher.serializeWithExceptions(
-            master,
+            master, null,
             listOf(modifiedException, cancelledException, locationException)
         )
 
@@ -1296,7 +1297,7 @@ class IcsPatcherTest {
             sequence = 3 // higher sequence from several edits
         )
 
-        val serialized = IcsPatcher.serializeWithExceptions(master, listOf(finalException))
+        val serialized = IcsPatcher.serializeWithExceptions(master, null, listOf(finalException))
 
         val parsed = parser.parseAllEvents(serialized).getOrNull()!!
 
@@ -1375,7 +1376,7 @@ class IcsPatcherTest {
             )
         )
 
-        val serialized = IcsPatcher.serializeWithExceptions(master, exceptions)
+        val serialized = IcsPatcher.serializeWithExceptions(master, null, exceptions)
 
         val parsed = parser.parseAllEvents(serialized).getOrNull()!!
 
@@ -1450,7 +1451,7 @@ class IcsPatcherTest {
             )
         )
 
-        val serialized = IcsPatcher.serializeWithExceptions(master, exceptions)
+        val serialized = IcsPatcher.serializeWithExceptions(master, null, exceptions)
         val parsed = parser.parseAllEvents(serialized).getOrNull()!!
 
         val parsedExceptions = parsed.filter { it.recurrenceId != null }
@@ -1486,7 +1487,7 @@ class IcsPatcherTest {
             // No timezone - test the time change aspect without timezone complexity
         )
 
-        val serialized = IcsPatcher.serializeWithExceptions(master, listOf(exception))
+        val serialized = IcsPatcher.serializeWithExceptions(master, null, listOf(exception))
         val parsed = parser.parseAllEvents(serialized).getOrNull()!!
 
         assertEquals("Should have 2 events", 2, parsed.size)
@@ -1500,6 +1501,89 @@ class IcsPatcherTest {
     }
 
     @Test
+    fun `a changed occurrence's RECURRENCE-ID is written in the series' zone`() {
+        // The series moved from New York to Tokyo; the occurrence whose time the user edited
+        // keeps its New York time, and its key is the Tokyo slot (RFC 5545 section 3.8.4.4).
+        val tokyoStart = at("2024-03-05T10:00", TOKYO)
+        val master = createTestEvent(
+            uid = "zone@kashcal.test", title = "Standup", startTs = tokyoStart, endTs = tokyoStart + HOUR,
+            timezone = TOKYO, rrule = "FREQ=WEEKLY;COUNT=4",
+        )
+        val key = at("2024-03-12T10:00", TOKYO)
+        val exception = createExceptionEvent(
+            masterId = 1L, masterUid = master.uid, originalInstanceTime = key, title = "Standup",
+            startTs = at("2024-03-12T15:00", NY), endTs = at("2024-03-12T16:00", NY), timezone = NY,
+        )
+
+        val ics = unfold(IcsPatcher.serializeWithExceptions(master, null, listOf(exception)))
+
+        assertTrue(ics, ics.contains("RECURRENCE-ID;TZID=Asia/Tokyo:20240312T100000"))
+        assertTrue(ics, ics.contains("DTSTART;TZID=America/New_York:20240312T150000"))
+    }
+
+    @Test
+    fun `a timed occurrence of an all-day series keeps a date RECURRENCE-ID`() {
+        val master = createTestEvent(
+            uid = "allday@kashcal.test", title = "Holiday", startTs = utcMidnight("2024-03-05"),
+            endTs = utcMidnight("2024-03-06") - 1, isAllDay = true, rrule = "FREQ=WEEKLY;COUNT=4",
+        )
+        val exception = createExceptionEvent(
+            masterId = 1L, masterUid = master.uid, originalInstanceTime = utcMidnight("2024-03-12"),
+            title = "Holiday", startTs = at("2024-03-12T09:00", NY), endTs = at("2024-03-12T10:00", NY),
+            timezone = NY,
+        )
+
+        val ics = unfold(IcsPatcher.serializeWithExceptions(master, null, listOf(exception)))
+
+        assertTrue(ics, ics.contains("RECURRENCE-ID;VALUE=DATE:20240312"))
+        val parsed = parser.parseAllEvents(ics).getOrNull()!!.single { it.recurrenceId != null }
+        assertEquals(utcMidnight("2024-03-12"), parsed.recurrenceId!!.timestamp)
+    }
+
+    @Test
+    fun `a changed occurrence keeps its unknown properties after the series moved`() {
+        val stored = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//EN
+            BEGIN:VEVENT
+            UID:moved@kashcal.test
+            DTSTAMP:20240101T000000Z
+            DTSTART;TZID=America/New_York:20240305T100000
+            DTEND;TZID=America/New_York:20240305T110000
+            RRULE:FREQ=WEEKLY;BYDAY=TU;COUNT=4
+            SUMMARY:Review
+            END:VEVENT
+            BEGIN:VEVENT
+            UID:moved@kashcal.test
+            DTSTAMP:20240101T000000Z
+            RECURRENCE-ID;TZID=America/New_York:20240312T100000
+            DTSTART;TZID=America/New_York:20240312T100000
+            DTEND;TZID=America/New_York:20240312T110000
+            SUMMARY:Review (renamed)
+            X-OCCURRENCE-NOTE:keep me
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent().replace("\n", "\r\n")
+        // Moved an hour later; the renamed occurrence moved with it and was re-keyed.
+        val master = createTestEvent(
+            uid = "moved@kashcal.test", title = "Review", startTs = at("2024-03-05T11:00", NY),
+            endTs = at("2024-03-05T12:00", NY), timezone = NY, rrule = "FREQ=WEEKLY;BYDAY=TU;COUNT=4",
+        )
+        val moved = at("2024-03-12T11:00", NY)
+        val exception = createExceptionEvent(
+            masterId = 1L, masterUid = master.uid, originalInstanceTime = moved, title = "Review (renamed)",
+            startTs = moved, endTs = moved + HOUR, timezone = NY,
+        )
+
+        val ics = unfold(IcsPatcher.serializeWithExceptions(master, stored, listOf(exception)))
+
+        val occurrence = ics.substringAfter("RECURRENCE-ID").substringBefore("END:VEVENT")
+        assertTrue(ics, occurrence.contains("X-OCCURRENCE-NOTE:keep me"))
+        assertTrue(ics, ics.contains("RECURRENCE-ID;TZID=America/New_York:20240312T110000"))
+    }
+
+    @Test
     fun `serializeWithExceptions empty exceptions list returns master only`() {
         val master = createTestEvent(
             uid = "solo@kashcal.test",
@@ -1509,7 +1593,7 @@ class IcsPatcherTest {
             rrule = "FREQ=MONTHLY"
         )
 
-        val serialized = IcsPatcher.serializeWithExceptions(master, emptyList())
+        val serialized = IcsPatcher.serializeWithExceptions(master, null, emptyList())
         val parsed = parser.parseAllEvents(serialized).getOrNull()!!
 
         assertEquals("Should have only master", 1, parsed.size)
@@ -1968,7 +2052,7 @@ class IcsPatcherTest {
             categories = listOf("SPECIAL", "MEETING")
         )
 
-        val serialized = IcsPatcher.serializeWithExceptions(master, listOf(exception))
+        val serialized = IcsPatcher.serializeWithExceptions(master, null, listOf(exception))
         val parsed = parser.parseAllEvents(serialized).getOrNull()!!
         val parsedException = parsed.find { it.recurrenceId != null }!!
 
@@ -1981,6 +2065,16 @@ class IcsPatcherTest {
     }
 
     // ========== Helper ==========
+
+    private fun at(local: String, zone: String): Long =
+        java.time.LocalDateTime.parse(local).atZone(java.time.ZoneId.of(zone)).toInstant().toEpochMilli()
+
+    private fun utcMidnight(date: String): Long =
+        java.time.LocalDate.parse(date).atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
+
+    /** Unfolds RFC 5545 section 3.1 line folding so a property reads as one line. */
+    private fun unfold(ics: String): String = ics.replace(Regex("\r?\n[ \t]"), "")
+
 
     private fun createExceptionEvent(
         masterId: Long,
@@ -2348,7 +2442,7 @@ class IcsPatcherTest {
 
     @Test
     fun `generateFresh without attendees emits no ATTENDEE - share-card PII guard`() {
-        // The share-card path nulls rawIcal and passes no attendees so the recipient's .ics
+        // The share-card path passes no stored ICS and no attendees so the recipient's .ics
         // never leaks the master's attendee list. The default empty list must keep
         // generateFresh attendee-free.
         val event = createTestEvent(
@@ -2388,8 +2482,10 @@ class IcsPatcherTest {
 
         val ics = IcsPatcher.serializeWithExceptions(
             master = master,
+            masterIcs = null,
             masterAttendees = masterAttendees,
-            exceptionsWithAttendees = listOf(exception to exceptionAttendees)
+            exceptionsWithAttendees = listOf(exception to exceptionAttendees),
+            ownIcs = emptyMap()
         )
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
@@ -2465,17 +2561,19 @@ class IcsPatcherTest {
         orderChangeVevent("20261023T100000Z", "20261023T120000Z", "20261023T130000Z", "Standup moved again"),
     )
 
-    private fun renamedAndMovedSeries(rawIcal: String): Event = createTestEvent(
+    private fun renamedAndMovedSeries(): Event = createTestEvent(
         uid = orderUid,
         title = "Standup renamed",
         startTs = orderSeriesStart + 3_600_000L, // series moved one hour later
         endTs = orderSeriesStart + 7_200_000L,
         rrule = "FREQ=DAILY;COUNT=5",
-    ).copy(id = 1L, rawIcal = rawIcal)
+    ).copy(id = 1L)
 
     @Test
     fun `series edit on a file listing the changed occurrence first keeps one series with its repeat rule`() {
-        val master = renamedAndMovedSeries(changeFirstIcs())
+        val stored = changeFirstIcs()
+        val master = renamedAndMovedSeries()
+        // The changed occurrence has no stored ICS of its own; it reads the series'.
         val exception = createExceptionEvent(
             masterId = master.id,
             masterUid = orderUid,
@@ -2483,12 +2581,14 @@ class IcsPatcherTest {
             title = "Standup moved",
             startTs = orderChangedStart,
             endTs = orderChangedStart + 3_600_000L,
-        ).copy(rawIcal = master.rawIcal)
+        )
 
         val ics = IcsPatcher.serializeWithExceptions(
             master = master,
+            masterIcs = stored,
             masterAttendees = null,
             exceptionsWithAttendees = listOf(exception to null),
+            ownIcs = emptyMap(),
         )
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
@@ -2511,9 +2611,9 @@ class IcsPatcherTest {
 
     @Test
     fun `series patch without exception rows on a file listing the changed occurrence first emits the series`() {
-        val master = renamedAndMovedSeries(changeFirstIcs())
+        val master = renamedAndMovedSeries()
 
-        val only = parser.parseAllEvents(IcsPatcher.serialize(master)).getOrNull()!!.single()
+        val only = parser.parseAllEvents(IcsPatcher.serialize(master, changeFirstIcs())).getOrNull()!!.single()
 
         assertNull("patched VEVENT is the series, not the changed occurrence", only.recurrenceId)
         assertNotNull("series keeps its repeat rule", only.rrule)
@@ -2580,8 +2680,8 @@ class IcsPatcherTest {
             title = "Standup renamed",
             startTs = orderChangedStart,
             endTs = orderChangedStart + 3_600_000L,
-        ).copy(id = 1L, rawIcal = changesOnlyIcs)
-        val patched = parser.parseAllEvents(IcsPatcher.serialize(seriesRow)).getOrNull()!!.single()
+        ).copy(id = 1L)
+        val patched = parser.parseAllEvents(IcsPatcher.serialize(seriesRow, changesOnlyIcs)).getOrNull()!!.single()
         assertEquals("first VEVENT is patched", orderChangedInstance, patched.recurrenceId?.timestamp)
         assertTrue(
             "patch path kept, not fresh generation (attendees survive)",
@@ -2598,9 +2698,10 @@ class IcsPatcherTest {
             title = "Standup moved",
             startTs = orderChangedStart,
             endTs = orderChangedStart + 3_600_000L,
-        ).copy(rawIcal = changeFirstIcs())
+        )
 
-        val patched = parser.parseAllEvents(IcsPatcher.serialize(exception)).getOrNull()!!.single()
+        // Exported alone it reads its resource's stored ICS (its series').
+        val patched = parser.parseAllEvents(IcsPatcher.serialize(exception, changeFirstIcs())).getOrNull()!!.single()
 
         assertEquals(orderChangedInstance, patched.recurrenceId?.timestamp)
     }
@@ -2645,7 +2746,7 @@ class IcsPatcherTest {
         ) + occurrenceLines + listOf("END:VEVENT", "END:VCALENDAR", "")
         ).joinToString("\r\n")
 
-    /** Rows as pull stores them: every row carries the whole resource body. */
+    /** Rows as pull maps them; the resource body is their stored ICS, held by the series row. */
     private fun pulledRows(resource: String): Pair<Event, Event> {
         val parsed = parser.parseAllEvents(resource).getOrNull()!!
         val seriesParsed = parsed.single { it.recurrenceId == null }
@@ -2692,8 +2793,9 @@ class IcsPatcherTest {
 
     @Test
     fun `editing a pulled event sends every unknown line back unchanged`() {
-        val (series, _) = pulledRows(unknownResource())
-        val out = IcsPatcher.serialize(series.copy(title = "Series edited", startTs = series.startTs + 3_600_000L))
+        val resource = unknownResource()
+        val (series, _) = pulledRows(resource)
+        val out = IcsPatcher.serialize(series.copy(title = "Series edited", startTs = series.startTs + 3_600_000L), resource)
         assertEquals(seriesUnknownLines, unknownIn(blockTitled(out, "Series edited")))
     }
 
@@ -2711,33 +2813,37 @@ class IcsPatcherTest {
 
     @Test
     fun `a pulled changed occurrence is sent with its own unknown lines`() {
-        val (series, exception) = pulledRows(unknownResource())
-        val out = IcsPatcher.serializeWithExceptions(series, listOf(exception))
+        val resource = unknownResource()
+        val (series, exception) = pulledRows(resource)
+        val out = IcsPatcher.serializeWithExceptions(series, resource, listOf(exception))
         assertEquals(seriesUnknownLines, unknownIn(blockTitled(out, "Series")))
         assertEquals(occurrenceUnknownLines, unknownIn(blockTitled(out, "Changed occurrence")))
     }
 
     @Test
     fun `a re-edited changed occurrence built from the series row still sends its own lines`() {
-        val (series, _) = pulledRows(unknownResource())
+        val resource = unknownResource()
+        val (series, _) = pulledRows(resource)
         val reEdited = rowDerivedFromSeries(series, unknownChangedInstance, "Changed again")
-        val out = IcsPatcher.serializeWithExceptions(series, listOf(reEdited))
+        val out = IcsPatcher.serializeWithExceptions(series, resource, listOf(reEdited))
         assertEquals(occurrenceUnknownLines, unknownIn(blockTitled(out, "Changed again")))
     }
 
     @Test
     fun `a newly changed occurrence is sent with the series' lines unchanged`() {
-        val (series, exception) = pulledRows(unknownResource())
+        val resource = unknownResource()
+        val (series, exception) = pulledRows(resource)
         val fresh = rowDerivedFromSeries(series, unknownChangedInstance + 7 * 86_400_000L, "New occurrence")
-        val out = IcsPatcher.serializeWithExceptions(series, listOf(exception, fresh))
+        val out = IcsPatcher.serializeWithExceptions(series, resource, listOf(exception, fresh))
         assertEquals(seriesUnknownLines, unknownIn(blockTitled(out, "New occurrence")))
     }
 
     @Test
     fun `a changed occurrence with no unknown lines sends none, not the series' copy`() {
-        val (series, _) = pulledRows(unknownResource(occurrenceLines = emptyList()))
+        val resource = unknownResource(occurrenceLines = emptyList())
+        val (series, _) = pulledRows(resource)
         val reEdited = rowDerivedFromSeries(series, unknownChangedInstance, "Changed again")
-        val out = IcsPatcher.serializeWithExceptions(series, listOf(reEdited))
+        val out = IcsPatcher.serializeWithExceptions(series, resource, listOf(reEdited))
         val block = blockTitled(out, "Changed again")
         assertEquals(emptyList<String>(), unknownIn(block))
         assertTrue(block.none { it.startsWith("X-APPLE-SUGGESTION-INFO-UNIQUE-KEY") || it.startsWith("RESOURCES") })
@@ -2745,32 +2851,36 @@ class IcsPatcherTest {
 
     @Test
     fun `an occurrence that matches nothing and is not a series copy keeps today's map output`() {
-        val (series, exception) = pulledRows(unknownResource())
+        val resource = unknownResource()
+        val (series, exception) = pulledRows(resource)
         val stray = exception.copy(
             id = 4L, importId = "$unknownUid:RECID:other", title = "Stray",
             originalInstanceTime = unknownChangedInstance + 21 * 86_400_000L,
             extraProperties = mapOf("X-STRAY" to "kept")
         )
-        val block = blockTitled(IcsPatcher.serializeWithExceptions(series, listOf(stray)), "Stray")
+        val block = blockTitled(IcsPatcher.serializeWithExceptions(series, resource, listOf(stray)), "Stray")
         assertTrue(block.contains("X-STRAY:kept"))
     }
 
     @Test
     fun `a series without a stored body sends its occurrences from the map as before`() {
-        val (series, exception) = pulledRows(unknownResource())
-        val local = series.copy(rawIcal = null, extraProperties = mapOf("X-LOCAL" to "series"))
-        val localException = exception.copy(rawIcal = null, extraProperties = mapOf("X-LOCAL" to "occurrence"))
-        val out = IcsPatcher.serializeWithExceptions(local, listOf(localException))
+        val resource = unknownResource()
+        val (series, exception) = pulledRows(resource)
+        val local = series.copy(extraProperties = mapOf("X-LOCAL" to "series"))
+        val localException = exception.copy(extraProperties = mapOf("X-LOCAL" to "occurrence"))
+        val out = IcsPatcher.serializeWithExceptions(local, null, listOf(localException))
         assertTrue(blockTitled(out, "Changed occurrence").contains("X-LOCAL:occurrence"))
     }
 
     @Test
     fun `an unreadable stored body falls back to today's output without throwing`() {
-        val (series, exception) = pulledRows(unknownResource())
+        val resource = unknownResource()
+        val (series, exception) = pulledRows(resource)
         val broken = "not an icalendar body"
+        val brokenException = exception.copy(extraProperties = mapOf("X-MAP" to "occurrence"))
         val out = IcsPatcher.serializeWithExceptions(
-            series.copy(rawIcal = broken, extraProperties = mapOf("X-MAP" to "series")),
-            listOf(exception.copy(rawIcal = broken, extraProperties = mapOf("X-MAP" to "occurrence")))
+            series.copy(extraProperties = mapOf("X-MAP" to "series")), broken, null,
+            listOf(brokenException to null), ownIcs = mapOf(brokenException.id to broken)
         )
         assertTrue(blockTitled(out, "Series").contains("X-MAP:series"))
         assertTrue(blockTitled(out, "Changed occurrence").contains("X-MAP:occurrence"))
@@ -2790,22 +2900,23 @@ class IcsPatcherTest {
         val placeholder = createTestEvent(
             uid = unknownUid, title = "Placeholder", startTs = unknownSeriesStart,
             endTs = unknownSeriesStart + 3_600_000L, rrule = "FREQ=WEEKLY;COUNT=5"
-        ).copy(id = 1L, rawIcal = resource)
+        ).copy(id = 1L)
         val exception = ICalEventMapper.toEntity(parsed, resource, 1L, "https://example.test/cal/u.ics", "e1")
             .event.copy(id = 2L, originalEventId = 1L)
 
-        val out = IcsPatcher.serializeWithExceptions(placeholder, listOf(exception))
+        val out = IcsPatcher.serializeWithExceptions(placeholder, resource, listOf(exception))
         assertEquals(occurrenceUnknownLines, unknownIn(blockTitled(out, "Changed occurrence")))
     }
 
     @Test
     fun `an occurrence of a split-off series never takes the old series' changed occurrence`() {
-        val (series, _) = pulledRows(unknownResource())
-        // A this-and-future split copies the series row (stored body included)
+        val resource = unknownResource()
+        val (series, _) = pulledRows(resource)
+        // A this-and-future split copies the series row, and its stored ICS,
         // under a new UID.
         val splitOff = series.copy(uid = "split-off@example.test")
         val fresh = rowDerivedFromSeries(splitOff, unknownChangedInstance, "Edited after split")
-        val block = blockTitled(IcsPatcher.serializeWithExceptions(splitOff, listOf(fresh)), "Edited after split")
+        val block = blockTitled(IcsPatcher.serializeWithExceptions(splitOff, resource, listOf(fresh)), "Edited after split")
         assertTrue(block.none { it in occurrenceUnknownLines })
         assertEquals(seriesUnknownLines, unknownIn(block))
     }
@@ -2814,10 +2925,11 @@ class IcsPatcherTest {
     fun `a date-form occurrence id still matches after the series time was changed locally`() {
         val resource = unknownResource(occurrenceRecurrenceId = "RECURRENCE-ID;VALUE=DATE:20261210")
         val (series, _) = pulledRows(resource)
-        // The user moved the series an hour later; the stored body still holds 14:00.
+        // The user moved the series an hour later; the stored body still holds 14:00, and the
+        // save re-keyed the occurrence to 15:00 with the series.
         val shifted = series.copy(startTs = series.startTs + 3_600_000L, endTs = series.endTs + 3_600_000L)
-        val reEdited = rowDerivedFromSeries(shifted, unknownChangedInstance, "Changed again")
-        val out = IcsPatcher.serializeWithExceptions(shifted, listOf(reEdited))
+        val reEdited = rowDerivedFromSeries(shifted, unknownChangedInstance + 3_600_000L, "Changed again")
+        val out = IcsPatcher.serializeWithExceptions(shifted, resource, listOf(reEdited))
         assertEquals(occurrenceUnknownLines, unknownIn(blockTitled(out, "Changed again")))
     }
 
@@ -3137,7 +3249,7 @@ class IcsPatcherTest {
     private fun copyRow(caldavUrl: String?, importSource: String?) = Event(
         uid = "copy-guests@example.test", calendarId = 1, title = "Planning",
         startTs = 1_792_512_000_000L, endTs = 1_792_515_600_000L, timezone = "UTC",
-        organizerEmail = "org@example.test", rawIcal = withGuestsCopy, dtstamp = 0,
+        organizerEmail = "org@example.test", dtstamp = 0,
         caldavUrl = caldavUrl, importSource = importSource,
     )
 
@@ -3147,8 +3259,8 @@ class IcsPatcherTest {
     @Test
     fun `a file's copy given no attendee set writes no guests`() {
         val row = copyRow(caldavUrl = null, importSource = Event.IMPORT_SOURCE_ICS_FILE)
-        assertTrue(row.holdsFileCopy)
-        assertTrue(attendeeLines(IcsPatcher.serialize(row)).isEmpty())
+        assertTrue(row.holdsFileCopy(withGuestsCopy))
+        assertTrue(attendeeLines(IcsPatcher.serialize(row, withGuestsCopy)).isEmpty())
     }
 
     @Test
@@ -3157,8 +3269,14 @@ class IcsPatcherTest {
             copyRow(caldavUrl = "https://dav.example.test/cal/copy-guests.ics", importSource = null),
             copyRow(caldavUrl = "https://dav.example.test/cal/copy-guests.ics", importSource = Event.IMPORT_SOURCE_ICS_FILE),
         )) {
-            assertFalse(row.holdsFileCopy)
-            assertEquals(1, attendeeLines(IcsPatcher.serialize(row)).size)
+            assertFalse(row.holdsFileCopy(withGuestsCopy))
+            assertEquals(1, attendeeLines(IcsPatcher.serialize(row, withGuestsCopy)).size)
         }
+    }
+
+    private companion object {
+        const val NY = "America/New_York"
+        const val TOKYO = "Asia/Tokyo"
+        const val HOUR = 3_600_000L
     }
 }

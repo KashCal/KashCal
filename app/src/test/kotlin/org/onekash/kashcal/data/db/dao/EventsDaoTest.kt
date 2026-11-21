@@ -1,7 +1,6 @@
 package org.onekash.kashcal.data.db.dao
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import app.cash.turbine.test
 import kotlinx.coroutines.flow.first
@@ -23,6 +22,7 @@ import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.search.SearchQuery
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import kotlin.time.Duration.Companion.seconds
@@ -50,7 +50,7 @@ class EventsDaoTest {
     @Before
     fun setup() = runTest {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
         eventsDao = database.eventsDao()
@@ -565,35 +565,57 @@ class EventsDaoTest {
     }
 
     @Test
-    fun `markSyncedWithCopy stores the body with the etag and clears the error`() = runTest {
+    fun `markSynced stores the etag and clears the error`() = runTest {
         val id = eventsDao.insert(createTestEvent(syncStatus = SyncStatus.PENDING_UPDATE))
         eventsDao.recordSyncError(id, "Test error", System.currentTimeMillis())
 
-        eventsDao.markSyncedWithCopy(id, "\"sent-etag\"", "BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n", System.currentTimeMillis())
+        eventsDao.markSynced(id, "\"sent-etag\"", System.currentTimeMillis())
 
         val event = eventsDao.getById(id)!!
         assertEquals(SyncStatus.SYNCED, event.syncStatus)
         assertEquals("\"sent-etag\"", event.etag)
-        assertEquals("BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n", event.rawIcal)
         assertNull(event.lastSyncError)
         assertEquals(0, event.syncRetryCount)
     }
 
     @Test
-    fun `markCreatedOnServerWithCopy stores the url, the etag and the body`() = runTest {
+    fun `markCreatedOnServer stores the url and the etag and clears the error`() = runTest {
         val id = eventsDao.insert(createTestEvent(syncStatus = SyncStatus.PENDING_CREATE))
         eventsDao.recordSyncError(id, "Test error", System.currentTimeMillis())
         val caldavUrl = "https://caldav.example.test/events/new123.ics"
 
-        eventsDao.markCreatedOnServerWithCopy(id, caldavUrl, "\"new-etag\"", "BODY", System.currentTimeMillis())
+        eventsDao.markCreatedOnServer(id, caldavUrl, "\"new-etag\"", System.currentTimeMillis())
 
         val event = eventsDao.getById(id)!!
         assertEquals(SyncStatus.SYNCED, event.syncStatus)
         assertEquals(caldavUrl, event.caldavUrl)
         assertEquals("\"new-etag\"", event.etag)
-        assertEquals("BODY", event.rawIcal)
         assertNull(event.lastSyncError)
         assertEquals(0, event.syncRetryCount)
+    }
+
+    @Test
+    fun `updateResourceEtag moves the resource's rows and leaves sync status and other URLs alone`() = runTest {
+        val oldUrl = "https://caldav.example.test/events/series.ics"
+        val newUrl = "https://caldav.example.test/moved/series.ics"
+        val seriesId = eventsDao.insert(
+            createTestEvent(uid = "series@test", rrule = "FREQ=DAILY", caldavUrl = oldUrl, syncStatus = SyncStatus.PENDING_UPDATE)
+        )
+        val atUrl = eventsDao.insert(
+            createTestEvent(uid = "series@test", originalEventId = seriesId, originalInstanceTime = 1L, caldavUrl = oldUrl)
+        )
+        val elsewhere = eventsDao.insert(
+            createTestEvent(uid = "series@test", originalEventId = seriesId, originalInstanceTime = 2L, caldavUrl = "https://other.test/x.ics")
+        )
+
+        eventsDao.updateResourceEtag(seriesId, oldUrl, newUrl, "\"e2\"")
+
+        val series = eventsDao.getById(seriesId)!!
+        assertEquals(newUrl, series.caldavUrl)
+        assertEquals("\"e2\"", series.etag)
+        assertEquals(SyncStatus.PENDING_UPDATE, series.syncStatus)
+        assertEquals(newUrl, eventsDao.getById(atUrl)!!.caldavUrl)
+        assertEquals("https://other.test/x.ics", eventsDao.getById(elsewhere)!!.caldavUrl)
     }
 
     @Test

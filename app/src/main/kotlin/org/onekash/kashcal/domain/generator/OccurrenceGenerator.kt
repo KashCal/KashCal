@@ -1,6 +1,5 @@
 package org.onekash.kashcal.domain.generator
 
-import androidx.room.withTransaction
 import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.EventsDao
@@ -147,7 +146,7 @@ class OccurrenceGenerator @Inject constructor(
         if (event.extraProperties?.get("X-KASHCAL-SYNTHETIC-MASTER") == "true") {
             return 0
         }
-        return database.withTransaction {
+        return database.runInTransaction {
             // A new or changed series may need rows the coverage record says are there (one
             // created on a far date writes none here), so its record goes even when nothing is
             // written.
@@ -281,12 +280,12 @@ class OccurrenceGenerator @Inject constructor(
 
     private suspend fun extendForward(eventId: Long, extendToMs: Long, floorMs: Long?): StepResult? {
         if (synchronized(coverageLock) { (forwardCoveredTo[eventId] ?: Long.MIN_VALUE) >= extendToMs }) return null
-        return database.withTransaction {
-            val current = eventsDao.getById(eventId) ?: return@withTransaction null
-            if (current.rrule.isNullOrBlank()) return@withTransaction null
+        return database.runInTransaction {
+            val current = eventsDao.getById(eventId) ?: return@runInTransaction null
+            if (current.rrule.isNullOrBlank()) return@runInTransaction null
             val edge = occurrencesDao.getLatestRuleStartTs(current.id)
             if (edge == null && floorMs == null && occurrencesDao.getCountForEvent(current.id) == 0) {
-                return@withTransaction null
+                return@runInTransaction null
             }
             // Rule rows are whole seconds, so the next instance is at least a second on.
             val fromMs = edge?.let { it + MILLISECONDS_PER_SECOND } ?: maxOf(secondAligned(current.startTs), floorMs ?: Long.MIN_VALUE)
@@ -358,21 +357,21 @@ class OccurrenceGenerator @Inject constructor(
 
     private suspend fun extendBack(eventId: Long, extendToMs: Long): StepResult? {
         if (synchronized(coverageLock) { (pastCoveredFrom[eventId] ?: Long.MAX_VALUE) <= extendToMs }) return null
-        return database.withTransaction {
-            val current = eventsDao.getById(eventId) ?: return@withTransaction null
-            if (current.rrule.isNullOrBlank()) return@withTransaction null
-            val currentMinTs = occurrencesDao.getEarliestRuleStartTs(current.id) ?: return@withTransaction null
+        return database.runInTransaction {
+            val current = eventsDao.getById(eventId) ?: return@runInTransaction null
+            if (current.rrule.isNullOrBlank()) return@runInTransaction null
+            val currentMinTs = occurrencesDao.getEarliestRuleStartTs(current.id) ?: return@runInTransaction null
 
             // Not before DTSTART, second-aligned as in regenerateOccurrences.
             val effectiveExtendTo = extendToMs.coerceAtLeast(secondAligned(current.startTs))
-            if (currentMinTs <= effectiveExtendTo) return@withTransaction null
+            if (currentMinTs <= effectiveExtendTo) return@runInTransaction null
 
             // The range end is exclusive, so the existing occurrence at currentMinTs isn't
             // duplicated.
             val fill = fill(current, effectiveExtendTo, currentMinTs)
             if (!fill.complete) {
                 android.util.Log.w(TAG, "Past extension of event ${current.id} passed the row limit; skipped")
-                return@withTransaction StepResult(0, null, null, complete = false)
+                return@runInTransaction StepResult(0, null, null, complete = false)
             }
             if (fill.rows.isNotEmpty()) occurrencesDao.insertAll(fill.rows)
             StepResult(fill.rows.size, null, extendToMs, complete = true)
@@ -394,7 +393,8 @@ class OccurrenceGenerator @Inject constructor(
      * and nothing cut short, records the range (a forward-only pass records none). The work
      * runs on the IO dispatcher and stops between batches when the caller is cancelled. Writes
      * only occurrence rows: no pending operation, sync or reminder. A failure is logged, not
-     * thrown. A call inside a Room transaction is skipped: it would wait for its own.
+     * thrown. A call inside [KashCalDatabase.runInTransaction] is skipped: it would wait for its
+     * own transaction ([KashCalDatabase.isInAppTransaction]).
      */
     suspend fun ensureCovered(
         startMs: Long,
@@ -404,7 +404,7 @@ class OccurrenceGenerator @Inject constructor(
         extendFromMs: Long = startMs - COVERAGE_BUFFER_MS,
     ) {
         if (isCovered(startMs, endMs)) return
-        if (database.inTransaction()) {
+        if (database.isInAppTransaction()) {
             android.util.Log.w(TAG, "ensureCovered called inside a transaction; skipped")
             return
         }
@@ -441,8 +441,8 @@ class OccurrenceGenerator @Inject constructor(
      * search emit again, don't each add another step's rows. A forward-only cover keeps its own
      * record, so it never stands in for a fill back to DTSTART. Steps run in the batches and
      * under the lock [ensureCovered] uses, on the IO dispatcher, and like it this writes only
-     * occurrence rows, logs a failure instead of throwing and skips a call made inside a Room
-     * transaction.
+     * occurrence rows, logs a failure instead of throwing and skips a call made inside
+     * [KashCalDatabase.runInTransaction].
      */
     suspend fun ensureCoveredFor(
         fromStart: Collection<Long>,
@@ -460,7 +460,7 @@ class OccurrenceGenerator @Inject constructor(
         }
         val (wholeNow, forwardNow) = pending()
         if (wholeNow.isEmpty() && forwardNow.isEmpty()) return 0
-        if (database.inTransaction()) {
+        if (database.isInAppTransaction()) {
             android.util.Log.w(TAG, "ensureCoveredFor called inside a transaction; skipped")
             return 0
         }
@@ -504,7 +504,7 @@ class OccurrenceGenerator @Inject constructor(
 
     private suspend fun coverPass(startMs: Long, endMs: Long, backward: Boolean, extendToMs: Long, extendFromMs: Long) {
         data class Selection(val forward: List<Long>, val noRows: List<Long>, val past: List<Long>, val version: Long)
-        val selection = database.withTransaction {
+        val selection = database.runInTransaction {
             val version = rowsVersion()
             val notForward = { id: Long -> synchronized(coverageLock) { (forwardCoveredTo[id] ?: Long.MIN_VALUE) < endMs } }
             Selection(
@@ -552,7 +552,7 @@ class OccurrenceGenerator @Inject constructor(
         while (index < ids.size) {
             coroutineContext.ensureActive()
             val committed = mutableListOf<Pair<Long, StepResult>>()
-            index = database.withTransaction {
+            index = database.runInTransaction {
                 committed.clear()
                 var i = index
                 var rows = 0
@@ -624,7 +624,7 @@ class OccurrenceGenerator @Inject constructor(
         occurrenceTimeMs: Long,
         exceptionEvent: Event
     ) {
-        database.withTransaction {
+        database.runInTransaction {
             occurrencesDao.deleteForEvent(exceptionEvent.id)
 
             val newStartDay = Occurrence.toDayFormat(exceptionEvent.startTs, exceptionEvent.isAllDay)

@@ -131,7 +131,7 @@ class IcsImportFileTest {
     // ---- the stored copy each group carries ----
 
     private fun copiesOf(file: IcsImportFile, uid: String) =
-        file.groups.single { it.uid == uid }.components.map { it.event.rawIcal }
+        file.groups.single { it.uid == uid }.components.map { it.ics }
 
     private fun unfoldedLines(copy: String) = copy.replace(Regex("\r?\n[ \t]"), "").lines().map { it.trimEnd('\r') }
 
@@ -178,9 +178,9 @@ class IcsImportFileTest {
     @Test
     fun `LF-only and CRLF files both keep a copy`() {
         val lf = requireNotNull(IcsParserService.parseForImport(fixture("issue_364_request.ics")))
-        assertNotNull(lf.groups.single().masters.single().event.rawIcal)
+        assertNotNull(lf.groups.single().masters.single().ics)
         val crlf = requireNotNull(IcsParserService.parseForImport(fixture("nextcloud_request.ics")))
-        crlf.groups.forEach { group -> group.components.forEach { assertNotNull(it.event.rawIcal) } }
+        crlf.groups.forEach { group -> group.components.forEach { assertNotNull(it.ics) } }
     }
 
     @Test
@@ -189,7 +189,7 @@ class IcsImportFileTest {
         val folded = "UID:" + longUid.substring(0, 60) + "\r\n " + longUid.substring(60)
         val file = requireNotNull(IcsParserService.parseForImport(vcal(null, vevent(folded, "DTSTART:20261020T160000Z", "DTEND:20261020T170000Z", "SUMMARY:Folded", "X-KEPT:1"))))
         assertEquals(longUid, file.groups.single().uid)
-        assertTrue(requireNotNull(file.groups.single().masters.single().event.rawIcal).contains("X-KEPT:1"))
+        assertTrue(requireNotNull(file.groups.single().masters.single().ics).contains("X-KEPT:1"))
     }
 
     @Test
@@ -206,7 +206,7 @@ class IcsImportFileTest {
         val content = "\uFEFF" + vcal(null, vevent("UID:bom", "DTSTART:20261020T160000Z", "DTEND:20261020T170000Z", "SUMMARY:Bom", "X-KEPT:1"))
         val file = requireNotNull(IcsParserService.parseForImport(content))
         file.groups.single().components.forEach {
-            val copy = requireNotNull(it.event.rawIcal)
+            val copy = requireNotNull(it.ics)
             assertTrue(copy.contains("X-KEPT:1"))
             assertFalse("the mark isn't copied", copy.startsWith("\uFEFF"))
         }
@@ -219,7 +219,7 @@ class IcsImportFileTest {
         val file = requireNotNull(IcsParserService.parseForImport(first + second))
         assertTrue(file.groups.isNotEmpty())
         for (group in file.groups) {
-            val copy = requireNotNull(group.masters.single().event.rawIcal) { "${group.uid} keeps a copy" }
+            val copy = requireNotNull(group.masters.single().ics) { "${group.uid} keeps a copy" }
             assertEquals("one calendar in the copy", 1, Regex("BEGIN:VCALENDAR").findAll(copy).count())
             assertEquals("only its own VEVENT", 1, Regex("BEGIN:VEVENT").findAll(copy).count())
             assertTrue(copy.contains("UID:${group.uid}"))
@@ -246,7 +246,7 @@ class IcsImportFileTest {
     fun `a VEVENT without a UID keeps no copy`() {
         val content = vcal(null, vevent("DTSTART:20261020T160000Z", "DTEND:20261020T170000Z", "SUMMARY:No uid", "X-LOST:1"))
         val file = requireNotNull(IcsParserService.parseForImport(content))
-        assertNull(file.groups.single().masters.single().event.rawIcal)
+        assertNull(file.groups.single().masters.single().ics)
     }
 
     @Test
@@ -259,7 +259,7 @@ class IcsImportFileTest {
         val file = requireNotNull(IcsParserService.parseForImport(content))
         val elapsedMs = (System.nanoTime() - started) / 1_000_000
         assertEquals(2_000, file.groups.size)
-        assertTrue("every group keeps its copy", file.groups.all { it.masters.single().event.rawIcal != null })
+        assertTrue("every group keeps its copy", file.groups.all { it.masters.single().ics != null })
         assertTrue("built in ${elapsedMs}ms", elapsedMs < 5_000)
     }
 }

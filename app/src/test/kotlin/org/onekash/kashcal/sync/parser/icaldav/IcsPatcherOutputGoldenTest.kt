@@ -73,8 +73,8 @@ class IcsPatcherOutputGoldenTest {
             "END:VEVENT",
         )
         val row = synced(body).single().copy(title = "Visitor tour (edited)")
-        check("synced-single-export", IcsPatcher.serialize(row))
-        check("synced-single-push", IcsPatcher.serialize(row, listOf(attendee("guest@example.test"))))
+        check("synced-single-export", IcsPatcher.serialize(row, body))
+        check("synced-single-push", IcsPatcher.serialize(row, body, listOf(attendee("guest@example.test"))))
     }
 
     @Test
@@ -86,12 +86,13 @@ class IcsPatcherOutputGoldenTest {
             id = 3, originalEventId = 1, originalInstanceTime = stored.originalInstanceTime + WEEK,
             title = "Weekly sync (local change)",
         )
-        check("synced-series-export", IcsPatcher.serializeWithExceptions(series, listOf(stored, added)))
+        check("synced-series-export", IcsPatcher.serializeWithExceptions(series, serverSeries, listOf(stored, added)))
         check(
             "synced-series-push",
             IcsPatcher.serializeWithExceptions(
-                series, listOf(attendee("guest@example.test")),
+                series, serverSeries, listOf(attendee("guest@example.test")),
                 listOf(stored to null, added to listOf(attendee("other@example.test"))),
+                ownIcs = emptyMap(),
             ),
         )
     }
@@ -106,6 +107,7 @@ class IcsPatcherOutputGoldenTest {
         val export = EventExport(
             series.first.copy(id = 1), listOf(stored.first.copy(id = 2, originalEventId = 1)),
             mapOf(1L to series.second, 2L to stored.second),
+            icsByEventId = mapOf(1L to serverSeries),
         )
         File(context.cacheDir, "shared").deleteRecursively()
         // The file is written before the FileProvider lookup, which has no provider here.
@@ -113,7 +115,7 @@ class IcsPatcherOutputGoldenTest {
         val written = File(context.cacheDir, "shared").listFiles()!!.single().readText()
         check("synced-series-export-rows", written)
 
-        val withoutRows = IcsPatcher.serializeWithExceptions(export.event, export.exceptions)
+        val withoutRows = IcsPatcher.serializeWithExceptions(export.event, serverSeries, export.exceptions)
         assertEquals(
             "only ATTENDEE lines differ from the stored copy's export",
             normalize(withoutRows).lines().filterNot { it.startsWith("ATTENDEE") },
@@ -130,8 +132,8 @@ class IcsPatcherOutputGoldenTest {
         val rows = synced(reordered)
         val series = rows.single { it.originalEventId == null }.copy(id = 1)
         val occurrence = rows.single { it.originalEventId != null }.copy(id = 2, originalEventId = 1)
-        check("occurrence-first-export", IcsPatcher.serializeWithExceptions(series, listOf(occurrence)))
-        check("occurrence-first-series-alone", IcsPatcher.serialize(series))
+        check("occurrence-first-export", IcsPatcher.serializeWithExceptions(series, reordered, listOf(occurrence)))
+        check("occurrence-first-series-alone", IcsPatcher.serialize(series, reordered))
     }
 
     @Test
@@ -140,20 +142,21 @@ class IcsPatcherOutputGoldenTest {
             .copy(organizerEmail = "org@example.test")
         check(
             "organizer-push",
-            IcsPatcher.serialize(series, listOf(attendee("guest@example.test"), attendee("new@example.test"))),
+            IcsPatcher.serialize(series, serverSeries, listOf(attendee("guest@example.test"), attendee("new@example.test"))),
         )
-        check("organizer-push-cleared", IcsPatcher.serialize(series, emptyList()))
+        check("organizer-push-cleared", IcsPatcher.serialize(series, serverSeries, emptyList()))
     }
 
     @Test
     fun `synced changed occurrence exported on its own`() {
         val occurrence = synced(serverSeries).single { it.originalEventId != null }
-        check("synced-occurrence-alone", IcsPatcher.serialize(occurrence))
+        // Exported alone it reads its resource's stored copy, held by its series row.
+        check("synced-occurrence-alone", IcsPatcher.serialize(occurrence, serverSeries))
     }
 
     @Test
     fun `local event without a stored copy`() {
-        check("local-single", IcsPatcher.serialize(local("Dentist", "local-single@kashcal")))
+        check("local-single", IcsPatcher.serialize(local("Dentist", "local-single@kashcal"), null))
     }
 
     @Test
@@ -193,7 +196,7 @@ class IcsPatcherOutputGoldenTest {
 
     // ---- fixtures ----
 
-    /** Rows as the pull stores them: each VEVENT mapped with the whole resource as its copy. */
+    /** Rows as the pull maps them; the resource's stored ICS is the body itself. */
     private fun synced(body: String): List<Event> {
         val events = ICalParser().parseAllEvents(body).getOrNull()!!
         val masterStart = events.firstOrNull { it.recurrenceId == null }?.dtStart

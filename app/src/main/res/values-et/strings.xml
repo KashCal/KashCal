@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+veel %1$d</string>
     <string name="tags_autocomplete_create_new">Loo „%1$s“</string>
     <string name="cd_tag">Silt: %1$s</string>
+    <string name="tags_show_events_click_label">Näita sündmusi selle sildiga</string>
+    <string name="tags_show_events">Näita sündmusi</string>
     <string name="cd_tags_move_menu">Teisalda sildid</string>
     <string name="tags_move_above_notes">Teisalda märkmete kohale</string>
     <string name="tags_move_below_notes">Teisalda märkmete alla</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Vaata sünkroonimise seansse (viimased 48 tundi)</string>
     <string name="settings_import_subtitle">Lisa sündmusi ICS-failist mis tahes kalendrisse</string>
     <string name="settings_birthday_reminder">Sünnipäeva meeldetuletus</string>
-    <string name="settings_use_device_timezone">Kasuta seadme ajavööndit</string>
     <string name="settings_section_calendars">Kalendrid ja kontod</string>
     <string name="settings_section_appearance">Välimus</string>
     <string name="settings_section_creating_events">Sündmuste seaded</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">Korduv</string>
     <string name="cd_enabled">Lubatud</string>
     <string name="cd_sync_error">Sünkroonimise viga</string>
-    <string name="cd_select_label">Vali %1$s</string>
     <string name="cd_wheel_picker">Rullikvalija %1$d valikuga</string>
     <string name="cd_time_entry_keyboard">Sisesta täpne aeg</string>
     <string name="time_entry_dialog_title">Sisesta aeg</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">Lõpeb</string>
     <string name="sheet_hint_change_end">Lõpu muutmiseks puuduta päeva</string>
     <string name="label_timezone">Ajavöönd</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Otsi linna, riiki või vööndit</string>
+    <string name="timezone_section_this_event">See sündmus</string>
+    <string name="timezone_section_device">Seadme ajavöönd</string>
+    <string name="timezone_section_recent">Hiljutised</string>
+    <string name="timezone_section_all">Kõik ajavööndid</string>
+    <string name="timezone_offsets_on">Nihked seisuga %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Kalendrist: %1$s</string>
+    <string name="timezone_shown_in_device_time">Kuvatud seadme ajas</string>
+    <string name="timezone_loading">Ajavööndite laadimine…</string>
+    <string name="timezone_no_match">Sobivaid ajavööndeid pole</string>
+    <string name="timezone_no_match_hint">Proovi linna, riiki või nihet, nt +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Meeldetuletused</string>
     <string name="label_add_alert">Lisa meeldetuletus</string>
     <string name="label_recurrence_never">Mitte kunagi</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">Uued sündmused luuakse sellesse kalendrisse</string>
     <string name="label_reminders_truncated">%1$d pole kuvatud (%2$d kokku, maks %3$d muudetav)</string>
     <string name="label_found_events">Leitud: %1$d sündmust</string>
-    <string name="placeholder_search">Otsi…</string>
     <string name="settings_search_placeholder">Otsi seadetest…</string>
     <string name="settings_search_no_results">Päringule \"%1$s\" seadeid ei leitud</string>
     <string name="cd_search_settings">Otsi seadetest</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">Nimetu sündmus</string>
     <string name="recurring_this_event">See sündmus</string>
     <string name="recurring_all_events">Kõik sündmused</string>
+    <string name="recurring_scope_move_not_expressible">Kordusreegel ei saa seda muudatust järgida</string>
+    <string name="event_form_move_not_expressible">Kordusreegel ei saa seda muudatust järgida. Midagi ei salvestatud.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Osalejad</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">Külaline:</string>
     <string name="search_keep_typing">Jätka otsimiseks tippimist</string>
     <string name="search_no_matches">Ükski sündmus ei vasta päringule „%1$s“</string>
+    <string name="search_no_events_tagged">Ükski sündmus ei sisalda silte „%1$s“</string>
     <string name="search_lookback_line">Sünkroonimise tagasivaade: %1$s</string>
     <string name="search_sync_settings">Sünkroonimise seaded</string>
     <string name="cd_search_sync_settings">Ava sünkroonimise tagasivaate seade</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">Selle voo server keelas juurdepääsu.</string>
     <string name="ics_feed_error_too_large">See kalendrivoog on allalaadimiseks liiga suur.</string>
     <string name="ics_feed_error_unreadable">Selle voo sündmusi ei õnnestunud kuvada.</string>
+    <string name="ics_feed_error_event_not_saved">„%1$s“ jäi salvestamata.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d sündmus jäi salvestamata.</item>
+        <item quantity="other">%1$d sündmust jäi salvestamata.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d sündmus jäi salvestamata, sealhulgas „%2$s“.</item>
+        <item quantity="other">%1$d sündmust jäi salvestamata, sealhulgas „%2$s“.</item>
+    </plurals>
     <string name="insights_title">Statistika</string>
     <string name="insights_period_this_week">Nädal</string>
     <string name="insights_period_last_week">Eelmine nädal</string>

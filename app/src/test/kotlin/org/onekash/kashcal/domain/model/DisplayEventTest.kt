@@ -550,11 +550,10 @@ class DisplayEventTest {
     }
 
     @Test
-    fun `toEventForShareCard does not set rawIcal, organizer, or caldavUrl`() {
+    fun `toEventForShareCard does not set organizer or caldavUrl`() {
         // Defense in depth: singleOccurrenceForShare strips these too, and
         // the device-event mapper has no reason to set them.
         val event = DisplayEvent.Device(testInstance).toEventForShareCard()
-        assertNull(event.rawIcal)
         assertNull(event.organizerEmail)
         assertNull(event.organizerName)
         assertNull(event.caldavUrl)

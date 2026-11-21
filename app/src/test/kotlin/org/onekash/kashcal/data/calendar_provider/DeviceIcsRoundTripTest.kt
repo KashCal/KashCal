@@ -232,4 +232,25 @@ class DeviceIcsRoundTripTest {
         assertEquals(listOf(DEFAULT_ALL_DAY_REMINDER), byTitle.getValue("Holiday").reminders)
         assertEquals(T0, byTitle.getValue("Call").startTs)
     }
+
+    // ---- multi-day all-day series (#444) ----
+
+    @Test
+    fun `a repeating multi-day all-day file imports over all its days`() = runTest {
+        // DATE-valued DTSTART and DTEND (exclusive, RFC 5545 section 3.6.1), as the app's own
+        // export and other calendar apps write an all-day range.
+        val ics = listOf(
+            "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Example//Test//EN",
+            "BEGIN:VEVENT", "UID:trip-series@example.test", "DTSTAMP:20261121T000000Z",
+            "DTSTART;VALUE=DATE:20270129", "DTEND;VALUE=DATE:20270201",
+            "RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=FR;COUNT=3", "SUMMARY:Trip",
+            "END:VEVENT", "END:VCALENDAR",
+        ).joinToString("\r\n", postfix = "\r\n")
+
+        assertEquals(1, importIcs(ics))
+
+        val shown = occurrences(LOCAL_CAL, startDay = 20270125, endDay = 20270331)
+        assertEquals(listOf(20270129 to 20270131, 20270212 to 20270214, 20270226 to 20270228), shown.map { it.startDay to it.endDay })
+        assertEquals("P3D", f.eventRow(shown.first().eventId)!![android.provider.CalendarContract.Events.DURATION])
+    }
 }

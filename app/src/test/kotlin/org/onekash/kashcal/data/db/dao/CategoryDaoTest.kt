@@ -1,7 +1,6 @@
 package org.onekash.kashcal.data.db.dao
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -14,6 +13,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.entity.Category
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -32,7 +32,7 @@ class CategoryDaoTest {
     @Before
     fun setup() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
         dao = database.categoryDao()
@@ -167,14 +167,14 @@ class CategoryDaoTest {
 
     /** Insert a bare account+calendar once so events satisfy the FK. */
     private fun seedCalendar() {
-        val raw = database.openHelper.writableDatabase
+        val raw = TestDatabases.raw(database)
         raw.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'CALDAV', 'a@test.com', 0)")
         raw.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://x/', 'C', 0)")
     }
 
     /** Insert an event whose `categories` column holds the given JSON blob verbatim. */
     private fun seedEvent(id: Long, uid: String, categoriesJson: String?) {
-        val raw = database.openHelper.writableDatabase
+        val raw = TestDatabases.raw(database)
         val value = if (categoriesJson == null) "NULL" else "'${categoriesJson.replace("'", "''")}'"
         raw.execSQL(
             "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, timezone, dtstamp, created_at, updated_at, categories) " +
@@ -184,7 +184,7 @@ class CategoryDaoTest {
 
     /** Read the raw `categories` JSON string for an event (null if the column is null). */
     private fun categoriesOf(id: Long): String? {
-        val raw = database.openHelper.writableDatabase
+        val raw = TestDatabases.raw(database)
         raw.query("SELECT categories FROM events WHERE id = $id").use { cursor ->
             if (!cursor.moveToFirst() || cursor.isNull(0)) return null
             return cursor.getString(0)

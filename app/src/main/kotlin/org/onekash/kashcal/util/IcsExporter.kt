@@ -41,19 +41,6 @@ class IcsExporter @Inject constructor() {
     )
 
     /**
-     * Exports [event] to an ICS file, writing no attendee rows: a stored server copy keeps its
-     * guests, and anything else gets none. A recurring event's [exceptions] go into the same
-     * VCALENDAR as its master, per RFC 5545. A Room event's export takes an [EventExport] so its
-     * guests come from its rows; a device event's uses [exportDeviceEvent], the share card
-     * [exportShareCopy].
-     */
-    fun exportEvent(
-        context: Context,
-        event: Event,
-        exceptions: List<Event> = emptyList()
-    ): Result<Uri> = exportEvent(context, EventExport(event, exceptions, emptyMap()))
-
-    /**
      * Exports a device event's rows ([org.onekash.kashcal.domain.mapper.toExportEvent]) as
      * [serializeDeviceEvent] writes them.
      */
@@ -72,10 +59,11 @@ class IcsExporter @Inject constructor() {
 
     /**
      * Returns the share card's file text: a device event's copy as [serializeDeviceEvent] writes
-     * it, a Room event's as [exportEvent] does.
+     * it, a Room event's generated from its fields with no stored ICS and no attendee rows, so
+     * nothing of the sender's server copy reaches the recipient.
      */
     internal fun shareCopyText(event: Event, fromDevice: Boolean): String =
-        if (fromDevice) serializeDeviceEvent(event, emptyList()) else IcsPatcher.serializeWithExceptions(event, null, emptyList())
+        if (fromDevice) serializeDeviceEvent(event, emptyList()) else IcsPatcher.serialize(event, ics = null, attendees = null)
 
     /**
      * Returns the file text for rows built from a device event, each zone written by
@@ -116,8 +104,10 @@ class IcsExporter @Inject constructor() {
             Log.d(TAG, "Exporting event: ${event.title} with ${export.exceptions.size} exceptions")
             val icsContent = IcsPatcher.serializeWithExceptions(
                 master = event,
+                masterIcs = export.icsByEventId[event.id],
                 masterAttendees = export.attendeesOf(event),
-                exceptionsWithAttendees = export.exceptions.map { it to export.attendeesOf(it) }
+                exceptionsWithAttendees = export.exceptions.map { it to export.attendeesOf(it) },
+                ownIcs = export.icsByEventId
             )
             val fileName = generateFileName(event.title)
             val uri = writeToCache(context, fileName, icsContent)
@@ -170,7 +160,8 @@ class IcsExporter @Inject constructor() {
             val master = export.event
             try {
                 IcsPatcher.toICalEvents(
-                    master, export.attendeesOf(master), export.exceptions.map { it to export.attendeesOf(it) }
+                    master, export.icsByEventId[master.id], export.attendeesOf(master),
+                    export.exceptions.map { it to export.attendeesOf(it) }, export.icsByEventId
                 )
             } catch (e: Exception) {
                 Log.w(TAG, "Exporting ${master.id} from its fields: ${e.javaClass.simpleName}")

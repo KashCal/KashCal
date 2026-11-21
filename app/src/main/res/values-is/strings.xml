@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d til viðbótar</string>
     <string name="tags_autocomplete_create_new">Búa til \"%1$s\"</string>
     <string name="cd_tag">Merki: %1$s</string>
+    <string name="tags_show_events_click_label">Sýna viðburði með þessu merki</string>
+    <string name="tags_show_events">Sýna viðburði</string>
     <string name="cd_tags_move_menu">Færa merki</string>
     <string name="tags_move_above_notes">Færa fyrir ofan athugasemdir</string>
     <string name="tags_move_below_notes">Færa fyrir neðan athugasemdir</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Skoða samstillingarlotur (síðustu 48 klukkustundir)</string>
     <string name="settings_import_subtitle">Bæta viðburðum úr ICS-skrá við hvaða dagatal sem er</string>
     <string name="settings_birthday_reminder">Afmælisáminning</string>
-    <string name="settings_use_device_timezone">Nota tímabelti tækis</string>
     <string name="settings_section_calendars">Dagatöl &amp; reikningar</string>
     <string name="settings_section_appearance">Útlit</string>
     <string name="settings_section_creating_events">Stillingar viðburða</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">Endurtekinn</string>
     <string name="cd_enabled">Virkt</string>
     <string name="cd_sync_error">Samstillingarvilla</string>
-    <string name="cd_select_label">Velja %1$s</string>
     <string name="cd_wheel_picker">Hjólveljari með %1$d valkostum</string>
     <string name="cd_time_entry_keyboard">Slá inn nákvæman tíma</string>
     <string name="time_entry_dialog_title">Slá inn tíma</string>
@@ -835,6 +835,23 @@
     <string name="label_ends">Endar</string>
     <string name="sheet_hint_change_end">Ýttu á dag til að breyta lokum</string>
     <string name="label_timezone">Tímabelti</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Leita að borg, landi eða belti</string>
+    <string name="timezone_section_this_event">Þessi viðburður</string>
+    <string name="timezone_section_device">Tímabelti tækis</string>
+    <string name="timezone_section_recent">Nýlegt</string>
+    <string name="timezone_section_all">Öll tímabelti</string>
+    <string name="timezone_offsets_on">Tímamunur þann %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Úr dagatalinu: %1$s</string>
+    <string name="timezone_shown_in_device_time">Sýnt í tíma tækisins</string>
+    <string name="timezone_loading">Hleður tímabeltum…</string>
+    <string name="timezone_no_match">Engin tímabelti passa</string>
+    <string name="timezone_no_match_hint">Prófaðu borg, land eða tímamun eins og +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Áminningar</string>
     <string name="label_add_alert">Bæta við áminningu</string>
     <string name="label_recurrence_never">Aldrei</string>
@@ -844,7 +861,6 @@
     <string name="label_default_calendar_hint">Nýir viðburðir verða búnir til í þessu dagatali</string>
     <string name="label_reminders_truncated">%1$d ekki sýndar (%2$d alls, hámark %3$d breytanlegar)</string>
     <string name="label_found_events">Fundust: %1$d viðburðir</string>
-    <string name="placeholder_search">Leita…</string>
     <string name="settings_search_placeholder">Leita í stillingum…</string>
     <string name="settings_search_no_results">Engar stillingar fundust fyrir \"%1$s\"</string>
     <string name="cd_search_settings">Leita í stillingum</string>
@@ -1096,6 +1112,8 @@
     <string name="event_untitled">Viðburður án titils</string>
     <string name="recurring_this_event">Þennan viðburð</string>
     <string name="recurring_all_events">Alla viðburði</string>
+    <string name="recurring_scope_move_not_expressible">Endurtekningarreglan getur ekki fylgt þessari breytingu</string>
+    <string name="event_form_move_not_expressible">Endurtekningarreglan getur ekki fylgt þessari breytingu. Ekkert var vistað.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Þátttakendur</string>
@@ -1178,6 +1196,7 @@
     <string name="search_reason_guest">Gestur:</string>
     <string name="search_keep_typing">Haltu áfram að skrifa til að leita</string>
     <string name="search_no_matches">Engir viðburðir passa við „%1$s“</string>
+    <string name="search_no_events_tagged">Engir viðburðir merktir „%1$s“</string>
     <string name="search_lookback_line">Samstillingarsvið aftur í tíma: %1$s</string>
     <string name="search_sync_settings">Samstillingarstillingar</string>
     <string name="cd_search_sync_settings">Opna stillingu fyrir samstillingarsvið aftur í tíma</string>
@@ -1474,6 +1493,15 @@
     <string name="ics_feed_error_access_denied">Netþjónn þessa straums neitaði um aðgang.</string>
     <string name="ics_feed_error_too_large">Þessi dagatalsstraumur er of stór til að sækja.</string>
     <string name="ics_feed_error_unreadable">Ekki tókst að birta viðburði þessa straums.</string>
+    <string name="ics_feed_error_event_not_saved">Ekki tókst að vista „%1$s“.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">Ekki tókst að vista %1$d viðburð.</item>
+        <item quantity="other">Ekki tókst að vista %1$d viðburði.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">Ekki tókst að vista %1$d viðburð, þar á meðal „%2$s“.</item>
+        <item quantity="other">Ekki tókst að vista %1$d viðburði, þar á meðal „%2$s“.</item>
+    </plurals>
     <string name="insights_title">Yfirlit</string>
     <string name="insights_period_this_week">Vika</string>
     <string name="insights_period_last_week">Síðasta vika</string>

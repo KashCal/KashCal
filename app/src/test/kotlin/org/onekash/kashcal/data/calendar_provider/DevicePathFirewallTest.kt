@@ -104,6 +104,7 @@ class DevicePathFirewallTest {
         "org.onekash.kashcal.sync.",
         "org.onekash.icaldav.scheduling.",
         "org.onekash.kashcal.data.db.dao.",
+        "androidx.room3.",
         "androidx.room.",
     )
 
@@ -211,6 +212,7 @@ class DevicePathFirewallTest {
             "import org.onekash.kashcal.sync.*",
             "import org.onekash.kashcal.data.db.entity.Attendee",
             "import org.onekash.kashcal.data.db.dao.AttendeesDao",
+            "import androidx.room3.useWriterConnection",
             "import androidx.room.withTransaction",
             // Two imports on one line, and an import split before a dot.
             "import kotlin.text.Regex; import org.onekash.kashcal.sync.scheduler.SyncScheduler",

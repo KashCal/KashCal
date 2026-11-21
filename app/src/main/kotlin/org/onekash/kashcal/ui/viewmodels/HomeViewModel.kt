@@ -69,6 +69,9 @@ import org.onekash.kashcal.domain.changes.isSeriesRow
 import org.onekash.kashcal.domain.changes.opens
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.domain.rrule.RruleShift
+import org.onekash.kashcal.domain.rrule.MoveNotExpressibleException
+import org.onekash.kashcal.domain.rrule.SeriesMove
+import org.onekash.kashcal.util.zone.ZoneCatalog
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.model.isStripItem
 import org.onekash.kashcal.domain.planner.PlannerWeekState
@@ -498,6 +501,18 @@ class HomeViewModel(
     /** Persists whether the event form's tag row sits above the notes, not below them. */
     fun setTagsAboveNotes(above: Boolean) {
         viewModelScope.launch { dataStore.setTagsAboveNotes(above) }
+    }
+
+    /**
+     * Zones picked before in the event form's time zone sheet, newest first. Its own flow, kept
+     * out of the UI state's combines, so a data store that never emits can't hold them up.
+     */
+    val recentTimeZones: StateFlow<List<String>> = dataStore.recentTimeZones
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /** Records [zoneId] as recent with [KashCalDataStore.addRecentTimeZone]. */
+    fun recordRecentTimeZone(zoneId: String) {
+        viewModelScope.launch { dataStore.addRecentTimeZone(zoneId, TimezoneUtils.getDeviceTimezone()) }
     }
 
     /** Persists whether the Agenda view's top week bar is expanded. */
@@ -2736,6 +2751,20 @@ class HomeViewModel(
         _uiState.update { it.withSearchReset(active = true) }
     }
 
+    /**
+     * Opens search on the events tagged [name], with [SearchQuery.tagText] as the query, the
+     * keyboard down and any day sheet closed; does nothing for a name no search text reads back
+     * as that tag.
+     */
+    fun openTagSearch(name: String) {
+        val text = SearchQuery.tagText(name) ?: return
+        activateSearch()
+        // A day sheet the quick view was opened from would cover the results.
+        dismissDayDetail()
+        _uiState.update { it.copy(searchFocusOnOpen = false, tagSearchOpens = it.tagSearchOpens + 1) }
+        updateSearchQuery(text)
+    }
+
     /** Closes search and resets its state; see [activateSearch]. */
     fun deactivateSearch() {
         searchJob?.cancel()
@@ -2745,6 +2774,7 @@ class HomeViewModel(
     private fun HomeUiState.withSearchReset(active: Boolean) = copy(
         isSearchActive = active,
         searchQuery = "",
+        searchFocusOnOpen = true,
         searchState = SearchResultsState.Idle,
         searchTab = SearchTab.UPCOMING,
         searchDateFilter = null,
@@ -2756,9 +2786,9 @@ class HomeViewModel(
 
     /**
      * Sets the search query and searches [SEARCH_TYPING_DELAY_MS] later, cancelling the search
-     * before. A query that isn't [SearchQuery.isSearchable] (one-letter words, only separators)
-     * shows [SearchResultsState.TooShort]; an empty one [SearchResultsState.Idle]. The selected
-     * list, the date range and the hidden-calendar choice stay.
+     * before. A query that isn't [SearchQuery.isSearchable] (one-letter words and no tag, only
+     * separators) shows [SearchResultsState.TooShort]; an empty one [SearchResultsState.Idle].
+     * The selected list, the date range and the hidden-calendar choice stay.
      */
     fun updateSearchQuery(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
@@ -2820,7 +2850,7 @@ class HomeViewModel(
         val t = outcome.timing
         Log.i(
             TAG,
-            "Search timing: words=${query.words.size} room=${t.roomMs}ms device=${t.deviceMs}ms total=${totalMs}ms " +
+            "Search timing: words=${query.words.size} tags=${query.tags.size} room=${t.roomMs}ms device=${t.deviceMs}ms total=${totalMs}ms " +
                 "coverage=${t.coverageMs?.let { "${it}ms" } ?: "none"} upcoming=${outcome.upcoming.size} " +
                 "past=${outcome.past.size} hidden=${outcome.hiddenUpcoming.size + outcome.hiddenPast.size} " +
                 "range=${outcome.range?.size ?: "none"}"
@@ -3549,6 +3579,7 @@ class HomeViewModel(
         formState: EventFormState,
         scope: EditScope? = null,
     ): Result<org.onekash.kashcal.data.db.entity.Event> {
+        _uiState.update { it.copy(formSaveError = null) }
         return withContext(ioDispatcher) {
             try {
                 // toStartEndTs is shared with the Save-and-notify change detection, so both use
@@ -3661,30 +3692,31 @@ class HomeViewModel(
                         }
                     val targetEventId = existingEvent.id
 
-                    // "All events" from a form opened on a later occurrence: the
-                    // form holds that occurrence's date, but the series starts
-                    // earlier. Keep the series' own first date so no occurrence
-                    // before this one is cut; only a changed clock time moves it.
-                    // A changed date isn't offered for a later occurrence (the
-                    // scope sheet withholds All events), so it is refused here too.
-                    val laterOccurrence = formState.editingOccurrenceTs?.takeIf { openedOn ->
-                        scope == EditScope.ALL_EVENTS && loadedEvent.originalEventId == null &&
-                            !existingEvent.rrule.isNullOrEmpty() && openedOn > existingEvent.startTs
+                    // ALL_EVENTS on a series keeps its first date ([seriesEdit]); null when a date
+                    // change on a later occurrence is refused.
+                    val seriesTiming = if (scope == EditScope.ALL_EVENTS && !existingEvent.rrule.isNullOrEmpty()) {
+                        seriesEdit(formState, existingEvent, EditScope.ALL_EVENTS, openedOnException = loadedEvent.originalEventId != null)
+                            ?: return@withContext Result.failure(
+                                IllegalStateException("Date change on a later occurrence can't apply to all events")
+                            )
+                    } else {
+                        null
                     }
-                    if (laterOccurrence != null && formState.occurrenceDateChanged(laterOccurrence, existingEvent.isAllDay)) {
-                        return@withContext Result.failure(
-                            IllegalStateException("Date change on a later occurrence can't apply to all events")
-                        )
-                    }
-                    val (seriesStartTs, seriesEndTs) = laterOccurrence?.let {
-                        formState.startEndAnchoredToSeries(it, existingEvent.startTs, existingEvent.isAllDay)
-                    } ?: (startTs to endTs)
+                    val seriesStartTs = seriesTiming?.startTs ?: startTs
+                    val seriesEndTs = seriesTiming?.endTs ?: endTs
 
                     val calendarChanged = existingEvent.calendarId != calendarId
 
                     // EventWriter bumps SEQUENCE; the ViewModel doesn't.
 
                     if (calendarChanged) {
+                        // Check the series move before the calendar move, so a refused one moves
+                        // nothing.
+                        if (seriesTiming != null &&
+                            SeriesMove.planSave(existingEvent, seriesTiming, existingEvent.startTs, eventReader.getExceptionsForMaster(existingEvent.id)) == null
+                        ) {
+                            throw MoveNotExpressibleException()
+                        }
                         // The coordinator queues the server side of the move (a MOVE, or a
                         // CREATE and DELETE, depending on the accounts).
                         eventCoordinator.moveEventToCalendar(targetEventId, calendarId)
@@ -3762,6 +3794,10 @@ class HomeViewModel(
                 Log.d(TAG, "Event saved: ${savedEvent.title} (id=${savedEvent.id})")
                 Result.success(savedEvent)
 
+            } catch (e: MoveNotExpressibleException) {
+                Log.w(TAG, "The repeat rule can't express this edit", e)
+                _uiState.update { it.copy(formSaveError = context.getString(R.string.event_form_move_not_expressible)) }
+                Result.failure(e)
             } catch (e: Exception) {
                 Log.e(TAG, "Error saving event", e)
                 Result.failure(e)
@@ -3796,17 +3832,19 @@ class HomeViewModel(
         }
 
         if (displayEvent.isSeriesOccurrence && editScope == EditScope.THIS_EVENT) {
-            // A same-day drop blocks nothing and is known at once; a cross-day
-            // drop is checked off the main thread against the stored series,
-            // and the sheet greys the series scopes until the check lands.
-            val crossDay = isCrossDayMove(displayEvent, droppedStartTs(displayEvent, targetDate, targetStartMinutes))
+            // A cross-day drop, and a same-day drop of a Room series (whose rule may pin
+            // clock times), is checked off the main thread against the stored series, and
+            // the sheet greys the series scopes until the check lands. A same-day device
+            // drop blocks nothing and is known at once.
+            val needsCheck = displayEvent is DisplayEvent.Room ||
+                isCrossDayMove(displayEvent, droppedStartTs(displayEvent, targetDate, targetStartMinutes))
             val pending = PendingDragReschedule(
                 displayEvent, targetDate, targetStartMinutes,
-                blockedScopes = if (crossDay) null else emptySet(),
+                blockedScopes = if (needsCheck) null else emptySet(),
             )
             dragAvailabilityJob?.cancel()
             _uiState.update { it.copy(pendingDragReschedule = pending) }
-            if (crossDay) resolveDragAvailability(pending)
+            if (needsCheck) resolveDragAvailability(pending)
             return
         }
 
@@ -3926,12 +3964,25 @@ class HomeViewModel(
         }
 
     /**
-     * The series scopes a cross-day drop of [room] can't use, read from the
-     * stored series (not the snapshot the timeline showed).
+     * The series scopes a drop of [room] can't use, read from the stored series (not the
+     * snapshot the timeline showed). A same-day drop is checked against what the save writes
+     * ([SeriesMove.planSave], [SeriesMove.canSplit]); a cross-day drop with
+     * [RruleShift.dragAvailability].
      */
     private suspend fun blockedDragScopes(room: DisplayEvent.Room, droppedStartTs: Long): Set<EditScope> {
         val master = eventReader.getEventById(room.event.originalEventId ?: room.event.id)
             ?: return setOf(EditScope.ALL_EVENTS, EditScope.THIS_AND_FUTURE)
+        if (!isCrossDayMove(room, droppedStartTs)) {
+            val exceptions = eventReader.getExceptionsForMaster(master.id)
+            val delta = droppedStartTs - room.occurrence.startTs
+            val allEvents = master.copy(startTs = master.startTs + delta, endTs = master.endTs + delta)
+            val draggedLength = room.endTs - room.startTs
+            val thisAndFuture = master.copy(startTs = droppedStartTs, endTs = droppedStartTs + draggedLength)
+            return buildSet {
+                if (SeriesMove.planSave(master, allEvents, master.startTs, exceptions) == null) add(EditScope.ALL_EVENTS)
+                if (!SeriesMove.canSplit(master, room.occurrence.startTs, thisAndFuture, exceptions)) add(EditScope.THIS_AND_FUTURE)
+            }
+        }
         val availability = RruleShift.dragAvailability(
             master = master,
             exceptions = eventReader.getExceptionsForMaster(master.id),
@@ -3989,6 +4040,13 @@ class HomeViewModel(
         isRecurringDevice: Boolean,
         loadedIsAllDay: Boolean,
     ) {
+        val (formStart, _) = formState.toStartEndTs()
+        // A Room series edit that moves the start, zone or all-day flag is checked against the
+        // stored series before its series scopes are offered.
+        val checksMove = !isRecurringDevice && formState.editingEventId != null && (
+            formStart != occurrenceTs || formState.isAllDay != loadedIsAllDay ||
+                (!formState.isAllDay && !ZoneCatalog.sameZone(formState.timezone ?: formState.editingZone, formState.editingZone))
+            )
         _uiState.update {
             it.copy(
                 pendingFormSave = PendingFormSave(
@@ -4000,12 +4058,95 @@ class HomeViewModel(
                     isRecurringDevice = isRecurringDevice,
                     loadedIsAllDay = loadedIsAllDay,
                     occurrenceDateChanged = formState.occurrenceDateChanged(occurrenceTs, loadedIsAllDay),
+                    blockedScopes = if (checksMove) null else emptySet(),
                 )
             )
         }
+        formScopeCheckJob?.cancel()
+        if (!checksMove) return
+        val editingId = formState.editingEventId ?: return
+        formScopeCheckJob = viewModelScope.launch {
+            val blocked = withContext(ioDispatcher) {
+                try {
+                    formBlockedScopes(formState, editingId, occurrenceTs)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.w(TAG, "Couldn't check the form save's scopes", e)
+                    setOf(EditScope.ALL_EVENTS, EditScope.THIS_AND_FUTURE)
+                }
+            }
+            _uiState.update { state ->
+                val pending = state.pendingFormSave
+                if (pending != null && pending.formState == formState) {
+                    state.copy(pendingFormSave = pending.copy(blockedScopes = blocked))
+                } else {
+                    state
+                }
+            }
+        }
+    }
+
+    private var formScopeCheckJob: Job? = null
+
+    /**
+     * The series scopes a form save of [formState] can't use: what [saveEvent] would write for
+     * each, planned against the stored series ([SeriesMove.planSave], [SeriesMove.canSplit]).
+     */
+    private suspend fun formBlockedScopes(formState: org.onekash.kashcal.ui.components.EventFormState, editingId: Long, occurrenceTs: Long): Set<EditScope> {
+        val loaded = eventReader.getEventById(editingId) ?: return setOf(EditScope.ALL_EVENTS, EditScope.THIS_AND_FUTURE)
+        val master = loaded.originalEventId?.let { eventReader.getEventById(it) } ?: loaded
+        val exceptions = eventReader.getExceptionsForMaster(master.id)
+        return buildSet {
+            val all = seriesEdit(formState, master, EditScope.ALL_EVENTS, openedOnException = loaded.originalEventId != null)
+            if (all != null && SeriesMove.planSave(master, all, master.startTs, exceptions) == null) add(EditScope.ALL_EVENTS)
+            val future = seriesEdit(formState, master, EditScope.THIS_AND_FUTURE, openedOnException = loaded.originalEventId != null)
+            if (future != null && !SeriesMove.canSplit(master, occurrenceTs, future, exceptions)) add(EditScope.THIS_AND_FUTURE)
+        }
+    }
+
+    /**
+     * The series start, end, all-day flag, zone and rule an All events or This and future save
+     * of [formState] writes over [master], or null when All events refuses a date change made
+     * on a later occurrence. One computation for [saveEvent] and its scope check.
+     */
+    private fun seriesEdit(
+        formState: org.onekash.kashcal.ui.components.EventFormState,
+        master: org.onekash.kashcal.data.db.entity.Event,
+        scope: EditScope,
+        openedOnException: Boolean,
+    ): org.onekash.kashcal.data.db.entity.Event? {
+        val (startTs, endTs) = formState.toStartEndTs()
+        val (seriesStart, seriesEnd) = if (scope == EditScope.ALL_EVENTS) {
+            // "All events" from a form opened on a later occurrence: the form holds that
+            // occurrence's date, but the series starts earlier. Keep the series' own first date
+            // so no occurrence before this one is cut; only a changed clock time or zone moves it.
+            // A changed date isn't offered for a later occurrence (the scope sheet withholds All
+            // events), so it is refused here too.
+            val later = formState.editingOccurrenceTs?.takeIf { openedOn ->
+                !openedOnException && !master.rrule.isNullOrEmpty() && openedOn > master.startTs
+            }
+            if (later != null && formState.occurrenceDateChanged(later, master.isAllDay)) return null
+            later?.let { formState.startEndAnchoredToSeries(it, master.startTs, master.isAllDay, master.timezone) } ?: (startTs to endTs)
+        } else {
+            startTs to endTs
+        }
+        return master.copy(
+            startTs = seriesStart,
+            endTs = seriesEnd,
+            isAllDay = formState.isAllDay,
+            timezone = if (formState.isAllDay) null else (formState.timezone ?: master.timezone),
+            rrule = formState.rrule,
+        )
+    }
+
+    /** Clears the form's inline save error, when the form closes. */
+    fun clearFormSaveError() {
+        _uiState.update { it.copy(formSaveError = null) }
     }
 
     fun cancelPendingFormSave() {
+        formScopeCheckJob?.cancel()
         _uiState.update { it.copy(pendingFormSave = null) }
     }
 
@@ -4133,12 +4274,11 @@ class HomeViewModel(
             throw MoveRefusedException("This move can't be applied to $scope")
         }
         val now = System.currentTimeMillis()
+        // The writer rewrites the stored rule for the move ([SeriesMove]).
         if (scope == EditScope.ALL_EVENTS) {
             val start = RruleShift.movedStart(master, occurrenceTs, newStartTs)
-            val rule = master.rrule?.let { RruleShift.shift(it, master.startTs, start, master.timezone, master.isAllDay) }
-                ?: throw MoveRefusedException("The repeat rule can't follow this move")
             eventCoordinator.updateEvent(
-                master.copy(startTs = start, endTs = start + (master.endTs - master.startTs), rrule = rule, updatedAt = now)
+                master.copy(startTs = start, endTs = start + (master.endTs - master.startTs), updatedAt = now)
             )
         } else {
             val draggedDuration = room.endTs - room.startTs
@@ -4146,13 +4286,11 @@ class HomeViewModel(
                 masterEventId = masterId,
                 splitTimeMs = occurrenceTs,
                 changes = { fresh ->
-                    val rule = fresh.rrule?.let { RruleShift.shift(it, occurrenceTs, newStartTs, fresh.timezone, fresh.isAllDay) }
-                        ?: throw MoveRefusedException("The repeat rule can't follow this move")
                     // The check refused any deleted or added date from the split on, so the ones
                     // left are all before it. Carried over they could hit a slot of the new series
                     // (a move to an earlier day), so the new series starts without them.
                     fresh.copy(
-                        startTs = newStartTs, endTs = newStartTs + draggedDuration, rrule = rule,
+                        startTs = newStartTs, endTs = newStartTs + draggedDuration,
                         exdate = null, rdate = null, updatedAt = now,
                     )
                 },
@@ -4200,7 +4338,10 @@ class HomeViewModel(
     /**
      * Re-reads the event [move] changes and, when it is as the grid showed it at the drop
      * ([checkRoomMove], [checkDeviceMove]), writes the move through the event's own path:
-     * [EventCoordinator] for a Room event, [DeviceEventWriter] for a device one.
+     * [EventCoordinator] for a Room event, [DeviceEventWriter] for a device one. A Room
+     * occurrence already changed moves as that occurrence of its series
+     * ([EventCoordinator.editSingleOccurrence]), keyed by its original start (RFC 5545
+     * §3.8.4.4), so it stays one override, uploaded with the series on a synced calendar.
      */
     private suspend fun writeMove(move: PendingMove): MoveSaveOutcome {
         val displayEvent = move.original
@@ -4225,7 +4366,21 @@ class HomeViewModel(
                         val isException = event.originalEventId != null
 
                         when {
-                            !isRecurring || isException -> {
+                            isException -> {
+                                // Without its key the occurrence can't be found in its series,
+                                // and writing it would add a second override.
+                                val key = event.originalInstanceTime ?: return@withContext MoveSaveOutcome.CHANGED
+                                eventCoordinator.editSingleOccurrence(
+                                    masterEventId = requireNotNull(event.originalEventId),
+                                    occurrenceTimeMs = key,
+                                    // The occurrence's own row, not the series projection the
+                                    // lambda receives, so its title and other edits stay.
+                                    changes = {
+                                        event.copy(startTs = newStartTs, endTs = newEndTs, updatedAt = System.currentTimeMillis())
+                                    },
+                                )
+                            }
+                            !isRecurring -> {
                                 eventCoordinator.updateEvent(
                                     event.copy(startTs = newStartTs, endTs = newEndTs, updatedAt = System.currentTimeMillis())
                                 )
@@ -4358,6 +4513,9 @@ class HomeViewModel(
         } catch (e: MoveRefusedException) {
             Log.w(TAG, "The stored series no longer allows the move", e)
             MoveSaveOutcome.CHANGED
+        } catch (e: MoveNotExpressibleException) {
+            Log.w(TAG, "The repeat rule can't express the move", e)
+            MoveSaveOutcome.CHANGED
         } catch (e: Exception) {
             Log.e(TAG, "Error rescheduling event", e)
             MoveSaveOutcome.FAILED
@@ -4403,7 +4561,7 @@ class HomeViewModel(
             newEndTs = newEndTs,
         )
         val needsCheck = move.scope != EditScope.THIS_EVENT && original.isSeriesOccurrence &&
-            isCrossDayMove(original, newStartTs)
+            (original is DisplayEvent.Room || isCrossDayMove(original, newStartTs))
         if (!needsCheck) {
             stageMove(retargeted)
             return
@@ -5025,7 +5183,7 @@ class HomeViewModel(
                                 ).also { showError(CalendarError.DeviceCalendar.WriteFailed("Date change on a later occurrence")) }
                             }
                             val (seriesStart, seriesEnd) =
-                                formState.startEndAnchoredToSeries(openedOn, existing.startTs, existing.isAllDay)
+                                formState.startEndAnchoredToSeries(openedOn, existing.startTs, existing.isAllDay, existing.timezone)
                             draft = draft.copy(startTs = seriesStart, endTs = seriesEnd)
                         }
                     }

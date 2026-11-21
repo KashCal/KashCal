@@ -130,11 +130,11 @@ class FastmailExhaustiveRoundTripTest {
     ): RoundTrip = runBlocking {
         val ics = when {
             exceptions.isNotEmpty() ->
-                IcsPatcher.serializeWithExceptions(event, attendees, exceptions)
+                IcsPatcher.serializeWithExceptions(event, null, attendees, exceptions, ownIcs = emptyMap())
             attendees.isNotEmpty() ->
                 IcsPatcher.generateFresh(event, attendees)
             else ->
-                IcsPatcher.serialize(event)
+                IcsPatcher.serialize(event, ics = null)
         }
         assert(ics.contains("UID:")) { "[${event.title}] serializer produced no UID" }
 

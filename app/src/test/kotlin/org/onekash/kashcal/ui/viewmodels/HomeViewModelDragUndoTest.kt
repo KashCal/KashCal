@@ -324,6 +324,7 @@ class HomeViewModelDragUndoTest {
         val viewModel = createViewModel()
 
         viewModel.rescheduleEvent(DisplayEvent.Device(series), dropDate, dropMinutes)
+        advanceUntilIdle()
         viewModel.confirmReschedule(EditScope.THIS_EVENT)
         advanceUntilIdle()
         assertNoProviderWrites()
@@ -332,6 +333,7 @@ class HomeViewModelDragUndoTest {
         assertEquals(1, repo.createdExceptions.size)
 
         viewModel.rescheduleEvent(DisplayEvent.Device(series), dropDate, dropMinutes)
+        advanceUntilIdle()
         viewModel.confirmReschedule(EditScope.THIS_AND_FUTURE)
         advanceUntilIdle()
         assertEquals(0, repo.editedFutureSeries.size)
@@ -348,6 +350,7 @@ class HomeViewModelDragUndoTest {
         val viewModel = createViewModel()
 
         viewModel.rescheduleEvent(room, dropDate, dropMinutes)
+        advanceUntilIdle()
         viewModel.confirmReschedule(EditScope.THIS_EVENT)
         advanceUntilIdle()
         coVerify(exactly = 0) { factory.eventCoordinator.editSingleOccurrence(any(), any(), any(), any()) }
@@ -506,11 +509,14 @@ class HomeViewModelDragUndoTest {
         val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
         val written = mutableListOf<Event>()
         coEvery { factory.eventReader.getEventById(8L) } returns room.event
-        coEvery { factory.eventReader.getExceptionsForMaster(8L) } coAnswers { gate.await(); emptyList() }
+        // The first drop's check reads at once; the moved copy's check waits on the gate.
+        var reads = 0
+        coEvery { factory.eventReader.getExceptionsForMaster(8L) } coAnswers { if (reads++ > 0) gate.await(); emptyList() }
         coEvery { factory.eventCoordinator.updateEvent(capture(written), any()) } returns room.event
         showOnGrid(room)
         val viewModel = createViewModel()
         viewModel.rescheduleEvent(room, dropDate, dropMinutes)
+        advanceUntilIdle()
         viewModel.confirmReschedule(EditScope.ALL_EVENTS)
         val firstId = viewModel.uiState.value.pendingSnackbarId
 
@@ -530,7 +536,10 @@ class HomeViewModelDragUndoTest {
 
         viewModel.endSnackbar()
         advanceUntilIdle()
-        assertTrue("the series moves to Wednesdays", written.single().rrule!!.contains("BYDAY=WE"))
+        // The stored rule goes to the writer, which rewrites it for the move (SeriesMove); the
+        // series start moved a day, to Wednesday.
+        assertEquals(room.event.rrule, written.single().rrule)
+        assertEquals(java.time.DayOfWeek.WEDNESDAY, java.time.Instant.ofEpochMilli(written.single().startTs).atZone(java.time.ZoneId.systemDefault()).dayOfWeek)
     }
 
     @Test
@@ -541,6 +550,7 @@ class HomeViewModelDragUndoTest {
         showOnGrid(DisplayEvent.Device(series))
         val viewModel = createViewModel()
         viewModel.rescheduleEvent(DisplayEvent.Device(series), dropDate, dropMinutes)
+        advanceUntilIdle()
         viewModel.confirmReschedule(EditScope.THIS_AND_FUTURE)
 
         runCurrent()
@@ -556,11 +566,17 @@ class HomeViewModelDragUndoTest {
         val room = roomSeriesOccurrence()
         val written = mutableListOf<Event>()
         coEvery { factory.eventReader.getEventById(8L) } returns room.event
-        coEvery { factory.eventReader.getExceptionsForMaster(8L) } coAnswers { kotlinx.coroutines.awaitCancellation() }
+        // The first drop's check reads at once; the moved copy's check never finishes.
+        var reads = 0
+        coEvery { factory.eventReader.getExceptionsForMaster(8L) } coAnswers {
+            if (reads++ > 0) kotlinx.coroutines.awaitCancellation()
+            emptyList()
+        }
         coEvery { factory.eventCoordinator.updateEvent(capture(written), any()) } returns room.event
         showOnGrid(room)
         val viewModel = createViewModel()
         viewModel.rescheduleEvent(room, dropDate, dropMinutes)
+        advanceUntilIdle()
         viewModel.confirmReschedule(EditScope.ALL_EVENTS)
         runCurrent()
         viewModel.rescheduleEvent(viewModel.weekEvents.value.timedEvents.single(), dropDate.plusDays(1), dropMinutes)
@@ -603,6 +619,7 @@ class HomeViewModelDragUndoTest {
         showOnGrid(room, nextWeek)
         val viewModel = createViewModel()
         viewModel.rescheduleEvent(room, dropDate, dropMinutes)
+        advanceUntilIdle()
         viewModel.confirmReschedule(EditScope.THIS_EVENT)
 
         viewModel.rescheduleEvent(nextWeek, dropDate.plusWeeks(1), dropMinutes)
@@ -626,6 +643,7 @@ class HomeViewModelDragUndoTest {
         showOnGrid(room, nextWeek)
         val viewModel = createViewModel()
         viewModel.rescheduleEvent(room, dropDate, dropMinutes)
+        advanceUntilIdle()
         viewModel.confirmReschedule(EditScope.THIS_AND_FUTURE)
 
         viewModel.rescheduleEvent(nextWeek, dropDate.plusWeeks(1), dropMinutes)
@@ -650,6 +668,7 @@ class HomeViewModelDragUndoTest {
         val viewModel = createViewModel()
 
         viewModel.rescheduleEvent(room, dropDate, dropMinutes)
+        advanceUntilIdle()
         viewModel.confirmReschedule(EditScope.THIS_EVENT)
         val shown = viewModel.pendingMoveState.value!!.shown
         assertEquals("the moved copy opens nothing", false, viewModel.onTimeGridEventTap(shown))
@@ -657,10 +676,12 @@ class HomeViewModelDragUndoTest {
         coVerify(exactly = 1) { factory.eventCoordinator.editSingleOccurrence(any(), any(), any(), any()) }
 
         viewModel.rescheduleEvent(room, dropDate, dropMinutes)
+        advanceUntilIdle()
         viewModel.confirmReschedule(EditScope.THIS_EVENT)
         assertEquals("after one occurrence moved, the rest open", true, viewModel.onTimeGridEventTap(nextWeek))
 
         viewModel.rescheduleEvent(room, dropDate, dropMinutes)
+        advanceUntilIdle()
         viewModel.confirmReschedule(EditScope.ALL_EVENTS)
         assertEquals("after the series moved, its other copies don't", false, viewModel.onTimeGridEventTap(nextWeek))
         assertEquals(PendingMove.State.SAVING, viewModel.pendingMoveState.value!!.state)
@@ -818,8 +839,10 @@ class HomeViewModelDragUndoTest {
         val viewModel = createViewModel()
 
         viewModel.rescheduleEvent(DisplayEvent.Device(series), dropDate, dropMinutes)
+        advanceUntilIdle()
         viewModel.confirmReschedule(EditScope.THIS_EVENT)
         viewModel.rescheduleEvent(DisplayEvent.Device(nextWeek), dropDate.plusWeeks(1), dropMinutes)
+        advanceUntilIdle()
         viewModel.confirmReschedule(EditScope.THIS_EVENT)
         viewModel.endSnackbar()
         advanceUntilIdle()

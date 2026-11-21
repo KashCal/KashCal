@@ -93,15 +93,6 @@ class SingleOccurrenceForShareTest {
     }
 
     @Test
-    fun `rawIcal is cleared so IcsExporter takes the generateFresh path`() {
-        // With rawIcal set, IcsPatcher.patch would keep the ATTENDEE, ORGANIZER and X-* lines
-        // from the server's original ICS body and leak them to the share-card recipient.
-        val withRawIcal = masterEvent.copy(rawIcal = "BEGIN:VCALENDAR\r\n...END:VCALENDAR\r\n")
-        val out = singleOccurrenceForShare(withRawIcal, withRawIcal.startTs, withRawIcal.endTs)
-        assertNull(out.rawIcal)
-    }
-
-    @Test
     fun `organizer fields are cleared`() {
         val withOrganizer = masterEvent.copy(
             organizerEmail = "alice@example.com",

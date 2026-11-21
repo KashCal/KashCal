@@ -1,9 +1,9 @@
 package org.onekash.kashcal.data.db.entity
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.Index
-import androidx.room.PrimaryKey
+import androidx.room3.ColumnInfo
+import androidx.room3.Entity
+import androidx.room3.Index
+import androidx.room3.PrimaryKey
 
 /**
  * Queues a sync operation for a local change to an event in a server calendar.
@@ -129,8 +129,8 @@ data class PendingOperation(
 
     /**
      * Marks an UPDATE as a PARTSTAT-only RSVP. The push then uses
-     * `IcsPatcher.patchAttendeeReply`, which keeps every ATTENDEE of rawIcal and changes only
-     * the user's PARTSTAT; the full-event serializer would write the local attendee table
+     * `IcsPatcher.patchAttendeeReply`, which keeps every ATTENDEE of the stored ICS and changes
+     * only the user's PARTSTAT; the full-event serializer would write the local attendee table
      * instead. Queue state only, not an RFC field.
      */
     @ColumnInfo(name = "partstat_only", defaultValue = "0")

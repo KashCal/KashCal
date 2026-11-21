@@ -1,7 +1,6 @@
 package org.onekash.kashcal.sync.integration.multiserver
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
@@ -28,6 +27,7 @@ import org.onekash.kashcal.sync.provider.icloud.ICloudCredentialProvider
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 import org.onekash.kashcal.sync.util.CaldavUrlNormalizer
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.net.URI
@@ -195,9 +195,7 @@ class MultiServerDiscoveryRefreshStabilityTest(private val config: CalDavServerC
     }
 
     private inner class Env {
-        val db: KashCalDatabase = Room.inMemoryDatabaseBuilder(
-            ApplicationProvider.getApplicationContext<Context>(), KashCalDatabase::class.java,
-        ).allowMainThreadQueries().build().also { databases += it }
+        val db: KashCalDatabase = TestDatabases.inMemory(ApplicationProvider.getApplicationContext<Context>()).allowMainThreadQueries().build().also { databases += it }
         val credentials = mutableMapOf<Long, AccountCredentials>()
         private val credentialManager = object : CredentialManager {
             override fun isEncryptionAvailable() = true

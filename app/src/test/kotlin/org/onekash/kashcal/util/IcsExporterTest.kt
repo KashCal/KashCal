@@ -157,7 +157,7 @@ class IcsExporterTest {
             description = "Test Description"
         )
 
-        val ics = IcsPatcher.serialize(event)
+        val ics = IcsPatcher.serialize(event, null)
 
         // Checks the serialized fields only; nothing is parsed back.
         assertTrue("Should contain VCALENDAR", ics.contains("BEGIN:VCALENDAR"))
@@ -165,6 +165,26 @@ class IcsExporterTest {
         assertTrue("Should contain title", ics.contains("SUMMARY:Round Trip Test"))
         assertTrue("Should contain location", ics.contains("LOCATION:Conference Room"))
         assertTrue("Should contain description", ics.contains("DESCRIPTION:Test Description"))
+    }
+
+    @Test
+    fun `an all-day series exports a timed changed occurrence with a date RECURRENCE-ID`() {
+        // RFC 5545 section 3.8.4.4: RECURRENCE-ID has the series DTSTART's value type.
+        val day = 86_400_000L
+        val start = java.time.LocalDate.parse("2024-03-05").atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
+        val master = createBasicEvent(title = "Holiday", uid = "allday-export@example.test").copy(
+            startTs = start, endTs = start + day - 1, isAllDay = true, rrule = "FREQ=WEEKLY;COUNT=4",
+        )
+        val nineAm = java.time.ZonedDateTime.parse("2024-03-12T09:00:00-04:00[America/New_York]").toInstant().toEpochMilli()
+        val exception = master.copy(
+            id = 2L, rrule = null, originalEventId = 1L, originalInstanceTime = start + 7 * day,
+            startTs = nineAm, endTs = nineAm + 3_600_000L, isAllDay = false, timezone = "America/New_York",
+        )
+
+        val ics = buildCalendarText(listOf(master to listOf(exception)), "Cal").replace(Regex("\r?\n[ \t]"), "")
+
+        assertTrue(ics, ics.contains("RECURRENCE-ID;VALUE=DATE:20240312"))
+        assertTrue(ics, ics.contains("DTSTART;TZID=America/New_York:20240312T090000"))
     }
 
     // ========== Helper Methods ==========

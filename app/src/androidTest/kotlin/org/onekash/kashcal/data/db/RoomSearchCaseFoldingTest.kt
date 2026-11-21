@@ -1,6 +1,6 @@
 package org.onekash.kashcal.data.db
 
-import androidx.room.Room
+import androidx.room3.useReaderConnection
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.runBlocking
@@ -15,11 +15,14 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.search.SearchQuery
+import org.onekash.kashcal.testutil.DeviceTestDatabases
 
 /**
  * Proves on a device that the app's Room search folds case outside ASCII, as the phone's
  * SQLite does for the platform's own calendar search: "врач" finds "Врач" and "ärzte" finds
- * "Ärzte-Termin", while "cafe" does not find "Café".
+ * "Ärzte-Termin", while "cafe" does not find "Café". The database is built with the production
+ * configuration, so it runs on the driver the app uses; a driver whose SQLite lacks the phone's
+ * Unicode case rules fails here.
  */
 @RunWith(AndroidJUnit4::class)
 class RoomSearchCaseFoldingTest {
@@ -29,7 +32,8 @@ class RoomSearchCaseFoldingTest {
 
     @Before
     fun setup() {
-        database = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), KashCalDatabase::class.java)
+        database = DeviceTestDatabases.inMemory(ApplicationProvider.getApplicationContext())
+            .kashCalProductionConfig()
             .build()
         runBlocking {
             val accountId = database.accountsDao().insert(Account(provider = AccountProvider.LOCAL, email = "local"))
@@ -70,6 +74,16 @@ class RoomSearchCaseFoldingTest {
     @Test
     fun germanCaseIsFolded() {
         assertEquals(listOf("Ärzte-Termin"), search("ärzte"))
+    }
+
+    @Test
+    fun theConnectionLowersNonAsciiLetters() {
+        val lowered = runBlocking {
+            database.useReaderConnection { connection ->
+                connection.usePrepared("SELECT lower('ÄÖÜ')") { it.step(); it.getText(0) }
+            }
+        }
+        assertEquals("äöü", lowered)
     }
 
     @Test

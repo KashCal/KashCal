@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d ထပ်မံ</string>
     <string name="tags_autocomplete_create_new">\"%1$s\" ဖန်တီးပါ</string>
     <string name="cd_tag">အမှတ်အသား: %1$s</string>
+    <string name="tags_show_events_click_label">ဤအမှတ်အသားပါသော ပွဲများ ပြရန်</string>
+    <string name="tags_show_events">ပွဲများ ပြရန်</string>
     <string name="cd_tags_move_menu">အမှတ်အသားများ ရွှေ့ရန်</string>
     <string name="tags_move_above_notes">မှတ်စုများ အပေါ်သို့ ရွှေ့ရန်</string>
     <string name="tags_move_below_notes">မှတ်စုများ အောက်သို့ ရွှေ့ရန်</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">ချိန်ကိုက်စက်ရှင်များ ကြည့်ရန် (နောက်ဆုံး ၄၈ နာရီ)</string>
     <string name="settings_import_subtitle">မည်သည့် ပြက္ခဒိန်သို့မဆို ICS ဖိုင်မှ ပွဲများ ထည့်ပါ</string>
     <string name="settings_birthday_reminder">မွေးနေ့ သတိပေးချက်</string>
-    <string name="settings_use_device_timezone">စက် အချိန်ဇုန် သုံးရန်</string>
     <string name="settings_section_calendars">ပြက္ခဒိန်များ &amp; အကောင့်များ</string>
     <string name="settings_section_appearance">အသွင်အပြင်</string>
     <string name="settings_section_creating_events">ပွဲ ဦးစားပေးများ</string>
@@ -461,7 +462,6 @@
     <string name="cd_recurring">ထပ်ခါတလဲလဲ</string>
     <string name="cd_enabled">ဖွင့်ထား</string>
     <string name="cd_sync_error">ချိန်ကိုက် အမှား</string>
-    <string name="cd_select_label">%1$s ရွေးချယ်</string>
     <string name="cd_wheel_picker">ရွေးစရာ %1$d ခုပါ ဘီးရွေးချယ်ကိရိယာ</string>
     <string name="cd_time_entry_keyboard">အချိန်အတိအကျ ထည့်ပါ</string>
     <string name="time_entry_dialog_title">အချိန် ထည့်ပါ</string>
@@ -825,6 +825,23 @@
     <string name="label_ends">ပြီးဆုံး</string>
     <string name="sheet_hint_change_end">အဆုံးကို ပြောင်းရန် ရက်တစ်ရက်ကို တို့ပါ</string>
     <string name="label_timezone">အချိန်ဇုန်</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">မြို့၊ နိုင်ငံ သို့မဟုတ် ဇုန် ရှာရန်</string>
+    <string name="timezone_section_this_event">ဤပွဲ</string>
+    <string name="timezone_section_device">စက်၏ အချိန်ဇုန်</string>
+    <string name="timezone_section_recent">မကြာသေးမီက</string>
+    <string name="timezone_section_all">အချိန်ဇုန် အားလုံး</string>
+    <string name="timezone_offsets_on">%1$s ရှိ အချိန်ကွာခြားချက်များ</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">ပြက္ခဒိန်မှ- %1$s</string>
+    <string name="timezone_shown_in_device_time">စက်၏ အချိန်ဖြင့် ပြသထားသည်</string>
+    <string name="timezone_loading">အချိန်ဇုန်များ ဖွင့်နေသည်…</string>
+    <string name="timezone_no_match">ကိုက်ညီသော အချိန်ဇုန် မရှိပါ</string>
+    <string name="timezone_no_match_hint">မြို့၊ နိုင်ငံ သို့မဟုတ် +5:30 ကဲ့သို့ ကွာခြားချက်ကို စမ်းကြည့်ပါ</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">သတိပေးချက်များ</string>
     <string name="label_add_alert">သတိပေးချက် ထည့်</string>
     <string name="label_recurrence_never">မည်သည့်အခါမျှ</string>
@@ -834,7 +851,6 @@
     <string name="label_default_calendar_hint">ပွဲအသစ်များကို ဤပြက္ခဒိန်တွင် ဖန်တီးပါမည်</string>
     <string name="label_reminders_truncated">%1$d ခု မပြထား (%2$d ခု စုစုပေါင်း, အများဆုံး %3$d ခု ပြင်ဆင်နိုင်)</string>
     <string name="label_found_events">တွေ့ရှိ: ပွဲ %1$d ခု</string>
-    <string name="placeholder_search">ရှာဖွေ…</string>
     <string name="settings_search_placeholder">ဆက်တင်များ ရှာရန်…</string>
     <string name="settings_search_no_results">\"%1$s\" အတွက် ဆက်တင် မတွေ့ပါ</string>
     <string name="cd_search_settings">ဆက်တင်များ ရှာရန်</string>
@@ -1046,6 +1062,8 @@
     <string name="event_untitled">ခေါင်းစဉ်မဲ့ ပွဲ</string>
     <string name="recurring_this_event">ဤပွဲ</string>
     <string name="recurring_all_events">ပွဲအားလုံး</string>
+    <string name="recurring_scope_move_not_expressible">ထပ်ခါတလဲလဲ စည်းမျဉ်းသည် ဤပြောင်းလဲမှုကို လိုက်၍ မရပါ</string>
+    <string name="event_form_move_not_expressible">ထပ်ခါတလဲလဲ စည်းမျဉ်းသည် ဤပြောင်းလဲမှုကို လိုက်၍ မရပါ။ ဘာမှ မသိမ်းဆည်းခဲ့ပါ။</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">တက်ရောက်သူများ</string>
@@ -1121,6 +1139,7 @@
     <string name="search_reason_guest">ဧည့်သည်:</string>
     <string name="search_keep_typing">ရှာရန် ဆက်ရိုက်ပါ</string>
     <string name="search_no_matches">“%1$s” နှင့် ကိုက်ညီသော ပွဲ မရှိပါ</string>
+    <string name="search_no_events_tagged">“%1$s” အမှတ်အသားပါသော ပွဲ မရှိပါ</string>
     <string name="search_lookback_line">ချိန်ကိုက် ပြန်ကြည့်ရာကာလ: %1$s</string>
     <string name="search_sync_settings">ချိန်ကိုက်ခြင်း ဆက်တင်များ</string>
     <string name="cd_search_sync_settings">ချိန်ကိုက် ပြန်ကြည့်ရာကာလ ဆက်တင်ကို ဖွင့်</string>
@@ -1400,6 +1419,13 @@
     <string name="ics_feed_error_access_denied">ဤဖိဒ်၏ ဆာဗာက ဝင်ရောက်ခွင့်ကို ငြင်းပယ်ခဲ့သည်။</string>
     <string name="ics_feed_error_too_large">ဤပြက္ခဒိန်ဖိဒ်သည် ဒေါင်းလုဒ်လုပ်ရန် ကြီးလွန်းသည်။</string>
     <string name="ics_feed_error_unreadable">ဤဖိဒ်၏ ပွဲများကို ပြသ၍မရပါ။</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s” ကို မသိမ်းဆည်းခဲ့ပါ။</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="other">ပွဲ %1$d ခုကို မသိမ်းဆည်းခဲ့ပါ။</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="other">“%2$s” အပါအဝင် ပွဲ %1$d ခုကို မသိမ်းဆည်းခဲ့ပါ။</item>
+    </plurals>
     <string name="insights_title">ထိုးထွင်းသိမြင်မှုများ</string>
     <string name="insights_period_this_week">အပတ်</string>
     <string name="insights_period_last_week">ယခင်အပတ်</string>

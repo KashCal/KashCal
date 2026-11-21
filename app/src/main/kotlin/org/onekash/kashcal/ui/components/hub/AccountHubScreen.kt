@@ -135,9 +135,9 @@ fun AccountHubScreen(
     onRecentChangesClick: () -> Unit = {},
     // Print your week opens the print sheet over the hub, like Share availability.
     onPrintWeekClick: () -> Unit = {},
-    // A slot so tests can stub it: the real section gets an AppearanceViewModel through
-    // hiltViewModel(), which a plain Compose test has no graph for.
-    makeItYours: @Composable () -> Unit = { MakeItYoursSection() },
+    // A slot so tests can stub it; null is the real section, which gets an AppearanceViewModel
+    // through hiltViewModel(), which a plain Compose test has no graph for.
+    makeItYours: (@Composable () -> Unit)? = null,
     // For confirmations that fire while the hub is up, such as the app-lock toggle's. The hub
     // is an opaque overlay above the caller's Scaffold, which would hide the caller's host.
     snackbarHost: @Composable () -> Unit = {},
@@ -199,7 +199,7 @@ fun AccountHubScreen(
 
             // Personalization sits next to the identity avatar.
             HubSectionHeader(stringResource(R.string.hub_section_make_it_yours))
-            makeItYours()
+            if (makeItYours != null) makeItYours() else MakeItYoursSection()
 
             HorizontalDivider(modifier = Modifier.padding(horizontal = 28.dp, vertical = 8.dp))
 

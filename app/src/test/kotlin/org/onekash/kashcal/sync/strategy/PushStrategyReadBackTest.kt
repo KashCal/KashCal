@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import io.mockk.Runs
+import org.onekash.kashcal.testutil.FakeEventIcsSource
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -131,9 +132,7 @@ class PushStrategyReadBackTest {
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
-        coEvery { eventsDao.markCreatedOnServerWithCopy(any(), any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
-        coEvery { eventsDao.markSyncedWithCopy(any(), any(), any(), any()) } just Runs
 
         pushStrategy = PushStrategy(
             calendarRepository = calendarRepository,
@@ -141,7 +140,8 @@ class PushStrategyReadBackTest {
             pendingOperationsDao = pendingOperationsDao,
             accountRepository = accountRepository,
             attendeesDao = attendeesDao,
-            pendingCancelsDao = pendingCancelsDao
+            pendingCancelsDao = pendingCancelsDao,
+            icsSource = FakeEventIcsSource(),
         )
     }
 

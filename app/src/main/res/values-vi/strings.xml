@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d nữa</string>
     <string name="tags_autocomplete_create_new">Tạo \"%1$s\"</string>
     <string name="cd_tag">Thẻ: %1$s</string>
+    <string name="tags_show_events_click_label">Hiển thị sự kiện có thẻ này</string>
+    <string name="tags_show_events">Hiển thị sự kiện</string>
     <string name="cd_tags_move_menu">Di chuyển thẻ</string>
     <string name="tags_move_above_notes">Di chuyển lên trên ghi chú</string>
     <string name="tags_move_below_notes">Di chuyển xuống dưới ghi chú</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Xem phiên đồng bộ (48 giờ gần nhất)</string>
     <string name="settings_import_subtitle">Thêm sự kiện từ tệp ICS vào bất kỳ lịch nào</string>
     <string name="settings_birthday_reminder">Nhắc nhở sinh nhật</string>
-    <string name="settings_use_device_timezone">Dùng múi giờ thiết bị</string>
     <string name="settings_section_calendars">Lịch và tài khoản</string>
     <string name="settings_section_appearance">Giao diện</string>
     <string name="settings_section_creating_events">Tùy chọn sự kiện</string>
@@ -461,7 +462,6 @@
     <string name="cd_recurring">Lặp lại</string>
     <string name="cd_enabled">Đã bật</string>
     <string name="cd_sync_error">Lỗi đồng bộ</string>
-    <string name="cd_select_label">Chọn %1$s</string>
     <string name="cd_wheel_picker">Bộ chọn cuộn với %1$d tùy chọn</string>
     <string name="cd_time_entry_keyboard">Nhập thời gian chính xác</string>
     <string name="time_entry_dialog_title">Nhập thời gian</string>
@@ -825,6 +825,23 @@
     <string name="label_ends">Kết thúc</string>
     <string name="sheet_hint_change_end">Chạm vào một ngày để đổi ngày kết thúc</string>
     <string name="label_timezone">Múi giờ</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Tìm thành phố, quốc gia hoặc múi giờ</string>
+    <string name="timezone_section_this_event">Sự kiện này</string>
+    <string name="timezone_section_device">Múi giờ thiết bị</string>
+    <string name="timezone_section_recent">Gần đây</string>
+    <string name="timezone_section_all">Tất cả múi giờ</string>
+    <string name="timezone_offsets_on">Chênh lệch giờ vào %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Từ lịch: %1$s</string>
+    <string name="timezone_shown_in_device_time">Hiển thị theo giờ thiết bị</string>
+    <string name="timezone_loading">Đang tải múi giờ…</string>
+    <string name="timezone_no_match">Không có múi giờ nào khớp</string>
+    <string name="timezone_no_match_hint">Hãy thử thành phố, quốc gia hoặc độ lệch như +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Nhắc nhở</string>
     <string name="label_add_alert">Thêm nhắc nhở</string>
     <string name="label_recurrence_never">Không bao giờ</string>
@@ -834,7 +851,6 @@
     <string name="label_default_calendar_hint">Sự kiện mới sẽ được tạo trong lịch này</string>
     <string name="label_reminders_truncated">%1$d bị ẩn (tổng %2$d, tối đa chỉnh sửa %3$d)</string>
     <string name="label_found_events">Tìm thấy: %1$d sự kiện</string>
-    <string name="placeholder_search">Tìm kiếm…</string>
     <string name="settings_search_placeholder">Tìm kiếm cài đặt…</string>
     <string name="settings_search_no_results">Không tìm thấy cài đặt nào cho \"%1$s\"</string>
     <string name="cd_search_settings">Tìm kiếm cài đặt</string>
@@ -1046,6 +1062,8 @@
     <string name="event_untitled">Sự kiện không có tiêu đề</string>
     <string name="recurring_this_event">Chỉ sự kiện này</string>
     <string name="recurring_all_events">Tất cả sự kiện</string>
+    <string name="recurring_scope_move_not_expressible">Quy tắc lặp lại không thể theo thay đổi này</string>
+    <string name="event_form_move_not_expressible">Quy tắc lặp lại không thể theo thay đổi này. Chưa lưu gì.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Người tham dự</string>
@@ -1121,6 +1139,7 @@
     <string name="search_reason_guest">Khách:</string>
     <string name="search_keep_typing">Nhập tiếp để tìm kiếm</string>
     <string name="search_no_matches">Không có sự kiện nào khớp với “%1$s”</string>
+    <string name="search_no_events_tagged">Không có sự kiện nào được gắn thẻ “%1$s”</string>
     <string name="search_lookback_line">Khoảng đồng bộ ngược: %1$s</string>
     <string name="search_sync_settings">Cài đặt đồng bộ</string>
     <string name="cd_search_sync_settings">Mở cài đặt khoảng đồng bộ ngược</string>
@@ -1399,6 +1418,13 @@
     <string name="ics_feed_error_access_denied">Máy chủ của nguồn cấp này đã từ chối truy cập.</string>
     <string name="ics_feed_error_too_large">Nguồn cấp lịch này quá lớn để tải xuống.</string>
     <string name="ics_feed_error_unreadable">Không thể hiển thị sự kiện của nguồn cấp này.</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s” không được lưu.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="other">%1$d sự kiện không được lưu.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="other">%1$d sự kiện không được lưu, trong đó có “%2$s”.</item>
+    </plurals>
     <string name="insights_title">Phân tích</string>
     <string name="insights_period_this_week">Tuần</string>
     <string name="insights_period_last_week">Tuần trước</string>

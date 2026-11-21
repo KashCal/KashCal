@@ -1,7 +1,6 @@
 package org.onekash.kashcal.ui.viewmodels
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -17,6 +16,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -42,6 +42,7 @@ import org.onekash.kashcal.domain.model.toEventForDuplicate
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.onekash.kashcal.ui.components.EventFormState
 import org.onekash.kashcal.ui.components.withDuplicateOf
 import org.onekash.kashcal.ui.components.parseIso8601DurationToMinutes
@@ -49,6 +50,8 @@ import org.onekash.kashcal.ui.components.toFormDateFields
 import org.onekash.kashcal.ui.components.withAllDay
 import org.onekash.kashcal.ui.components.withDateFields
 import org.onekash.kashcal.ui.components.withTimedStart
+import org.onekash.kashcal.ui.components.withZonePick
+import org.onekash.kashcal.ui.components.occurrenceDateChanged
 import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.util.TimezoneUtils
 import org.robolectric.RobolectricTestRunner
@@ -63,6 +66,7 @@ import java.time.ZonedDateTime
 import java.util.TimeZone
 import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.domain.search.SearchQuery
+import org.onekash.kashcal.ui.components.timedFormDateFields
 
 /**
  * Tests an "All events" save made from a form opened on a later occurrence of a
@@ -110,7 +114,7 @@ class HomeViewModelRoomAllEventsSeriesDatesTest {
         pinPhoneZone(NEW_YORK)
         Dispatchers.setMain(dispatcher)
         val context: Context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        db = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
         generator = OccurrenceGenerator(db, db.occurrencesDao(), db.eventsDao(), TestDataStoreFactory.createDefault())
@@ -188,7 +192,9 @@ class HomeViewModelRoomAllEventsSeriesDatesTest {
         assertEquals("UTC", saved.timezone)
         assertEquals(start, saved.startTs)
         assertEquals((0..3).map { start + it * 7 * DAY_MS }, occurrenceStarts(id))
-        val upload = org.onekash.kashcal.sync.parser.icaldav.IcsPatcher.serialize(saved).lines()
+        val upload = org.onekash.kashcal.sync.parser.icaldav.IcsPatcher.serialize(
+            saved, org.onekash.kashcal.data.db.EventIcsStore(db).read(saved)
+        ).lines()
         assertTrue(upload.toString(), "DTSTART:20240305T150000Z" in upload)
     }
 
@@ -295,6 +301,288 @@ class HomeViewModelRoomAllEventsSeriesDatesTest {
         assertEquals(ZonedDateTime.of(LocalDate.of(2024, 3, 5), LocalTime.of(9, 0), zone).toInstant().toEpochMilli(), saved.startTs)
         val dates = occurrenceStarts(id).map { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() }
         assertEquals(listOf(5, 12, 19, 26).map { LocalDate.of(2024, 3, it) }, dates)
+    }
+
+    // ---- a zone change from the time zone sheet ----
+
+    @Test
+    fun `moving a weekday series to another zone keeps its days and clock time`() = runTest(dispatcher) {
+        // Tuesdays 10:00 New York would be Wednesdays in Tokyo if the moment were kept.
+        pinPhoneZone("Asia/Tokyo")
+        val id = seed(timedSeriesEvent("byday@example.test").copy(rrule = "FREQ=WEEKLY;BYDAY=TU;COUNT=4"))
+        val form = openForm(id, occurrence(3))
+            .withZonePick(org.onekash.kashcal.ui.components.pickers.ZonePick.Device, "Asia/Tokyo")
+
+        assertTrue(saveAllEvents(form).isSuccess)
+
+        val tokyo = ZoneId.of("Asia/Tokyo")
+        val expected = (0..3).map { ZonedDateTime.of(LocalDate.of(2024, 3, 5).plusWeeks(it.toLong()), LocalTime.of(10, 0), tokyo).toInstant().toEpochMilli() }
+        assertEquals("Asia/Tokyo", event(id).timezone)
+        assertEquals(expected.first(), event(id).startTs)
+        assertEquals(expected, occurrenceStarts(id))
+        // What any later regeneration, or a server, expands from the stored series.
+        generator.regenerateOccurrences(event(id))
+        assertEquals(expected, occurrenceStarts(id))
+    }
+
+    @Test
+    fun `a zone picked for one occurrence saves that time and keeps the series zone`() = runTest(dispatcher) {
+        // The occurrence keeps the series' zone so its RECURRENCE-ID matches the series; the
+        // picked zone only decides the moment the form saves.
+        val id = seedTimedSeries()
+        val form = openForm(id, occurrence(3))
+            .withZonePick(org.onekash.kashcal.ui.components.pickers.ZonePick.Set("Asia/Tokyo"), NEW_YORK)
+
+        val result = viewModel.saveEvent(form, EditScope.THIS_EVENT)
+        advanceUntilIdle()
+        assertTrue(result.isSuccess)
+
+        val exception = db.eventsDao().getExceptionsForMaster(id).single()
+        assertEquals(NEW_YORK, exception.timezone)
+        val tokyo10am = ZonedDateTime.of(LocalDate.of(2024, 3, 19), LocalTime.of(10, 0), ZoneId.of("Asia/Tokyo"))
+        assertEquals(tokyo10am.toInstant().toEpochMilli(), exception.startTs)
+    }
+
+    // ---- a series move from the form keeps its rule, deletions, changes and end ----
+
+    @Test
+    fun `moving the first occurrence a day moves the weekday rule with it`() = runTest(dispatcher) {
+        // Tuesdays 10:00 from 5 Mar 2024, COUNT=4; the first occurrence moves to Wednesday.
+        val id = seed(timedSeriesEvent("v2@example.test").copy(rrule = "FREQ=WEEKLY;BYDAY=TU;COUNT=4"))
+        val opened = openForm(id, occurrence(1))
+        val form = opened.withDateFields(timedFormDateFields(occurrence(1) + DAY_MS, occurrence(1) + DAY_MS + HOUR_MS, NEW_YORK))
+
+        assertTrue(saveAllEvents(form).isSuccess)
+
+        assertEquals("FREQ=WEEKLY;BYDAY=WE;COUNT=4", event(id).rrule)
+        val days = occurrenceStarts(id).map { Instant.ofEpochMilli(it).atZone(ZoneId.of(NEW_YORK)).toLocalDate() }
+        assertEquals(listOf(6, 13, 20, 27).map { LocalDate.of(2024, 3, it) }, days)
+    }
+
+    @Test
+    fun `this and future moved a day keeps the opened occurrence and the total`() = runTest(dispatcher) {
+        val id = seed(timedSeriesEvent("nr3@example.test").copy(rrule = "FREQ=WEEKLY;BYDAY=TU;COUNT=4"))
+        val opened = openForm(id, occurrence(3))
+        val wed = occurrence(3) + DAY_MS
+        val form = opened.withDateFields(timedFormDateFields(wed, wed + HOUR_MS, NEW_YORK))
+
+        val result = viewModel.saveEvent(form, EditScope.THIS_AND_FUTURE)
+        advanceUntilIdle()
+        assertTrue(result.isSuccess)
+
+        val newSeries = result.getOrThrow()
+        assertEquals(wed, newSeries.startTs)
+        assertEquals(listOf(wed, wed + 7 * DAY_MS), occurrenceStarts(newSeries.id))
+        assertEquals(listOf(occurrence(1), occurrence(2)), occurrenceStarts(id))
+    }
+
+    @Test
+    fun `a new time keeps a changed occurrence, a deletion and the last day`() = runTest(dispatcher) {
+        // Weekly Tuesdays 10:00 New York, 5 to 26 Mar (UNTIL = last second of 26 Mar).
+        val id = seed(timedSeriesEvent("r22@example.test").copy(rrule = "FREQ=WEEKLY;UNTIL=20240327T035959Z"))
+        val single = openForm(id, occurrence(2)).copy(title = "Renamed")
+        assertTrue(viewModel.saveEvent(single, EditScope.THIS_EVENT).also { advanceUntilIdle() }.isSuccess)
+        coordinator.deleteSingleOccurrence(id, occurrence(3))
+        advanceUntilIdle()
+
+        val opened = openForm(id, occurrence(1))
+        val form = opened.withTimedStart(opened.dateMillis, 11, 0, defaultDurationMinutes = 60)
+        assertTrue(saveAllEvents(form).isSuccess)
+
+        val at11 = { n: Int -> newYork(LocalDate.of(2024, 3, 5).plusWeeks(n - 1L), 11, 0) }
+        assertEquals("${at11(3)}", event(id).exdate)
+        assertEquals(at11(2), db.eventsDao().getExceptionsForMaster(id).single().originalInstanceTime)
+        val rows = db.occurrencesDao().getForEvent(id).filter { !it.isCancelled }.map { it.startTs }.sorted()
+        assertEquals(listOf(at11(1), at11(2), at11(4)), rows)
+    }
+
+    @Test
+    fun `an edit the rule can't express is greyed out and refused`() = runTest(dispatcher) {
+        // Second Tuesday of each month: moving it a day can't be written as a rule.
+        val first = newYork(LocalDate.of(2024, 3, 12), 10, 0)
+        val id = seed(timedSeriesEvent("monthly@example.test").copy(startTs = first, endTs = first + HOUR_MS, rrule = "FREQ=MONTHLY;BYDAY=2TU;COUNT=4"))
+        val opened = openForm(id, first)
+        val form = opened.withDateFields(timedFormDateFields(first + DAY_MS, first + DAY_MS + HOUR_MS, NEW_YORK))
+
+        requestSave(form, first, event(id), isDetachedException = false)
+        // The check reads the stored series through Room's own threads.
+        for (attempt in 0 until 100) {
+            if (viewModel.uiState.value.pendingFormSave?.blockedScopes != null) break
+            advanceUntilIdle()
+            Thread.sleep(20)
+        }
+        val pending = viewModel.uiState.value.pendingFormSave!!
+        // Opened on the first occurrence, so This and future is the same in-place edit and is
+        // refused too.
+        assertEquals(setOf(EditScope.ALL_EVENTS, EditScope.THIS_AND_FUTURE), pending.blockedScopes)
+        val resources = ApplicationProvider.getApplicationContext<Context>().resources
+        val options = computeEditScopeOptions(pending.toScopeContext(), pending.originalRrule, form.rrule, resources, pending.blockedScopes)
+        val all = options.single { it.scope == EditScope.ALL_EVENTS }
+        assertFalse(all.enabled)
+        assertEquals(resources.getString(org.onekash.kashcal.R.string.recurring_scope_move_not_expressible), all.reason)
+
+        viewModel.cancelPendingFormSave()
+        val before = event(id)
+        val result = saveAllEvents(form)
+        assertTrue(result.exceptionOrNull() is org.onekash.kashcal.domain.rrule.MoveNotExpressibleException)
+        assertEquals(before, event(id))
+        assertNotNull("the form shows why nothing saved", viewModel.uiState.value.formSaveError)
+        viewModel.clearFormSaveError()
+        assertNull("closing or reopening the form clears it", viewModel.uiState.value.formSaveError)
+    }
+
+    @Test
+    fun `a refused edit with a calendar change moves nothing`() = runTest(dispatcher) {
+        val first = newYork(LocalDate.of(2024, 3, 12), 10, 0)
+        val id = seed(timedSeriesEvent("monthly-move@example.test").copy(startTs = first, endTs = first + HOUR_MS, rrule = "FREQ=MONTHLY;BYDAY=2TU;COUNT=4"))
+        val form = openForm(id, first).let { it.withDateFields(timedFormDateFields(first + DAY_MS, first + DAY_MS + HOUR_MS, NEW_YORK)) }
+            .copy(selectedCalendarId = otherCalendarId)
+
+        assertTrue(saveAllEvents(form).isFailure)
+
+        assertEquals(calendarId, event(id).calendarId)
+        assertEquals(listOf<String>(), operations(id))
+    }
+
+    // ---- an end date changed in the same save ----
+
+    @Test
+    fun `a new time and a new end date for all events keeps the new end date`() = runTest(dispatcher) {
+        // Daily 10:00 New York, Mar 20 to Mar 26 2024; the user moves it to 11:00 and picks Apr 30.
+        val first = newYork(LocalDate.of(2024, 3, 20), 10, 0)
+        val id = seed(timedSeriesEvent("new-until@example.test").copy(
+            startTs = first, endTs = first + HOUR_MS, rrule = "FREQ=DAILY;UNTIL=20240327T035959Z",
+        ))
+        val opened = openForm(id, first)
+        val form = opened.withTimedStart(opened.dateMillis, 11, 0, defaultDurationMinutes = 60)
+            .copy(rrule = "FREQ=DAILY;UNTIL=20240501T035959Z")
+
+        assertTrue(saveAllEvents(form).isSuccess)
+
+        val dates = occurrenceStarts(id).map { Instant.ofEpochMilli(it).atZone(ZoneId.of(NEW_YORK)).toLocalDate() }
+        assertEquals(LocalDate.of(2024, 4, 30), dates.last())
+        assertEquals(LocalDate.of(2024, 3, 20), dates.first())
+    }
+
+    @Test
+    fun `turning an until series all-day from a later occurrence for this and future keeps its last day`() = runTest(dispatcher) {
+        // Daily 10:00 New York, Mar 20 to Mar 26 2024; from Mar 22 on, all-day.
+        val first = newYork(LocalDate.of(2024, 3, 20), 10, 0)
+        val id = seed(timedSeriesEvent("until-allday@example.test").copy(
+            startTs = first, endTs = first + HOUR_MS, rrule = "FREQ=DAILY;UNTIL=20240327T035959Z",
+        ))
+        val opened = newYork(LocalDate.of(2024, 3, 22), 10, 0)
+        val form = openForm(id, opened).withAllDay(true, defaultReminderTimed = 15, defaultReminderAllDay = 1440)
+
+        val result = viewModel.saveEvent(form, EditScope.THIS_AND_FUTURE).also { advanceUntilIdle() }
+
+        assertTrue("the split saves: ${result.exceptionOrNull()}", result.isSuccess)
+        val created = db.eventsDao().getAllMasterEventsForCalendar(event(id).calendarId).single { it.id != id }
+        val dates = occurrenceStarts(created.id).map { Instant.ofEpochMilli(it).atZone(java.time.ZoneOffset.UTC).toLocalDate() }
+        assertEquals((22..26).map { LocalDate.of(2024, 3, it) }, dates)
+        assertEquals(2, occurrenceStarts(id).size)
+    }
+
+    // ---- zone change probes (keep the clock time) ----
+
+    private fun at(zone: String, date: LocalDate, hour: Int, minute: Int = 0): Long =
+        ZonedDateTime.of(date, LocalTime.of(hour, minute), ZoneId.of(zone)).toInstant().toEpochMilli()
+
+    @Test
+    fun `a zone with the same offset that day still moves the series to its clock time`() = runTest(dispatcher) {
+        // Weekly 10:00 London from Mon 1 Jul 2024 (BST). On 6 Jan 2025 10:00 London is 10:00 UTC,
+        // so picking UTC there leaves that occurrence's instant unchanged.
+        val first = at("Europe/London", LocalDate.of(2024, 7, 1), 10)
+        val id = seed(timedSeriesEvent("london@example.test").copy(
+            startTs = first, endTs = first + HOUR_MS, timezone = "Europe/London", rrule = "FREQ=WEEKLY;COUNT=30",
+        ))
+        val opened = at("Europe/London", LocalDate.of(2025, 1, 6), 10)
+        val form = openForm(id, opened).withZonePick(org.onekash.kashcal.ui.components.pickers.ZonePick.Set("UTC"), NEW_YORK)
+
+        assertTrue(saveAllEvents(form).isSuccess)
+
+        assertEquals(at("UTC", LocalDate.of(2024, 7, 1), 10), event(id).startTs)
+    }
+
+    @Test
+    fun `a series with an end date keeps its last day after a zone change`() = runTest(dispatcher) {
+        // Daily 10:00 New York, Mar 20 to Mar 26 2024; the end as the repeat picker writes it,
+        // the last second of Mar 26 in New York.
+        val first = newYork(LocalDate.of(2024, 3, 20), 10, 0)
+        val id = seed(timedSeriesEvent("until@example.test").copy(
+            startTs = first, endTs = first + HOUR_MS, rrule = "FREQ=DAILY;UNTIL=20240327T035959Z",
+        ))
+        val form = openForm(id, first).withZonePick(org.onekash.kashcal.ui.components.pickers.ZonePick.Set("Asia/Tokyo"), NEW_YORK)
+
+        assertTrue(saveAllEvents(form).isSuccess)
+
+        val tokyo = ZoneId.of("Asia/Tokyo")
+        val dates = occurrenceStarts(id).map { Instant.ofEpochMilli(it).atZone(tokyo).toLocalDate() }
+        assertEquals((20..26).map { LocalDate.of(2024, 3, it) }, dates)
+    }
+
+    @Test
+    fun `moving a daily series a day keeps two changed occurrences a day apart`() = runTest(dispatcher) {
+        // Daily 09:00 New York from Thu 4 Jan 2024, renamed on 5 and 6 Jan; the series moves to
+        // 5 Jan. The 5 Jan key moves onto 6 Jan, where the other changed occurrence sits until
+        // it moves.
+        val day = { d: Int -> newYork(LocalDate.of(2024, 1, d), 9, 0) }
+        val id = seed(timedSeriesEvent("daily-pair@example.test").copy(
+            startTs = day(4), endTs = day(4) + HOUR_MS, rrule = "FREQ=DAILY;COUNT=6",
+        ))
+        for (d in listOf(5, 6)) {
+            val single = openForm(id, day(d)).copy(title = "Changed $d")
+            assertTrue(viewModel.saveEvent(single, EditScope.THIS_EVENT).also { advanceUntilIdle() }.isSuccess)
+        }
+        val opened = openForm(id, day(4))
+        val moved = opened.withTimedStart(opened.dateMillis + DAY_MS, 9, 0, defaultDurationMinutes = 60)
+
+        val result = saveAllEvents(moved)
+
+        assertTrue("the move saves: ${result.exceptionOrNull()}", result.isSuccess)
+        val keys = db.eventsDao().getExceptionsForMaster(id).associate { it.title to it.originalInstanceTime }
+        assertEquals(mapOf("Changed 5" to day(6), "Changed 6" to day(7)), keys)
+    }
+
+    @Test
+    fun `a changed occurrence stays matched to its series after a zone change`() = runTest(dispatcher) {
+        val id = seedTimedSeries()
+        val single = openForm(id, occurrence(3)).copy(title = "Moved standup")
+        assertTrue(viewModel.saveEvent(single, EditScope.THIS_EVENT).also { advanceUntilIdle() }.isSuccess)
+
+        val form = openForm(id, occurrence(1)).withZonePick(org.onekash.kashcal.ui.components.pickers.ZonePick.Set("Asia/Tokyo"), NEW_YORK)
+        assertTrue(saveAllEvents(form).isSuccess)
+        generator.regenerateOccurrences(event(id))
+
+        val rows = db.occurrencesDao().getForEvent(id)
+        assertEquals(4, rows.size)
+        assertEquals(1, rows.count { it.exceptionEventId != null })
+    }
+
+    @Test
+    fun `a series stored without a zone is not a date change after a zone pick`() = runTest(dispatcher) {
+        // Tuesdays 22:00 on the phone (New York) is Wednesday in Tokyo.
+        val first = newYork(LocalDate.of(2024, 3, 5), 22, 0)
+        val id = seed(timedSeriesEvent("nozone@example.test").copy(startTs = first, endTs = first + HOUR_MS, timezone = null))
+        val opened = first + 14 * DAY_MS
+        val form = openForm(id, opened).withZonePick(org.onekash.kashcal.ui.components.pickers.ZonePick.Set("Asia/Tokyo"), NEW_YORK)
+
+        assertFalse(form.occurrenceDateChanged(opened, occurrenceIsAllDay = false))
+    }
+
+    @Test
+    fun `a zone-only change from the first occurrence moves the summer occurrences too`() = runTest(dispatcher) {
+        // Weekly 10:00 London from Mon 6 Jan 2025 (GMT): picking UTC keeps the first instant,
+        // but the July occurrences move from 09:00Z (BST) to 10:00Z.
+        val first = at("Europe/London", LocalDate.of(2025, 1, 6), 10)
+        val id = seed(timedSeriesEvent("london-winter@example.test").copy(
+            startTs = first, endTs = first + HOUR_MS, timezone = "Europe/London", rrule = "FREQ=WEEKLY;COUNT=30",
+        ))
+        val form = openForm(id, first).withZonePick(org.onekash.kashcal.ui.components.pickers.ZonePick.Set("UTC"), NEW_YORK)
+
+        assertTrue(saveAllEvents(form).isSuccess)
+
+        assertTrue(at("UTC", LocalDate.of(2025, 7, 7), 10) in occurrenceStarts(id))
     }
 
     // ---- an unchanged save ----
@@ -688,6 +976,9 @@ class HomeViewModelRoomAllEventsSeriesDatesTest {
             editingEventId = id,
             isEditMode = true,
             editingOccurrenceTs = occurrenceTs,
+            editingZone = if (e.isAllDay) null else {
+                e.timezone?.takeIf { TimezoneUtils.resolveZoneOrNull(it) != null } ?: TimezoneUtils.getDeviceTimezone()
+            },
             transp = e.transp,
             eventColor = e.color,
             categories = e.categories.orEmpty(),

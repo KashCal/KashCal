@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.integration
 
 import android.util.Log
+import org.onekash.kashcal.testutil.FakeEventIcsSource
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -127,7 +128,8 @@ class ZohoCalDavTest {
             dataStore = dataStore,
             inviteNotifier = mockk(relaxed = true),
             accountRepository = mockk(relaxed = true),
-            reminderScheduler = mockk(relaxed = true)
+            reminderScheduler = mockk(relaxed = true),
+            icsSource = FakeEventIcsSource(),
         )
     }
 

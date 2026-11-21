@@ -1,9 +1,9 @@
 package org.onekash.kashcal.data.ics
 
 /**
- * Builds the stored copy of each UID group of an imported .ics file: the text
- * [org.onekash.kashcal.data.db.entity.Event.rawIcal] holds for every row of that group, as the
- * pull stores a server's resource on every row.
+ * Builds the stored copy of each UID group of an imported .ics file: the text the group's series
+ * keeps as its stored ICS ([org.onekash.kashcal.data.db.EventIcsSource]), as the pull keeps a
+ * server's resource.
  *
  * A copy is the file's VCALENDAR reduced to one UID: its calendar-level lines except METHOD (a
  * stored resource carries none, RFC 4791 §4.1), the VTIMEZONEs its VEVENTs name, and that UID's

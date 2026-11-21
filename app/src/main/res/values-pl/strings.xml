@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d więcej</string>
     <string name="tags_autocomplete_create_new">Utwórz \"%1$s\"</string>
     <string name="cd_tag">Tag: %1$s</string>
+    <string name="tags_show_events_click_label">Pokaż wydarzenia z tym tagiem</string>
+    <string name="tags_show_events">Pokaż wydarzenia</string>
     <string name="cd_tags_move_menu">Przenieś tagi</string>
     <string name="tags_move_above_notes">Przenieś nad notatki</string>
     <string name="tags_move_below_notes">Przenieś pod notatki</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Pokaż sesje synchronizacji (ostatnie 48 godzin)</string>
     <string name="settings_import_subtitle">Dodaj wydarzenia z pliku ICS do dowolnego kalendarza</string>
     <string name="settings_birthday_reminder">Przypomnienie o urodzinach</string>
-    <string name="settings_use_device_timezone">Użyj strefy czasowej urządzenia</string>
     <string name="settings_section_calendars">Kalendarze i konta</string>
     <string name="settings_section_appearance">Wygląd</string>
     <string name="settings_section_creating_events">Preferencje wydarzeń</string>
@@ -464,7 +465,6 @@
     <string name="cd_recurring">Powtarzające się</string>
     <string name="cd_enabled">Włączone</string>
     <string name="cd_sync_error">Błąd synchronizacji</string>
-    <string name="cd_select_label">Wybierz %1$s</string>
     <string name="cd_wheel_picker">Pokrętło wyboru z %1$d opcjami</string>
     <string name="cd_time_entry_keyboard">Wprowadź dokładny czas</string>
     <string name="time_entry_dialog_title">Wprowadź czas</string>
@@ -858,6 +858,23 @@
     <string name="label_ends">Kończy się</string>
     <string name="sheet_hint_change_end">Dotknij dnia, aby zmienić koniec</string>
     <string name="label_timezone">Strefa czasowa</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Szukaj miasta, kraju lub strefy</string>
+    <string name="timezone_section_this_event">To wydarzenie</string>
+    <string name="timezone_section_device">Strefa czasowa urządzenia</string>
+    <string name="timezone_section_recent">Ostatnie</string>
+    <string name="timezone_section_all">Wszystkie strefy czasowe</string>
+    <string name="timezone_offsets_on">Przesunięcia na dzień %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Z kalendarza: %1$s</string>
+    <string name="timezone_shown_in_device_time">Wyświetlane w czasie urządzenia</string>
+    <string name="timezone_loading">Wczytywanie stref czasowych…</string>
+    <string name="timezone_no_match">Brak pasujących stref czasowych</string>
+    <string name="timezone_no_match_hint">Spróbuj miasta, kraju lub przesunięcia, np. +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Alerty</string>
     <string name="label_add_alert">Dodaj alert</string>
     <string name="label_recurrence_never">Nigdy</string>
@@ -867,7 +884,6 @@
     <string name="label_default_calendar_hint">Nowe wydarzenia będą tworzone w tym kalendarzu</string>
     <string name="label_reminders_truncated">%1$d niepokazanych (%2$d łącznie, maks. %3$d edytowalnych)</string>
     <string name="label_found_events">Znaleziono: %1$d wydarzeń</string>
-    <string name="placeholder_search">Szukaj…</string>
     <string name="settings_search_placeholder">Szukaj w ustawieniach…</string>
     <string name="settings_search_no_results">Nie znaleziono ustawień dla \"%1$s\"</string>
     <string name="cd_search_settings">Szukaj w ustawieniach</string>
@@ -1199,6 +1215,8 @@
     <string name="event_untitled">Wydarzenie bez tytułu</string>
     <string name="recurring_this_event">To wydarzenie</string>
     <string name="recurring_all_events">Wszystkie wydarzenia</string>
+    <string name="recurring_scope_move_not_expressible">Reguła powtarzania nie może uwzględnić tej zmiany</string>
+    <string name="event_form_move_not_expressible">Reguła powtarzania nie może uwzględnić tej zmiany. Nic nie zostało zapisane.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Uczestnicy</string>
@@ -1295,6 +1313,7 @@
     <string name="search_reason_guest">Gość:</string>
     <string name="search_keep_typing">Pisz dalej, aby wyszukać</string>
     <string name="search_no_matches">Brak wydarzeń pasujących do „%1$s”</string>
+    <string name="search_no_events_tagged">Brak wydarzeń otagowanych „%1$s”</string>
     <string name="search_lookback_line">Zakres synchronizacji wstecz: %1$s</string>
     <string name="search_sync_settings">Ustawienia synchronizacji</string>
     <string name="cd_search_sync_settings">Otwórz zakres synchronizacji wstecz</string>
@@ -1627,6 +1646,19 @@
     <string name="ics_feed_error_access_denied">Serwer tego kanału odmówił dostępu.</string>
     <string name="ics_feed_error_too_large">Ten kanał kalendarza jest zbyt duży, aby go pobrać.</string>
     <string name="ics_feed_error_unreadable">Nie udało się wyświetlić wydarzeń z tego kanału.</string>
+    <string name="ics_feed_error_event_not_saved">Wydarzenie „%1$s” nie zostało zapisane.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d wydarzenie nie zostało zapisane.</item>
+        <item quantity="few">%1$d wydarzenia nie zostały zapisane.</item>
+        <item quantity="many">%1$d wydarzeń nie zostało zapisanych.</item>
+        <item quantity="other">%1$d wydarzenia nie zostało zapisane.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d wydarzenie nie zostało zapisane, w tym „%2$s”.</item>
+        <item quantity="few">%1$d wydarzenia nie zostały zapisane, w tym „%2$s”.</item>
+        <item quantity="many">%1$d wydarzeń nie zostało zapisanych, w tym „%2$s”.</item>
+        <item quantity="other">%1$d wydarzenia nie zostało zapisane, w tym „%2$s”.</item>
+    </plurals>
     <string name="insights_title">Statystyki</string>
     <string name="insights_period_this_week">Tydzień</string>
     <string name="insights_period_last_week">Ost. tydzień</string>

@@ -1,7 +1,6 @@
 package org.onekash.kashcal.domain.reader
 
 import android.provider.CalendarContract.Attendees
-import androidx.room.Room
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
@@ -30,6 +29,7 @@ import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.LocalDate
@@ -73,7 +73,7 @@ class DisplayEventRepositoryPrintReadTest {
         startMs = weekStart.atStartOfDay(zone).toInstant().toEpochMilli()
         endMs = weekStart.plusDays(7).atStartOfDay(zone).toInstant().toEpochMilli()
 
-        database = Room.inMemoryDatabaseBuilder(f.context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(f.context)
             .allowMainThreadQueries()
             .build()
         generator = OccurrenceGenerator(

@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d තවත්</string>
     <string name="tags_autocomplete_create_new">\"%1$s\" සාදන්න</string>
     <string name="cd_tag">ටැගය: %1$s</string>
+    <string name="tags_show_events_click_label">මෙම ටැගය සහිත සිදුවීම් පෙන්වන්න</string>
+    <string name="tags_show_events">සිදුවීම් පෙන්වන්න</string>
     <string name="cd_tags_move_menu">ටැග ගෙන යන්න</string>
     <string name="tags_move_above_notes">සටහන් ඉහළට ගෙන යන්න</string>
     <string name="tags_move_below_notes">සටහන් පහළට ගෙන යන්න</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">සමමුහුර්ත සැසි බලන්න (පසුගිය පැය 48)</string>
     <string name="settings_import_subtitle">ICS ගොනුවකින් ඕනෑම දින දර්ශනයකට සිදුවීම් එකතු කරන්න</string>
     <string name="settings_birthday_reminder">උපන්දින මතක්කිරීම</string>
-    <string name="settings_use_device_timezone">උපාංග වේලා කලාපය භාවිත කරන්න</string>
     <string name="settings_section_calendars">දින දර්ශන &amp; ගිණුම්</string>
     <string name="settings_section_appearance">පෙනුම</string>
     <string name="settings_section_creating_events">සිදුවීම් අභිප්‍රේත</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">පුනරාවර්තන</string>
     <string name="cd_enabled">සක්‍රියයි</string>
     <string name="cd_sync_error">සමමුහුර්ත දෝෂය</string>
-    <string name="cd_select_label">%1$s තෝරන්න</string>
     <string name="cd_wheel_picker">විකල්ප %1$d ක් සහිත රෝද තෝරනය</string>
     <string name="cd_time_entry_keyboard">නිශ්චිත වේලාව ඇතුළු කරන්න</string>
     <string name="time_entry_dialog_title">වේලාව ඇතුළු කරන්න</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">අවසානය</string>
     <string name="sheet_hint_change_end">අවසානය වෙනස් කිරීමට දිනයක් තට්ටු කරන්න</string>
     <string name="label_timezone">වේලා කලාපය</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">නගරය, රට හෝ කලාපය සොයන්න</string>
+    <string name="timezone_section_this_event">මෙම සිදුවීම</string>
+    <string name="timezone_section_device">උපාංගයේ වේලා කලාපය</string>
+    <string name="timezone_section_recent">මෑත</string>
+    <string name="timezone_section_all">සියලු වේලා කලාප</string>
+    <string name="timezone_offsets_on">%1$s දිනට ඕෆ්සෙට්</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">දින දර්ශනයෙන්: %1$s</string>
+    <string name="timezone_shown_in_device_time">උපාංගයේ වේලාවෙන් පෙන්වයි</string>
+    <string name="timezone_loading">වේලා කලාප පූරණය වෙමින්…</string>
+    <string name="timezone_no_match">ගැළපෙන වේලා කලාප නැත</string>
+    <string name="timezone_no_match_hint">නගරයක්, රටක් හෝ +5:30 වැනි ඕෆ්සෙට් එකක් උත්සාහ කරන්න</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">ඇඟවීම්</string>
     <string name="label_add_alert">ඇඟවීමක් එකතු කරන්න</string>
     <string name="label_recurrence_never">කිසිවිටක නැත</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">නව සිදුවීම් මෙම දින දර්ශනයේ සාදනු ඇත</string>
     <string name="label_reminders_truncated">%1$d නොපෙන්වයි (%2$d මුළු, උපරිම %3$d සංස්කරණය කළ හැකි)</string>
     <string name="label_found_events">හමු විය: සිදුවීම් %1$d</string>
-    <string name="placeholder_search">සොයන්න…</string>
     <string name="settings_search_placeholder">සැකසීම් සොයන්න…</string>
     <string name="settings_search_no_results">\"%1$s\" සඳහා සැකසීම් හමු නොවීය</string>
     <string name="cd_search_settings">සැකසීම් සොයන්න</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">මාතෘකාවක් නැති සිදුවීම</string>
     <string name="recurring_this_event">මෙම සිදුවීම</string>
     <string name="recurring_all_events">සියලු සිදුවීම්</string>
+    <string name="recurring_scope_move_not_expressible">පුනරාවර්තන නීතියට මෙම වෙනස අනුගමනය කළ නොහැක</string>
+    <string name="event_form_move_not_expressible">පුනරාවර්තන නීතියට මෙම වෙනස අනුගමනය කළ නොහැක. කිසිවක් සුරැකුණේ නැත.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">සහභාගිවන්නන්</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">අමුත්තා:</string>
     <string name="search_keep_typing">සෙවීමට දිගටම ටයිප් කරන්න</string>
     <string name="search_no_matches">“%1$s” ට ගැළපෙන සිදුවීම් නැත</string>
+    <string name="search_no_events_tagged">“%1$s” ටැග සහිත සිදුවීම් නැත</string>
     <string name="search_lookback_line">සමමුහුර්ත ආපසු බැලීම: %1$s</string>
     <string name="search_sync_settings">සමමුහුර්ත සැකසීම්</string>
     <string name="cd_search_sync_settings">සමමුහුර්ත ආපසු බැලීමේ සැකසීම විවෘත කරන්න</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">මෙම පෝෂකයේ සේවාදායකය ප්‍රවේශය ප්‍රතික්ෂේප කළේය.</string>
     <string name="ics_feed_error_too_large">මෙම දින දර්ශන පෝෂකය බාගැනීමට ඉතා විශාලය.</string>
     <string name="ics_feed_error_unreadable">මෙම පෝෂකයේ සිදුවීම් පෙන්විය නොහැකි විය.</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s” සුරැකුණේ නැත.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">සිදුවීම %1$d ක් සුරැකුණේ නැත.</item>
+        <item quantity="other">සිදුවීම් %1$d ක් සුරැකුණේ නැත.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">“%2$s” ඇතුළුව සිදුවීම %1$d ක් සුරැකුණේ නැත.</item>
+        <item quantity="other">“%2$s” ඇතුළුව සිදුවීම් %1$d ක් සුරැකුණේ නැත.</item>
+    </plurals>
     <string name="insights_title">තීක්ෂ්ණ බුද්ධිය</string>
     <string name="insights_period_this_week">සතිය</string>
     <string name="insights_period_last_week">පසුගිය සතිය</string>

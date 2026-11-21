@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d тағы</string>
     <string name="tags_autocomplete_create_new">\"%1$s\" жасау</string>
     <string name="cd_tag">Тег: %1$s</string>
+    <string name="tags_show_events_click_label">Осы тегі бар оқиғаларды көрсету</string>
+    <string name="tags_show_events">Оқиғаларды көрсету</string>
     <string name="cd_tags_move_menu">Тегтерді жылжыту</string>
     <string name="tags_move_above_notes">Жазбалардың үстіне жылжыту</string>
     <string name="tags_move_below_notes">Жазбалардың астына жылжыту</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Синхрондау сеанстарын көру (соңғы 48 сағат)</string>
     <string name="settings_import_subtitle">ICS файлынан оқиғаларды кез келген күнтізбеге қосу</string>
     <string name="settings_birthday_reminder">Туған күн еске салғышы</string>
-    <string name="settings_use_device_timezone">Құрылғы уақыт белдеуін пайдалану</string>
     <string name="settings_section_calendars">Күнтізбелер &amp; тіркелгілер</string>
     <string name="settings_section_appearance">Безендіру</string>
     <string name="settings_section_creating_events">Оқиға параметрлері</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">Қайталанатын</string>
     <string name="cd_enabled">Қосулы</string>
     <string name="cd_sync_error">Синхрондау қатесі</string>
-    <string name="cd_select_label">%1$s таңдау</string>
     <string name="cd_wheel_picker">%1$d опциялы дөңгелек таңдағыш</string>
     <string name="cd_time_entry_keyboard">Нақты уақытты енгізу</string>
     <string name="time_entry_dialog_title">Уақытты енгізу</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">Аяқталуы</string>
     <string name="sheet_hint_change_end">Аяқталуын өзгерту үшін күнді түртіңіз</string>
     <string name="label_timezone">Уақыт белдеуі</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Қала, ел немесе белдеу іздеу</string>
+    <string name="timezone_section_this_event">Осы оқиға</string>
+    <string name="timezone_section_device">Құрылғының уақыт белдеуі</string>
+    <string name="timezone_section_recent">Соңғылар</string>
+    <string name="timezone_section_all">Барлық уақыт белдеулері</string>
+    <string name="timezone_offsets_on">%1$s күнгі ығысулар</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Күнтізбеден: %1$s</string>
+    <string name="timezone_shown_in_device_time">Құрылғы уақытымен көрсетілген</string>
+    <string name="timezone_loading">Уақыт белдеулері жүктелуде…</string>
+    <string name="timezone_no_match">Сәйкес уақыт белдеуі жоқ</string>
+    <string name="timezone_no_match_hint">Қаланы, елді немесе +5:30 сияқты ығысуды байқап көріңіз</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Ескертулер</string>
     <string name="label_add_alert">Ескерту қосу</string>
     <string name="label_recurrence_never">Ешқашан</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">Жаңа оқиғалар осы күнтізбеде жасалады</string>
     <string name="label_reminders_truncated">%1$d көрсетілмейді (барлығы %2$d, макс. %3$d өңделетін)</string>
     <string name="label_found_events">Табылды: %1$d оқиға</string>
-    <string name="placeholder_search">Іздеу…</string>
     <string name="settings_search_placeholder">Параметрлерді іздеу…</string>
     <string name="settings_search_no_results">\"%1$s\" үшін параметрлер табылмады</string>
     <string name="cd_search_settings">Параметрлерді іздеу</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">Атаусыз оқиға</string>
     <string name="recurring_this_event">Бұл оқиға</string>
     <string name="recurring_all_events">Барлық оқиғалар</string>
+    <string name="recurring_scope_move_not_expressible">Қайталау ережесі бұл өзгерісті ескере алмайды</string>
+    <string name="event_form_move_not_expressible">Қайталау ережесі бұл өзгерісті ескере алмайды. Ештеңе сақталмады.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Қатысушылар</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">Қонақ:</string>
     <string name="search_keep_typing">Іздеу үшін теруді жалғастырыңыз</string>
     <string name="search_no_matches">“%1$s” сұрауына сәйкес оқиға жоқ</string>
+    <string name="search_no_events_tagged">“%1$s” тегімен белгіленген оқиғалар жоқ</string>
     <string name="search_lookback_line">Синхрондау кері кезеңі: %1$s</string>
     <string name="search_sync_settings">Синхрондау параметрлері</string>
     <string name="cd_search_sync_settings">Синхрондау кері кезеңі параметрін ашу</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">Бұл арнаның сервері кіруге рұқсат бермеді.</string>
     <string name="ics_feed_error_too_large">Бұл күнтізбе арнасы жүктеп алу үшін тым үлкен.</string>
     <string name="ics_feed_error_unreadable">Бұл арнаның оқиғаларын көрсету мүмкін болмады.</string>
+    <string name="ics_feed_error_event_not_saved">«%1$s» сақталмады.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d оқиға сақталмады.</item>
+        <item quantity="other">%1$d оқиға сақталмады.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d оқиға сақталмады, соның ішінде «%2$s».</item>
+        <item quantity="other">%1$d оқиға сақталмады, соның ішінде «%2$s».</item>
+    </plurals>
     <string name="insights_title">Статистика</string>
     <string name="insights_period_this_week">Апта</string>
     <string name="insights_period_last_week">Өткен апта</string>

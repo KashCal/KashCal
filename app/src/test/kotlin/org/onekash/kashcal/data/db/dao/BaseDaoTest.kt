@@ -1,12 +1,12 @@
 package org.onekash.kashcal.data.db.dao
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import org.junit.After
 import org.junit.Before
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.KashCalDatabase
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -24,10 +24,7 @@ abstract class BaseDaoTest {
     @Before
     open fun setup() {
         context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(
-            context,
-            KashCalDatabase::class.java
-        )
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries() // OK for tests
             .build()
     }

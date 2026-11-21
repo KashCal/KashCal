@@ -247,18 +247,18 @@ class ReminderScheduler @Inject constructor(
         triggerTime >= now + MIN_TRIGGER_FUTURE_MS && triggerTime <= windowEnd(now)
 
     /**
-     * Returns the event's alarm offsets: every VALARM in its stored copy when it has over 3
+     * Returns the event's alarm offsets: every VALARM in its stored ICS when it has over 3
      * alarms, since [Event.reminders] holds at most 5; [Event.reminders] for a file's copy
-     * ([Event.holdsFileCopy]), whose alarms are the file's, not the user's.
+     * ([Event.holdsFileCopy]), whose alarms are the file's, not the user's, and when the stored
+     * ICS can't be read ([EventReader.getStoredIcsOrNull]), so one event can't stop a scan. The
+     * stored ICS is read only past 3 alarms.
      */
-    private fun reminderOffsetsFor(event: Event): List<String> =
-        if (event.alarmCount > 3 && event.rawIcal != null && !event.holdsFileCopy) {
-            RawIcsParser.getAllAlarmTriggers(event.rawIcal)
-                .takeIf { it.isNotEmpty() }
-                ?: event.reminders.orEmpty()
-        } else {
-            event.reminders.orEmpty()
-        }
+    private suspend fun reminderOffsetsFor(event: Event): List<String> {
+        // Any stored ICS of an unsynced import is a file's ([Event.holdsFileCopy]).
+        if (event.alarmCount <= 3 || event.isUnsyncedImport) return event.reminders.orEmpty()
+        val ics = eventReader.getStoredIcsOrNull(event) ?: return event.reminders.orEmpty()
+        return RawIcsParser.getAllAlarmTriggers(ics).takeIf { it.isNotEmpty() } ?: event.reminders.orEmpty()
+    }
 
     private fun triggerTimeFor(occurrenceStartTs: Long, offsetMs: Long, isAllDay: Boolean): Long =
         if (isAllDay) calculateAllDayTriggerTime(occurrenceStartTs, offsetMs) else occurrenceStartTs + offsetMs
@@ -337,7 +337,7 @@ class ReminderScheduler @Inject constructor(
         val now = System.currentTimeMillis()
 
         val offsetsByEventId = mutableMapOf<Long, List<String>>()
-        fun offsetsOf(event: Event) = offsetsByEventId.getOrPut(event.id) { reminderOffsetsFor(event) }
+        suspend fun offsetsOf(event: Event) = offsetsByEventId.getOrPut(event.id) { reminderOffsetsFor(event) }
 
         // Most occurrences read are beyond the window. Drop them before any
         // further query; either all-day flag is tried since a changed

@@ -35,6 +35,8 @@ import org.onekash.kashcal.network.NetworkMonitor
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.sync.scheduler.SyncStatus
 import org.onekash.kashcal.ui.components.EventFormState
+import org.onekash.kashcal.ui.components.withZonePick
+import org.onekash.kashcal.ui.components.pickers.ZonePick
 
 /**
  * Tests [HomeViewModel]'s device-event writes over [FakeCalendarProviderRepository]:
@@ -449,7 +451,7 @@ class HomeViewModelDeviceCalendarWriteTest {
     }
 
     @Test
-    fun `picking a new timezone for a device event keeps the event at the same moment`() = withDeviceTimeZone("America/Los_Angeles") {
+    fun `picking a new timezone for a device event keeps its clock time`() = withDeviceTimeZone("America/Los_Angeles") {
         runTest {
             val viewModel = createViewModel()
             advanceUntilIdle()
@@ -459,8 +461,8 @@ class HomeViewModelDeviceCalendarWriteTest {
 
             val update = fakeCalendarProviderRepository.updatedEvents.single()
             assertEquals("America/Chicago", update.timezone)
-            assertEquals(newYork10am, update.startTs) // shown as 09:00 Chicago
-            assertEquals(newYork10am + oneHourMs, update.endTs)
+            assertEquals(newYork10am + oneHourMs, update.startTs) // 10:00 Chicago
+            assertEquals(newYork10am + 2 * oneHourMs, update.endTs)
         }
     }
 
@@ -563,7 +565,7 @@ class HomeViewModelDeviceCalendarWriteTest {
             advanceUntilIdle()
 
             openAndSave(viewModel, newYorkDeviceEvent(newYork10am, timezone = "Eastern Standard Time")) {
-                it.withTimezone(null)
+                it.withZonePick(ZonePick.Device, "America/Los_Angeles")
             }
             advanceUntilIdle()
 

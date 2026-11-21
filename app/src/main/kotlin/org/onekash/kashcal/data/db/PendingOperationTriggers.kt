@@ -1,7 +1,8 @@
 package org.onekash.kashcal.data.db
 
-import androidx.room.RoomDatabase
-import androidx.sqlite.db.SupportSQLiteDatabase
+import androidx.room3.RoomDatabase
+import androidx.sqlite.SQLiteConnection
+import androidx.sqlite.execSQL
 
 /**
  * Keeps `pending_operations` in step with `events`: deleting an event row, on any route (a user
@@ -46,20 +47,15 @@ object PendingOperationTriggers {
     """.trimIndent()
 
     /** Creates the trigger, replacing any copy with another definition. */
-    fun create(db: SupportSQLiteDatabase) {
-        db.execSQL("DROP TRIGGER IF EXISTS $EVENT_DELETE_TRIGGER")
-        db.execSQL(CREATE_SQL)
+    fun create(connection: SQLiteConnection) {
+        connection.execSQL("DROP TRIGGER IF EXISTS $EVENT_DELETE_TRIGGER")
+        connection.execSQL(CREATE_SQL)
     }
-
-    /** Returns whether the trigger exists in [db]. */
-    fun exists(db: SupportSQLiteDatabase): Boolean =
-        db.query("SELECT 1 FROM sqlite_master WHERE type = 'trigger' AND name = ?", arrayOf(EVENT_DELETE_TRIGGER))
-            .use { it.moveToFirst() }
 
     /** Returns a callback that creates only this trigger, for tests that build Room directly. */
     fun callback(): RoomDatabase.Callback = object : RoomDatabase.Callback() {
-        override fun onCreate(db: SupportSQLiteDatabase) {
-            create(db)
+        override suspend fun onCreate(connection: SQLiteConnection) {
+            create(connection)
         }
     }
 }

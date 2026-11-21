@@ -18,15 +18,15 @@ import java.time.temporal.ChronoUnit
 data class DragMoveAvailability(val allEvents: Boolean, val thisAndFuture: Boolean)
 
 /**
- * Moves a recurring series to another day and time of day, rewriting its repeat
- * rule to match.
+ * Moves a recurring series to another day, time of day, zone or all-day flag,
+ * rewriting its repeat rule to match.
  *
  * RFC 5545 section 3.8.5.3 makes DTSTART the first instance of the set and says
  * a DTSTART out of step with the rule gives an undefined set, so moving the
  * start alone (Monday series now starting on a Tuesday) breaks the series. The
  * rewrite is proposed from the rule's day parts, then checked: expanded from
  * the new start, it must generate exactly the old occurrences, each moved to
- * its local date plus the day shift at the new local time, in the event's zone
+ * its local date plus the day shift at the new local time, in the new zone
  * (all-day: the UTC date). Anything else (a 29th that becomes a 31st, a 2nd
  * Monday on the 14th, week groupings that change) is refused with null.
  */
@@ -58,19 +58,31 @@ object RruleShift {
     /**
      * Returns the rule for a series that started at [dtstartMs] and now starts at [newDtstartMs],
      * or null when no rule generates the moved occurrences. [zone] and [isAllDay] are the
-     * event's. Never throws.
+     * event's; [newZone] and [newIsAllDay] are the moved series' when the move also changes them
+     * (a zone change keeps each occurrence's local date and the new clock time). Never throws.
      */
-    fun shift(rrule: String, dtstartMs: Long, newDtstartMs: Long, zone: String?, isAllDay: Boolean): String? {
-        if (newDtstartMs == dtstartMs) return rrule
+    fun shift(
+        rrule: String,
+        dtstartMs: Long,
+        newDtstartMs: Long,
+        zone: String?,
+        isAllDay: Boolean,
+        newZone: String? = zone,
+        newIsAllDay: Boolean = isAllDay,
+    ): String? {
+        val sameKind = newZone == zone && newIsAllDay == isAllDay
+        if (newDtstartMs == dtstartMs && sameKind) return rrule
         return try {
             val z = zoneFor(zone, isAllDay)
+            val zNew = zoneFor(newZone, newIsAllDay)
             val oldStart = Instant.ofEpochMilli(dtstartMs).atZone(z)
-            val newStart = Instant.ofEpochMilli(newDtstartMs).atZone(z)
+            val newStart = Instant.ofEpochMilli(newDtstartMs).atZone(zNew)
             val days = ChronoUnit.DAYS.between(oldStart.toLocalDate(), newStart.toLocalDate())
             val newTime = newStart.toLocalTime()
-            val timeDelta = Duration.between(oldStart.toLocalTime(), newTime)
-            val proposed = propose(rrule, days, z, isAllDay, timeDelta) ?: return null
-            if (verifies(rrule, dtstartMs, proposed, newDtstartMs, zone, isAllDay, z, days, newTime)) proposed else null
+            val timeDelta = if (isAllDay || newIsAllDay) Duration.ZERO else Duration.between(oldStart.toLocalTime(), newTime)
+            val proposed = propose(rrule, days, z, zNew, isAllDay, newIsAllDay, timeDelta) ?: return null
+            val ok = verifies(rrule, dtstartMs, proposed, newDtstartMs, zone, isAllDay, newZone, newIsAllDay, z, zNew, days, newTime)
+            if (ok) proposed else null
         } catch (_: Exception) {
             null
         }
@@ -128,7 +140,15 @@ object RruleShift {
 
     // ---- propose ----
 
-    private fun propose(rrule: String, days: Long, zone: ZoneId, isAllDay: Boolean, timeDelta: Duration): String? {
+    private fun propose(
+        rrule: String,
+        days: Long,
+        zone: ZoneId,
+        newZone: ZoneId,
+        isAllDay: Boolean,
+        newIsAllDay: Boolean,
+        timeDelta: Duration,
+    ): String? {
         val parts = parse(rrule) ?: return null
         if (parts.keys.any { it in REFUSED_PARTS }) return null
         if (!timeDelta.isZero && parts.keys.any { it in TIME_PARTS }) return null
@@ -148,7 +168,7 @@ object RruleShift {
                 key == "BYMONTHDAY" && yearlyDate != null -> yearlyDate.dayOfMonth.toString()
                 key == "BYDAY" -> shiftWeekdays(value, days) ?: return null
                 key == "BYMONTHDAY" -> shiftMonthDays(value, days) ?: return null
-                key == "UNTIL" -> shiftUntil(value, days, timeDelta, zone, isAllDay) ?: return null
+                key == "UNTIL" -> shiftUntil(value, days, timeDelta, zone, newZone, isAllDay, newIsAllDay) ?: return null
                 else -> value
             }
         }
@@ -198,20 +218,44 @@ object RruleShift {
         }.joinToString(",")
 
     /**
-     * Moves UNTIL by the same days and time-of-day change in the event's zone, written back in
-     * the form it came in (UTC date-time, floating date-time, or DATE), per RFC 5545 section
-     * 3.3.10. A floating date-time UNTIL on an all-day series gives null.
+     * Moves UNTIL by the same days and time-of-day change, from the event's zone to [newZone],
+     * per RFC 5545 section 3.3.10: a timed series with a zone keeps a UTC date-time, a floating
+     * one a floating date-time, an all-day one a DATE. A series turned all-day ends on the
+     * moved local date; one turned timed ends at the last second of its last date in [newZone].
+     * A floating date-time UNTIL on an all-day series gives null.
      */
-    private fun shiftUntil(value: String, days: Long, timeDelta: Duration, zone: ZoneId, isAllDay: Boolean): String? {
+    private fun shiftUntil(
+        value: String,
+        days: Long,
+        timeDelta: Duration,
+        zone: ZoneId,
+        newZone: ZoneId,
+        isAllDay: Boolean,
+        newIsAllDay: Boolean,
+    ): String? {
         val v = value.trim()
+        fun timedEnd(date: LocalDate) =
+            ZonedDateTime.of(date, LocalTime.of(23, 59, 59), newZone).withZoneSameInstant(ZoneOffset.UTC).format(UTC_UNTIL)
+        // The UNTIL form changes only with the all-day flag (RFC 5545 section 3.3.10: a DATE for a
+        // DATE start, UTC for a zoned one); otherwise it keeps the form it had.
         return when {
-            v.length == 8 -> LocalDate.parse(v, DATE_UNTIL).plusDays(days).format(DATE_UNTIL)
+            v.length == 8 -> {
+                val date = LocalDate.parse(v, DATE_UNTIL).plusDays(days)
+                if (isAllDay && !newIsAllDay) timedEnd(date) else date.format(DATE_UNTIL)
+            }
             v.endsWith("Z") -> {
                 val local = LocalDateTime.parse(v, UTC_UNTIL).atOffset(ZoneOffset.UTC).atZoneSameInstant(zone)
                 val moved = local.toLocalDateTime().plusDays(days).plus(timeDelta)
-                ZonedDateTime.of(moved, zone).withZoneSameInstant(ZoneOffset.UTC).format(UTC_UNTIL)
+                if (!isAllDay && newIsAllDay) {
+                    moved.toLocalDate().format(DATE_UNTIL)
+                } else {
+                    ZonedDateTime.of(moved, newZone).withZoneSameInstant(ZoneOffset.UTC).format(UTC_UNTIL)
+                }
             }
-            !isAllDay -> LocalDateTime.parse(v, LOCAL_UNTIL).plusDays(days).plus(timeDelta).format(LOCAL_UNTIL)
+            !isAllDay -> {
+                val moved = LocalDateTime.parse(v, LOCAL_UNTIL).plusDays(days).plus(timeDelta)
+                if (newIsAllDay) moved.toLocalDate().format(DATE_UNTIL) else moved.format(LOCAL_UNTIL)
+            }
             else -> null
         }
     }
@@ -225,7 +269,10 @@ object RruleShift {
         newStart: Long,
         tzid: String?,
         isAllDay: Boolean,
+        newTzid: String?,
+        newIsAllDay: Boolean,
         zone: ZoneId,
+        newZone: ZoneId,
         days: Long,
         newTime: LocalTime,
     ): Boolean {
@@ -233,12 +280,21 @@ object RruleShift {
         val oldCmp = if (bounded) oldRule else "$oldRule;COUNT=$COMPARE_COUNT"
         val newCmp = if (bounded) newRule else "$newRule;COUNT=$COMPARE_COUNT"
         val old = expand(oldCmp, oldStart, tzid, isAllDay)
-        val new = expand(newCmp, newStart, tzid, isAllDay)
+        val new = expand(newCmp, newStart, newTzid, newIsAllDay)
         if (old.isEmpty() || new.isEmpty() || old.size != new.size) return false
         // A start the old rule doesn't generate gives an undefined set (RFC 5545 section 3.8.5.3).
         if (old.first() != (oldStart / SECOND_MS) * SECOND_MS) return false
-        val expected = old.map { moved(it, zone, days, newTime, isAllDay) }
+        val expected = old.map { moved(it, zone, days, newTime, newZone, newIsAllDay) }
         return expected == new
+    }
+
+    /**
+     * Returns the first instances, at most [COMPARE_COUNT], of [rule] from [start]; [SeriesMove]
+     * aligns a typed rule against the old one over them.
+     */
+    internal fun firstInstances(rule: String, start: Long, tzid: String?, isAllDay: Boolean): List<Long> {
+        val bounded = rule.contains("COUNT=") || rule.contains("UNTIL=")
+        return expand(if (bounded) rule else "$rule;COUNT=$COMPARE_COUNT", start, tzid, isAllDay).take(COMPARE_COUNT)
     }
 
     private fun expand(rule: String, start: Long, tzid: String?, isAllDay: Boolean): List<Long> =
@@ -254,17 +310,35 @@ object RruleShift {
         )
 
     /**
-     * Moves [ts] to its local date + [days] at [newTime] (all-day: UTC midnight), to the second.
+     * Moves [ts] to its local date in [zone] + [days] at [newTime] in [newZone] (all-day: UTC
+     * midnight), to the second. Taking the local date and the new clock time, not the local
+     * time plus a delta, keeps an occurrence a spring-forward gap moved (02:30 run at 03:30) on
+     * its slot.
      */
-    private fun moved(ts: Long, zone: ZoneId, days: Long, newTime: LocalTime, isAllDay: Boolean): Long {
+    internal fun moved(ts: Long, zone: ZoneId, days: Long, newTime: LocalTime, newZone: ZoneId, newIsAllDay: Boolean): Long {
         val date = Instant.ofEpochMilli(ts).atZone(zone).toLocalDate().plusDays(days)
-        val ms = if (isAllDay) {
+        val ms = if (newIsAllDay) {
             date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
         } else {
-            ZonedDateTime.of(date, newTime, zone).toInstant().toEpochMilli()
+            ZonedDateTime.of(date, newTime, newZone).toInstant().toEpochMilli()
         }
         return (ms / SECOND_MS) * SECOND_MS
     }
+
+    /**
+     * Returns true when [rule] from [dtstartMs] generates an instance within a minute of [ts]
+     * (the tolerance changed occurrences are linked with). The expansion window starts two days
+     * before [ts], not at DTSTART, so a series that started years ago is checked as cheaply as
+     * a new one and the engine's per-call date cap never applies; with COUNT, ical4j still
+     * counts the instances before the window. EXDATE and RDATE are left out.
+     */
+    internal fun isInstance(rule: String, dtstartMs: Long, tzid: String?, isAllDay: Boolean, ts: Long): Boolean =
+        IcalDavRRuleEngine.expandToTimestamps(
+            rule, dtstartMs, ts - 2 * DAY_MS, ts + 2 * DAY_MS, tzid, isAllDay, null, null,
+        ).any { kotlin.math.abs(it - ts) < LINK_TOLERANCE_MS }
+
+    /** Linking tolerance between a changed occurrence's key and its series slot. */
+    private const val LINK_TOLERANCE_MS = 60_000L
 
     /**
      * Returns true when the series' rule, from its start, still generates [occurrenceMs]. The

@@ -146,6 +146,21 @@ class SearchEmptyStatesTest {
     }
 
     @Test
+    fun `no matches for tags alone says no events are tagged that way`() {
+        show(Screen(loaded(lookback = 90)), query = "  #work #kids ")
+
+        rule.onNodeWithText("No events tagged “#work #kids”").assertIsDisplayed()
+        rule.onNodeWithText("Sync lookback: 3 months").assertIsDisplayed()
+    }
+
+    @Test
+    fun `no matches for a tag and words keeps the general message`() {
+        show(Screen(loaded(lookback = 90)), query = "#work kids")
+
+        rule.onNodeWithText("No events match “#work kids”").assertIsDisplayed()
+    }
+
+    @Test
     fun `with All events there is no lookback line and no link`() {
         show(Screen(loaded(lookback = Int.MAX_VALUE)))
 

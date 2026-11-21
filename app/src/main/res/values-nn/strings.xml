@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d til</string>
     <string name="tags_autocomplete_create_new">Opprett \"%1$s\"</string>
     <string name="cd_tag">Tagg: %1$s</string>
+    <string name="tags_show_events_click_label">Vis hendingar med denne taggen</string>
+    <string name="tags_show_events">Vis hendingar</string>
     <string name="cd_tags_move_menu">Flytt taggar</string>
     <string name="tags_move_above_notes">Flytt over notat</string>
     <string name="tags_move_below_notes">Flytt under notat</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Vis synkroniseringsøkter (siste 48 timar)</string>
     <string name="settings_import_subtitle">Legg til hendingar frå ei ICS-fil i ein valfri kalender</string>
     <string name="settings_birthday_reminder">Bursdagspåminning</string>
-    <string name="settings_use_device_timezone">Bruk tidssona til eininga</string>
     <string name="settings_section_calendars">Kalendarar &amp; kontoar</string>
     <string name="settings_section_appearance">Utsjånad</string>
     <string name="settings_section_creating_events">Hendingsinnstillingar</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">Gjentakande</string>
     <string name="cd_enabled">Aktivert</string>
     <string name="cd_sync_error">Synkroniseringsfeil</string>
-    <string name="cd_select_label">Vel %1$s</string>
     <string name="cd_wheel_picker">Hjulveljar med %1$d alternativ</string>
     <string name="cd_time_entry_keyboard">Skriv inn nøyaktig tid</string>
     <string name="time_entry_dialog_title">Skriv inn tid</string>
@@ -835,6 +835,23 @@
     <string name="label_ends">Sluttar</string>
     <string name="sheet_hint_change_end">Trykk på ein dag for å endre slutten</string>
     <string name="label_timezone">Tidssone</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Søk etter by, land eller sone</string>
+    <string name="timezone_section_this_event">Denne hendinga</string>
+    <string name="timezone_section_device">Tidssona til eininga</string>
+    <string name="timezone_section_recent">Nylege</string>
+    <string name="timezone_section_all">Alle tidssoner</string>
+    <string name="timezone_offsets_on">Tidsskilnader den %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Frå kalenderen: %1$s</string>
+    <string name="timezone_shown_in_device_time">Vist i tida til eininga</string>
+    <string name="timezone_loading">Lastar inn tidssoner…</string>
+    <string name="timezone_no_match">Ingen tidssoner passar</string>
+    <string name="timezone_no_match_hint">Prøv ein by, eit land eller ein tidsskilnad som +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Påminningar</string>
     <string name="label_add_alert">Legg til påminning</string>
     <string name="label_recurrence_never">Aldri</string>
@@ -844,7 +861,6 @@
     <string name="label_default_calendar_hint">Nye hendingar vert oppretta i denne kalenderen</string>
     <string name="label_reminders_truncated">%1$d ikkje viste (%2$d totalt, maks %3$d redigerbare)</string>
     <string name="label_found_events">Funne: %1$d hendingar</string>
-    <string name="placeholder_search">Søk…</string>
     <string name="settings_search_placeholder">Søk i innstillingar…</string>
     <string name="settings_search_no_results">Ingen innstillingar funne for \"%1$s\"</string>
     <string name="cd_search_settings">Søk i innstillingar</string>
@@ -1096,6 +1112,8 @@
     <string name="event_untitled">Hending utan tittel</string>
     <string name="recurring_this_event">Denne hendinga</string>
     <string name="recurring_all_events">Alle hendingar</string>
+    <string name="recurring_scope_move_not_expressible">Gjentakingsregelen kan ikkje følgje denne endringa</string>
+    <string name="event_form_move_not_expressible">Gjentakingsregelen kan ikkje følgje denne endringa. Ingenting vart lagra.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Deltakarar</string>
@@ -1178,6 +1196,7 @@
     <string name="search_reason_guest">Gjest:</string>
     <string name="search_keep_typing">Skriv vidare for å søkje</string>
     <string name="search_no_matches">Ingen hendingar samsvarer med «%1$s»</string>
+    <string name="search_no_events_tagged">Ingen hendingar tagga «%1$s»</string>
     <string name="search_lookback_line">Synkroniseringsperiode bakover: %1$s</string>
     <string name="search_sync_settings">Synkroniseringsinnstillingar</string>
     <string name="cd_search_sync_settings">Opne innstillinga for synkroniseringsperiode bakover</string>
@@ -1474,6 +1493,15 @@
     <string name="ics_feed_error_access_denied">Tenaren for denne feeden nekta tilgang.</string>
     <string name="ics_feed_error_too_large">Denne kalenderfeeden er for stor til å lastast ned.</string>
     <string name="ics_feed_error_unreadable">Hendingane i denne feeden kunne ikkje visast.</string>
+    <string name="ics_feed_error_event_not_saved">«%1$s» vart ikkje lagra.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d hending vart ikkje lagra.</item>
+        <item quantity="other">%1$d hendingar vart ikkje lagra.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d hending vart ikkje lagra, mellom anna «%2$s».</item>
+        <item quantity="other">%1$d hendingar vart ikkje lagra, mellom anna «%2$s».</item>
+    </plurals>
     <string name="insights_title">Innsikt</string>
     <string name="insights_period_this_week">Veke</string>
     <string name="insights_period_last_week">Førre veke</string>

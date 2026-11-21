@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d pli</string>
     <string name="tags_autocomplete_create_new">Krei «%1$s»</string>
     <string name="cd_tag">Etikedo: %1$s</string>
+    <string name="tags_show_events_click_label">Montri eventojn kun ĉi tiu etikedo</string>
+    <string name="tags_show_events">Montri eventojn</string>
     <string name="cd_tags_move_menu">Movi etikedojn</string>
     <string name="tags_move_above_notes">Movi super notojn</string>
     <string name="tags_move_below_notes">Movi sub notojn</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Vidi sinkronigajn seancojn (lastaj 48 horoj)</string>
     <string name="settings_import_subtitle">Aldoni eventojn el ICS-dosiero al iu ajn kalendaro</string>
     <string name="settings_birthday_reminder">Naskig̉taga rememorigo</string>
-    <string name="settings_use_device_timezone">Uzi aparatan horzonon</string>
     <string name="settings_section_calendars">Kalendaroj kaj kontoj</string>
     <string name="settings_section_appearance">Aspekto</string>
     <string name="settings_section_creating_events">Eventaj preferoj</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">Ripeta</string>
     <string name="cd_enabled">Ŝaltita</string>
     <string name="cd_sync_error">Sinkroniga eraro</string>
-    <string name="cd_select_label">Elekti %1$s</string>
     <string name="cd_wheel_picker">Rada elektilo kun %1$d elektoj</string>
     <string name="cd_time_entry_keyboard">Entajpu precizan horon</string>
     <string name="time_entry_dialog_title">Entajpu horon</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">Finiĝas</string>
     <string name="sheet_hint_change_end">Tuŝetu tagon por ŝanĝi la finon</string>
     <string name="label_timezone">Horzono</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Serĉu urbon, landon aŭ zonon</string>
+    <string name="timezone_section_this_event">Ĉi tiu evento</string>
+    <string name="timezone_section_device">Horzono de la aparato</string>
+    <string name="timezone_section_recent">Lastatempaj</string>
+    <string name="timezone_section_all">Ĉiuj horzonoj</string>
+    <string name="timezone_offsets_on">Deŝovoj je %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">El la kalendaro: %1$s</string>
+    <string name="timezone_shown_in_device_time">Montrata laŭ la horo de la aparato</string>
+    <string name="timezone_loading">Ŝargante horzonojn…</string>
+    <string name="timezone_no_match">Neniu horzono kongruas</string>
+    <string name="timezone_no_match_hint">Provu urbon, landon aŭ deŝovon kiel +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Alarmoj</string>
     <string name="label_add_alert">Aldoni alarmon</string>
     <string name="label_recurrence_never">Neniam</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">Novaj eventoj estos kreataj en ĉi tiu kalendaro</string>
     <string name="label_reminders_truncated">%1$d ne montritaj (%2$d totale, maks. %3$d redakteblaj)</string>
     <string name="label_found_events">Trovitaj: %1$d eventoj</string>
-    <string name="placeholder_search">Serĉi…</string>
     <string name="settings_search_placeholder">Serĉi en agordoj…</string>
     <string name="settings_search_no_results">Neniu agordo trovita por \"%1$s\"</string>
     <string name="cd_search_settings">Serĉi en agordoj</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">Sentitola evento</string>
     <string name="recurring_this_event">Ĉi tiu evento</string>
     <string name="recurring_all_events">Ĉiuj eventoj</string>
+    <string name="recurring_scope_move_not_expressible">La ripeta regulo ne povas sekvi ĉi tiun ŝanĝon</string>
+    <string name="event_form_move_not_expressible">La ripeta regulo ne povas sekvi ĉi tiun ŝanĝon. Nenio estis konservita.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Ĉeestantoj</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">Gasto:</string>
     <string name="search_keep_typing">Daŭre tajpu por serĉi</string>
     <string name="search_no_matches">Neniu evento kongruas kun “%1$s”</string>
+    <string name="search_no_events_tagged">Neniu evento etikedita per “%1$s”</string>
     <string name="search_lookback_line">Sinkroniga retrorigardo: %1$s</string>
     <string name="search_sync_settings">Sinkronigaj agordoj</string>
     <string name="cd_search_sync_settings">Malfermi la agordon de sinkroniga retrorigardo</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">La servilo de ĉi tiu fluo rifuzis aliron.</string>
     <string name="ics_feed_error_too_large">Ĉi tiu kalendara fluo estas tro granda por elŝuti.</string>
     <string name="ics_feed_error_unreadable">Ne eblis montri la eventojn de ĉi tiu fluo.</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s” ne estis konservita.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d evento ne estis konservita.</item>
+        <item quantity="other">%1$d eventoj ne estis konservitaj.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d evento ne estis konservita, inkluzive de “%2$s”.</item>
+        <item quantity="other">%1$d eventoj ne estis konservitaj, inkluzive de “%2$s”.</item>
+    </plurals>
     <string name="insights_title">Enrigardoj</string>
     <string name="insights_period_this_week">Semajno</string>
     <string name="insights_period_last_week">Pasinta sem.</string>

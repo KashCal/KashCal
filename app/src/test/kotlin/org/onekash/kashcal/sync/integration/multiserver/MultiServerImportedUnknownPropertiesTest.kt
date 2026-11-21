@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.integration.multiserver
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.every
 import io.mockk.mockk
@@ -38,6 +38,7 @@ import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.sync.strategy.PushResult
 import org.onekash.kashcal.sync.strategy.PushStrategy
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.Instant
@@ -100,7 +101,7 @@ class MultiServerImportedUnknownPropertiesTest(private val config: CalDavServerC
         )
         /** Fields the pull's change check ignores (PullStrategy.hasContentChanged). */
         private val SYNC_METADATA = setOf(
-            "id", "etag", "syncStatus", "caldavUrl", "rawIcal", "dtstamp", "importId", "originalEventId",
+            "id", "etag", "syncStatus", "caldavUrl", "dtstamp", "importId", "originalEventId",
             "originalInstanceTime", "originalSyncId", "calendarId", "uid", "createdAt", "updatedAt",
             "localModifiedAt", "serverModifiedAt", "lastSyncError", "syncRetryCount",
         )
@@ -123,7 +124,7 @@ class MultiServerImportedUnknownPropertiesTest(private val config: CalDavServerC
         creds = pair.second
         assumeTrue("${config.name} server not reachable", CalDavTestServerLoader.isServerReachable(creds.davEndpoint))
         val context: Context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java).allowMainThreadQueries().build()
+        db = TestDatabases.inMemory(context).allowMainThreadQueries().build()
     }
 
     @After
@@ -159,7 +160,7 @@ class MultiServerImportedUnknownPropertiesTest(private val config: CalDavServerC
 
         assertEquals(1, import(coordinator, single(uid, start), calendar).created)
         val url = uploadedUrl(calendar, uid, "create")
-        assertEquals("sent as written", SINGLE_LINES, unknownLines(blocks(ownEvent(uid).rawIcal!!).single()))
+        assertEquals("sent as written", SINGLE_LINES, unknownLines(blocks(storedIcs(uid)).single()))
         assertServerKeeps("create", reference, fetch(url))
         reportFirstPull(calendar, url, uid, "create")
 
@@ -182,7 +183,7 @@ class MultiServerImportedUnknownPropertiesTest(private val config: CalDavServerC
 
         assertEquals(2, import(coordinator, series(seriesUid, start), calendar).created)
         val url = uploadedUrl(calendar, seriesUid, "create")
-        val sent = blocks(ownEvent(seriesUid).rawIcal!!)
+        val sent = blocks(storedIcs(seriesUid))
         assertEquals("series sent as written", SERIES_LINES, unknownLines(sent.seriesBlock()))
         assertEquals("occurrence sent as written", OCCURRENCE_LINES, unknownLines(sent.occurrenceBlock()))
         assertServerKeeps("series create", reference, fetch(url))
@@ -206,7 +207,7 @@ class MultiServerImportedUnknownPropertiesTest(private val config: CalDavServerC
 
         assertEquals(1, import(coordinator, invitation(inviteUid, start, self!!, "REQUEST", 0), calendar).created)
         val url = uploadedUrl(calendar, inviteUid, "invitation create")
-        assertEquals("sent as written", SINGLE_LINES, unknownLines(blocks(ownEvent(inviteUid).rawIcal!!).single()))
+        assertEquals("sent as written", SINGLE_LINES, unknownLines(blocks(storedIcs(inviteUid)).single()))
         val stored = fetch(url)
 
         val cancel = import(coordinator, invitation(inviteUid, start, self, "CANCEL", 1), calendar)
@@ -326,6 +327,9 @@ class MultiServerImportedUnknownPropertiesTest(private val config: CalDavServerC
     private suspend fun ownEvent(eventUid: String): Event =
         db.eventsDao().getByUid(eventUid).single { it.originalEventId == null }
 
+    /** Returns the stored ICS of [eventUid]'s series row: the body the last push sent. */
+    private suspend fun storedIcs(eventUid: String): String = EventIcsStore(db).read(ownEvent(eventUid))!!
+
     /** Pushes the import's create and returns the URL it landed at (this run's own). */
     private suspend fun uploadedUrl(calendar: Calendar, eventUid: String, step: String): String {
         val pushed = runCatching { pushOrFail(calendar, step) }
@@ -433,6 +437,7 @@ class MultiServerImportedUnknownPropertiesTest(private val config: CalDavServerC
         accountRepository = accountRepository(),
         attendeesDao = db.attendeesDao(),
         pendingCancelsDao = db.pendingCancelsDao(),
+        icsSource = EventIcsStore(db),
     )
 
     private fun accountRepository(): AccountRepository = AccountRepositoryImpl(

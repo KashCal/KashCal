@@ -8,7 +8,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -53,7 +52,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -121,6 +119,10 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Calendar as JavaCalendar
 import kotlin.math.floor
+import org.onekash.kashcal.ui.components.deviceLocalDate
+import org.onekash.kashcal.ui.components.compactZoneLabel
+import java.time.ZonedDateTime
+import java.time.Instant
 
 /** Names which date of a range, start or end, the user is editing. */
 enum class DateSelectionMode {
@@ -133,95 +135,6 @@ enum class ActiveDateTimeSheet {
     NONE,
     START,
     END
-}
-
-/**
- * Shows the selected date and time as a read-only outlined field; a tap calls [onClick].
- *
- * @param label "Starts" or "Ends", floating on the border like an OutlinedTextField label.
- * @param hour 0-23.
- * @param isAllDay hides the time.
- * @param isError shows the error border and strikes through the text.
- * @param errorMessage shown below the field.
- * @param timezone shown as an abbreviation badge only when timed and not the device zone.
- */
-@Deprecated("Use DateTimeDisplayRow instead", level = DeprecationLevel.WARNING)
-@Composable
-fun DateTimePickerCard(
-    label: String,
-    dateMillis: Long,
-    hour: Int,
-    minute: Int,
-    isAllDay: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    isError: Boolean = false,
-    errorMessage: String? = null,
-    timezone: String? = null,
-    timePattern: String = "h:mm a"
-) {
-    val focusManager = LocalFocusManager.current
-
-    val deviceTimezone = TimezoneUtils.getDeviceTimezone()
-    val timezoneAbbrev = if (!isAllDay && timezone != null && timezone != deviceTimezone) {
-        TimezoneUtils.getAbbreviation(timezone)
-    } else null
-
-    val displayText = buildString {
-        append(formatDateForPicker(dateMillis, isAllDay))
-        if (!isAllDay) {
-            append("   ")
-            append(DateTimeUtils.formatTime(hour, minute, timePattern))
-        }
-    }
-
-    Box(modifier = modifier.fillMaxWidth()) {
-        OutlinedTextField(
-            value = displayText,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(label) },
-            trailingIcon = {
-                Icon(Icons.Default.ExpandMore, contentDescription = stringResource(R.string.cd_select_label, label))
-            },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            isError = isError,
-            supportingText = if (errorMessage != null) {
-                { Text(errorMessage, color = MaterialTheme.colorScheme.error) }
-            } else null,
-            textStyle = androidx.compose.ui.text.TextStyle(
-                textDecoration = if (isError) TextDecoration.LineThrough else TextDecoration.None
-            )
-        )
-
-        // Floats on the top-right border, mirroring the label on the left.
-        if (timezoneAbbrev != null) {
-            Text(
-                text = timezoneAbbrev,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = (-12).dp, y = 0.dp) // Match M3 floating label (centered on border)
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(horizontal = 4.dp)
-            )
-        }
-
-        // A readOnly OutlinedTextField still shows a cursor on tap, so an overlay takes the tap.
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
-                    focusManager.clearFocus()
-                    onClick()
-                }
-        )
-    }
 }
 
 /**
@@ -255,13 +168,24 @@ fun DateTimeDisplayRow(
     startErrorMessage: String? = null,
     endErrorMessage: String? = null,
     timezone: String? = null,
-    timePattern: String = "h:mm a"
+    timePattern: String = "h:mm a",
+    /** The start instant the form saves; null computes it from the date and clock fields. */
+    startTs: Long? = null,
+    /** The end instant the form saves; null computes it from the date and clock fields. */
+    endTs: Long? = null,
 ) {
     val focusManager = LocalFocusManager.current
     val deviceTimezone = TimezoneUtils.getDeviceTimezone()
-    val timezoneAbbrev = if (!isAllDay && timezone != null && timezone != deviceTimezone) {
-        TimezoneUtils.getAbbreviation(timezone)
-    } else null
+    // Each row shows the zone at its own instant: an event that starts before the clocks change
+    // and ends after it reads CET on the start and CEST on the end.
+    val startAt = startTs?.let(Instant::ofEpochMilli) ?: formInstant(startDateMillis, startHour, startMinute, timezone)
+    val endAt = endTs?.let(Instant::ofEpochMilli) ?: formInstant(endDateMillis, endHour, endMinute, timezone)
+    val startZoneLabel = if (isAllDay) null else remember(timezone, deviceTimezone, startAt) {
+        compactZoneLabel(timezone, deviceTimezone, startAt)
+    }
+    val endZoneLabel = if (isAllDay) null else remember(timezone, deviceTimezone, endAt) {
+        compactZoneLabel(timezone, deviceTimezone, endAt)
+    }
 
     Column(modifier = modifier) {
         // A Switch reserves a 48dp interactive box, which makes this row taller than the
@@ -302,7 +226,7 @@ fun DateTimeDisplayRow(
                     append("  ")
                     append(DateTimeUtils.formatTime(startHour, startMinute, timePattern))
                 }
-                if (timezoneAbbrev != null) append("  $timezoneAbbrev")
+                if (startZoneLabel != null) append("  $startZoneLabel")
             }
             Text(
                 startDisplay,
@@ -340,7 +264,7 @@ fun DateTimeDisplayRow(
                     append("  ")
                     append(DateTimeUtils.formatTime(endHour, endMinute, timePattern))
                 }
-                if (timezoneAbbrev != null) append("  $timezoneAbbrev")
+                if (endZoneLabel != null) append("  $endZoneLabel")
             }
             Text(
                 endDisplay,
@@ -1208,3 +1132,8 @@ fun isMidnightCrossing(
     val endMinutes = endHour * 60 + endMinute
     return endMinutes < startMinutes
 }
+
+/** The instant of a form date (device-midnight encoding) at [hour]:[minute] in [timezone]. */
+private fun formInstant(dateMillis: Long, hour: Int, minute: Int, timezone: String?): Instant =
+    ZonedDateTime.of(deviceLocalDate(dateMillis).atTime(hour, minute), TimezoneUtils.resolveZone(timezone)).toInstant()
+

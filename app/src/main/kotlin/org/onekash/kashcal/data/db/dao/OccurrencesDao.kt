@@ -1,9 +1,9 @@
 package org.onekash.kashcal.data.db.dao
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
+import androidx.room3.Dao
+import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
+import androidx.room3.Query
 import kotlinx.coroutines.flow.Flow
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.OccurrenceWithEventData
@@ -71,7 +71,7 @@ interface OccurrencesDao {
      * Room tracks both joined tables, so the Flow emits on an event edit (title, location) as
      * well as an occurrence change. The join picks the exception event when
      * `exception_event_id` is set, else the master. Event columns carry the `e_` prefix of
-     * [OccurrenceWithEventData]'s embedded Event; `raw_ical` is selected as NULL.
+     * [OccurrenceWithEventData]'s embedded Event.
      */
     @Query("""
         SELECT o.id, o.event_id, o.exception_event_id, o.calendar_id,
@@ -87,7 +87,7 @@ interface OccurrencesDao {
                e.organizer_email AS e_organizer_email, e.organizer_name AS e_organizer_name,
                e.organizer_sent_by AS e_organizer_sent_by, e.organizer_schedule_status AS e_organizer_schedule_status,
                e.duration AS e_duration, e.original_sync_id AS e_original_sync_id,
-               e.extra_properties AS e_extra_properties, NULL AS e_raw_ical, e.dtstamp AS e_dtstamp,
+               e.extra_properties AS e_extra_properties, e.dtstamp AS e_dtstamp,
                e.last_sync_error AS e_last_sync_error, e.sync_retry_count AS e_sync_retry_count,
                e.server_modified_at AS e_server_modified_at,
                e.import_source AS e_import_source, e.itip_dtstamp AS e_itip_dtstamp,
@@ -121,7 +121,7 @@ interface OccurrencesDao {
                e.organizer_email AS e_organizer_email, e.organizer_name AS e_organizer_name,
                e.organizer_sent_by AS e_organizer_sent_by, e.organizer_schedule_status AS e_organizer_schedule_status,
                e.duration AS e_duration, e.original_sync_id AS e_original_sync_id,
-               e.extra_properties AS e_extra_properties, NULL AS e_raw_ical, e.dtstamp AS e_dtstamp,
+               e.extra_properties AS e_extra_properties, e.dtstamp AS e_dtstamp,
                e.last_sync_error AS e_last_sync_error, e.sync_retry_count AS e_sync_retry_count,
                e.server_modified_at AS e_server_modified_at,
                e.import_source AS e_import_source, e.itip_dtstamp AS e_itip_dtstamp,
@@ -160,7 +160,7 @@ interface OccurrencesDao {
                e.organizer_email AS e_organizer_email, e.organizer_name AS e_organizer_name,
                e.organizer_sent_by AS e_organizer_sent_by, e.organizer_schedule_status AS e_organizer_schedule_status,
                e.duration AS e_duration, e.original_sync_id AS e_original_sync_id,
-               e.extra_properties AS e_extra_properties, NULL AS e_raw_ical, e.dtstamp AS e_dtstamp,
+               e.extra_properties AS e_extra_properties, e.dtstamp AS e_dtstamp,
                e.last_sync_error AS e_last_sync_error, e.sync_retry_count AS e_sync_retry_count,
                e.server_modified_at AS e_server_modified_at,
                e.import_source AS e_import_source, e.itip_dtstamp AS e_itip_dtstamp,

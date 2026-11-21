@@ -20,6 +20,7 @@ import org.onekash.kashcal.domain.mapper.toExportEvent
 import org.onekash.kashcal.util.IcsExporter
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.onekash.kashcal.testutil.TestDatabases
 import java.time.Instant
 
 /**
@@ -79,7 +80,7 @@ class DeviceIcsUtcSeriesImportTest {
     private suspend fun roomStarts(text: String): List<String> {
         val calendarId = room.initializer.ensureLocalCalendarExists()
         assertEquals(1, room.coordinator.importIcsFile(requireNotNull(IcsParserService.parseForImport(text)), calendarId).created)
-        return room.db.query("SELECT start_ts FROM occurrences ORDER BY start_ts", null).use { c ->
+        return TestDatabases.raw(room.db).query("SELECT start_ts FROM occurrences ORDER BY start_ts").use { c ->
             buildList { while (c.moveToNext()) add(Instant.ofEpochMilli(c.getLong(0)).toString()) }
         }
     }

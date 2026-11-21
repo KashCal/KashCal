@@ -10,10 +10,12 @@ import java.util.UUID
  * Builds a standalone, non-recurring copy of one occurrence of [event] for the .ics the share
  * card attaches, so the recipient can add that one event and never the series.
  *
+ * The copy has no stored ICS, so IcsPatcher generates it fresh
+ * ([org.onekash.kashcal.util.IcsExporter.shareCopyText] passes none): the patch path keeps
+ * ATTENDEE, ORGANIZER, RECURRENCE-ID and X-* properties from the original CalDAV body, so a
+ * synced event would leak every attendee's email and RSVP.
+ *
  * Cleared, so none of the sender's data or series state reaches the recipient:
- *  - `rawIcal`, so IcsPatcher takes `generateFresh`. The patch path keeps ATTENDEE,
- *    ORGANIZER, RECURRENCE-ID and X-* properties from the original CalDAV body, so a synced
- *    event would leak every attendee's email and RSVP.
  *  - `rrule`, `originalEventId` and `originalInstanceTime`, so the VEVENT has no RRULE or
  *    RECURRENCE-ID.
  *  - `organizerEmail`, `organizerName`, `organizerSentBy` and `organizerScheduleStatus`: the
@@ -50,7 +52,6 @@ fun singleOccurrenceForShare(
         rrule = null,
         originalEventId = null,
         originalInstanceTime = null,
-        rawIcal = null,
         organizerEmail = null,
         organizerName = null,
         organizerSentBy = null,

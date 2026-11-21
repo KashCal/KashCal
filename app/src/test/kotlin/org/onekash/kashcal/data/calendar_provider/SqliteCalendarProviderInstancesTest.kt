@@ -513,6 +513,20 @@ class SqliteCalendarProviderInstancesTest {
     }
 
     @Test
+    fun `the view applies an event id selection the way the platform view does`() {
+        // The platform's events view has no event_id column of its own, so the name is not
+        // ambiguous in an Instances selection (CalendarProvider2 instance projection map).
+        val kept = oneOff(title = "Kept")
+        oneOff(title = "Other")
+        val series = series()
+
+        val rows = viewRows(T0 - DAY, T0 + 30 * DAY, "${Instances.EVENT_ID} IN ($kept, $series)")
+
+        assertEquals(setOf(kept, series), rows.map { it.first }.toSet())
+        assertEquals(1 + 3, rows.size)
+    }
+
+    @Test
     fun `search treats the escape character literally`() = runTest {
         oneOff(title = "Room #4")
         oneOff(title = "Room 4")

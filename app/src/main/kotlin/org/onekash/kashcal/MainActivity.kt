@@ -109,6 +109,7 @@ import org.onekash.kashcal.util.CalendarIntentParser
 import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.util.IcsExporter
 import org.onekash.kashcal.util.IcsShareIntentParser
+import org.onekash.kashcal.util.SearchIntentRouter
 import org.onekash.kashcal.util.ShareChooser
 import org.onekash.kashcal.util.ShareIntentRouter
 import org.onekash.kashcal.util.IcsFileReader
@@ -195,6 +196,7 @@ class MainActivity : FragmentActivity() {
                 val agendaEvents by homeViewModel.agendaEvents.collectAsStateWithLifecycle()
                 val monthEvents by homeViewModel.monthEvents.collectAsStateWithLifecycle()
                 val plannerState by homeViewModel.plannerState.collectAsStateWithLifecycle()
+                val recentTimeZones by homeViewModel.recentTimeZones.collectAsStateWithLifecycle()
                 val dayDetail by homeViewModel.dayDetail.collectAsStateWithLifecycle()
                 val displayZone by homeViewModel.displayZone.collectAsStateWithLifecycle()
                 val isOnline by homeViewModel.isOnline.collectAsStateWithLifecycle()
@@ -320,6 +322,11 @@ class MainActivity : FragmentActivity() {
                 // Drive form-side attendee state when the form opens for an existing event.
                 androidx.compose.runtime.LaunchedEffect(showEventFormSheet, editingEventId) {
                     homeViewModel.setFormEventId(if (showEventFormSheet) editingEventId else null)
+                }
+                // A refused save's error belongs to that form: every open and close starts clean,
+                // including closes that skip the sheet's own dismiss (Quick Add from the title).
+                androidx.compose.runtime.LaunchedEffect(showEventFormSheet) {
+                    homeViewModel.clearFormSaveError()
                 }
                 // Resolve the form's attendee-editing context and the contacts permission state
                 // when the sheet opens.
@@ -453,6 +460,9 @@ class MainActivity : FragmentActivity() {
                                 }
                                 is PendingAction.OpenSearch -> {
                                     homeViewModel.activateSearch()
+                                }
+                                is PendingAction.OpenTagSearch -> {
+                                    homeViewModel.openTagSearch(action.name)
                                 }
                                 is PendingAction.GoToToday -> {
                                     homeViewModel.goToToday()
@@ -862,6 +872,12 @@ class MainActivity : FragmentActivity() {
                             quickViewEvent = null
                             quickViewOccurrenceTs = null
                         },
+                        onTagClick = { tag ->
+                            showQuickViewSheet = false
+                            quickViewEvent = null
+                            quickViewOccurrenceTs = null
+                            homeViewModel.openTagSearch(tag)
+                        },
                         onEdit = {
                             // One Edit path: the form opens on the tapped
                             // occurrence of a series or exception, and on the
@@ -1172,7 +1188,7 @@ class MainActivity : FragmentActivity() {
                         icsUriProvider = {
                             // A single-occurrence copy, so the recipient
                             // gets one standalone entry instead of the series,
-                            // without the sender's rawIcal, organizer or X-*
+                            // without the sender's stored ICS, organizer or X-*
                             // properties ([singleOccurrenceForShare]). File
                             // I/O runs on Dispatchers.IO so the Send tap
                             // doesn't jank. A failure here is non-fatal: the
@@ -1246,6 +1262,11 @@ class MainActivity : FragmentActivity() {
                         onDismiss = {
                             showDeviceQuickViewSheet = false
                             deviceQuickViewEvent = null
+                        },
+                        onTagClick = { tag ->
+                            showDeviceQuickViewSheet = false
+                            deviceQuickViewEvent = null
+                            homeViewModel.openTagSearch(tag)
                         },
                         onEdit = {
                             // One Edit path, as in the Room quick view: the
@@ -1630,7 +1651,10 @@ class MainActivity : FragmentActivity() {
                         contactsDeclined = contactsDeclined,
                         onDeclineContacts = { homeViewModel.declineContactSuggestions() },
                         tagsAboveNotes = uiState.tagsAboveNotes,
-                        onSetTagsAboveNotes = { above -> homeViewModel.setTagsAboveNotes(above) }
+                        onSetTagsAboveNotes = { above -> homeViewModel.setTagsAboveNotes(above) },
+                        recentTimeZones = recentTimeZones,
+                        onTimeZonePicked = homeViewModel::recordRecentTimeZone,
+                        formSaveError = uiState.formSaveError,
                     )
                 }
 
@@ -2244,8 +2268,12 @@ class MainActivity : FragmentActivity() {
                     return
                 }
                 org.onekash.kashcal.widget.ACTION_OPEN_SEARCH -> {
-                    Log.d(TAG, "Shortcut: opening search")
-                    homeViewModel.setPendingAction(PendingAction.OpenSearch)
+                    val routed = SearchIntentRouter.route(intent) ?: PendingAction.OpenSearch
+                    Log.d(TAG, "Opening search: ${routed::class.simpleName}")
+                    // A tag search is consumed so a recreation keeps the search it opened; the
+                    // shortcut's extras are kept.
+                    if (routed is PendingAction.OpenTagSearch) SearchIntentRouter.consume(intent)
+                    homeViewModel.setPendingAction(routed)
                     return
                 }
             }

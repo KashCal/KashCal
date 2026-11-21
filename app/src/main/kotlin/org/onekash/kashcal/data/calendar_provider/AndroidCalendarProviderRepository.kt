@@ -12,9 +12,11 @@ import android.text.format.DateUtils
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.onekash.kashcal.domain.search.SearchFold
 import org.onekash.kashcal.error.CalendarError
 import org.onekash.kashcal.error.CalendarErrorException
 import org.onekash.kashcal.util.DateTimeUtils
+import org.onekash.kashcal.util.computeDurationString
 import java.time.LocalDate
 import java.time.ZoneId
 import javax.inject.Inject
@@ -184,15 +186,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
         if (enabledCalendarIds.isEmpty()) return@withContext emptyList()
 
         try {
-            // Extend by 1 day to catch events spanning midnight
-            val startMs = dayCodeToStartOfDayMs(startDayCode) - DateUtils.DAY_IN_MILLIS
-            val endMs = dayCodeToEndOfDayMs(endDayCode) + DateUtils.DAY_IN_MILLIS
-
-            val builder = Instances.CONTENT_URI.buildUpon()
-            ContentUris.appendId(builder, startMs)
-            ContentUris.appendId(builder, endMs)
-
-            val selection = if (hideDeclined) SELECTION_HIDE_DECLINED else SELECTION_VISIBLE
+            val builder = instancesWindow(Instances.CONTENT_URI, startDayCode, endDayCode)
+            val selection = visibleSelection(hideDeclined)
 
             val instances = contentResolver.query(
                 builder.build(), INSTANCES_PROJECTION, selection, null, SORT_ORDER
@@ -205,6 +200,20 @@ class AndroidCalendarProviderRepository @Inject constructor(
             emptyList()
         }
     }
+
+    /**
+     * Returns [base] with the window for [startDayCode] to [endDayCode] (YYYYMMDD) appended,
+     * a day wider on each side to catch events spanning midnight.
+     */
+    private fun instancesWindow(base: android.net.Uri, startDayCode: Int, endDayCode: Int): android.net.Uri.Builder =
+        base.buildUpon().also {
+            ContentUris.appendId(it, dayCodeToStartOfDayMs(startDayCode) - DateUtils.DAY_IN_MILLIS)
+            ContentUris.appendId(it, dayCodeToEndOfDayMs(endDayCode) + DateUtils.DAY_IN_MILLIS)
+        }
+
+    /** The Instances selection: calendars with `VISIBLE = 1`, without declined ones when asked. */
+    private fun visibleSelection(hideDeclined: Boolean): String =
+        if (hideDeclined) SELECTION_HIDE_DECLINED else SELECTION_VISIBLE
 
     private fun mapToInstances(
         cursor: android.database.Cursor,
@@ -292,21 +301,65 @@ class AndroidCalendarProviderRepository @Inject constructor(
         if (enabledCalendarIds.isEmpty() || query.isBlank()) return@withContext emptyList()
 
         try {
-            val startMs = dayCodeToStartOfDayMs(startDayCode) - DateUtils.DAY_IN_MILLIS
-            val endMs = dayCodeToEndOfDayMs(endDayCode) + DateUtils.DAY_IN_MILLIS
-
             // Path: instances/search/{begin}/{end}/{query}
-            val builder = Instances.CONTENT_SEARCH_URI.buildUpon()
-            ContentUris.appendId(builder, startMs)
-            ContentUris.appendId(builder, endMs)
+            val builder = instancesWindow(Instances.CONTENT_SEARCH_URI, startDayCode, endDayCode)
             builder.appendPath(query)
 
-            val selection = if (hideDeclined) SELECTION_HIDE_DECLINED else SELECTION_VISIBLE
+            val selection = visibleSelection(hideDeclined)
 
             val instances = contentResolver.query(
                 builder.build(), INSTANCES_PROJECTION, selection, null, SORT_ORDER
             )?.use { cursor -> mapToInstances(cursor, enabledCalendarIds) }
                 .orEmpty()
+
+            populateRemindersAndCategories(instances)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Calendar permission revoked", e)
+            emptyList()
+        }
+    }
+
+    override suspend fun searchTaggedInstances(
+        tags: List<String>,
+        query: String,
+        startDayCode: Int,
+        endDayCode: Int,
+        enabledCalendarIds: Set<Long>,
+        hideDeclined: Boolean
+    ): List<DeviceCalendarInstance> = withContext(Dispatchers.IO) {
+        if (tags.isEmpty()) return@withContext searchInstances(query, startDayCode, endDayCode, enabledCalendarIds, hideDeclined)
+        if (enabledCalendarIds.isEmpty()) return@withContext emptyList()
+        if (query.isNotBlank()) {
+            return@withContext searchInstances(query, startDayCode, endDayCode, enabledCalendarIds, hideDeclined)
+                .filter { SearchFold.hasAllTags(it.categories, tags) }
+        }
+        try {
+            val eventIds = LinkedHashSet<Long>()
+            contentResolver.query(
+                CalendarContract.ExtendedProperties.CONTENT_URI,
+                arrayOf(CalendarContract.ExtendedProperties.EVENT_ID, CalendarContract.ExtendedProperties.VALUE),
+                "${CalendarContract.ExtendedProperties.NAME} = ?",
+                arrayOf(EXTNAME_CATEGORIES),
+                null
+            )?.use { cursor ->
+                while (cursor.moveToNext()) {
+                    if (SearchFold.hasAllTags(decodeCategories(cursor.getString(1)), tags)) eventIds += cursor.getLong(0)
+                }
+            }
+            // No tagged event: an empty IN () would be an SQL error.
+            if (eventIds.isEmpty()) return@withContext emptyList()
+
+            val uri = instancesWindow(Instances.CONTENT_URI, startDayCode, endDayCode).build()
+            val visible = visibleSelection(hideDeclined)
+
+            // Chunked under SQLite's variable limit (default 999).
+            val instances = eventIds.toList().chunked(500).flatMap { chunk ->
+                val selection = "$visible AND ${Instances.EVENT_ID} IN (${chunk.joinToString(",") { "?" }})"
+                contentResolver.query(
+                    uri, INSTANCES_PROJECTION, selection, chunk.map { it.toString() }.toTypedArray(), SORT_ORDER
+                )?.use { cursor -> mapToInstances(cursor, enabledCalendarIds) }
+                    .orEmpty()
+            }.sortedWith(compareBy({ it.startTs }, { it.endTs }))
 
             populateRemindersAndCategories(instances)
         } catch (e: SecurityException) {
@@ -2562,7 +2615,8 @@ internal fun buildImportedAttendeeValues(attendee: DeviceAttendee): android.cont
  * @param startTs epoch ms; UTC midnight for all-day
  * @param endTs inclusive end, KashCal's convention
  * @param rrule null or empty for a one-off
- * @param duration computed from [endTs] when null
+ * @param duration when null, a series gets [computeDurationString] of [endTs], or PT0M
+ *   without an end
  * @param timezone ignored for all-day, which uses UTC
  * @param isException for a one-off, the row is an exception: RRULE is left out of the values,
  *   and RDATE, EXDATE and EXRULE are written as null. Otherwise a one-off writes RRULE as null,
@@ -2605,7 +2659,9 @@ internal fun buildEventValues(
     if (isRecurring) {
         values.put(android.provider.CalendarContract.Events.RRULE, rrule)
 
-        val effectiveDuration = duration ?: calculateDuration(startTs, endTs, isAllDay)
+        val effectiveDuration = duration
+            ?: endTs?.let { computeDurationString(startTs, it, isAllDay) }
+            ?: "PT0M"
         values.put(android.provider.CalendarContract.Events.DURATION, effectiveDuration)
         values.putNull(android.provider.CalendarContract.Events.DTEND)
     } else {
@@ -2630,33 +2686,6 @@ internal fun buildEventValues(
     }
 
     return values
-}
-
-/**
- * Returns the RFC 5545 duration from start to end: `P<n>D` (at least 1) for all-day,
- * `PT<n>H<n>M` for timed, and `PT0M` when [endTs] is null.
- */
-private fun calculateDuration(startTs: Long, endTs: Long?, isAllDay: Boolean): String {
-    if (endTs == null) return "PT0M"
-
-    if (isAllDay) {
-        // endTs is inclusive (last ms of the last day), so add 1 ms for the exclusive end.
-        val durationMs = (endTs + 1) - startTs
-        val days = (durationMs / 86_400_000).toInt().coerceAtLeast(1)
-        return "P${days}D"
-    } else {
-        val durationMs = endTs - startTs
-        val totalMinutes = (durationMs / 60_000).toInt()
-        val hours = totalMinutes / 60
-        val minutes = totalMinutes % 60
-
-        return buildString {
-            append("PT")
-            if (hours > 0) append("${hours}H")
-            if (minutes > 0) append("${minutes}M")
-            if (hours == 0 && minutes == 0) append("0M")
-        }
-    }
 }
 
 /**

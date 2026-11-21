@@ -84,6 +84,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -120,7 +121,6 @@ import org.onekash.kashcal.ui.components.pickers.EventColorPalettePanel
 import org.onekash.kashcal.ui.components.pickers.EventFormRow
 import org.onekash.kashcal.ui.components.pickers.RecurrencePickerRow
 import org.onekash.kashcal.ui.components.pickers.ReminderPickerRow
-import org.onekash.kashcal.ui.components.pickers.TimezonePickerSheet
 import org.onekash.kashcal.ui.components.pickers.untilDisplayMillis
 import org.onekash.kashcal.ui.components.pickers.untilForPickedDate
 import org.onekash.kashcal.ui.model.CalendarGroup
@@ -146,6 +146,10 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Calendar as JavaCalendar
+import org.onekash.kashcal.util.zone.ZoneCatalog
+import androidx.compose.ui.semantics.contentDescription
+import org.onekash.kashcal.ui.components.pickers.TimeZoneSheet
+import org.onekash.kashcal.ui.components.pickers.ZonePick
 
 private const val TAG = "EventFormSheet"
 
@@ -334,6 +338,13 @@ data class EventFormState(
     val editingEventId: Long? = null,
     val isEditMode: Boolean = false,
     val editingOccurrenceTs: Long? = null,
+    /**
+     * The zone the edited event is shown in when the form loads: its stored zone, or the device
+     * zone for a timed event with none or an unreadable one (null: new or all-day). The opened
+     * occurrence's date is read in it ([occurrenceDateChanged]), since a zone pick keeps the
+     * form's date and clock time but moves the moment.
+     */
+    val editingZone: String? = null,
 
     // Attendees the user is editing (organizer flow), as Room entities: seeding
     // from the real rows preserves the role, cutype, rsvp and delegation that the
@@ -352,7 +363,7 @@ data class EventFormState(
     // A timed source event's timezone ID that the app can't resolve (the form then
     // uses the device zone), from a device event's edit or a duplicate. Kept so a
     // device save that doesn't pick a zone writes the original ID instead of the
-    // device zone. Cleared by the timezone picker.
+    // device zone. Cleared when the time zone sheet sets a zone (Device or a pick; Keep leaves it).
     val sourceTimezoneId: String? = null,
     // The repeat rule before an all-day toggle re-expressed its end date, and the
     // rule that toggle produced. Toggling back with the rule untouched restores the
@@ -385,12 +396,21 @@ internal fun eventFormHasUnsavedChanges(
         current.description != initial.description ||
         current.reminders != initial.reminders ||
         current.rrule != initial.rrule ||
-        current.timezone != initial.timezone ||
+        !sameFormZone(current.timezone, initial.timezone) ||
         current.sourceTimezoneId != initial.sourceTimezoneId ||
         current.eventColor != initial.eventColor ||
         current.transp != initial.transp ||
         current.categories != initial.categories ||
         current.attendeesEdited != initial.attendeesEdited
+
+/**
+ * True when two form zones name the same zone, reading null as the device zone: picking a zone
+ * and then Device time zone on a new event shows the same times, so it is not a change.
+ */
+private fun sameFormZone(a: String?, b: String?): Boolean {
+    val device = TimezoneUtils.getDeviceTimezone()
+    return ZoneCatalog.sameZone(a ?: device, b ?: device)
+}
 
 /** Outcome of a dismiss attempt (Cancel tap or system back press). */
 internal enum class FormDismissAction { DISMISS, SHOW_DISCARD_CONFIRM, BLOCKED }
@@ -707,15 +727,26 @@ internal fun EventFormState.withTimedEnd(dateMillis: Long, hour: Int, minute: In
 }
 
 /**
- * Switches a timed form to [newTimezone] (null = device default), keeping the
- * event at the same moment: the start and end are re-expressed as the date and
- * clock time they fall on in the new zone. Any preserved unrecognised source
- * timezone is dropped, since the user has now chosen one.
+ * Switches a timed form to [newTimezone] (null = device default), keeping the dates and clock
+ * times the form shows: "10:00 New York" becomes "10:00 Tokyo", so the moment moves. A series'
+ * start then stays on the days its rule names; keeping the moment instead would move a Tuesday
+ * start to Wednesday in Tokyo while the rule still says Tuesday. Any preserved unrecognised source
+ * timezone is dropped, since the user has now chosen one. The offset hints stay: one is used only
+ * while it names the clock time shown in the form's zone, so switching back to the event's own
+ * zone keeps the second of two repeated clock times.
  */
-internal fun EventFormState.withTimezone(newTimezone: String?): EventFormState {
-    val (start, end) = toStartEndTs()
-    return copy(timezone = newTimezone, sourceTimezoneId = null)
-        .withDateFields(timedFormDateFields(start, end, newTimezone))
+internal fun EventFormState.withTimezone(newTimezone: String?): EventFormState =
+    copy(timezone = newTimezone, sourceTimezoneId = null)
+
+/**
+ * Applies a tap in the time zone sheet. Device time zone stores [deviceZone] itself: the Room edit
+ * saves (update, move, this and future) fall back to the event's stored zone when the form's is
+ * null, so a null here would leave an existing event in its old zone.
+ */
+internal fun EventFormState.withZonePick(pick: ZonePick, deviceZone: String): EventFormState = when (pick) {
+    ZonePick.Keep -> this
+    ZonePick.Device -> withTimezone(deviceZone)
+    is ZonePick.Set -> withTimezone(pick.id)
 }
 
 /**
@@ -944,6 +975,9 @@ fun EventFormSheet(
     onDeclineContacts: (() -> Unit)? = null,
     tagsAboveNotes: Boolean = false,
     onSetTagsAboveNotes: ((Boolean) -> Unit)? = null,
+    recentTimeZones: List<String> = emptyList(),
+    onTimeZonePicked: (String) -> Unit = {},
+    formSaveError: String? = null,
 ) {
     // Mirrored up from EventFormContent, which owns the form state, for the dismiss guard.
     var isSaving by remember { mutableStateOf(false) }
@@ -1035,6 +1069,9 @@ fun EventFormSheet(
             onDeclineContacts = onDeclineContacts,
             tagsAboveNotes = tagsAboveNotes,
             onSetTagsAboveNotes = onSetTagsAboveNotes,
+            recentTimeZones = recentTimeZones,
+            onTimeZonePicked = onTimeZonePicked,
+            formSaveError = formSaveError,
         )
         }
     }
@@ -1198,6 +1235,12 @@ fun EventFormContent(
     tagsAboveNotes: Boolean = false,
     /** Persist a new tag-row position (above or below notes). */
     onSetTagsAboveNotes: ((Boolean) -> Unit)? = null,
+    /** Zones picked before in the time zone sheet, newest first. */
+    recentTimeZones: List<String> = emptyList(),
+    /** Records a zone picked in the time zone sheet as recent. */
+    onTimeZonePicked: (String) -> Unit = {},
+    /** Why the last save was refused (nothing saved), shown above Save; null hides it. */
+    formSaveError: String? = null,
     /**
      * Whether the host has finished its open animation. The title auto-focus, and the
      * keyboard it raises, waits for it so the keyboard doesn't rise mid-entrance.
@@ -1449,7 +1492,8 @@ fun EventFormContent(
                 newState = mappedState.copy(
                     calendarGroups = writableGroups,
                     deviceCalendarGroups = deviceCalendarGroups,
-                    editingOccurrenceTs = deviceOccurrenceTs
+                    editingOccurrenceTs = deviceOccurrenceTs,
+                    editingZone = if (mappedState.isAllDay) null else mappedState.timezone ?: TimezoneUtils.getDeviceTimezone(),
                 )
                 initialRrule = mappedState.rrule
                 wasRecurringAtLoad = editData.event.rrule != null || editData.event.originalId != null
@@ -1506,6 +1550,9 @@ fun EventFormContent(
                     editingEventId = eventId,
                     isEditMode = true,
                     editingOccurrenceTs = occurrenceTs,
+                    editingZone = if (event.isAllDay) null else {
+                        event.timezone?.takeIf { TimezoneUtils.resolveZoneOrNull(it) != null } ?: TimezoneUtils.getDeviceTimezone()
+                    },
                     transp = event.transp,
                     eventColor = event.color,
                     categories = event.categories.orEmpty()
@@ -2189,6 +2236,7 @@ fun EventFormContent(
                     state = state.withAllDay(newIsAllDay, defaultReminderTimed, defaultReminderAllDay)
                 }
 
+                val formStartEnd = state.toStartEndTs()
                 DateTimeDisplayRow(
                     startDateMillis = state.dateMillis,
                     startHour = state.startHour,
@@ -2203,19 +2251,22 @@ fun EventFormContent(
                     isEndError = hasTimeConflict,
                     endErrorMessage = if (hasTimeConflict) stringResource(R.string.error_end_before_start) else null,
                     timezone = state.timezone,
-                    timePattern = timePattern
+                    timePattern = timePattern,
+                    startTs = formStartEnd.first,
+                    endTs = formStartEnd.second,
                 )
 
                 if (!state.isAllDay) {
                     var showTimezoneSheet by remember { mutableStateOf(false) }
                     val tzId = state.timezone
                     val effectiveTzId = tzId ?: remember { TimezoneUtils.getDeviceTimezone() }
-                    val tzAbbrev = remember(effectiveTzId) { TimezoneUtils.getAbbreviation(effectiveTzId) }
-                    val tzDisplayName = remember(effectiveTzId) {
-                        TimezoneUtils.getTimezoneInfo(effectiveTzId)?.displayName
-                            ?: effectiveTzId.substringAfterLast('/').replace('_', ' ')
+                    val resources = LocalResources.current
+                    val startTs = formStartEnd.first
+                    val timezoneLabel = remember(effectiveTzId, startTs, resources) {
+                        ZoneCatalog.label(effectiveTzId, Instant.ofEpochMilli(startTs))
+                            ?.let { timeZoneRowLabel(resources, it) }
+                            ?: TimeZoneRowLabel(effectiveTzId, effectiveTzId)
                     }
-                    val timezoneLabel = "$tzDisplayName ($tzAbbrev)"
 
                     EventFormRow(
                         icon = Icons.Default.Public,
@@ -2224,8 +2275,11 @@ fun EventFormContent(
                         onToggle = { if (!isReadOnly) showTimezoneSheet = true }
                     ) {
                         Text(
-                            timezoneLabel,
+                            timezoneLabel.text,
                             style = MaterialTheme.typography.bodyLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.semantics { contentDescription = timezoneLabel.description },
                             color = if (tzId == null)
                                 MaterialTheme.colorScheme.onSurfaceVariant
                             else
@@ -2234,10 +2288,14 @@ fun EventFormContent(
                     }
 
                     if (showTimezoneSheet) {
-                        TimezonePickerSheet(
-                            selectedTimezone = state.timezone,
-                            onTimezoneSelected = { newTimezone ->
-                                state = state.withTimezone(newTimezone)
+                        TimeZoneSheet(
+                            eventZone = state.timezone,
+                            sourceZone = state.sourceTimezoneId,
+                            at = Instant.ofEpochMilli(startTs),
+                            recents = recentTimeZones,
+                            onPick = { pick ->
+                                state = state.withZonePick(pick, TimezoneUtils.getDeviceTimezone())
+                                if (pick is ZonePick.Set) onTimeZonePicked(pick.id)
                                 showTimezoneSheet = false
                             },
                             onDismiss = { showTimezoneSheet = false }
@@ -2866,6 +2924,14 @@ fun EventFormContent(
             // Sticky bottom Save. Its own top divider ends the scroll content, so
             // content sections must not add a trailing divider (it would stack).
             HorizontalDivider(modifier = Modifier.testTag(TAG_SAVE_DIVIDER))
+            if (formSaveError != null) {
+                Text(
+                    formSaveError,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp),
+                )
+            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

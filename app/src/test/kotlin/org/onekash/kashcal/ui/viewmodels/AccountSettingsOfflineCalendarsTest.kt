@@ -3,7 +3,6 @@ package org.onekash.kashcal.ui.viewmodels
 import android.app.AlarmManager
 import android.content.Context
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.every
@@ -60,6 +59,7 @@ import org.onekash.kashcal.reminder.device.DeviceCalendarChangeWatcher
 import org.onekash.kashcal.reminder.receiver.ReminderAlarmReceiver
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
+import org.onekash.kashcal.testutil.TestDatabases
 import org.onekash.kashcal.testutil.insertOfflineCalendar
 import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.model.localizedDisplayName
@@ -108,7 +108,7 @@ class AccountSettingsOfflineCalendarsTest {
         Dispatchers.setMain(Dispatchers.Unconfined)
         context = ApplicationProvider.getApplicationContext()
         ShadowAlarmManager.setCanScheduleExactAlarms(true)
-        db = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        db = TestDatabases.inMemory(context)
             .addCallback(PendingOperationTriggers.callback())
             .allowMainThreadQueries()
             .build()

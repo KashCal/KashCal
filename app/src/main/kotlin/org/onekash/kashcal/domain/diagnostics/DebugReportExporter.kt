@@ -4,6 +4,8 @@ import android.content.Context
 import android.net.Uri
 import android.os.Build
 import androidx.core.content.FileProvider
+import androidx.room3.deferredTransaction
+import androidx.room3.useReaderConnection
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
@@ -178,8 +180,19 @@ class DebugReportExporter(
         work.forEach { info ->
             write("  ${info.state}  attempts ${info.runAttemptCount}  ${info.tags.sorted().joinToString(" ")}")
         }
-        val counts = COUNTED_TABLES.joinToString(", ") { table -> "$table ${rowCount(table)}" }
-        write("Database: version ${database.openHelper.readableDatabase.version}; $counts")
+        // One read transaction, so the version and the counts come from one snapshot; outside a
+        // transaction each statement could see a sync commit between them.
+        val (version, counts) = database.useReaderConnection { connection ->
+            connection.deferredTransaction {
+                suspend fun readLong(sql: String): Long = usePrepared(sql) { if (it.step()) it.getLong(0) else 0L }
+                val tables = COUNTED_TABLES.map { table -> "$table ${readLong("SELECT COUNT(*) FROM $table")}" }
+                // How many events store an ICS, and in how many pieces (EventIcsStore splits them).
+                val ics = "ics ${readLong("SELECT COUNT(DISTINCT event_id) FROM event_ics")} events / " +
+                    "${readLong("SELECT COUNT(*) FROM event_ics")} parts"
+                readLong("PRAGMA user_version") to tables + ics
+            }
+        }
+        write("Database: version $version; ${counts.joinToString(", ")}")
     }
 
     private suspend fun writeWaitingChanges(write: (String) -> Unit, time: (Long?) -> String) {
@@ -236,11 +249,6 @@ class DebugReportExporter(
         errorMessage = errorMessage?.let(DebugReportMasker::mask),
         warnings = warnings?.map(DebugReportMasker::mask),
     )
-
-    private fun rowCount(table: String): Long =
-        database.query("SELECT COUNT(*) FROM $table", null).use { cursor ->
-            if (cursor.moveToFirst()) cursor.getLong(0) else 0
-        }
 
     private fun formatTime(epochMs: Long?, zone: ZoneId): String =
         if (epochMs == null || epochMs <= 0) "-" else timeFormat.format(Instant.ofEpochMilli(epochMs).atZone(zone))

@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">还有 %1$d 个</string>
     <string name="tags_autocomplete_create_new">创建“%1$s”</string>
     <string name="cd_tag">标签：%1$s</string>
+    <string name="tags_show_events_click_label">显示具有此标签的事件</string>
+    <string name="tags_show_events">显示事件</string>
     <string name="cd_tags_move_menu">移动标签</string>
     <string name="tags_move_above_notes">上移到备注上方</string>
     <string name="tags_move_below_notes">下移到备注下方</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">查看同步会话（过去48小时）</string>
     <string name="settings_import_subtitle">从 ICS 文件将事件添加到任意日历</string>
     <string name="settings_birthday_reminder">生日提醒</string>
-    <string name="settings_use_device_timezone">使用设备时区</string>
     <string name="settings_section_calendars">日历与账户</string>
     <string name="settings_section_appearance">外观</string>
     <string name="settings_section_creating_events">事件偏好设置</string>
@@ -461,7 +462,6 @@
     <string name="cd_recurring">重复</string>
     <string name="cd_enabled">已启用</string>
     <string name="cd_sync_error">同步错误</string>
-    <string name="cd_select_label">选择%1$s</string>
     <string name="cd_wheel_picker">有 %1$d 个选项的滚轮选择器</string>
     <string name="cd_time_entry_keyboard">输入精确时间</string>
     <string name="time_entry_dialog_title">输入时间</string>
@@ -825,6 +825,23 @@
     <string name="label_ends">结束</string>
     <string name="sheet_hint_change_end">点按某一天可更改结束日期</string>
     <string name="label_timezone">时区</string>
+    <string name="timezone_row_city_zone">%1$s（%2$s）</string>
+    <string name="cd_timezone_city_name_offset">%1$s，%2$s，%3$s</string>
+    <string name="cd_timezone_city_offset">%1$s，%2$s</string>
+    <string name="timezone_search_hint">搜索城市、国家或时区</string>
+    <string name="timezone_section_this_event">此事件</string>
+    <string name="timezone_section_device">设备时区</string>
+    <string name="timezone_section_recent">最近使用</string>
+    <string name="timezone_section_all">所有时区</string>
+    <string name="timezone_offsets_on">%1$s 的时差</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">日历中的名称：%1$s</string>
+    <string name="timezone_shown_in_device_time">按设备时间显示</string>
+    <string name="timezone_loading">正在加载时区…</string>
+    <string name="timezone_no_match">没有匹配的时区</string>
+    <string name="timezone_no_match_hint">试试城市、国家或 +5:30 这样的时差</string>
+    <string name="cd_timezone_join">%1$s，%2$s</string>
     <string name="label_alerts">提醒</string>
     <string name="label_add_alert">添加提醒</string>
     <string name="label_recurrence_never">永不</string>
@@ -834,7 +851,6 @@
     <string name="label_default_calendar_hint">新事件将在此日历中创建</string>
     <string name="label_reminders_truncated">%1$d 个未显示（共 %2$d 个，最多可编辑 %3$d 个）</string>
     <string name="label_found_events">发现：%1$d 个事件</string>
-    <string name="placeholder_search">搜索…</string>
     <string name="settings_search_placeholder">搜索设置…</string>
     <string name="settings_search_no_results">未找到与 \"%1$s\" 匹配的设置</string>
     <string name="cd_search_settings">搜索设置</string>
@@ -1046,6 +1062,8 @@
     <string name="event_untitled">无标题事件</string>
     <string name="recurring_this_event">仅此事件</string>
     <string name="recurring_all_events">所有事件</string>
+    <string name="recurring_scope_move_not_expressible">重复规则无法适应此更改</string>
+    <string name="event_form_move_not_expressible">重复规则无法适应此更改。未保存任何内容。</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">参加者</string>
@@ -1121,6 +1139,7 @@
     <string name="search_reason_guest">嘉宾：</string>
     <string name="search_keep_typing">继续输入以搜索</string>
     <string name="search_no_matches">没有与“%1$s”匹配的事件</string>
+    <string name="search_no_events_tagged">没有标记为“%1$s”的事件</string>
     <string name="search_lookback_line">同步回溯范围：%1$s</string>
     <string name="search_sync_settings">同步设置</string>
     <string name="cd_search_sync_settings">打开同步回溯范围设置</string>
@@ -1399,6 +1418,13 @@
     <string name="ics_feed_error_access_denied">此订阅源的服务器拒绝了访问。</string>
     <string name="ics_feed_error_too_large">此日历订阅源太大，无法下载。</string>
     <string name="ics_feed_error_unreadable">无法显示此订阅源中的事件。</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s”未保存。</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="other">%1$d 个事件未保存。</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="other">%1$d 个事件未保存，包括“%2$s”。</item>
+    </plurals>
     <string name="insights_title">洞察</string>
     <string name="insights_period_this_week">周</string>
     <string name="insights_period_last_week">上周</string>

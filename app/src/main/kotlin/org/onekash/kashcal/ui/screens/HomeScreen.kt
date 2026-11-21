@@ -87,6 +87,7 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -122,9 +123,11 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -344,6 +347,9 @@ fun HomeScreen(
     onEnsureDotsForYear: (Int) -> Unit = {},
     dayAttendees: Map<Long, List<org.onekash.kashcal.ui.components.attendees.AttendeeUiModel>> = emptyMap(),
     onSetVisibleEventIds: (List<Long>) -> Unit = {},
+    // Replaces the hub's Make it yours section, whose view model needs Hilt, in plain Compose
+    // tests; null keeps the real section.
+    hubMakeItYours: (@Composable () -> Unit)? = null,
 ) {
     // Month pager, covering the CalendarSpan
     val initialPage = MonthPagerUtils.INITIAL_PAGE
@@ -451,20 +457,31 @@ fun HomeScreen(
 
     val searchFocusRequester = remember { FocusRequester() }
 
-    // Focus the search field when search opens
-    LaunchedEffect(uiState.isSearchActive) {
-        if (uiState.isSearchActive) {
+    // Focus the search field when search opens, unless it opened on a tag: then the keyboard
+    // is closed so the results are in view.
+    val searchKeyboardController = LocalSoftwareKeyboardController.current
+    LaunchedEffect(uiState.isSearchActive, uiState.searchFocusOnOpen, uiState.tagSearchOpens) {
+        if (!uiState.isSearchActive) return@LaunchedEffect
+        if (uiState.searchFocusOnOpen) {
             try {
                 searchFocusRequester.requestFocus()
             } catch (_: Exception) {
                 // The field may not be attached yet
             }
+        } else {
+            searchKeyboardController?.hide()
         }
     }
 
     // Declared before the snackbar effect, which routes to the hub's own host while the hub is
     // up (hubSnackbarHostState).
     var showHub by rememberSaveable { mutableStateOf(false) }
+
+    // Search opening (a tag tapped in a quick view over the hub, or "Show events" on the Tags
+    // screen opened from it) closes the hub, or it would cover the results.
+    LaunchedEffect(uiState.isSearchActive) {
+        if (uiState.isSearchActive) showHub = false
+    }
 
     val snackbarHostState = remember { SnackbarHostState() }
     // A second host mounted on the account-hub overlay. The hub is an opaque Surface above the
@@ -1244,6 +1261,7 @@ fun HomeScreen(
                 // App-lock enable, enroll and unsupported messages show while the hub is up;
                 // hosted here so they aren't hidden behind the overlay.
                 snackbarHost = { SnackbarHost(hostState = hubSnackbarHostState) },
+                makeItYours = hubMakeItYours,
             )
         }
     }
@@ -1319,12 +1337,13 @@ fun HomeScreen(
         val context = remember(pending) {
             pending.toScopeContext()
         }
-        val options = remember(context, pending.originalRrule, pending.formState.rrule) {
+        val options = remember(context, pending.originalRrule, pending.formState.rrule, pending.blockedScopes) {
             org.onekash.kashcal.ui.viewmodels.computeEditScopeOptions(
                 context = context,
                 originalRrule = pending.originalRrule,
                 currentRrule = pending.formState.rrule,
                 resources = scopeResources,
+                blockedScopes = pending.blockedScopes,
             )
         }
         org.onekash.kashcal.ui.components.RecurringScopeSheet(
@@ -1401,9 +1420,24 @@ private fun HomeTopAppBar(
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back), modifier = Modifier.size(24.dp))
                         }
                         val searchKeyboard = LocalSoftwareKeyboardController.current
+                        // Held as a TextFieldValue so text set from outside (a tag search) puts
+                        // the cursor at its end; typed edits keep their own selection.
+                        var searchField by remember { mutableStateOf(TextFieldValue()) }
+                        val shownField = if (searchField.text == uiState.searchQuery) {
+                            searchField
+                        } else {
+                            TextFieldValue(uiState.searchQuery, TextRange(uiState.searchQuery.length))
+                        }
+                        // Kept equal to what is shown, so an edit compares with the text on
+                        // screen even when two edits arrive before the next composition.
+                        SideEffect { if (searchField != shownField) searchField = shownField }
                         BasicTextField(
-                            value = uiState.searchQuery,
-                            onValueChange = onSearchQueryChange,
+                            value = shownField,
+                            onValueChange = {
+                                val changed = it.text != searchField.text
+                                searchField = it
+                                if (changed) onSearchQueryChange(it.text)
+                            },
                             modifier = Modifier.weight(1f).focusRequester(searchFocusRequester),
                             singleLine = true,
                             // Search runs as the user types; the key only closes the keyboard.

@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d okuningi</string>
     <string name="tags_autocomplete_create_new">Dala \"%1$s\"</string>
     <string name="cd_tag">Ithegi: %1$s</string>
+    <string name="tags_show_events_click_label">Bonisa imicimbi enale thegi</string>
+    <string name="tags_show_events">Bonisa imicimbi</string>
     <string name="cd_tags_move_menu">Hambisa amathegi</string>
     <string name="tags_move_above_notes">Hambisa ngenhla kwamanothi</string>
     <string name="tags_move_below_notes">Hambisa ngezansi kwamanothi</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Buka izinhlelo zokuvumelanisa (amahora angama-48 edlule)</string>
     <string name="settings_import_subtitle">Engeza imicimbi esuka efayeleni le-ICS kunoma yiliphi ikhalenda</string>
     <string name="settings_birthday_reminder">Isikhumbuzi Sosuku Lokuzalwa</string>
-    <string name="settings_use_device_timezone">Sebenzisa indawo yesikhathi yedivayisi</string>
     <string name="settings_section_calendars">Amakhalenda &amp; ama-akhawunti</string>
     <string name="settings_section_appearance">Ukubonakala</string>
     <string name="settings_section_creating_events">Okuncamelayo komcimbi</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">Okuphindaphindayo</string>
     <string name="cd_enabled">Kunikwe amandla</string>
     <string name="cd_sync_error">Iphutha lokuvumelanisa</string>
-    <string name="cd_select_label">Khetha %1$s</string>
     <string name="cd_wheel_picker">Isondo sokukhetha esinezinketho ezingu-%1$d</string>
     <string name="cd_time_entry_keyboard">Faka isikhathi esiqondile</string>
     <string name="time_entry_dialog_title">Faka isikhathi</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">Kuphela</string>
     <string name="sheet_hint_change_end">Thepha usuku ukuze ushintshe ukuphela</string>
     <string name="label_timezone">Indawo yesikhathi</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Sesha idolobha, izwe noma indawo</string>
+    <string name="timezone_section_this_event">Lo mcimbi</string>
+    <string name="timezone_section_device">Indawo yesikhathi yedivayisi</string>
+    <string name="timezone_section_recent">Zakamuva</string>
+    <string name="timezone_section_all">Zonke izindawo zesikhathi</string>
+    <string name="timezone_offsets_on">Umehluko ngo-%1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Kusuka ekhalendeni: %1$s</string>
+    <string name="timezone_shown_in_device_time">Kuboniswa ngesikhathi sedivayisi</string>
+    <string name="timezone_loading">Ilayisha izindawo zesikhathi…</string>
+    <string name="timezone_no_match">Ayikho indawo yesikhathi efanayo</string>
+    <string name="timezone_no_match_hint">Zama idolobha, izwe noma umehluko onjengo-+5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Izexwayiso</string>
     <string name="label_add_alert">Engeza Isexwayiso</string>
     <string name="label_recurrence_never">Akusoze</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">Imicimbi emisha izokwenziwa kule khalenda</string>
     <string name="label_reminders_truncated">%1$d akuboniswanga (%2$d esiphelele, okuningi %3$d okuhlelekayo)</string>
     <string name="label_found_events">Kutholwe: imicimbi engu-%1$d</string>
-    <string name="placeholder_search">Sesha…</string>
     <string name="settings_search_placeholder">Sesha izilungiselelo…</string>
     <string name="settings_search_no_results">Azikho izilungiselelo ezitholakele ze-\"%1$s\"</string>
     <string name="cd_search_settings">Sesha izilungiselelo</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">Umcimbi ongenasihloko</string>
     <string name="recurring_this_event">Lo mcimbi</string>
     <string name="recurring_all_events">Yonke imicimbi</string>
+    <string name="recurring_scope_move_not_expressible">Umthetho wokuphinda awukwazi ukulandela lolu shintsho</string>
+    <string name="event_form_move_not_expressible">Umthetho wokuphinda awukwazi ukulandela lolu shintsho. Akukho okulondoloziwe.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Abazohambela</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">Isivakashi:</string>
     <string name="search_keep_typing">Qhubeka uthayipha ukuze useshe</string>
     <string name="search_no_matches">Ayikho imicimbi efana no-“%1$s”</string>
+    <string name="search_no_events_tagged">Ayikho imicimbi enethegi elingu-“%1$s”</string>
     <string name="search_lookback_line">Ukubheka Emuva Kokuvumelanisa: %1$s</string>
     <string name="search_sync_settings">Izilungiselelo zokuvumelanisa</string>
     <string name="cd_search_sync_settings">Vula isilungiselelo sokubheka emuva kokuvumelanisa</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">Iseva yale fidi yenqabe ukufinyelela.</string>
     <string name="ics_feed_error_too_large">Le fidi yekhalenda inkulu kakhulu ukuthi ingalandwa.</string>
     <string name="ics_feed_error_unreadable">Imicimbi yale fidi ayikwazanga ukuboniswa.</string>
+    <string name="ics_feed_error_event_not_saved">Umcimbi “%1$s” awugcinwanga.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">Umcimbi ongu-%1$d awugcinwanga.</item>
+        <item quantity="other">Imicimbi engu-%1$d ayigcinwanga.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">Umcimbi ongu-%1$d awugcinwanga, kufaka phakathi i-“%2$s”.</item>
+        <item quantity="other">Imicimbi engu-%1$d ayigcinwanga, kufaka phakathi i-“%2$s”.</item>
+    </plurals>
     <string name="insights_title">Ukuqonda</string>
     <string name="insights_period_this_week">Isonto</string>
     <string name="insights_period_last_week">Isonto eledlule</string>

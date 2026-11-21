@@ -91,6 +91,8 @@ import org.onekash.kashcal.util.text.shouldOpenExternally
  * @param onRsvp called with the chosen response when the user changes their own RSVP. The RSVP
  *   cards show only on a writable calendar, for a user with a self row who isn't the organizer.
  * @param timeFormat time format preference: "system", "12h" or "24h"
+ * @param onTagClick called with a tag's name when its chip is tapped; null leaves the chips
+ *   as text.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -112,6 +114,7 @@ fun DeviceEventQuickViewSheet(
     onShareAsCard: () -> Unit = {},
     showShareCardTooltip: Boolean = false,
     onShareCardTooltipDismissed: () -> Unit = {},
+    onTagClick: ((String) -> Unit)? = null,
     timeFormat: String = "system"
 ) {
     val canWrite = hasWritePermission && isWritableCalendar
@@ -276,7 +279,8 @@ fun DeviceEventQuickViewSheet(
                                         suggestions = emptyList(),
                                         onToggle = {},
                                         onAdd = {},
-                                        readOnly = true
+                                        readOnly = true,
+                                        onTagClick = onTagClick,
                                     )
                                 }
                             }

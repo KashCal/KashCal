@@ -206,18 +206,19 @@ class DisplayEventRepository @Inject constructor(
      * ([seriesToCover], [OccurrenceGenerator.ensureCoveredFor], not awaited), so such a series is
      * dated once its rows land.
      * With [range] the range is covered first ([OccurrenceGenerator.ensureCovered]), so the
-     * first range list is whole. Device calendars are searched by
-     * [SearchQuery.toProviderQuery] over every enabled calendar, hidden ones included, from the
-     * sync lookback (10 years back at most) to 2 years ahead, and again over [range]'s days;
-     * only the device change signal, the hidden-calendar set and the sync lookback (which moves
-     * the window and the empty state's lookback line) run that search again. A calendar
+     * first range list is whole. Device calendars are searched with the query's tags and
+     * [SearchQuery.toProviderQuery] ([CalendarProviderRepository.searchTaggedInstances]) over every
+     * enabled calendar, hidden ones included, from the sync lookback (10 years back at most) to 2
+     * years ahead, and again over [range]'s days; only the device change signal, the
+     * hidden-calendar set and the sync lookback (which moves the window and the empty state's
+     * lookback line) run that search again. A calendar
      * visibility change splits again without searching. A device [SecurityException]
      * leaves the Room results. [now] and [zone] decide which occurrences have ended. Nothing
      * here touches the network.
      */
     @OptIn(ExperimentalCoroutinesApi::class)
     fun observeSearch(query: SearchQuery, now: Long, zone: ZoneId, range: LongRange? = null): Flow<SearchOutcome> {
-        if (query.words.isEmpty()) return flowOf(SearchOutcome())
+        if (query.isEmpty) return flowOf(SearchOutcome())
         val started = System.nanoTime()
         val today = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
         val todayCode = DayPagerUtils.localDateToDayCode(today)
@@ -366,17 +367,14 @@ class DisplayEventRepository @Inject constructor(
             val to = today.plusYears(SEARCH_YEARS_AHEAD)
             val hideDeclined = !dataStore.getShowDeclinedEvents()
             val text = query.toProviderQuery()
+            suspend fun search(startDay: Int, endDay: Int) =
+                calendarProviderRepository.searchTaggedInstances(query.tags, text, startDay, endDay, calendarIds, hideDeclined)
             val start = System.nanoTime()
-            val all = calendarProviderRepository.searchInstances(
-                text, DayPagerUtils.localDateToDayCode(from), DayPagerUtils.localDateToDayCode(to), calendarIds, hideDeclined
-            )
+            val all = search(DayPagerUtils.localDateToDayCode(from), DayPagerUtils.localDateToDayCode(to))
             val inRange = range?.let {
-                calendarProviderRepository.searchInstances(
-                    text,
+                search(
                     DateTimeUtils.eventTsToDayCode(it.first, isAllDay = false, localZone = zone),
                     DateTimeUtils.eventTsToDayCode(it.last, isAllDay = false, localZone = zone),
-                    calendarIds,
-                    hideDeclined,
                 )
             }
             DeviceSearch(all, inRange, elapsedMs(start), pastDays)

@@ -1,7 +1,6 @@
 package org.onekash.kashcal.domain.writer
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -26,6 +25,7 @@ import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -61,7 +61,7 @@ class EventWriterTest {
     @Before
     fun setup() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .addCallback(PendingOperationTriggers.callback())
             .allowMainThreadQueries()
             .build()
@@ -1427,9 +1427,11 @@ class EventWriterTest {
         // well inside it.
         val splitFrom = occurrences[5].startTs
 
+        // The new series starts on the split occurrence, as the form and the drag send it.
+        val splitEnd = occurrences[5].endTs
         eventWriter.splitSeries(
             master.id, splitFrom,
-            createBaseEvent().copy(rrule = "FREQ=DAILY", isAllDay = true),
+            createBaseEvent().copy(rrule = "FREQ=DAILY", isAllDay = true, startTs = splitFrom, endTs = splitEnd),
             isLocal = true
         )
 

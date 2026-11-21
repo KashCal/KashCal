@@ -73,7 +73,6 @@ class EventToICalEventMapperTest {
         reminders = reminders,
         alarmCount = 0,
         extraProperties = extraProperties,
-        rawIcal = null,
         dtstamp = dtstamp,
         caldavUrl = null,
         etag = null,
@@ -222,14 +221,22 @@ class EventToICalEventMapperTest {
     }
 
     @Test
-    fun `exception mapper recurrenceId built from originalInstanceTime`() {
-        val master = baseEvent(uid = "m-1")
+    fun `exception mapper recurrenceId built from originalInstanceTime in the series zone`() {
+        val master = baseEvent(uid = "m-1", timezone = "America/New_York")
         val originalInstance = 1709740800000L // 2024-03-06 12:00 UTC
-        val exception = baseEvent(originalInstanceTime = originalInstance, timezone = "America/New_York")
+        val exception = baseEvent(originalInstanceTime = originalInstance, timezone = "Europe/London")
         val ical = EventToICalEventMapper.toICalEvent(master, exception)
         assertNotNull(ical.recurrenceId)
         assertEquals(originalInstance, ical.recurrenceId!!.timestamp)
         assertEquals(ZoneId.of("America/New_York"), ical.recurrenceId!!.timezone)
+        assertEquals(ZoneId.of("Europe/London"), ical.dtStart.timezone)
+    }
+
+    @Test
+    fun `exception mapper with only the series uid uses the exception's zone`() {
+        val exception = baseEvent(originalInstanceTime = 1709740800000L, timezone = "Europe/London")
+        val ical = EventToICalEventMapper.toICalEvent(masterUid = "m-1", exception = exception)
+        assertEquals(ZoneId.of("Europe/London"), ical.recurrenceId!!.timezone)
     }
 
     @Test

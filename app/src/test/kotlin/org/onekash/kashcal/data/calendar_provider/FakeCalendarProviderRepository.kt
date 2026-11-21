@@ -1,5 +1,6 @@
 package org.onekash.kashcal.data.calendar_provider
 
+import org.onekash.kashcal.domain.search.SearchFold
 import org.onekash.kashcal.error.CalendarError
 
 /**
@@ -280,6 +281,15 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
     ): List<DeviceCalendarInstance> {
         searchCalls += SearchCall(query, startDayCode, endDayCode, enabledCalendarIds, hideDeclined)
         if (shouldThrowSecurityException) throw SecurityException("Calendar permission revoked")
+        return wordMatches(query, startDayCode, endDayCode, enabledCalendarIds)
+    }
+
+    private fun wordMatches(
+        query: String,
+        startDayCode: Int,
+        endDayCode: Int,
+        enabledCalendarIds: Set<Long>,
+    ): List<DeviceCalendarInstance> {
         val words = SqliteCalendarProvider.tokenizeSearchQuery(query).map { it.lowercase() }
         if (words.isEmpty()) return emptyList()
         return instances.filter { instance ->
@@ -294,6 +304,43 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
                         }
                 }
         }
+    }
+
+    /** One [searchTaggedInstances] call, recorded so tests can assert what the search sent. */
+    data class TaggedSearchCall(
+        val tags: List<String>,
+        val query: String,
+        val startDayCode: Int,
+        val endDayCode: Int,
+        val enabledCalendarIds: Set<Long>,
+        val hideDeclined: Boolean,
+    )
+
+    val taggedSearchCalls = mutableListOf<TaggedSearchCall>()
+
+    /**
+     * Mirrors the real rule: every tag held under [SearchFold.hasAllTags], on the
+     * [searchInstances] word matches when [query] has words; no tags is [searchInstances].
+     */
+    override suspend fun searchTaggedInstances(
+        tags: List<String>,
+        query: String,
+        startDayCode: Int,
+        endDayCode: Int,
+        enabledCalendarIds: Set<Long>,
+        hideDeclined: Boolean
+    ): List<DeviceCalendarInstance> {
+        if (tags.isEmpty()) return searchInstances(query, startDayCode, endDayCode, enabledCalendarIds, hideDeclined)
+        taggedSearchCalls += TaggedSearchCall(tags, query, startDayCode, endDayCode, enabledCalendarIds, hideDeclined)
+        if (shouldThrowSecurityException) throw SecurityException("Calendar permission revoked")
+        val pool = if (query.isNotBlank()) {
+            wordMatches(query, startDayCode, endDayCode, enabledCalendarIds)
+        } else {
+            instances.filter {
+                it.calendarId in enabledCalendarIds && it.endDay >= startDayCode && it.startDay <= endDayCode
+            }
+        }
+        return pool.filter { SearchFold.hasAllTags(it.categories, tags) }
     }
 
     /**

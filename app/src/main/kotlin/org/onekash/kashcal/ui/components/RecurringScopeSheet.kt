@@ -46,7 +46,8 @@ enum class ScopeTint { Neutral, Warn, Destructive }
 
 /**
  * One card in [RecurringScopeSheet], built by the caller. A disabled option stays visible at
- * reduced opacity; the context shows why it doesn't apply.
+ * reduced opacity; the context shows why it doesn't apply, or [reason] does, one line under the
+ * label.
  */
 data class ScopeOption(
     val scope: EditScope,
@@ -54,6 +55,7 @@ data class ScopeOption(
     val icon: ImageVector,
     val enabled: Boolean,
     val tint: ScopeTint = ScopeTint.Neutral,
+    val reason: String? = null,
 )
 
 /**
@@ -202,12 +204,21 @@ private fun ScopeOptionCard(
                     modifier = Modifier.size(22.dp),
                 )
             }
-            Text(
-                text = option.label,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                color = labelColor,
-            )
+            Column {
+                Text(
+                    text = option.label,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = labelColor,
+                )
+                if (!option.enabled && option.reason != null) {
+                    Text(
+                        text = option.reason,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
         }
     }
 }

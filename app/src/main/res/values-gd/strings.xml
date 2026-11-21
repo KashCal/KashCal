@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d eile</string>
     <string name="tags_autocomplete_create_new">Cruthaich «%1$s»</string>
     <string name="cd_tag">Taga: %1$s</string>
+    <string name="tags_show_events_click_label">Seall tachartasan leis an taga seo</string>
+    <string name="tags_show_events">Seall tachartasan</string>
     <string name="cd_tags_move_menu">Gluais tagaichean</string>
     <string name="tags_move_above_notes">Gluais os cionn nan nòtaichean</string>
     <string name="tags_move_below_notes">Gluais fo na nòtaichean</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Seall seiseanan sioncronachaidh (48 uairean mu dheireadh)</string>
     <string name="settings_import_subtitle">Cuir tachartasan bho fhaidhle ICS ri mìosachan sam bith</string>
     <string name="settings_birthday_reminder">Cuimhneachan Co-là Breith</string>
-    <string name="settings_use_device_timezone">Cleachd roinn-tìde an uidheim</string>
     <string name="settings_section_calendars">Mìosachain is cunntasan</string>
     <string name="settings_section_appearance">Coltas</string>
     <string name="settings_section_creating_events">Roghainnean thachartasan</string>
@@ -464,7 +465,6 @@
     <string name="cd_recurring">Ath-thachairteil</string>
     <string name="cd_enabled">Air a chur an comas</string>
     <string name="cd_sync_error">Mearachd sioncronachaidh</string>
-    <string name="cd_select_label">Tagh %1$s</string>
     <string name="cd_wheel_picker">Roghadair cuibhle le %1$d roghainn</string>
     <string name="cd_time_entry_keyboard">Cuir a-steach an t-àm mionaideach</string>
     <string name="time_entry_dialog_title">Cuir a-steach an t-àm</string>
@@ -858,6 +858,23 @@
     <string name="label_ends">A\' Crìochnachadh</string>
     <string name="sheet_hint_change_end">Thoir gnogag air latha gus an deireadh atharrachadh</string>
     <string name="label_timezone">Roinn-tìde</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Lorg baile, dùthaich no roinn-tìde</string>
+    <string name="timezone_section_this_event">An tachartas seo</string>
+    <string name="timezone_section_device">Roinn-tìde an uidheim</string>
+    <string name="timezone_section_recent">O chionn goirid</string>
+    <string name="timezone_section_all">Gach roinn-tìde</string>
+    <string name="timezone_offsets_on">Eadar-dhealachaidhean air %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Bhon mhìosachan: %1$s</string>
+    <string name="timezone_shown_in_device_time">Ga shealltainn ann an tìde an uidheim</string>
+    <string name="timezone_loading">A\' luchdadh nan roinnean-tìde…</string>
+    <string name="timezone_no_match">Chan eil roinn-tìde a\' freagairt</string>
+    <string name="timezone_no_match_hint">Feuch baile, dùthaich no eadar-dhealachadh mar +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Rabhaidhean</string>
     <string name="label_add_alert">Cuir Rabhadh Ris</string>
     <string name="label_recurrence_never">Gu bràth</string>
@@ -867,7 +884,6 @@
     <string name="label_default_calendar_hint">Thèid tachartasan ùra a chruthachadh sa mhìosachan seo</string>
     <string name="label_reminders_truncated">%1$d gun sealltainn (%2$d san iomlan, as motha %3$d ri dheasachadh)</string>
     <string name="label_found_events">Air lorg: %1$d tachartas</string>
-    <string name="placeholder_search">Lorg…</string>
     <string name="settings_search_placeholder">Lorg sna roghainnean…</string>
     <string name="settings_search_no_results">Cha deach roghainn a lorg airson \"%1$s\"</string>
     <string name="cd_search_settings">Lorg sna roghainnean</string>
@@ -1199,6 +1215,8 @@
     <string name="event_untitled">Tachartas gun tiotal</string>
     <string name="recurring_this_event">An tachartas seo</string>
     <string name="recurring_all_events">Gach tachartas</string>
+    <string name="recurring_scope_move_not_expressible">Chan urrainn do riaghailt an ath-dhèanaimh an atharrachadh seo a leantainn</string>
+    <string name="event_form_move_not_expressible">Chan urrainn do riaghailt an ath-dhèanaimh an atharrachadh seo a leantainn. Cha deach dad a shàbhaladh.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Luchd-frithealaidh</string>
@@ -1295,6 +1313,7 @@
     <string name="search_reason_guest">Aoigh:</string>
     <string name="search_keep_typing">Cùm ort a\' sgrìobhadh gus lorg</string>
     <string name="search_no_matches">Chan eil tachartas a\' freagairt ri “%1$s”</string>
+    <string name="search_no_events_tagged">Chan eil tachartas le taga “%1$s”</string>
     <string name="search_lookback_line">Coimhead Air Ais Sioncronachaidh: %1$s</string>
     <string name="search_sync_settings">Roghainnean sioncronachaidh</string>
     <string name="cd_search_sync_settings">Fosgail roghainn coimhead air ais sioncronachaidh</string>
@@ -1627,6 +1646,19 @@
     <string name="ics_feed_error_access_denied">Dhiùlt am frithealaiche inntrigeadh dhan inbhir seo.</string>
     <string name="ics_feed_error_too_large">Tha an t-inbhir mìosachain seo ro mhòr airson a luchdadh a-nuas.</string>
     <string name="ics_feed_error_unreadable">Cha b\'urrainnear na tachartasan san inbhir seo a shealltainn.</string>
+    <string name="ics_feed_error_event_not_saved">Cha deach “%1$s” a shàbhaladh.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">Cha deach %1$d tachartas a shàbhaladh.</item>
+        <item quantity="two">Cha deach %1$d thachartas a shàbhaladh.</item>
+        <item quantity="few">Cha deach %1$d tachartasan a shàbhaladh.</item>
+        <item quantity="other">Cha deach %1$d tachartas a shàbhaladh.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">Cha deach %1$d tachartas a shàbhaladh, a\' gabhail a-steach “%2$s”.</item>
+        <item quantity="two">Cha deach %1$d thachartas a shàbhaladh, a\' gabhail a-steach “%2$s”.</item>
+        <item quantity="few">Cha deach %1$d tachartasan a shàbhaladh, a\' gabhail a-steach “%2$s”.</item>
+        <item quantity="other">Cha deach %1$d tachartas a shàbhaladh, a\' gabhail a-steach “%2$s”.</item>
+    </plurals>
     <string name="insights_title">Fiosrachaidhean</string>
     <string name="insights_period_this_week">Seachdain</string>
     <string name="insights_period_last_week">Seachd. sa chaidh</string>

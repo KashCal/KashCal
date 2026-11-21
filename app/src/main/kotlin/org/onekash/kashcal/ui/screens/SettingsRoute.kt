@@ -123,6 +123,7 @@ fun SettingsRoute(
     // Tags screen, and backing out of it finishes the activity to the hub instead of revealing
     // the Settings root the user never chose.
     openTagsInitially: Boolean = false,
+    onShowTagEvents: ((name: String) -> Unit)? = null,
     // True when the onboarding sheet launched straight into Device calendars: the route opens
     // there, and backing out finishes the activity to HomeScreen.
     openDeviceCalendarsInitially: Boolean = false,
@@ -714,6 +715,7 @@ fun SettingsRoute(
                             onNavigateBack = closeTags,
                             onSetColor = { name, color -> tagsViewModel.onSetColor(name, color) },
                             onRename = tagsViewModel::onRename,
+                            onShowEvents = onShowTagEvents,
                             onDelete = { name ->
                                 // Deletes at once with an undo window: the row disappears through
                                 // the live Room flow, and Undo on the snackbar restores it.

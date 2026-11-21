@@ -1,7 +1,6 @@
 package org.onekash.kashcal.domain.reader
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.every
@@ -34,6 +33,7 @@ import org.onekash.kashcal.domain.search.SearchOutcome
 import org.onekash.kashcal.domain.search.SearchQuery
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.onekash.kashcal.ui.util.DayPagerUtils
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -44,7 +44,7 @@ import java.time.ZoneId
  * [DisplayEventRepository.observeSearch] over a real Room database and the shared
  * [FakeCalendarProviderRepository]: Room and device matches split by Upcoming, Past and hidden
  * calendars, a revoked permission, re-runs on the device change signal and their bounds, the
- * device window, and the words the device search gets.
+ * device window, the words the device search gets, and tag searches on both sources.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -70,7 +70,7 @@ class DisplayEventRepositorySearchTest {
     @Before
     fun setUp(): Unit = runBlocking {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
         val generator = OccurrenceGenerator(
@@ -102,11 +102,17 @@ class DisplayEventRepositorySearchTest {
     @After
     fun tearDown() = database.close()
 
-    private suspend fun create(title: String, start: Long, calendar: Long = calendarId, rrule: String? = null): Long =
+    private suspend fun create(
+        title: String,
+        start: Long,
+        calendar: Long = calendarId,
+        rrule: String? = null,
+        tags: List<String>? = null,
+    ): Long =
         writer.createEvent(
             Event(
                 uid = "", calendarId = calendar, title = title, startTs = start, endTs = start + hour, dtstamp = 0L,
-                rrule = rrule, timezone = "UTC", syncStatus = SyncStatus.SYNCED,
+                rrule = rrule, timezone = "UTC", syncStatus = SyncStatus.SYNCED, categories = tags,
             ),
             isLocal = true,
         ).id
@@ -233,6 +239,58 @@ class DisplayEventRepositorySearchTest {
         val sent = fake.searchCalls.single().query
         assertEquals(SearchQuery.of(text).words, SearchQuery.of(sent).words)
         assertEquals(30, SearchQuery.of(sent).words.size)
+    }
+
+    @Test
+    fun `a tag alone lists the tagged events of both sources by side and hidden calendars`(): Unit = runBlocking {
+        create("Checkup", now + day, tags = listOf("Doctor"))
+        create("Physio", now - 30 * day, tags = listOf("doctor", "Family"))
+        create("Old clinic", now + 2 * day, calendar = hiddenCalendarId, tags = listOf("Doctor"))
+        create("Doctor Who night", now + day)
+        fake.instances = listOf(
+            device(1, "Phone dentist", now + 3 * day).copy(categories = listOf("DOCTOR")),
+            device(2, "Phone lunch", now + 3 * day).copy(categories = listOf("Family")),
+            device(3, "Hidden scan", now + 4 * day, calendar = HIDDEN_DEVICE_CAL).copy(categories = listOf("Doctor")),
+        )
+        hiddenDevice.value = setOf(HIDDEN_DEVICE_CAL)
+
+        val outcome = search("#doctor") { it.upcoming.size == 2 }
+
+        assertEquals(listOf("Checkup", "Phone dentist"), titles(outcome.upcoming))
+        assertEquals(listOf("Physio"), titles(outcome.past))
+        assertEquals(listOf("Old clinic", "Hidden scan"), titles(outcome.hiddenUpcoming))
+        assertTrue("no reason line for a tag-only search", (outcome.upcoming + outcome.past).all { it.reason == null })
+        val call = fake.taggedSearchCalls.single()
+        assertEquals(listOf("doctor"), call.tags)
+        assertEquals("", call.query)
+        assertTrue("words-only device search not used", fake.searchCalls.isEmpty())
+    }
+
+    @Test
+    fun `a tag and words send both to the device and narrow both sources`(): Unit = runBlocking {
+        create("Kids checkup", now + day, tags = listOf("Doctor"))
+        create("Adult checkup", now + day, tags = listOf("Doctor"))
+        fake.instances = listOf(
+            device(1, "Kids dentist", now + 2 * day).copy(categories = listOf("Doctor")),
+            device(2, "Kids party", now + 2 * day).copy(categories = listOf("Fun")),
+        )
+
+        val outcome = search("#doctor kids") { it.upcoming.size == 2 }
+
+        assertEquals(listOf("Kids checkup", "Kids dentist"), titles(outcome.upcoming))
+        assertEquals("\"kids\"", fake.taggedSearchCalls.single().query)
+    }
+
+    @Test
+    fun `a tag search over a range searches the device by the range's days`(): Unit = runBlocking {
+        val far = today.plusYears(3)
+        val start = far.atStartOfDay(zone).toInstant().toEpochMilli()
+        fake.instances = listOf(device(1, "Far checkup", start + 10 * hour).copy(categories = listOf("Doctor")))
+
+        val outcome = search("#doctor", range = start..(start + 7 * day - 1))
+
+        assertEquals(listOf("Far checkup"), titles(outcome.range!!))
+        assertEquals(DayPagerUtils.localDateToDayCode(far), fake.taggedSearchCalls.last().startDayCode)
     }
 
     @Test

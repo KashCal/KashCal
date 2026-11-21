@@ -31,12 +31,14 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 /**
- * Refreshes a subscribed feed after its server removed every event, through the real
+ * Subscribes to and refreshes feeds with no events left to show, through the real
  * [OkHttpIcsFetcher] and [IcsSubscriptionRepository] over Room, with a MockWebServer as the feed.
  *
- * A calendar with no events, or with only a VTIMEZONE (RFC 5545 §3.6 accepts any component), is
+ * A calendar with no events, with only a VTIMEZONE (RFC 5545 §3.6 accepts any component), or
+ * whose events are all CANCELLED (as a Nextcloud export of a calendar of cancelled events is) is
  * the feed's current state, so the refresh removes the stored events and their alarms. A blank
- * body or one that isn't a calendar fails the refresh and keeps them.
+ * body, one that isn't a calendar, or one whose events can't be read fails the refresh and keeps
+ * them.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -201,4 +203,45 @@ class IcsEmptyFeedRefreshTest {
     @Test
     fun `a download cut off before END-VCALENDAR fails the refresh and keeps the events`() =
         assertFeedKept(header + "BEGIN:VEVENT\r\nUID:x@example.test\r\nDTSTART:20261110T100000Z\r\n", "Invalid ICS format")
+
+    /** The two-event feed with each event marked STATUS:CANCELLED. */
+    private fun cancelledFeed() = twoEventFeed().replace("SUMMARY:", "STATUS:CANCELLED\r\nSUMMARY:")
+
+    @Test
+    fun `a feed whose events were all cancelled clears its events and alarms on refresh`() =
+        assertFeedCleared(cancelledFeed())
+
+    @Test
+    fun `subscribing to a feed of cancelled events succeeds with nothing stored`() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(200).setBody(cancelledFeed()))
+
+        val added = repository.addSubscription(server.url("/feed.ics").toString(), "Feed", 0xFF3366CC.toInt())
+
+        assertTrue("subscribing failed: $added", added is IcsSubscriptionRepository.SubscriptionResult.Success)
+        val sub = (added as IcsSubscriptionRepository.SubscriptionResult.Success).subscription
+        assertEquals("the feed was downloaded", 1, server.requestCount)
+        assertTrue("no feed events", storedEvents(sub).isEmpty())
+        val row = db.icsSubscriptionsDao().getById(sub.id)!!
+        assertNull("no error on the row", row.lastError)
+        assertTrue("the refresh was recorded", row.lastSync > 0)
+    }
+
+    @Test
+    fun `a feed whose live events can't be read fails even with a cancelled one`() =
+        // Only the CANCELLED VEVENT parses: not an all-cancelled feed, so the events stay.
+        assertFeedKept(
+            header + "BEGIN:VEVENT\r\nUID:bad@example.test\r\nEND:VEVENT\r\n" +
+                "BEGIN:VEVENT\r\nUID:gone@example.test\r\nDTSTAMP:20261028T000000Z\r\n" +
+                "DTSTART:20261110T100000Z\r\nDTEND:20261110T110000Z\r\nSTATUS:CANCELLED\r\nEND:VEVENT\r\n" +
+                "END:VCALENDAR\r\n",
+            IcsFeedErrors.NO_EVENTS_PARSED
+        )
+
+    @Test
+    fun `a feed whose events can't be read fails the refresh and keeps the events`() =
+        // A VEVENT without DTSTART: the parser reads no event from a body that has VEVENTs.
+        assertFeedKept(
+            header + "BEGIN:VEVENT\r\nUID:bad@example.test\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n",
+            IcsFeedErrors.NO_EVENTS_PARSED
+        )
 }

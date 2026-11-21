@@ -41,4 +41,14 @@ object SearchFold {
 
     /** Returns whether [text] contains [word], ignoring case; see [fold] for repeated checks. */
     fun contains(text: String?, word: String): Boolean = text != null && indexOf(text, word) >= 0
+
+    /**
+     * Returns whether [eventTags] hold every name in [searched], each equal to one of them once
+     * both are folded: the whole-name rule a tag search applies to device-calendar tags.
+     */
+    fun hasAllTags(eventTags: List<String>, searched: Collection<String>): Boolean {
+        if (searched.isEmpty()) return true
+        val held = eventTags.mapTo(HashSet()) { fold(it) }
+        return searched.all { fold(it) in held }
+    }
 }

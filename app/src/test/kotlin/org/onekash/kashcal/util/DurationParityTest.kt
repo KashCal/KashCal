@@ -12,8 +12,7 @@ import java.time.Duration
 
 /**
  * Compares the app's hand-rolled duration helpers, [computeDurationString] and [parseDurationMs],
- * with icaldav-core's [DurationUtils]. A third helper, `calculateDuration` in
- * AndroidCalendarProviderRepository.kt, is file-private and not tested here.
+ * with icaldav-core's [DurationUtils].
  *
  * Records every input where they disagree, so a swap of call sites to DurationUtils knows which
  * differences to accept as a behavior change and which to keep with a wrapper at the call site.
@@ -71,7 +70,7 @@ class DurationParityTest {
     }
 
     // ========================================================================
-    // FORMAT divergence: four differences
+    // FORMAT divergence: five differences
     // ========================================================================
 
     /**
@@ -87,6 +86,24 @@ class DurationParityTest {
         val canonical = DurationUtils.format(Duration.ZERO)
         assertEquals("local coerces to P1D", "P1D", local)
         assertEquals("canonical emits PT0S", "PT0S", canonical)
+    }
+
+    /**
+     * Divergence: all-day inclusive end.
+     * - `computeDurationString` counts the last day: an end at the last ms of day 3 gives `P3D`.
+     * - `DurationUtils.format` of the raw span gives `P2DT23H59M59.999S`.
+     * A swapped call site must add the 1 ms back, or each occurrence of a multi-day all-day
+     * series loses its last day (#444).
+     */
+    @Test
+    fun `format DIVERGENCE - all-day inclusive end`() {
+        val start = 1704067200000L
+        val end = start + 3 * ONE_DAY_MS - 1
+        assertEquals("local counts the last day", "P3D", computeDurationString(start, end, isAllDay = true))
+        assertTrue(
+            "canonical keeps the raw span short of three days",
+            DurationUtils.format(Duration.ofMillis(end - start)).startsWith("P2DT23H59M"),
+        )
     }
 
     /**

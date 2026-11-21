@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d več</string>
     <string name="tags_autocomplete_create_new">Ustvari \"%1$s\"</string>
     <string name="cd_tag">Oznaka: %1$s</string>
+    <string name="tags_show_events_click_label">Prikaži dogodke s to oznako</string>
+    <string name="tags_show_events">Prikaži dogodke</string>
     <string name="cd_tags_move_menu">Premakni oznake</string>
     <string name="tags_move_above_notes">Premakni nad opombe</string>
     <string name="tags_move_below_notes">Premakni pod opombe</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Prikaži seje sinhronizacije (zadnjih 48 ur)</string>
     <string name="settings_import_subtitle">Dodaj dogodke iz datoteke ICS v poljubni koledar</string>
     <string name="settings_birthday_reminder">Opomnik za rojstni dan</string>
-    <string name="settings_use_device_timezone">Uporabi časovni pas naprave</string>
     <string name="settings_section_calendars">Koledarji in računi</string>
     <string name="settings_section_appearance">Videz</string>
     <string name="settings_section_creating_events">Nastavitve dogodkov</string>
@@ -464,7 +465,6 @@
     <string name="cd_recurring">Ponavljajoč</string>
     <string name="cd_enabled">Omogočeno</string>
     <string name="cd_sync_error">Napaka sinhronizacije</string>
-    <string name="cd_select_label">Izberi %1$s</string>
     <string name="cd_wheel_picker">Kolesce za izbiro z %1$d možnostmi</string>
     <string name="cd_time_entry_keyboard">Vnesite točen čas</string>
     <string name="time_entry_dialog_title">Vnesite čas</string>
@@ -858,6 +858,23 @@
     <string name="label_ends">Se konča</string>
     <string name="sheet_hint_change_end">Tapni dan, da spremeniš konec</string>
     <string name="label_timezone">Časovni pas</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Iskanje mesta, države ali pasu</string>
+    <string name="timezone_section_this_event">Ta dogodek</string>
+    <string name="timezone_section_device">Časovni pas naprave</string>
+    <string name="timezone_section_recent">Nedavni</string>
+    <string name="timezone_section_all">Vsi časovni pasovi</string>
+    <string name="timezone_offsets_on">Zamiki na dan %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Iz koledarja: %1$s</string>
+    <string name="timezone_shown_in_device_time">Prikazano v času naprave</string>
+    <string name="timezone_loading">Nalaganje časovnih pasov…</string>
+    <string name="timezone_no_match">Noben časovni pas se ne ujema</string>
+    <string name="timezone_no_match_hint">Poskusite z mestom, državo ali zamikom, npr. +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Opomniki</string>
     <string name="label_add_alert">Dodaj opomnik</string>
     <string name="label_recurrence_never">Nikoli</string>
@@ -867,7 +884,6 @@
     <string name="label_default_calendar_hint">Novi dogodki se bodo ustvarjali v tem koledarju</string>
     <string name="label_reminders_truncated">%1$d neprikazanih (%2$d skupno, največ %3$d za urejanje)</string>
     <string name="label_found_events">Najdeno: %1$d dogodkov</string>
-    <string name="placeholder_search">Iskanje…</string>
     <string name="settings_search_placeholder">Iskanje po nastavitvah…</string>
     <string name="settings_search_no_results">Za \"%1$s\" ni najdenih nastavitev</string>
     <string name="cd_search_settings">Iskanje po nastavitvah</string>
@@ -1199,6 +1215,8 @@
     <string name="event_untitled">Dogodek brez naslova</string>
     <string name="recurring_this_event">Ta dogodek</string>
     <string name="recurring_all_events">Vse dogodke</string>
+    <string name="recurring_scope_move_not_expressible">Pravilo ponavljanja ne more slediti tej spremembi</string>
+    <string name="event_form_move_not_expressible">Pravilo ponavljanja ne more slediti tej spremembi. Nič ni bilo shranjeno.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Udeleženci</string>
@@ -1295,6 +1313,7 @@
     <string name="search_reason_guest">Gost:</string>
     <string name="search_keep_typing">Za iskanje tipkaj naprej</string>
     <string name="search_no_matches">Ni dogodkov za „%1$s“</string>
+    <string name="search_no_events_tagged">Ni dogodkov z oznako „%1$s“</string>
     <string name="search_lookback_line">Razpon sinhronizacije nazaj: %1$s</string>
     <string name="search_sync_settings">Nastavitve sinhronizacije</string>
     <string name="cd_search_sync_settings">Odpri razpon sinhronizacije nazaj</string>
@@ -1627,6 +1646,19 @@
     <string name="ics_feed_error_access_denied">Strežnik tega vira je zavrnil dostop.</string>
     <string name="ics_feed_error_too_large">Ta vir koledarja je prevelik za prenos.</string>
     <string name="ics_feed_error_unreadable">Dogodkov iz tega vira ni bilo mogoče prikazati.</string>
+    <string name="ics_feed_error_event_not_saved">Dogodek „%1$s“ ni bil shranjen.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d dogodek ni bil shranjen.</item>
+        <item quantity="two">%1$d dogodka nista bila shranjena.</item>
+        <item quantity="few">%1$d dogodki niso bili shranjeni.</item>
+        <item quantity="other">%1$d dogodkov ni bilo shranjenih.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d dogodek ni bil shranjen, vključno z „%2$s“.</item>
+        <item quantity="two">%1$d dogodka nista bila shranjena, vključno z „%2$s“.</item>
+        <item quantity="few">%1$d dogodki niso bili shranjeni, vključno z „%2$s“.</item>
+        <item quantity="other">%1$d dogodkov ni bilo shranjenih, vključno z „%2$s“.</item>
+    </plurals>
     <string name="insights_title">Vpogledi</string>
     <string name="insights_period_this_week">Teden</string>
     <string name="insights_period_last_week">Prejšnji ted.</string>

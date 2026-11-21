@@ -58,7 +58,8 @@ class UiLayerPersistenceBoundaryTest {
         private val APPLICATION_CLASS =
             Regex("""\bclass\s+\w+\s*(\([^)]*\))?\s*:\s*(android\.app\.)?Application\s*\(""")
 
-        const val ROOM_PREFIX = "androidx.room"
+        /** Room 3 and Room 2 (the second still on the classpath through WorkManager). */
+        val ROOM_PREFIXES = listOf("androidx.room3", "androidx.room")
         const val DB_PACKAGE = "org.onekash.kashcal.data.db"
         const val ENTITY_PACKAGE = "$DB_PACKAGE.entity"
         const val CALENDAR_PROVIDER_PACKAGE = "org.onekash.kashcal.data.calendar_provider"
@@ -90,7 +91,7 @@ class UiLayerPersistenceBoundaryTest {
          */
         fun isForbiddenImport(imported: String): Boolean {
             fun under(prefix: String) = imported == prefix || imported.startsWith("$prefix.")
-            if (under(ROOM_PREFIX)) return true
+            if (ROOM_PREFIXES.any(::under)) return true
             if (imported in PERMITTED_DB_SYMBOLS) return false
             return under(DB_PACKAGE) && !imported.startsWith("$ENTITY_PACKAGE.")
         }
@@ -238,6 +239,8 @@ class UiLayerPersistenceBoundaryTest {
     @Test
     fun `matcher flags persistence imports`() {
         listOf(
+            "androidx.room3.withWriteTransaction",
+            "androidx.room3.Room",
             "androidx.room.withTransaction",
             "androidx.room.Room",
             "org.onekash.kashcal.data.db.dao.EventsDao",
@@ -305,6 +308,7 @@ class UiLayerPersistenceBoundaryTest {
         assertFalse(repositoryReferenceIn(codeLine("    is Device -> true // already filtered by CalendarProviderRepository")))
 
         assertTrue(roomReferenceIn(codeLine("    val dao = org.onekash.kashcal.data.db.dao.EventsDao()")))
+        assertTrue(roomReferenceIn(codeLine("    androidx.room3.withWriteTransaction(db) {}")))
         assertTrue(roomReferenceIn(codeLine("    androidx.room.withTransaction(db) {}")))
         assertFalse(roomReferenceIn(codeLine("    val s: List<org.onekash.kashcal.data.db.dao.TitleSuggestion>")))
         assertFalse(roomReferenceIn(codeLine("    val e: org.onekash.kashcal.data.db.entity.Event")))
@@ -413,6 +417,7 @@ class UiLayerPersistenceBoundaryTest {
             "org.onekash.kashcal.data.dbutil.Something",
             "org.onekash.kashcal.domain.reader.EventReader",
             "androidx.roomx.Other",
+            "androidx.room3x.Other",
         ).forEach {
             assertFalse("Matcher wrongly flagged an allowed import: $it", isForbiddenImport(it))
         }

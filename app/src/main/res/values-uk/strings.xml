@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+ще %1$d</string>
     <string name="tags_autocomplete_create_new">Створити «%1$s»</string>
     <string name="cd_tag">Мітка: %1$s</string>
+    <string name="tags_show_events_click_label">Показати події з цією міткою</string>
+    <string name="tags_show_events">Показати події</string>
     <string name="cd_tags_move_menu">Перемістити мітки</string>
     <string name="tags_move_above_notes">Перемістити над нотатками</string>
     <string name="tags_move_below_notes">Перемістити під нотатки</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Переглянути сеанси синхронізації (за 48 годин)</string>
     <string name="settings_import_subtitle">Додати події з файлу ICS у будь-який календар</string>
     <string name="settings_birthday_reminder">Нагадування про день народження</string>
-    <string name="settings_use_device_timezone">Часовий пояс пристрою</string>
     <string name="settings_section_calendars">Календарі та акаунти</string>
     <string name="settings_section_appearance">Вигляд</string>
     <string name="settings_section_creating_events">Налаштування подій</string>
@@ -464,7 +465,6 @@
     <string name="cd_recurring">Повторювана</string>
     <string name="cd_enabled">Увімкнено</string>
     <string name="cd_sync_error">Помилка синхронізації</string>
-    <string name="cd_select_label">Вибрати %1$s</string>
     <string name="cd_wheel_picker">Коліщатко вибору, варіантів: %1$d</string>
     <string name="cd_time_entry_keyboard">Ввести точний час</string>
     <string name="time_entry_dialog_title">Введення часу</string>
@@ -858,6 +858,23 @@
     <string name="label_ends">Закінчується</string>
     <string name="sheet_hint_change_end">Торкнися дня, щоб змінити кінець</string>
     <string name="label_timezone">Часовий пояс</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Пошук міста, країни або поясу</string>
+    <string name="timezone_section_this_event">Ця подія</string>
+    <string name="timezone_section_device">Часовий пояс пристрою</string>
+    <string name="timezone_section_recent">Нещодавні</string>
+    <string name="timezone_section_all">Усі часові пояси</string>
+    <string name="timezone_offsets_on">Зсуви на %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">З календаря: %1$s</string>
+    <string name="timezone_shown_in_device_time">Показано за часом пристрою</string>
+    <string name="timezone_loading">Завантаження часових поясів…</string>
+    <string name="timezone_no_match">Немає відповідних часових поясів</string>
+    <string name="timezone_no_match_hint">Пошук за містом, країною або зсувом, наприклад +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Нагадування</string>
     <string name="label_add_alert">Додати нагадування</string>
     <string name="label_recurrence_never">Ніколи</string>
@@ -867,7 +884,6 @@
     <string name="label_default_calendar_hint">Нові події створюватимуться в цьому календарі</string>
     <string name="label_reminders_truncated">%1$d не показано (%2$d всього, макс. %3$d для редагування)</string>
     <string name="label_found_events">Знайдено: %1$d подій</string>
-    <string name="placeholder_search">Пошук…</string>
     <string name="settings_search_placeholder">Пошук у налаштуваннях…</string>
     <string name="settings_search_no_results">Нічого не знайдено за запитом \"%1$s\"</string>
     <string name="cd_search_settings">Пошук у налаштуваннях</string>
@@ -1199,6 +1215,8 @@
     <string name="event_untitled">Подія без назви</string>
     <string name="recurring_this_event">Ця подія</string>
     <string name="recurring_all_events">Усі події</string>
+    <string name="recurring_scope_move_not_expressible">Правило повторення не може врахувати цю зміну</string>
+    <string name="event_form_move_not_expressible">Правило повторення не може врахувати цю зміну. Нічого не збережено.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Учасники</string>
@@ -1295,6 +1313,7 @@
     <string name="search_reason_guest">Гість:</string>
     <string name="search_keep_typing">Продовжуй вводити, щоб почати пошук</string>
     <string name="search_no_matches">Немає подій за запитом «%1$s»</string>
+    <string name="search_no_events_tagged">Немає подій з мітками «%1$s»</string>
     <string name="search_lookback_line">Глибина синхронізації: %1$s</string>
     <string name="search_sync_settings">Налаштування синхронізації</string>
     <string name="cd_search_sync_settings">Відкрити налаштування глибини синхронізації</string>
@@ -1627,6 +1646,19 @@
     <string name="ics_feed_error_access_denied">Сервер цього каналу відмовив у доступі.</string>
     <string name="ics_feed_error_too_large">Цей календарний канал завеликий для завантаження.</string>
     <string name="ics_feed_error_unreadable">Не вдалося показати події цього каналу.</string>
+    <string name="ics_feed_error_event_not_saved">«%1$s» не збережено.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d подію не збережено.</item>
+        <item quantity="few">%1$d події не збережено.</item>
+        <item quantity="many">%1$d подій не збережено.</item>
+        <item quantity="other">%1$d подій не збережено.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d подію не збережено, зокрема «%2$s».</item>
+        <item quantity="few">%1$d події не збережено, зокрема «%2$s».</item>
+        <item quantity="many">%1$d подій не збережено, зокрема «%2$s».</item>
+        <item quantity="other">%1$d подій не збережено, зокрема «%2$s».</item>
+    </plurals>
     <string name="insights_title">Аналітика</string>
     <string name="insights_period_this_week">Тиждень</string>
     <string name="insights_period_last_week">Мин. тиждень</string>

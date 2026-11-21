@@ -1,7 +1,6 @@
 package org.onekash.kashcal.domain.reader
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -18,6 +17,7 @@ import org.onekash.kashcal.domain.changes.RecentChangesRecorder
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.model.ChangeType
 import org.onekash.kashcal.sync.model.ChangedField
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -38,7 +38,7 @@ class EventReaderRecentChangesTest {
     @Before
     fun setup() = runTest {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java).allowMainThreadQueries().build()
+        database = TestDatabases.inMemory(context).allowMainThreadQueries().build()
         reader = EventReader(database)
         val accountId = database.accountsDao().insert(Account(provider = AccountProvider.CALDAV, email = "self@example.test"))
         calendarId = database.calendarsDao().insert(

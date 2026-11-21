@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import io.mockk.mockk
+import org.onekash.kashcal.data.db.EventIcsStore
 import io.mockk.MockKAnnotations
 import io.mockk.Ordering
 import io.mockk.Runs
@@ -124,7 +125,8 @@ class PullStrategyTest {
             dataStore = dataStore,
             inviteNotifier = mockk(relaxed = true),
             accountRepository = mockk(relaxed = true),
-            reminderScheduler = mockk(relaxed = true)
+            reminderScheduler = mockk(relaxed = true),
+            icsSource = EventIcsStore(database),
         )
     }
 
@@ -4643,7 +4645,6 @@ class PullStrategyTest {
         val existing = createEvent().copy(
             dtstamp = 1000L,
             syncStatus = SyncStatus.SYNCED,
-            rawIcal = "BEGIN:VCALENDAR...",
             caldavUrl = "https://old.example.com/event.ics",
             importId = "old-import",
             createdAt = 1000L,
@@ -4656,7 +4657,6 @@ class PullStrategyTest {
         val incoming = createEvent().copy(
             dtstamp = 9000L,
             syncStatus = SyncStatus.PENDING_UPDATE,
-            rawIcal = "BEGIN:VCALENDAR...v2",
             caldavUrl = "https://new.example.com/event.ics",
             importId = "new-import",
             createdAt = 5000L,

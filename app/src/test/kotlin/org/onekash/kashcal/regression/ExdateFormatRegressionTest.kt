@@ -1,7 +1,6 @@
 package org.onekash.kashcal.regression
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -22,6 +21,7 @@ import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -47,7 +47,7 @@ class ExdateFormatRegressionTest {
     @Before
     fun setup() = runTest {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
 
@@ -129,7 +129,7 @@ class ExdateFormatRegressionTest {
 
     @Test
     fun `exdate from deleteSingleOccurrence works with IcsPatcher`() = runTest {
-        // A recurring event with rawIcal, so the push patches it.
+        // A recurring event with a stored ICS, so the push patches it.
         val startTs = 1768867200000L // Jan 20, 2026 00:00 UTC
         val rawIcs = """
             BEGIN:VCALENDAR
@@ -155,10 +155,10 @@ class ExdateFormatRegressionTest {
                 endTs = startTs + 3600000,
                 dtstamp = System.currentTimeMillis(),
                 rrule = "FREQ=DAILY;COUNT=5",
-                rawIcal = rawIcs,
                 syncStatus = SyncStatus.SYNCED
             ),
-            isLocal = false
+            isLocal = false,
+            ics = rawIcs
         )
 
         // Delete the second occurrence.
@@ -297,7 +297,7 @@ class ExdateFormatRegressionTest {
             END:VCALENDAR
         """.trimIndent()
 
-        // 1. A recurring event carrying its server ICS in rawIcal, standing in for a pulled one.
+        // 1. A recurring event storing its server ICS, standing in for a pulled one.
         val event = eventWriter.createEvent(
             Event(
                 uid = "full-roundtrip@kashcal.test",
@@ -307,10 +307,10 @@ class ExdateFormatRegressionTest {
                 endTs = startTs + 15 * 3600000, // 15:00 UTC
                 dtstamp = System.currentTimeMillis(),
                 rrule = "FREQ=DAILY;COUNT=5",
-                rawIcal = rawIcs,
                 syncStatus = SyncStatus.SYNCED
             ),
-            isLocal = false
+            isLocal = false,
+            ics = rawIcs
         )
 
         // 2. Delete the second occurrence (Jan 21, 2026 14:00 UTC).

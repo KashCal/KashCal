@@ -1,11 +1,11 @@
 package org.onekash.kashcal.data.db.dao
 
-import androidx.room.ColumnInfo
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Transaction
+import androidx.room3.ColumnInfo
+import androidx.room3.Dao
+import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
+import androidx.room3.Query
+import androidx.room3.Transaction
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.json.Json
 import org.onekash.kashcal.data.db.entity.Category
@@ -138,10 +138,10 @@ interface CategoryDao {
 
     /**
      * Returns every event with at least one tag. The per-element match happens in Kotlin, with
-     * Unicode case folding; this only skips untagged rows. Don't add a `LIKE '%"Name"%'`
-     * prefilter: SQLite's `LIKE` folds ASCII case only, so it would silently miss an event
-     * storing the tag in another non-ASCII casing (Cyrillic `работа` vs `Работа`) and leave it
-     * un-renamed. Renames are rare user actions, so scanning the tagged rows is cheap enough.
+     * its ignore-case comparison; this only skips untagged rows. Don't add a `LIKE` prefilter:
+     * LIKE folds case by ICU's rule, not Kotlin's, so a prefilter could drop a row the rename
+     * would match and leave it un-renamed. Renames are rare user actions, so scanning the tagged
+     * rows is cheap enough.
      */
     @Query("SELECT id, categories FROM events WHERE categories IS NOT NULL AND categories != '' AND categories != '[]'")
     suspend fun eventsCarrying(): List<EventCategories>

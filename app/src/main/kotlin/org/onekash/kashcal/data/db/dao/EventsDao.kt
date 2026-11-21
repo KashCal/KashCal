@@ -1,16 +1,16 @@
 package org.onekash.kashcal.data.db.dao
 
-import androidx.room.ColumnInfo
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Embedded
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.RawQuery
-import androidx.room.Update
-import androidx.room.Upsert
-import androidx.sqlite.db.SupportSQLiteQuery
+import androidx.room3.ColumnInfo
+import androidx.room3.Dao
+import androidx.room3.Delete
+import androidx.room3.Embedded
+import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
+import androidx.room3.Query
+import androidx.room3.RawQuery
+import androidx.room3.RoomRawQuery
+import androidx.room3.Update
+import androidx.room3.Upsert
 import kotlinx.coroutines.flow.Flow
 import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Event
@@ -29,9 +29,21 @@ data class SearchMatchRow(
     @ColumnInfo(name = "has_occurrences") val hasOccurrences: Boolean,
 )
 
-/** Pairs an event with the occurrence start its query picked as next_occurrence_ts. */
-data class EventWithNextOccurrence(
-    @Embedded val event: Event,
+/**
+ * Holds one [EventsDao.getMasterEventsWithFutureOccurrenceFlow] row: the event columns the inbox
+ * reads and the start of its next occurrence.
+ */
+data class PendingInvitationRow(
+    val id: Long,
+    @ColumnInfo(name = "calendar_id") val calendarId: Long,
+    val title: String,
+    val location: String?,
+    @ColumnInfo(name = "is_all_day") val isAllDay: Boolean,
+    @ColumnInfo(name = "start_ts") val startTs: Long,
+    @ColumnInfo(name = "end_ts") val endTs: Long,
+    @ColumnInfo(name = "organizer_email") val organizerEmail: String?,
+    @ColumnInfo(name = "organizer_name") val organizerName: String?,
+    @ColumnInfo(name = "original_event_id") val originalEventId: Long?,
     @ColumnInfo(name = "next_occurrence_ts") val nextOccurrenceTs: Long?
 )
 
@@ -384,26 +396,6 @@ interface EventsDao {
     suspend fun markSynced(id: Long, etag: String?, now: Long)
 
     /**
-     * Marks the event SYNCED after a write and stores [rawIcal], the body the write sent, with
-     * the [etag] the server returned for it, in one statement. The pair is the row's copy of the
-     * server resource: a later reply patches it, and a 412 merge diffs the rows against it. An
-     * etag stored without its body would let a later reply re-send text from before this write
-     * without meeting a 412.
-     */
-    @Query("""
-        UPDATE events
-        SET sync_status = 'SYNCED',
-            etag = :etag,
-            raw_ical = :rawIcal,
-            last_sync_error = NULL,
-            sync_retry_count = 0,
-            server_modified_at = :now,
-            updated_at = :now
-        WHERE id = :id
-    """)
-    suspend fun markSyncedWithCopy(id: Long, etag: String?, rawIcal: String, now: Long)
-
-    /**
      * Sets only the etag, leaving sync status alone, so a still-pending event carries the new
      * etag into its next If-Match: for example a recovered missing etag or the etag after a
      * MOVE.
@@ -412,17 +404,17 @@ interface EventsDao {
     suspend fun updateEtag(id: Long, etag: String?)
 
     /**
-     * Stores the server's copy of a resource on every row pulled from it: the series
-     * [seriesId] and its changed occurrences at [oldUrl], moved to [newUrl] (the same URL
-     * unless the server redirected the write). Writes URL, etag and raw_ical in one statement,
-     * without touching sync status. A pull-made placeholder series has no URL and is never
-     * matched.
+     * Stores the etag of a resource on every row pulled from it: the series [seriesId] and its
+     * changed occurrences at [oldUrl], moved to [newUrl] (the same URL unless the server
+     * redirected the write), without touching sync status. A pull-made placeholder series has no
+     * URL and is never matched. The caller stores the body that goes with the etag
+     * ([org.onekash.kashcal.data.db.EventIcsSource.writeResource]) in the same transaction.
      */
     @Query("""
-        UPDATE events SET caldav_url = :newUrl, etag = :etag, raw_ical = :rawIcal
+        UPDATE events SET caldav_url = :newUrl, etag = :etag
         WHERE (id = :seriesId OR original_event_id = :seriesId) AND caldav_url = :oldUrl
     """)
-    suspend fun updateResourceCopy(seriesId: Long, oldUrl: String, newUrl: String, etag: String, rawIcal: String)
+    suspend fun updateResourceEtag(seriesId: Long, oldUrl: String, newUrl: String, etag: String)
 
     /**
      * Moves every row of a resource (series [seriesId] and its changed occurrences at
@@ -455,24 +447,6 @@ interface EventsDao {
         WHERE id = :id
     """)
     suspend fun markCreatedOnServer(id: Long, caldavUrl: String, etag: String?, now: Long)
-
-    /**
-     * [markCreatedOnServer] that also stores [rawIcal], the body the write sent, in the same
-     * statement (see [markSyncedWithCopy] for why the body and etag move together).
-     */
-    @Query("""
-        UPDATE events
-        SET sync_status = 'SYNCED',
-            caldav_url = :caldavUrl,
-            etag = :etag,
-            raw_ical = :rawIcal,
-            last_sync_error = NULL,
-            sync_retry_count = 0,
-            server_modified_at = :now,
-            updated_at = :now
-        WHERE id = :id
-    """)
-    suspend fun markCreatedOnServerWithCopy(id: Long, caldavUrl: String, etag: String?, rawIcal: String, now: Long)
 
     /** Records the error and increments the retry count. */
     @Query("""
@@ -584,7 +558,7 @@ interface EventsDao {
 
     /**
      * Returns the series rows [org.onekash.kashcal.domain.initializer.UtcSeriesZoneRepair] reads:
-     * timed, with no zone and a stored copy, not waiting to be deleted.
+     * timed, with no zone, not waiting to be deleted. The repair skips a row without a stored ICS.
      */
     @Query("""
         SELECT * FROM events
@@ -592,18 +566,16 @@ interface EventsDao {
         AND rrule IS NOT NULL AND rrule != ''
         AND is_all_day = 0
         AND timezone IS NULL
-        AND raw_ical IS NOT NULL
         AND sync_status != 'PENDING_DELETE'
     """)
     suspend fun getUtcSeriesRepairCandidates(): List<Event>
 
     /**
-     * Sets [timezone] on row [id] only while it has no zone and its stored copy is still [rawIcal],
-     * touching no other column. Returns the rows changed: 0 when a write replaced the row since
-     * it was read.
+     * Sets [timezone] on row [id] only while it has no zone, touching no other column. Returns the
+     * rows changed: 0 when a write gave the row a zone since it was read.
      */
-    @Query("UPDATE events SET timezone = :timezone WHERE id = :id AND timezone IS NULL AND raw_ical = :rawIcal")
-    suspend fun setTimezoneIfUnset(id: Long, timezone: String, rawIcal: String): Int
+    @Query("UPDATE events SET timezone = :timezone WHERE id = :id AND timezone IS NULL")
+    suspend fun setTimezoneIfUnset(id: Long, timezone: String): Int
 
     // ========== Recurrence Updates ==========
 
@@ -725,23 +697,33 @@ interface EventsDao {
 
     /** Runs a search built by [EventSearchSql.nextAndLast] once. */
     @RawQuery
-    suspend fun searchMatches(query: SupportSQLiteQuery): List<SearchMatchRow>
+    suspend fun searchMatches(query: RoomRawQuery): List<SearchMatchRow>
 
     /**
      * Emits the rows of a search built by [EventSearchSql.nextAndLast], again whenever events,
      * occurrences or attendees change.
      */
     @RawQuery(observedEntities = [Event::class, Occurrence::class, Attendee::class])
-    fun observeSearchMatches(query: SupportSQLiteQuery): Flow<List<SearchMatchRow>>
+    fun observeSearchMatches(query: RoomRawQuery): Flow<List<SearchMatchRow>>
 
     /**
      * Emits masters and one-off events, not PENDING_DELETE, with a non-cancelled occurrence
      * not ended at [now], each with that earliest occurrence's start, soonest first. The
      * pending-invitations inbox narrows these in Kotlin; an exception's own NEEDS-ACTION
      * attendees aren't read.
+     *
+     * Selects only the columns the inbox reads. It runs at launch over every future event, and
+     * Android can't read back a row over its 2 MB cursor window, so selecting description
+     * or extra_properties would let one large event crash the app on every start
+     * (`PendingInvitationsOversizedRowTest`).
      */
     @Query("""
-        SELECT DISTINCT events.*,
+        SELECT DISTINCT events.id AS id, events.calendar_id AS calendar_id,
+               events.title AS title, events.location AS location,
+               events.is_all_day AS is_all_day, events.start_ts AS start_ts,
+               events.end_ts AS end_ts, events.organizer_email AS organizer_email,
+               events.organizer_name AS organizer_name,
+               events.original_event_id AS original_event_id,
                (SELECT MIN(o.start_ts) FROM occurrences o
                 WHERE o.event_id = events.id
                 AND o.end_ts >= :now
@@ -755,7 +737,7 @@ interface EventsDao {
         GROUP BY events.id
         ORDER BY next_occurrence_ts ASC
     """)
-    fun getMasterEventsWithFutureOccurrenceFlow(now: Long): kotlinx.coroutines.flow.Flow<List<EventWithNextOccurrence>>
+    fun getMasterEventsWithFutureOccurrenceFlow(now: Long): kotlinx.coroutines.flow.Flow<List<PendingInvitationRow>>
 
     // ========== Reminder Queries ==========
 

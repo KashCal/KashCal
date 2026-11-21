@@ -20,7 +20,7 @@ import org.onekash.kashcal.util.AddressNormalizer
  * wrote into the organizer's copy, another device's edit) survives unless the user changed the
  * same field group.
  *
- * What the user changed is found by mapping the stored copy (the series row's raw_ical, the copy
+ * What the user changed is found by mapping the stored copy (the series row's stored ICS, the copy
  * its fields reflect) as pull maps a body, and comparing it with the local rows one field group at
  * a time, on normalized values: text with empty as null, status, transparency and class ignoring
  * case, times by instant and all-day flag plus the zone for a timed series (a missing zone and the
@@ -62,7 +62,8 @@ internal object ServerChangeMerge {
     /**
      * The body to upload, the merged series row it was built from, and the merged
      * changed-occurrence rows the body carries that have a local row (same ids). Neither row is
-     * stored: its fields hold the server's side too, and the series' raw_ical is the server's copy.
+     * stored: its fields hold the server's side too, and its body is patched from the server's
+     * copy.
      */
     class Merged(val body: String, val series: Event, val occurrences: List<Event>)
 
@@ -120,7 +121,7 @@ internal object ServerChangeMerge {
             (it.series ?: it.occurrences.values.firstOrNull())?.event?.uid == series.uid
         }
 
-        var mergedSeries = mergeFields(series, base?.series?.event, theirSeries.event).copy(rawIcal = server)
+        var mergedSeries = mergeFields(series, base?.series?.event, theirSeries.event)
         val seriesRows = mergeAttendees(seriesAttendees, base?.series?.attendees, theirSeries.attendees, account)
 
         val sentLocal = mutableListOf<Event>()
@@ -162,9 +163,9 @@ internal object ServerChangeMerge {
         }
 
         val body = if (mergedSeries.rrule != null) {
-            IcsPatcher.serializeWithExceptions(mergedSeries, seriesRows, out)
+            IcsPatcher.serializeWithExceptions(mergedSeries, server, seriesRows, out, ownIcs = emptyMap())
         } else {
-            IcsPatcher.serialize(mergedSeries, seriesRows)
+            IcsPatcher.serialize(mergedSeries, server, seriesRows)
         }
         return Merged(body, mergedSeries, sentLocal)
     }

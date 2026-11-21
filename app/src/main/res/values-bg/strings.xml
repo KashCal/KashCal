@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+още %1$d</string>
     <string name="tags_autocomplete_create_new">Създаване на „%1$s“</string>
     <string name="cd_tag">Етикет: %1$s</string>
+    <string name="tags_show_events_click_label">Показване на събития с този етикет</string>
+    <string name="tags_show_events">Показване на събития</string>
     <string name="cd_tags_move_menu">Преместване на етикетите</string>
     <string name="tags_move_above_notes">Преместване над бележките</string>
     <string name="tags_move_below_notes">Преместване под бележките</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Преглед на сесиите за синхронизиране (последните 48 часа)</string>
     <string name="settings_import_subtitle">Добави събития от ICS файл към произволен календар</string>
     <string name="settings_birthday_reminder">Напомняне за рожден ден</string>
-    <string name="settings_use_device_timezone">Използвай часовата зона на устройството</string>
     <string name="settings_section_calendars">Календари и профили</string>
     <string name="settings_section_appearance">Облик</string>
     <string name="settings_section_creating_events">Предпочитания за събития</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">Повтарящо се</string>
     <string name="cd_enabled">Включено</string>
     <string name="cd_sync_error">Грешка при синхронизиране</string>
-    <string name="cd_select_label">Избери %1$s</string>
     <string name="cd_wheel_picker">Ролков избирач с %1$d опции</string>
     <string name="cd_time_entry_keyboard">Въведете точен час</string>
     <string name="time_entry_dialog_title">Въведете час</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">Край</string>
     <string name="sheet_hint_change_end">Докоснете ден, за да промените края</string>
     <string name="label_timezone">Часова зона</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Търсене на град, държава или зона</string>
+    <string name="timezone_section_this_event">Това събитие</string>
+    <string name="timezone_section_device">Часова зона на устройството</string>
+    <string name="timezone_section_recent">Последни</string>
+    <string name="timezone_section_all">Всички часови зони</string>
+    <string name="timezone_offsets_on">Отмествания към %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">От календара: %1$s</string>
+    <string name="timezone_shown_in_device_time">Показва се в часа на устройството</string>
+    <string name="timezone_loading">Зареждане на часовите зони…</string>
+    <string name="timezone_no_match">Няма съвпадащи часови зони</string>
+    <string name="timezone_no_match_hint">Опитайте с град, държава или отместване като +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Напомняния</string>
     <string name="label_add_alert">Добави напомняне</string>
     <string name="label_recurrence_never">Никога</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">Новите събития ще се създават в този календар</string>
     <string name="label_reminders_truncated">%1$d не са показани (%2$d общо, макс. %3$d редактируеми)</string>
     <string name="label_found_events">Намерени: %1$d събития</string>
-    <string name="placeholder_search">Търсене…</string>
     <string name="settings_search_placeholder">Търсене в настройките…</string>
     <string name="settings_search_no_results">Няма намерени настройки за \"%1$s\"</string>
     <string name="cd_search_settings">Търсене в настройките</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">Събитие без заглавие</string>
     <string name="recurring_this_event">Това събитие</string>
     <string name="recurring_all_events">Всички събития</string>
+    <string name="recurring_scope_move_not_expressible">Правилото за повторение не може да отрази тази промяна</string>
+    <string name="event_form_move_not_expressible">Правилото за повторение не може да отрази тази промяна. Нищо не е запазено.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Участници</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">Гост:</string>
     <string name="search_keep_typing">Продължете да пишете, за да търсите</string>
     <string name="search_no_matches">Няма събития, отговарящи на „%1$s“</string>
+    <string name="search_no_events_tagged">Няма събития с етикет „%1$s“</string>
     <string name="search_lookback_line">Период за синхронизиране назад: %1$s</string>
     <string name="search_sync_settings">Настройки за синхронизиране</string>
     <string name="cd_search_sync_settings">Отваряне на настройката за период за синхронизиране назад</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">Сървърът на този канал отказа достъп.</string>
     <string name="ics_feed_error_too_large">Този календарен канал е твърде голям за изтегляне.</string>
     <string name="ics_feed_error_unreadable">Събитията от този канал не можаха да бъдат показани.</string>
+    <string name="ics_feed_error_event_not_saved">„%1$s“ не беше запазено.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d събитие не беше запазено.</item>
+        <item quantity="other">%1$d събития не бяха запазени.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d събитие не беше запазено, включително „%2$s“.</item>
+        <item quantity="other">%1$d събития не бяха запазени, включително „%2$s“.</item>
+    </plurals>
     <string name="insights_title">Статистика</string>
     <string name="insights_period_this_week">Седмица</string>
     <string name="insights_period_last_week">Мин. седмица</string>

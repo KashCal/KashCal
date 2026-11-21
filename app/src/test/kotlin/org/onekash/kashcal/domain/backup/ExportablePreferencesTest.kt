@@ -12,8 +12,14 @@ import org.onekash.kashcal.data.preferences.PreferencesKeys
 class ExportablePreferencesTest {
 
     @Test
-    fun `allow list contains exactly 43 keys`() {
-        assertEquals(43, ExportablePreferences.KEYS.size)
+    fun `allow list contains exactly 44 keys`() {
+        assertEquals(44, ExportablePreferences.KEYS.size)
+    }
+
+    @Test
+    fun `recent time zones are backed up`() {
+        assertTrue(ExportablePreferences.KEYS.any { it.name == PreferencesKeys.RECENT_TIME_ZONES.name })
+        assertFalse(ExportablePreferences.EXCLUDED_KEY_NAMES.contains(PreferencesKeys.RECENT_TIME_ZONES.name))
     }
 
     @Test

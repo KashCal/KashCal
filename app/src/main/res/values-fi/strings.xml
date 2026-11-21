@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d lisää</string>
     <string name="tags_autocomplete_create_new">Luo ”%1$s”</string>
     <string name="cd_tag">Tunniste: %1$s</string>
+    <string name="tags_show_events_click_label">Näytä tapahtumat tällä tunnisteella</string>
+    <string name="tags_show_events">Näytä tapahtumat</string>
     <string name="cd_tags_move_menu">Siirrä tunnisteet</string>
     <string name="tags_move_above_notes">Siirrä muistiinpanojen yläpuolelle</string>
     <string name="tags_move_below_notes">Siirrä muistiinpanojen alapuolelle</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Näytä synkronointiistunnot (viimeiset 48 tuntia)</string>
     <string name="settings_import_subtitle">Lisää tapahtumia ICS-tiedostosta mihin tahansa kalenteriin</string>
     <string name="settings_birthday_reminder">Syntymäpäivämuistutus</string>
-    <string name="settings_use_device_timezone">Käytä laitteen aikavyöhykettä</string>
     <string name="settings_section_calendars">Kalenterit ja tilit</string>
     <string name="settings_section_appearance">Ulkoasu</string>
     <string name="settings_section_creating_events">Tapahtuma-asetukset</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">Toistuva</string>
     <string name="cd_enabled">Käytössä</string>
     <string name="cd_sync_error">Synkronointivirhe</string>
-    <string name="cd_select_label">Valitse %1$s</string>
     <string name="cd_wheel_picker">Pyöritettävä valitsin, %1$d vaihtoehtoa</string>
     <string name="cd_time_entry_keyboard">Syötä tarkka aika</string>
     <string name="time_entry_dialog_title">Syötä aika</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">Päättyy</string>
     <string name="sheet_hint_change_end">Muuta loppua napauttamalla päivää</string>
     <string name="label_timezone">Aikavyöhyke</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Hae kaupunkia, maata tai vyöhykettä</string>
+    <string name="timezone_section_this_event">Tämä tapahtuma</string>
+    <string name="timezone_section_device">Laitteen aikavyöhyke</string>
+    <string name="timezone_section_recent">Viimeaikaiset</string>
+    <string name="timezone_section_all">Kaikki aikavyöhykkeet</string>
+    <string name="timezone_offsets_on">Siirtymät %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Kalenterista: %1$s</string>
+    <string name="timezone_shown_in_device_time">Näytetään laitteen ajassa</string>
+    <string name="timezone_loading">Ladataan aikavyöhykkeitä…</string>
+    <string name="timezone_no_match">Ei vastaavia aikavyöhykkeitä</string>
+    <string name="timezone_no_match_hint">Kokeile kaupunkia, maata tai siirtymää, esim. +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Muistutukset</string>
     <string name="label_add_alert">Lisää muistutus</string>
     <string name="label_recurrence_never">Ei koskaan</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">Uudet tapahtumat luodaan tähän kalenteriin</string>
     <string name="label_reminders_truncated">%1$d ei näytetty (%2$d yhteensä, enintään %3$d muokattavissa)</string>
     <string name="label_found_events">Löydetty: %1$d tapahtumaa</string>
-    <string name="placeholder_search">Hae…</string>
     <string name="settings_search_placeholder">Hae asetuksista…</string>
     <string name="settings_search_no_results">Haulla \"%1$s\" ei löytynyt asetuksia</string>
     <string name="cd_search_settings">Hae asetuksista</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">Nimetön tapahtuma</string>
     <string name="recurring_this_event">Tämä tapahtuma</string>
     <string name="recurring_all_events">Kaikki tapahtumat</string>
+    <string name="recurring_scope_move_not_expressible">Toistosääntö ei voi seurata tätä muutosta</string>
+    <string name="event_form_move_not_expressible">Toistosääntö ei voi seurata tätä muutosta. Mitään ei tallennettu.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Osallistujat</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">Vieras:</string>
     <string name="search_keep_typing">Jatka kirjoittamista hakeaksesi</string>
     <string name="search_no_matches">Mikään tapahtuma ei vastaa hakua ”%1$s”</string>
+    <string name="search_no_events_tagged">Mikään tapahtuma ei sisällä tunnisteita ”%1$s”</string>
     <string name="search_lookback_line">Synkronoinnin takaisinkatse: %1$s</string>
     <string name="search_sync_settings">Synkronoinnin asetukset</string>
     <string name="cd_search_sync_settings">Avaa synkronoinnin takaisinkatseen asetus</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">Tämän syötteen palvelin eväsi pääsyn.</string>
     <string name="ics_feed_error_too_large">Tämä kalenterisyöte on liian suuri ladattavaksi.</string>
     <string name="ics_feed_error_unreadable">Tämän syötteen tapahtumia ei voitu näyttää.</string>
+    <string name="ics_feed_error_event_not_saved">”%1$s” jäi tallentamatta.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d tapahtuma jäi tallentamatta.</item>
+        <item quantity="other">%1$d tapahtumaa jäi tallentamatta.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d tapahtuma jäi tallentamatta, mukaan lukien ”%2$s”.</item>
+        <item quantity="other">%1$d tapahtumaa jäi tallentamatta, mukaan lukien ”%2$s”.</item>
+    </plurals>
     <string name="insights_title">Tilastot</string>
     <string name="insights_period_this_week">Viikko</string>
     <string name="insights_period_last_week">Edellinen vko</string>

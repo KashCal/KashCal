@@ -2,6 +2,7 @@ package org.onekash.kashcal.domain.scheduling
 
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.util.RruleUtils
+import org.onekash.kashcal.util.zone.ZoneCatalog
 
 /**
  * Decides when an organizer's edit bumps the iCalendar SEQUENCE, and when a change reschedules
@@ -38,14 +39,17 @@ object SequenceBumper {
 
     /**
      * Returns true when the change from [old] to [new] moves, adds or removes an occurrence:
-     * DTSTART, DTEND, DURATION, the all-day flag, RRULE, RDATE or EXDATE (the reschedule of RFC
-     * 6638 §3.2.8, which resets an attendee's PARTSTAT).
+     * DTSTART, DTEND, DURATION, the all-day flag, the zone, RRULE, RDATE or EXDATE (the reschedule
+     * of RFC 6638 §3.2.8, which resets an attendee's PARTSTAT). A zone change at the same
+     * instants counts for a repeating event only: its later occurrences move when the zones keep
+     * different clock changes, while a one-off's single instance stays where it was.
      */
     fun reschedules(old: Event, new: Event): Boolean {
         val timingChanged = old.startTs != new.startTs ||
             old.endTs != new.endTs ||
             old.isAllDay != new.isAllDay ||
-            old.duration != new.duration
+            old.duration != new.duration ||
+            (new.rrule != null && !ZoneCatalog.sameZone(old.timezone, new.timezone))
         // Compare the RRULE by meaning: a picker that re-emits the same rule with reordered
         // parts, other case or extra whitespace isn't a change, and a bump would re-notify every
         // attendee. RDATE and EXDATE compare exactly: they are timestamp lists, and any real add

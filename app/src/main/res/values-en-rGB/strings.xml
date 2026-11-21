@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d more</string>
     <string name="tags_autocomplete_create_new">Create \"%1$s\"</string>
     <string name="cd_tag">Tag: %1$s</string>
+    <string name="tags_show_events_click_label">Show events with this tag</string>
+    <string name="tags_show_events">Show events</string>
     <string name="cd_tags_move_menu">Move tags</string>
     <string name="tags_move_above_notes">Move above notes</string>
     <string name="tags_move_below_notes">Move below notes</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">View sync sessions (last 48 hours)</string>
     <string name="settings_import_subtitle">Add events from an ICS file to any calendar</string>
     <string name="settings_birthday_reminder">Birthday Reminder</string>
-    <string name="settings_use_device_timezone">Use device timezone</string>
     <string name="settings_section_calendars">Calendars &amp; accounts</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_creating_events">Event preferences</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">Recurring</string>
     <string name="cd_enabled">Enabled</string>
     <string name="cd_sync_error">Sync error</string>
-    <string name="cd_select_label">Select %1$s</string>
     <string name="cd_wheel_picker">Wheel picker with %1$d options</string>
     <string name="cd_time_entry_keyboard">Enter exact time</string>
     <string name="time_entry_dialog_title">Enter time</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">Ends</string>
     <string name="sheet_hint_change_end">Tap a day to change the end</string>
     <string name="label_timezone">Time zone</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Search city, country or zone</string>
+    <string name="timezone_section_this_event">This event</string>
+    <string name="timezone_section_device">Device time zone</string>
+    <string name="timezone_section_recent">Recent</string>
+    <string name="timezone_section_all">All time zones</string>
+    <string name="timezone_offsets_on">Offsets on %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">From the calendar: %1$s</string>
+    <string name="timezone_shown_in_device_time">Shown in device time</string>
+    <string name="timezone_loading">Loading time zones…</string>
+    <string name="timezone_no_match">No time zones match</string>
+    <string name="timezone_no_match_hint">Try a city, a country or an offset like +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Alerts</string>
     <string name="label_add_alert">Add Alert</string>
     <string name="label_recurrence_never">Never</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">New events will be created in this calendar</string>
     <string name="label_reminders_truncated">%1$d not shown (%2$d total, max %3$d editable)</string>
     <string name="label_found_events">Found: %1$d events</string>
-    <string name="placeholder_search">Search…</string>
     <string name="settings_search_placeholder">Search settings…</string>
     <string name="settings_search_no_results">No settings found for \"%1$s\"</string>
     <string name="cd_search_settings">Search settings</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">Untitled event</string>
     <string name="recurring_this_event">This event</string>
     <string name="recurring_all_events">All events</string>
+    <string name="recurring_scope_move_not_expressible">The repeat rule can\'t follow this change</string>
+    <string name="event_form_move_not_expressible">The repeat rule can\'t follow this change. Nothing was saved.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Attendees</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">Guest:</string>
     <string name="search_keep_typing">Keep typing to search</string>
     <string name="search_no_matches">No events match “%1$s”</string>
+    <string name="search_no_events_tagged">No events tagged “%1$s”</string>
     <string name="search_lookback_line">Sync Lookback: %1$s</string>
     <string name="search_sync_settings">Sync settings</string>
     <string name="cd_search_sync_settings">Open the sync lookback setting</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">This feed\'s server refused access.</string>
     <string name="ics_feed_error_too_large">This calendar feed is too large to download.</string>
     <string name="ics_feed_error_unreadable">This feed\'s events couldn\'t be shown.</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s” wasn\'t saved.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d event wasn\'t saved.</item>
+        <item quantity="other">%1$d events weren\'t saved.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d event wasn\'t saved, including “%2$s”.</item>
+        <item quantity="other">%1$d events weren\'t saved, including “%2$s”.</item>
+    </plurals>
     <string name="insights_title">Insights</string>
     <string name="insights_period_this_week">Week</string>
     <string name="insights_period_last_week">Last week</string>

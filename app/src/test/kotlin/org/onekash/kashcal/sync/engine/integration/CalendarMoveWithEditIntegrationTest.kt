@@ -1,8 +1,8 @@
 package org.onekash.kashcal.sync.engine.integration
 
 import android.content.Context
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
@@ -31,6 +31,7 @@ import org.onekash.kashcal.sync.integration.multiserver.CalDavServerConfig
 import org.onekash.kashcal.sync.integration.multiserver.CalDavTestServerLoader
 import org.onekash.kashcal.sync.integration.multiserver.ServerCredentials
 import org.onekash.kashcal.sync.strategy.PushStrategy
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.io.File
@@ -84,7 +85,7 @@ class CalendarMoveWithEditIntegrationTest(
     @Before
     fun setup() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
 
@@ -108,7 +109,8 @@ class CalendarMoveWithEditIntegrationTest(
             pendingOperationsDao = database.pendingOperationsDao(),
             accountRepository = mockk(relaxed = true),
             attendeesDao = database.attendeesDao(),
-            pendingCancelsDao = database.pendingCancelsDao()
+            pendingCancelsDao = database.pendingCancelsDao(),
+            icsSource = EventIcsStore(database),
         )
     }
 

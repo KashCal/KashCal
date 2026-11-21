@@ -2,7 +2,6 @@ package org.onekash.kashcal.reminder
 
 import android.app.AlarmManager
 import android.content.Context
-import androidx.room.Room
 import io.mockk.mockk
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.entity.Account
@@ -17,6 +16,7 @@ import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.reminder.notification.ReminderNotificationChannels
 import org.onekash.kashcal.reminder.receiver.ReminderAlarmReceiver
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.shadows.ShadowAlarmManager
 
@@ -27,10 +27,15 @@ import org.robolectric.shadows.ShadowAlarmManager
  *
  * Call [close] in `@After`.
  */
-class ReminderAlarmFixture(private val context: Context) {
+class ReminderAlarmFixture(
+    private val context: Context,
+    /** Installs production's create callback ([KashCalDatabase.testCallback]): its triggers. */
+    withProductionCallback: Boolean = false,
+) {
 
-    val database: KashCalDatabase = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+    val database: KashCalDatabase = TestDatabases.inMemory(context)
         .allowMainThreadQueries()
+        .apply { if (withProductionCallback) addCallback(KashCalDatabase.testCallback()) }
         .build()
 
     val eventReader = EventReader(database)
@@ -196,7 +201,7 @@ class ReminderAlarmFixture(private val context: Context) {
     }
 
     fun reminderRowCount(): Int =
-        database.query("SELECT COUNT(*) FROM scheduled_reminders", null).use {
+        TestDatabases.raw(database).query("SELECT COUNT(*) FROM scheduled_reminders").use {
             it.moveToFirst()
             it.getInt(0)
         }

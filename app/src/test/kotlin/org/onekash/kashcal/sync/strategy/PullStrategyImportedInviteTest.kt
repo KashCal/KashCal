@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -30,6 +30,7 @@ import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.client.model.CalendarMetadataProbe
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.Instant
@@ -66,7 +67,7 @@ class PullStrategyImportedInviteTest {
     @Before
     fun setup() = runTest {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .addCallback(PendingOperationTriggers.callback())
             .allowMainThreadQueries()
             .build()
@@ -87,7 +88,8 @@ class PullStrategyImportedInviteTest {
             dataStore = dataStore,
             inviteNotifier = inviteNotifier,
             accountRepository = accountRepository,
-            reminderScheduler = mockk(relaxed = true)
+            reminderScheduler = mockk(relaxed = true),
+            icsSource = EventIcsStore(database),
         )
         coEvery { accountRepository.getAccountById(account.id) } returns account
     }
@@ -123,7 +125,7 @@ class PullStrategyImportedInviteTest {
     }
 
     private fun markImported() {
-        database.openHelper.writableDatabase.execSQL(
+        TestDatabases.raw(database).execSQL(
             "UPDATE events SET import_source = '${Event.IMPORT_SOURCE_ICS_FILE}' WHERE uid = 'series-uid'"
         )
     }

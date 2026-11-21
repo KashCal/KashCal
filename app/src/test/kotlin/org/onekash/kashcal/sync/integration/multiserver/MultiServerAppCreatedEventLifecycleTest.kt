@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.integration.multiserver
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.every
 import io.mockk.mockk
@@ -34,6 +34,7 @@ import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.sync.strategy.PushResult
 import org.onekash.kashcal.sync.strategy.PushStrategy
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.net.URI
@@ -86,7 +87,7 @@ class MultiServerAppCreatedEventLifecycleTest(private val config: CalDavServerCo
     @Before
     fun setUp() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java).allowMainThreadQueries().build()
+        db = TestDatabases.inMemory(context).allowMainThreadQueries().build()
         val generator = OccurrenceGenerator(db, db.occurrencesDao(), db.eventsDao(), TestDataStoreFactory.createDefault())
         coordinator = EventCoordinator(
             eventWriter = EventWriter(db, generator),
@@ -113,6 +114,7 @@ class MultiServerAppCreatedEventLifecycleTest(private val config: CalDavServerCo
             accountRepository = accountRepository(db),
             attendeesDao = db.attendeesDao(),
             pendingCancelsDao = db.pendingCancelsDao(),
+            icsSource = EventIcsStore(db),
         )
         CalDavTestServerLoader.createClient(config)?.let { client = it.first; creds = it.second }
     }
@@ -291,7 +293,7 @@ class MultiServerAppCreatedEventLifecycleTest(private val config: CalDavServerCo
     /** Returns every row for [uid] after a full pull into a fresh database. */
     private suspend fun freshPull(uid: String): List<Event> {
         val context: Context = ApplicationProvider.getApplicationContext()
-        val fresh = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java).allowMainThreadQueries().build()
+        val fresh = TestDatabases.inMemory(context).allowMainThreadQueries().build()
         try {
             val calendar = localCalendarFor(calendarUrl!!, fresh)
             pullStrategyFor(fresh).pull(calendar, forceFullSync = true, client = client!!)
@@ -317,6 +319,7 @@ class MultiServerAppCreatedEventLifecycleTest(private val config: CalDavServerCo
             inviteNotifier = mockk(relaxed = true),
             accountRepository = mockk(relaxed = true),
             reminderScheduler = mockk(relaxed = true),
+            icsSource = EventIcsStore(database),
         )
     }
 

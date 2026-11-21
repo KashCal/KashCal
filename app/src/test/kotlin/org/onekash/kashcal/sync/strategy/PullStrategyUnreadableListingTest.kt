@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
@@ -34,6 +34,7 @@ import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.notification.InviteNotifier
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -69,7 +70,7 @@ class PullStrategyUnreadableListingTest {
             Credentials(username = "u", password = "p", serverUrl = base), DefaultQuirks(base)
         )
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .addCallback(PendingOperationTriggers.callback())
             .allowMainThreadQueries().build()
         database.accountsDao().insert(account)
@@ -83,7 +84,8 @@ class PullStrategyUnreadableListingTest {
             dataStore = dataStore,
             inviteNotifier = inviteNotifier,
             accountRepository = accountRepository,
-            reminderScheduler = reminderScheduler
+            reminderScheduler = reminderScheduler,
+            icsSource = EventIcsStore(database),
         )
     }
 

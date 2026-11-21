@@ -1,22 +1,24 @@
 package org.onekash.kashcal.data.db.migration
 
-import android.content.ContentValues
-import android.database.sqlite.SQLiteDatabase
-import androidx.room.Room
-import androidx.room.testing.MigrationTestHelper
-import androidx.sqlite.db.SupportSQLiteDatabase
-import androidx.sqlite.db.SupportSQLiteOpenHelper
-import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
+import androidx.room3.migration.Migration
+import androidx.room3.testing.MigrationTestHelper
+import androidx.sqlite.SQLiteConnection
+import androidx.sqlite.execSQL
+import androidx.sqlite.driver.AndroidSQLiteDriver
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.PendingOperationTriggers
+import org.onekash.kashcal.testutil.ConnectionSql
+import org.onekash.kashcal.testutil.TestDatabases
+import org.onekash.kashcal.testutil.insert
+import org.onekash.kashcal.testutil.QueryRows
+import org.onekash.kashcal.testutil.queryRows
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
@@ -33,47 +35,21 @@ import org.robolectric.annotation.Config
 @Config(manifest = Config.NONE, sdk = [34])
 class MigrationGoldenTest {
 
-    private lateinit var db: SupportSQLiteDatabase
-
-    @get:Rule
-    val helper: MigrationTestHelper = MigrationTestHelper(
-        InstrumentationRegistry.getInstrumentation(),
-        KashCalDatabase::class.java,
-        emptyList(),
-        FrameworkSQLiteOpenHelperFactory()
-    )
+    private lateinit var db: SQLiteConnection
 
     @Before
     fun setup() {
-        // Create database with version 6 schema
-        val config = SupportSQLiteOpenHelper.Configuration.builder(
-            RuntimeEnvironment.getApplication()
-        )
-            .name("migration-golden-test")
-            .callback(object : SupportSQLiteOpenHelper.Callback(6) {
-                override fun onCreate(db: SupportSQLiteDatabase) {
-                    createSchemaV6(db)
-                }
-
-                override fun onUpgrade(
-                    db: SupportSQLiteDatabase,
-                    oldVersion: Int,
-                    newVersion: Int
-                ) {
-                    // Not used in setup
-                }
-            })
-            .build()
-
-        val helper = FrameworkSQLiteOpenHelperFactory().create(config)
-        db = helper.writableDatabase
+        db = ConnectionSql.open(RuntimeEnvironment.getApplication(), DB_NAME)
+        createSchemaV6(db)
     }
 
     @After
     fun teardown() {
-        db.close()
-        RuntimeEnvironment.getApplication().deleteDatabase("migration-golden-test")
+        ConnectionSql.close(RuntimeEnvironment.getApplication(), db, DB_NAME)
     }
+
+    /** Runs [migration] inside a transaction, as Room does; see [ConnectionSql.migrate]. */
+    private fun migrate(migration: Migration) = ConnectionSql.migrate(db, migration)
 
     // ==================== Migration 6 to 7 Tests ====================
 
@@ -83,10 +59,10 @@ class MigrationGoldenTest {
         val eventId = insertEventV6("test-uid-1", "Test Event 1")
 
         // Run migration
-        Migrations.MIGRATION_6_7.migrate(db)
+        migrate(Migrations.MIGRATION_6_7)
 
         // Verify the column exists and data is preserved
-        val cursor = db.query(
+        val cursor = db.queryRows(
             "SELECT raw_ical, title FROM events WHERE id = ?",
             arrayOf(eventId.toString())
         )
@@ -103,10 +79,10 @@ class MigrationGoldenTest {
         insertEventV6("uid-beta-456", "Event Beta")
 
         // Run migration
-        Migrations.MIGRATION_6_7.migrate(db)
+        migrate(Migrations.MIGRATION_6_7)
 
         // Verify import_id is initialized from uid
-        val cursor = db.query(
+        val cursor = db.queryRows(
             "SELECT import_id, uid FROM events ORDER BY id"
         )
 
@@ -125,9 +101,9 @@ class MigrationGoldenTest {
     fun `migration 6 to 7 adds alarm_count column with default 0`() {
         val eventId = insertEventV6("test-uid", "Test Event")
 
-        Migrations.MIGRATION_6_7.migrate(db)
+        migrate(Migrations.MIGRATION_6_7)
 
-        val cursor = db.query(
+        val cursor = db.queryRows(
             "SELECT alarm_count FROM events WHERE id = ?",
             arrayOf(eventId.toString())
         )
@@ -138,16 +114,16 @@ class MigrationGoldenTest {
 
     @Test
     fun `migration 6 to 7 creates import_id indexes`() {
-        Migrations.MIGRATION_6_7.migrate(db)
+        migrate(Migrations.MIGRATION_6_7)
 
         // Check indexes exist
-        val cursor = db.query(
+        val cursor = db.queryRows(
             "SELECT name FROM sqlite_master WHERE type='index' AND name LIKE '%import_id%'"
         )
 
         val indexNames = mutableListOf<String>()
         while (cursor.moveToNext()) {
-            indexNames.add(cursor.getString(0))
+            indexNames.add(cursor.getString(0)!!)
         }
         cursor.close()
 
@@ -164,7 +140,7 @@ class MigrationGoldenTest {
     @Test
     fun `migration 6 to 7 preserves all existing event data`() {
         // Insert event with many fields populated
-        val values = ContentValues().apply {
+        val values = buildMap<String, Any?> {
             put("uid", "complex-event-uid")
             put("calendar_id", 1)
             put("title", "Complex Event")
@@ -187,12 +163,12 @@ class MigrationGoldenTest {
             put("created_at", 1699800000000L)
             put("updated_at", 1699900000000L)
         }
-        val eventId = db.insert("events", SQLiteDatabase.CONFLICT_FAIL, values)
+        val eventId = db.insert("events", values)
 
-        Migrations.MIGRATION_6_7.migrate(db)
+        migrate(Migrations.MIGRATION_6_7)
 
         // Verify all data is preserved
-        val cursor = db.query(
+        val cursor = db.queryRows(
             """SELECT uid, title, location, description, start_ts, end_ts,
                timezone, is_all_day, status, rrule, reminders, caldav_url, etag,
                sequence, sync_status, import_id, alarm_count, raw_ical
@@ -230,13 +206,13 @@ class MigrationGoldenTest {
     fun `migration 6 to 7 handles null uid gracefully`() {
         // uid is NOT NULL in the v6 schema, so a null-uid row can't be inserted. The test runs
         // the migration on an empty table instead and checks the new columns exist.
-        Migrations.MIGRATION_6_7.migrate(db)
+        migrate(Migrations.MIGRATION_6_7)
 
         // Verify table structure is correct
-        val cursor = db.query("PRAGMA table_info(events)")
+        val cursor = db.queryRows("PRAGMA table_info(events)")
         val columns = mutableListOf<String>()
         while (cursor.moveToNext()) {
-            columns.add(cursor.getString(1)) // Column name is at index 1
+            columns.add(cursor.getString(1)!!) // Column name is at index 1
         }
         cursor.close()
 
@@ -250,13 +226,13 @@ class MigrationGoldenTest {
         // Verify column types via PRAGMA table_info
         insertEventV6("test-uid", "Test Event")
 
-        Migrations.MIGRATION_6_7.migrate(db)
+        migrate(Migrations.MIGRATION_6_7)
 
-        val cursor = db.query("PRAGMA table_info(events)")
+        val cursor = db.queryRows("PRAGMA table_info(events)")
         val columns = mutableMapOf<String, String>()
         while (cursor.moveToNext()) {
-            val name = cursor.getString(1)
-            val type = cursor.getString(2)
+            val name = cursor.getString(1)!!
+            val type = cursor.getString(2)!!
             columns[name] = type
         }
         cursor.close()
@@ -277,10 +253,6 @@ class MigrationGoldenTest {
      */
     @Test
     fun `migration 6 to 7 produces Room-compatible schema`() {
-        // Close the simplified test database
-        db.close()
-        RuntimeEnvironment.getApplication().deleteDatabase("migration-golden-test")
-
         // Create database with COMPLETE v6 schema from exported schema
         val dbFile = RuntimeEnvironment.getApplication().getDatabasePath("migration-compat-test")
         dbFile.parentFile?.mkdirs()
@@ -321,11 +293,7 @@ class MigrationGoldenTest {
         rawDb.close()
 
         // Opening with Room runs every migration from 6 and validates the schema
-        val roomDb = Room.databaseBuilder(
-            RuntimeEnvironment.getApplication(),
-            KashCalDatabase::class.java,
-            "migration-compat-test"
-        )
+        val roomDb = TestDatabases.file(RuntimeEnvironment.getApplication(), "migration-compat-test")
             .addMigrations(*Migrations.ALL_MIGRATIONS)
             .build()
 
@@ -341,14 +309,11 @@ class MigrationGoldenTest {
             // A trigger lives outside Room's schema check, so a table rebuild could drop it
             // silently, and a migration's copy of its SQL could fall behind; the chain must end
             // with the trigger a fresh install gets.
-            val fresh = Room.inMemoryDatabaseBuilder(RuntimeEnvironment.getApplication(), KashCalDatabase::class.java)
+            val fresh = TestDatabases.inMemory(RuntimeEnvironment.getApplication())
                 .addCallback(PendingOperationTriggers.callback())
                 .build()
             try {
-                assertEquals(
-                    triggerSql(fresh.openHelper.readableDatabase),
-                    triggerSql(roomDb.openHelper.readableDatabase),
-                )
+                assertEquals(triggerSql(room(fresh)), triggerSql(room(roomDb)))
             } finally {
                 fresh.close()
             }
@@ -367,7 +332,9 @@ class MigrationGoldenTest {
     fun `upgrading a v27 database drops the search index and keeps events writable`() {
         val name = "migration-golden-v27"
         val tables = listOf("events", "attendees", "occurrences")
-        val before = helper.createDatabase(name, 27).use { v27 ->
+        val file = RuntimeEnvironment.getApplication().getDatabasePath(name).also { it.parentFile?.mkdirs() }
+        val helper = MigrationTestHelper(InstrumentationRegistry.getInstrumentation(), file, AndroidSQLiteDriver(), KashCalDatabase::class)
+        val before = kotlinx.coroutines.runBlocking { helper.createDatabase(27) }.use { v27 ->
             v27.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'ICLOUD', 'a@example.test', 0)")
             v27.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://x/', 'C', 0)")
             v27.execSQL(
@@ -380,20 +347,21 @@ class MigrationGoldenTest {
                 "INSERT INTO occurrences (id, event_id, calendar_id, start_ts, end_ts, start_day, end_day) " +
                     "VALUES (1, 1, 1, 100, 200, 19700101, 19700101)"
             )
-            assertTrue(searchIndexObjects(v27) > 0)
-            tables.map { rows(v27, it) }
+            val read = Read { sql, args -> v27.queryRows(sql, args) }
+            assertTrue(searchIndexObjects(read) > 0)
+            tables.map { rows(read, it) }
         }
 
-        val room = Room.databaseBuilder(RuntimeEnvironment.getApplication(), KashCalDatabase::class.java, name)
+        val roomDatabase = TestDatabases.file(RuntimeEnvironment.getApplication(), name)
             .addMigrations(*Migrations.ALL_MIGRATIONS)
             .allowMainThreadQueries()
             .build()
         try {
-            val upgraded = room.openHelper.writableDatabase
+            val upgraded = room(roomDatabase)
             assertEquals(0L, searchIndexObjects(upgraded))
             assertEquals(before, tables.map { rows(upgraded, it) })
             kotlinx.coroutines.runBlocking {
-                val dao = room.eventsDao()
+                val dao = roomDatabase.eventsDao()
                 val kept = dao.getByUid("golden").single()
                 dao.update(kept.copy(title = "Dentist moved"))
                 val newId = dao.insert(kept.copy(id = 0, uid = "golden-2", title = "Second"))
@@ -402,22 +370,38 @@ class MigrationGoldenTest {
                 assertTrue(dao.getByUid("golden-2").isEmpty())
             }
         } finally {
-            room.close()
+            roomDatabase.close()
             RuntimeEnvironment.getApplication().deleteDatabase(name)
         }
     }
 
-    private fun searchIndexObjects(db: SupportSQLiteDatabase): Long =
-        db.query("SELECT COUNT(*) FROM sqlite_master WHERE name LIKE '%events_fts%' OR sql LIKE '%events_fts%'")
+    /** Reads with a query function: a connection's [queryRows] or a Room database's ([room]). */
+    private fun interface Read {
+        fun query(sql: String, args: Array<out Any?>): QueryRows
+    }
+
+    private fun room(database: KashCalDatabase) = Read { sql, args -> TestDatabases.queryRows(database, sql, *args) }
+
+    private fun searchIndexObjects(read: Read): Long =
+        read.query("SELECT COUNT(*) FROM sqlite_master WHERE name LIKE '%events_fts%' OR sql LIKE '%events_fts%'", emptyArray())
             .use { it.moveToFirst(); it.getLong(0) }
 
-    private fun rows(db: SupportSQLiteDatabase, table: String): List<List<String?>> =
-        db.query("SELECT * FROM $table ORDER BY rowid").use { c ->
-            buildList { while (c.moveToNext()) add((0 until c.columnCount).map { c.getString(it) }) }
+    /**
+     * Returns [table]'s rows as column name to value, without `raw_ical`, which v29 moves to
+     * `event_ics` (`Migration28To29Test` checks the move).
+     */
+    private fun rows(read: Read, table: String): List<Map<String, String?>> {
+        val columns = read.query("SELECT name FROM pragma_table_info('$table')", emptyArray()).use { c ->
+            buildList { while (c.moveToNext()) add(c.getString(0)!!) }
+        } - "raw_ical"
+        val list = columns.joinToString(", ") { "`$it`" }
+        return read.query("SELECT $list FROM $table ORDER BY rowid", emptyArray()).use { c ->
+            buildList { while (c.moveToNext()) add(columns.indices.associate { columns[it] to c.getString(it) }) }
         }
+    }
 
-    private fun triggerSql(db: SupportSQLiteDatabase): String? =
-        db.query(
+    private fun triggerSql(read: Read): String? =
+        read.query(
             "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = ?",
             arrayOf(PendingOperationTriggers.EVENT_DELETE_TRIGGER),
         ).use { if (it.moveToFirst()) it.getString(0) else null }
@@ -497,7 +481,7 @@ class MigrationGoldenTest {
      * Creates the v6 accounts, calendars and events tables, plus the account and calendar the
      * events reference.
      */
-    private fun createSchemaV6(db: SupportSQLiteDatabase) {
+    private fun createSchemaV6(db: SQLiteConnection) {
         // Accounts table
         db.execSQL("""
             CREATE TABLE IF NOT EXISTS accounts (
@@ -578,14 +562,14 @@ class MigrationGoldenTest {
         """)
 
         // Create a test account and calendar for foreign key constraints
-        db.insert("accounts", SQLiteDatabase.CONFLICT_FAIL, ContentValues().apply {
+        db.insert("accounts", buildMap<String, Any?> {
             put("id", 1)
             put("provider", "test")
             put("email", "test@test.com")
             put("created_at", System.currentTimeMillis())
         })
 
-        db.insert("calendars", SQLiteDatabase.CONFLICT_FAIL, ContentValues().apply {
+        db.insert("calendars", buildMap<String, Any?> {
             put("id", 1)
             put("account_id", 1)
             put("caldav_url", "https://test.com/cal/")
@@ -596,7 +580,7 @@ class MigrationGoldenTest {
 
     /** Inserts an event into the v6 events table in calendar 1. */
     private fun insertEventV6(uid: String, title: String): Long {
-        val values = ContentValues().apply {
+        val values = buildMap<String, Any?> {
             put("uid", uid)
             put("calendar_id", 1)
             put("title", title)
@@ -606,6 +590,10 @@ class MigrationGoldenTest {
             put("created_at", System.currentTimeMillis())
             put("updated_at", System.currentTimeMillis())
         }
-        return db.insert("events", SQLiteDatabase.CONFLICT_FAIL, values)
+        return db.insert("events", values)
+    }
+
+    private companion object {
+        const val DB_NAME = "migration-golden-test"
     }
 }

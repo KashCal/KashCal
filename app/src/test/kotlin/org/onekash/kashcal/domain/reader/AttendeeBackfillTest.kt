@@ -10,11 +10,12 @@ import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.testutil.FakeEventIcsSource
 import org.onekash.kashcal.data.db.entity.SyncStatus
 
 /**
- * Tests [AttendeeBackfill.backfillIfEmpty], which parses `event.rawIcal` and writes the master
- * VEVENT's attendees when an event has no attendee rows or an unusable address.
+ * Tests [AttendeeBackfill.backfillIfEmpty], which parses the event's stored ICS and writes the
+ * master VEVENT's attendees when an event has no attendee rows or an unusable address.
  *
  * Covers the no-op returns (missing event, null, empty or ATTENDEE-less rawIcal, a header-only
  * ICS, usable rows already stored), the re-parse of principal-href and bare-mailto rows, a
@@ -27,7 +28,9 @@ class AttendeeBackfillTest {
     private val attendeesDao = mockk<AttendeesDao>(relaxed = true)
     private val eventsDao = mockk<EventsDao>()
 
-    private val backfill = AttendeeBackfill(attendeesDao, eventsDao)
+    private val ics = FakeEventIcsSource()
+
+    private val backfill = AttendeeBackfill(attendeesDao, eventsDao, ics)
 
     @Test
     fun `returns 0 when event not found`() = runTest {
@@ -258,11 +261,12 @@ class AttendeeBackfillTest {
         coVerify(exactly = 0) { attendeesDao.replaceForEvent(any(), any()) }
     }
 
+    /** Returns event [id] and stores [rawIcal] as its ICS ([FakeEventIcsSource]). */
     private fun event(
         rawIcal: String?,
         id: Long = 1L,
         calendarId: Long = 1L
-    ): Event = Event(
+    ): Event = kotlinx.coroutines.runBlocking { ics.write(id, rawIcal) }.let { Event(
         id = id,
         uid = "evt-$id",
         calendarId = calendarId,
@@ -270,9 +274,8 @@ class AttendeeBackfillTest {
         startTs = 1_000L,
         endTs = 2_000L,
         dtstamp = System.currentTimeMillis(),
-        syncStatus = SyncStatus.SYNCED,
-        rawIcal = rawIcal
-    )
+        syncStatus = SyncStatus.SYNCED
+    ) }
 
     companion object {
         val ICS_WITH_ATTENDEES = """

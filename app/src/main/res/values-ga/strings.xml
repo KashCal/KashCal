@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d eile</string>
     <string name="tags_autocomplete_create_new">Cruthaigh «%1$s»</string>
     <string name="cd_tag">Clib: %1$s</string>
+    <string name="tags_show_events_click_label">Taispeáin imeachtaí leis an gclib seo</string>
+    <string name="tags_show_events">Taispeáin imeachtaí</string>
     <string name="cd_tags_move_menu">Bog clibeanna</string>
     <string name="tags_move_above_notes">Bog os cionn na nótaí</string>
     <string name="tags_move_below_notes">Bog faoi bhun na nótaí</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Féach ar sheisiúin sioncronúithe (48 uair an chloig siar)</string>
     <string name="settings_import_subtitle">Cuir imeachtaí ó chomhad ICS le haon fhéilire</string>
     <string name="settings_birthday_reminder">Meabhrúchán Lá Breithe</string>
-    <string name="settings_use_device_timezone">Úsáid crios ama na gléine</string>
     <string name="settings_section_calendars">Féilirí agus cuntais</string>
     <string name="settings_section_appearance">Cuma</string>
     <string name="settings_section_creating_events">Roghanna imeachtaí</string>
@@ -465,7 +466,6 @@
     <string name="cd_recurring">Athfhillteach</string>
     <string name="cd_enabled">Cumasaithe</string>
     <string name="cd_sync_error">Earráid sioncronúithe</string>
-    <string name="cd_select_label">Roghnaigh %1$s</string>
     <string name="cd_wheel_picker">Roghnóir rotha le %1$d rogha</string>
     <string name="cd_time_entry_keyboard">Cuir isteach an t-am beacht</string>
     <string name="time_entry_dialog_title">Cuir isteach an t-am</string>
@@ -869,6 +869,23 @@
     <string name="label_ends">Críochnaíonn</string>
     <string name="sheet_hint_change_end">Tapáil lá chun an deireadh a athrú</string>
     <string name="label_timezone">Crios ama</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Cuardaigh cathair, tír nó crios</string>
+    <string name="timezone_section_this_event">An t-imeacht seo</string>
+    <string name="timezone_section_device">Crios ama an ghléis</string>
+    <string name="timezone_section_recent">Le déanaí</string>
+    <string name="timezone_section_all">Gach crios ama</string>
+    <string name="timezone_offsets_on">Fritháirimh ar %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Ón bhféilire: %1$s</string>
+    <string name="timezone_shown_in_device_time">Taispeántar in am an ghléis</string>
+    <string name="timezone_loading">Criosanna ama á lódáil…</string>
+    <string name="timezone_no_match">Níl aon chrios ama ag teacht leis</string>
+    <string name="timezone_no_match_hint">Bain triail as cathair, tír nó fritháireamh mar +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Foláirimh</string>
     <string name="label_add_alert">Cuir Foláireamh Leis</string>
     <string name="label_recurrence_never">Go brách</string>
@@ -878,7 +895,6 @@
     <string name="label_default_calendar_hint">Cruthófar imeachtaí nua san fhéilire seo</string>
     <string name="label_reminders_truncated">%1$d gan taispeáint (%2$d san iomlán, uasmhéid %3$d ineagarthóireachta)</string>
     <string name="label_found_events">Aimsíodh: %1$d imeacht</string>
-    <string name="placeholder_search">Cuardaigh…</string>
     <string name="settings_search_placeholder">Cuardaigh socruithe…</string>
     <string name="settings_search_no_results">Níor aimsíodh socruithe le haghaidh \"%1$s\"</string>
     <string name="cd_search_settings">Cuardaigh socruithe</string>
@@ -1250,6 +1266,8 @@
     <string name="event_untitled">Imeacht gan teideal</string>
     <string name="recurring_this_event">An t-imeacht seo</string>
     <string name="recurring_all_events">Gach imeacht</string>
+    <string name="recurring_scope_move_not_expressible">Ní féidir leis an riail athfhillteachta an t-athrú seo a leanúint</string>
+    <string name="event_form_move_not_expressible">Ní féidir leis an riail athfhillteachta an t-athrú seo a leanúint. Níor sábháladh aon rud.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Freastalaithe</string>
@@ -1353,6 +1371,7 @@
     <string name="search_reason_guest">Aoi:</string>
     <string name="search_keep_typing">Lean ort ag clóscríobh le cuardach</string>
     <string name="search_no_matches">Níl aon imeacht ag teacht le “%1$s”</string>
+    <string name="search_no_events_tagged">Níl aon imeacht clibáilte le “%1$s”</string>
     <string name="search_lookback_line">Féachaint Siar Sioncronúithe: %1$s</string>
     <string name="search_sync_settings">Socruithe sioncronaithe</string>
     <string name="cd_search_sync_settings">Oscail an socrú féachaint siar sioncronaithe</string>
@@ -1703,6 +1722,21 @@
     <string name="ics_feed_error_access_denied">Dhiúltaigh freastalaí an fhotha seo rochtain.</string>
     <string name="ics_feed_error_too_large">Tá an fotha féilire seo rómhór le híoslódáil.</string>
     <string name="ics_feed_error_unreadable">Níorbh fhéidir imeachtaí an fhotha seo a thaispeáint.</string>
+    <string name="ics_feed_error_event_not_saved">Níor sábháladh “%1$s”.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">Níor sábháladh %1$d imeacht.</item>
+        <item quantity="two">Níor sábháladh %1$d imeacht.</item>
+        <item quantity="few">Níor sábháladh %1$d imeacht.</item>
+        <item quantity="many">Níor sábháladh %1$d n-imeacht.</item>
+        <item quantity="other">Níor sábháladh %1$d imeacht.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">Níor sábháladh %1$d imeacht, “%2$s” san áireamh.</item>
+        <item quantity="two">Níor sábháladh %1$d imeacht, “%2$s” san áireamh.</item>
+        <item quantity="few">Níor sábháladh %1$d imeacht, “%2$s” san áireamh.</item>
+        <item quantity="many">Níor sábháladh %1$d n-imeacht, “%2$s” san áireamh.</item>
+        <item quantity="other">Níor sábháladh %1$d imeacht, “%2$s” san áireamh.</item>
+    </plurals>
     <string name="insights_title">Léargais</string>
     <string name="insights_period_this_week">Seachtain</string>
     <string name="insights_period_last_week">Seachtain seo caite</string>

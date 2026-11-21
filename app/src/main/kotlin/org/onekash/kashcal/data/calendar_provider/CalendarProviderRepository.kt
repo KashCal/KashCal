@@ -55,6 +55,26 @@ interface CalendarProviderRepository {
     ): List<DeviceCalendarInstance>
 
     /**
+     * Searches the occurrences of [enabledCalendarIds] in a day range for events that carry
+     * every tag in [tags], each equal to one of the event's own tags once both are folded by
+     * [org.onekash.kashcal.domain.search.SearchFold] (the folding the phone's LIKE applies to
+     * app-calendar tags). A non-blank [query] must also match, as [searchInstances] matches it.
+     * An exception is matched by its own tags. With empty [tags] this is [searchInstances].
+     *
+     * @param startDayCode first day, YYYYMMDD, inclusive
+     * @param endDayCode last day, YYYYMMDD, inclusive
+     * @param hideDeclined drops occurrences the user declined
+     */
+    suspend fun searchTaggedInstances(
+        tags: List<String>,
+        query: String,
+        startDayCode: Int,
+        endDayCode: Int,
+        enabledCalendarIds: Set<Long>,
+        hideDeclined: Boolean = false
+    ): List<DeviceCalendarInstance>
+
+    /**
      * Suggests device-event titles starting with [prefix], grouped case-insensitively with use
      * count and last-used time, for the event-form autocomplete.
      *

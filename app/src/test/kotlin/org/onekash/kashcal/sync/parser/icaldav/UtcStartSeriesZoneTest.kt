@@ -1,7 +1,6 @@
 package org.onekash.kashcal.sync.parser.icaldav
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -22,6 +21,7 @@ import org.onekash.kashcal.data.ics.IcsParserService
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.Instant
@@ -52,7 +52,7 @@ class UtcStartSeriesZoneTest {
     fun setUp() {
         TimeZone.setDefault(TimeZone.getTimeZone("America/New_York"))
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java).allowMainThreadQueries().build()
+        database = TestDatabases.inMemory(context).allowMainThreadQueries().build()
         generator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
         runTest {
             val accountId = database.accountsDao().insert(Account(provider = AccountProvider.CALDAV, email = "user@example.test"))
@@ -167,14 +167,14 @@ class UtcStartSeriesZoneTest {
         val exceptionBefore = exception.copy(timezone = null)
 
         // Patch path (stored copy), fresh path (no copy), and the series with a changed occurrence.
-        assertEquals(withoutStamps(IcsPatcher.serialize(before)), withoutStamps(IcsPatcher.serialize(series)))
+        assertEquals(withoutStamps(IcsPatcher.serialize(before, body)), withoutStamps(IcsPatcher.serialize(series, body)))
         assertEquals(
-            withoutStamps(IcsPatcher.serialize(before.copy(rawIcal = null))),
-            withoutStamps(IcsPatcher.serialize(series.copy(rawIcal = null))),
+            withoutStamps(IcsPatcher.serialize(before, null)),
+            withoutStamps(IcsPatcher.serialize(series, null)),
         )
-        val withExceptions = IcsPatcher.serializeWithExceptions(series, listOf(exception))
+        val withExceptions = IcsPatcher.serializeWithExceptions(series, body, listOf(exception))
         assertEquals(
-            withoutStamps(IcsPatcher.serializeWithExceptions(before, listOf(exceptionBefore))),
+            withoutStamps(IcsPatcher.serializeWithExceptions(before, body, listOf(exceptionBefore))),
             withoutStamps(withExceptions),
         )
         assertEquals(EventToICalEventMapper.dtStartOf(before), EventToICalEventMapper.dtStartOf(series))
@@ -195,23 +195,24 @@ class UtcStartSeriesZoneTest {
             startTs = map(ics(utcSeries)).startTs, endTs = map(ics(utcSeries)).endTs,
             timezone = "UTC", dtstamp = 0L,
         )
-        val lines = IcsPatcher.serialize(oneOff).lines()
+        val lines = IcsPatcher.serialize(oneOff, null).lines()
         assertTrue(lines.toString(), "DTSTART:20270308T150000Z" in lines)
         assertFalse(lines.toString(), lines.any { it.contains("TZID=UTC") })
     }
 
     @Test
     fun `rows made from a UTC series write UTC form`() {
-        val series = map(ics(utcSeries)).copy(id = 5L)
+        val body = ics(utcSeries)
+        val series = map(body).copy(id = 5L)
         val third = series.startTs + 14L * 86_400_000
 
         // The share card's single occurrence drops the rule and keeps the zone.
         val shared = org.onekash.kashcal.domain.share.singleOccurrenceForShare(series, third, third + 3_600_000)
-        assertTrue("DTSTART:20270322T150000Z" in IcsPatcher.serialize(shared).lines())
+        assertTrue("DTSTART:20270322T150000Z" in IcsPatcher.serialize(shared, null).lines())
 
         // A series turned into a one-off in the form keeps its zone.
         val oneOff = series.copy(rrule = null)
-        val lines = IcsPatcher.serialize(oneOff).lines()
+        val lines = IcsPatcher.serialize(oneOff, body).lines()
         assertTrue(lines.toString(), "DTSTART:20270308T150000Z" in lines)
         assertFalse(lines.toString(), lines.any { it.contains("TZID=UTC") })
     }
@@ -227,10 +228,10 @@ class UtcStartSeriesZoneTest {
         val row = Event(
             id = 5L, uid = "utc-start@example.test", calendarId = calendarId, title = "Weekly",
             startTs = start, endTs = start + 3_600_000, timezone = "UTC", rrule = "FREQ=WEEKLY;COUNT=4",
-            rawIcal = stored, dtstamp = 0L,
+            dtstamp = 0L,
         )
 
-        val uploaded = IcsPatcher.serialize(row)
+        val uploaded = IcsPatcher.serialize(row, stored)
         assertTrue(uploaded, uploaded.lines().contains("DTSTART:20270308T150000Z"))
         assertFalse(uploaded, uploaded.contains("TZID=UTC"))
 

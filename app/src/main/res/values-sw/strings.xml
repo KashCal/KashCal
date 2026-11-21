@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d zaidi</string>
     <string name="tags_autocomplete_create_new">Unda \"%1$s\"</string>
     <string name="cd_tag">Lebo: %1$s</string>
+    <string name="tags_show_events_click_label">Onyesha matukio yenye lebo hii</string>
+    <string name="tags_show_events">Onyesha matukio</string>
     <string name="cd_tags_move_menu">Hamisha lebo</string>
     <string name="tags_move_above_notes">Hamisha juu ya madokezo</string>
     <string name="tags_move_below_notes">Hamisha chini ya madokezo</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Tazama vipindi vya kusawazisha (saa 48 zilizopita)</string>
     <string name="settings_import_subtitle">Ongeza matukio kutoka faili ya ICS kwenye kalenda yoyote</string>
     <string name="settings_birthday_reminder">Ukumbusho wa Siku ya Kuzaliwa</string>
-    <string name="settings_use_device_timezone">Tumia eneo la saa la kifaa</string>
     <string name="settings_section_calendars">Kalenda &amp; akaunti</string>
     <string name="settings_section_appearance">Mwonekano</string>
     <string name="settings_section_creating_events">Mapendeleo ya tukio</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">Inarudia</string>
     <string name="cd_enabled">Imewashwa</string>
     <string name="cd_sync_error">Hitilafu ya kusawazisha</string>
-    <string name="cd_select_label">Chagua %1$s</string>
     <string name="cd_wheel_picker">Kichagua gurudumu chenye chaguo %1$d</string>
     <string name="cd_time_entry_keyboard">Weka saa kamili</string>
     <string name="time_entry_dialog_title">Weka saa</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">Inaisha</string>
     <string name="sheet_hint_change_end">Gusa siku ili kubadilisha mwisho</string>
     <string name="label_timezone">Eneo la saa</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Tafuta jiji, nchi au eneo</string>
+    <string name="timezone_section_this_event">Tukio hili</string>
+    <string name="timezone_section_device">Eneo la saa la kifaa</string>
+    <string name="timezone_section_recent">Za hivi karibuni</string>
+    <string name="timezone_section_all">Maeneo yote ya saa</string>
+    <string name="timezone_offsets_on">Tofauti za saa tarehe %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Kutoka kwa kalenda: %1$s</string>
+    <string name="timezone_shown_in_device_time">Inaonyeshwa kwa saa ya kifaa</string>
+    <string name="timezone_loading">Inapakia maeneo ya saa…</string>
+    <string name="timezone_no_match">Hakuna eneo la saa linalolingana</string>
+    <string name="timezone_no_match_hint">Jaribu jiji, nchi au tofauti ya saa kama +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Tahadhari</string>
     <string name="label_add_alert">Ongeza Tahadhari</string>
     <string name="label_recurrence_never">Kamwe</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">Matukio mapya yataundwa katika kalenda hii</string>
     <string name="label_reminders_truncated">%1$d hazikuonyeshwa (jumla %2$d, upeo %3$d zinazoweza kuhaririwa)</string>
     <string name="label_found_events">Zimepatikana: matukio %1$d</string>
-    <string name="placeholder_search">Tafuta…</string>
     <string name="settings_search_placeholder">Tafuta mipangilio…</string>
     <string name="settings_search_no_results">Hakuna mipangilio iliyopatikana kwa \"%1$s\"</string>
     <string name="cd_search_settings">Tafuta mipangilio</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">Tukio lisilo na kichwa</string>
     <string name="recurring_this_event">Tukio hili</string>
     <string name="recurring_all_events">Matukio yote</string>
+    <string name="recurring_scope_move_not_expressible">Kanuni ya kurudia haiwezi kufuata mabadiliko haya</string>
+    <string name="event_form_move_not_expressible">Kanuni ya kurudia haiwezi kufuata mabadiliko haya. Hakuna kilichohifadhiwa.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Washiriki</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">Mgeni:</string>
     <string name="search_keep_typing">Endelea kuandika ili kutafuta</string>
     <string name="search_no_matches">Hakuna matukio yanayolingana na “%1$s”</string>
+    <string name="search_no_events_tagged">Hakuna matukio yaliyowekwa lebo “%1$s”</string>
     <string name="search_lookback_line">Muda wa Kusawazisha Nyuma: %1$s</string>
     <string name="search_sync_settings">Mipangilio ya kusawazisha</string>
     <string name="cd_search_sync_settings">Fungua mpangilio wa muda wa kusawazisha nyuma</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">Seva ya mlisho huu imekataa ufikiaji.</string>
     <string name="ics_feed_error_too_large">Mlisho huu wa kalenda ni mkubwa mno kupakuliwa.</string>
     <string name="ics_feed_error_unreadable">Matukio ya mlisho huu hayakuweza kuonyeshwa.</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s” haikuhifadhiwa.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">Tukio %1$d halikuhifadhiwa.</item>
+        <item quantity="other">Matukio %1$d hayakuhifadhiwa.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">Tukio %1$d halikuhifadhiwa, likiwemo “%2$s”.</item>
+        <item quantity="other">Matukio %1$d hayakuhifadhiwa, likiwemo “%2$s”.</item>
+    </plurals>
     <string name="insights_title">Maarifa</string>
     <string name="insights_period_this_week">Wiki</string>
     <string name="insights_period_last_week">Wiki iliyopita</string>

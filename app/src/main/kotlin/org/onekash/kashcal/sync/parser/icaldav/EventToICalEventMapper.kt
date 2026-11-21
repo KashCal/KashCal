@@ -103,6 +103,10 @@ object EventToICalEventMapper {
      * Maps an exception to a VEVENT with the master's UID and a RECURRENCE-ID from the
      * exception's `originalInstanceTime`.
      *
+     * The RECURRENCE-ID takes the master's value type and zone, as DTSTART's (RFC 5545
+     * §3.8.4.4): a date for an all-day series even when the occurrence was given a time, and
+     * the series' zone even when the occurrence kept another one after the series moved.
+     *
      * RRULE, EXDATE and RDATE are cleared: an exception describes one occurrence (RFC 5545).
      * With a null `originalInstanceTime` there is no RECURRENCE-ID and a null importId becomes
      * `<masterUid>:RECID:null`; this is kept deliberately.
@@ -114,18 +118,29 @@ object EventToICalEventMapper {
         master: Event,
         exception: Event,
         attendees: List<org.onekash.kashcal.data.db.entity.Attendee> = emptyList(),
-    ): ICalEvent = toICalEvent(masterUid = master.uid, exception = exception, attendees = attendees)
+    ): ICalEvent = exceptionToICalEvent(master.uid, exception, attendees, writeZone(master), master.isAllDay)
 
-    /** Maps an exception when only the master UID is known; see the overload above. */
+    /**
+     * Maps an exception when only the master UID is known: the RECURRENCE-ID takes the
+     * exception's own zone and value type. See the overload above.
+     */
     fun toICalEvent(
         masterUid: String,
         exception: Event,
         attendees: List<org.onekash.kashcal.data.db.entity.Attendee> = emptyList(),
+    ): ICalEvent = exceptionToICalEvent(masterUid, exception, attendees, writeZone(exception), exception.isAllDay)
+
+    private fun exceptionToICalEvent(
+        masterUid: String,
+        exception: Event,
+        attendees: List<org.onekash.kashcal.data.db.entity.Attendee>,
+        recurrenceIdZone: ZoneId?,
+        recurrenceIdIsAllDay: Boolean,
     ): ICalEvent {
         val zone = writeZone(exception)
         val endZone = resolveZone(exception.endTimezone) ?: zone
         val recurrenceId = exception.originalInstanceTime?.let {
-            ICalDateTime.fromTimestamp(it, zone, exception.isAllDay)
+            ICalDateTime.fromTimestamp(it, recurrenceIdZone, recurrenceIdIsAllDay)
         }
         return ICalEvent(
             uid = masterUid,

@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">他%1$d件</string>
     <string name="tags_autocomplete_create_new">「%1$s」を作成</string>
     <string name="cd_tag">タグ: %1$s</string>
+    <string name="tags_show_events_click_label">このタグで予定を表示</string>
+    <string name="tags_show_events">予定を表示</string>
     <string name="cd_tags_move_menu">タグを移動</string>
     <string name="tags_move_above_notes">メモの上に移動</string>
     <string name="tags_move_below_notes">メモの下に移動</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">同期セッションを表示（過去48時間）</string>
     <string name="settings_import_subtitle">ICSファイルの予定を任意のカレンダーに追加します</string>
     <string name="settings_birthday_reminder">誕生日リマインダー</string>
-    <string name="settings_use_device_timezone">デバイスのタイムゾーンを使用</string>
     <string name="settings_section_calendars">カレンダーとアカウント</string>
     <string name="settings_section_appearance">外観</string>
     <string name="settings_section_creating_events">予定の設定</string>
@@ -461,7 +462,6 @@
     <string name="cd_recurring">繰り返し</string>
     <string name="cd_enabled">有効</string>
     <string name="cd_sync_error">同期エラー</string>
-    <string name="cd_select_label">%1$sを選択</string>
     <string name="cd_wheel_picker">%1$d個のオプションのホイールピッカー</string>
     <string name="cd_time_entry_keyboard">正確な時刻を入力する</string>
     <string name="time_entry_dialog_title">時刻を入力</string>
@@ -825,6 +825,23 @@
     <string name="label_ends">終了</string>
     <string name="sheet_hint_change_end">日付をタップすると終了日を変更できます</string>
     <string name="label_timezone">タイムゾーン</string>
+    <string name="timezone_row_city_zone">%1$s（%2$s）</string>
+    <string name="cd_timezone_city_name_offset">%1$s、%2$s、%3$s</string>
+    <string name="cd_timezone_city_offset">%1$s、%2$s</string>
+    <string name="timezone_search_hint">都市、国、タイムゾーンを検索</string>
+    <string name="timezone_section_this_event">この予定</string>
+    <string name="timezone_section_device">デバイスのタイムゾーン</string>
+    <string name="timezone_section_recent">最近</string>
+    <string name="timezone_section_all">すべてのタイムゾーン</string>
+    <string name="timezone_offsets_on">%1$s 時点のオフセット</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">カレンダーの表記: %1$s</string>
+    <string name="timezone_shown_in_device_time">デバイスの時刻で表示</string>
+    <string name="timezone_loading">タイムゾーンを読み込み中…</string>
+    <string name="timezone_no_match">一致するタイムゾーンはありません</string>
+    <string name="timezone_no_match_hint">都市、国、または +5:30 のようなオフセットで検索してください</string>
+    <string name="cd_timezone_join">%1$s、%2$s</string>
     <string name="label_alerts">アラート</string>
     <string name="label_add_alert">アラートを追加</string>
     <string name="label_recurrence_never">なし</string>
@@ -834,7 +851,6 @@
     <string name="label_default_calendar_hint">新しい予定はこのカレンダーに作成されます</string>
     <string name="label_reminders_truncated">%1$d件が非表示（合計%2$d件、最大%3$d件まで編集可能）</string>
     <string name="label_found_events">検出: %1$d件の予定</string>
-    <string name="placeholder_search">検索…</string>
     <string name="settings_search_placeholder">設定を検索…</string>
     <string name="settings_search_no_results">\"%1$s\" に一致する設定はありません</string>
     <string name="cd_search_settings">設定を検索</string>
@@ -1046,6 +1062,8 @@
     <string name="event_untitled">無題の予定</string>
     <string name="recurring_this_event">この予定のみ</string>
     <string name="recurring_all_events">すべての予定</string>
+    <string name="recurring_scope_move_not_expressible">繰り返しのルールではこの変更に対応できません</string>
+    <string name="event_form_move_not_expressible">繰り返しのルールではこの変更に対応できません。何も保存されていません。</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">出席者</string>
@@ -1121,6 +1139,7 @@
     <string name="search_reason_guest">ゲスト：</string>
     <string name="search_keep_typing">入力を続けると検索します</string>
     <string name="search_no_matches">「%1$s」に一致する予定はありません</string>
+    <string name="search_no_events_tagged">「%1$s」でタグ付けされた予定はありません</string>
     <string name="search_lookback_line">同期の遡り期間：%1$s</string>
     <string name="search_sync_settings">同期設定</string>
     <string name="cd_search_sync_settings">同期の遡り期間の設定を開く</string>
@@ -1399,6 +1418,13 @@
     <string name="ics_feed_error_access_denied">このフィードのサーバーがアクセスを拒否しました。</string>
     <string name="ics_feed_error_too_large">このカレンダーフィードは大きすぎてダウンロードできません。</string>
     <string name="ics_feed_error_unreadable">このフィードの予定を表示できませんでした。</string>
+    <string name="ics_feed_error_event_not_saved">「%1$s」は保存されませんでした。</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="other">%1$d件の予定が保存されませんでした。</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="other">「%2$s」を含む%1$d件の予定が保存されませんでした。</item>
+    </plurals>
     <string name="insights_title">インサイト</string>
     <string name="insights_period_this_week">週</string>
     <string name="insights_period_last_week">先週</string>

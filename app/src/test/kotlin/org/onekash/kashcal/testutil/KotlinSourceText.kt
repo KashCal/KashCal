@@ -16,6 +16,9 @@ package org.onekash.kashcal.testutil
  *   many `$` as the string's prefix, so a lone `${` inside is plain text.
  * - Backtick identifiers are kept as code; quotes inside them open nothing.
  * - Newlines are kept, so line numbers are unchanged.
+ *
+ * [commentFreeLines] blanks only the comments and keeps string contents, for guards that look for
+ * SQL text (a table name inside `@Query("...")`).
  */
 object KotlinSourceText {
 
@@ -23,6 +26,16 @@ object KotlinSourceText {
     data class Result(val lines: List<String>, val endsInCode: Boolean)
 
     fun codeLines(source: String): List<String> = scan(source).lines
+
+    /**
+     * Returns [source]'s lines with comments blanked and string and character literals kept.
+     * Throws if the reader didn't end back in plain code, as [references] does.
+     */
+    fun commentFreeLines(source: String): List<String> {
+        val result = scan(source, keepLiterals = true)
+        check(result.endsInCode) { "Source reader lost track of this file; refusing to scan it" }
+        return result.lines
+    }
 
     /**
      * Every match of [pattern] in the code of [source], as (1-based line of the
@@ -42,7 +55,7 @@ object KotlinSourceText {
         }.toList()
     }
 
-    fun scan(source: String): Result {
+    fun scan(source: String, keepLiterals: Boolean = false): Result {
         val out = source.toCharArray()
         val frames = ArrayDeque<Frame>().apply { addLast(Frame.Code(inTemplate = false)) }
         var blockDepth = 0
@@ -51,6 +64,10 @@ object KotlinSourceText {
 
         fun blank(from: Int, until: Int) {
             for (k in from until minOf(until, out.size)) if (out[k] != '\n') out[k] = ' '
+        }
+        // Blanks literal text unless the caller keeps literals.
+        fun blankLiteral(from: Int, until: Int) {
+            if (!keepLiterals) blank(from, until)
         }
         fun at(k: Int): Char = if (k < source.length) source[k] else '\u0000'
         fun startsWith(prefix: String): Boolean = source.startsWith(prefix, i)
@@ -89,7 +106,7 @@ object KotlinSourceText {
                     }
                     startsWith("\"\"\"") -> { frames.addLast(Frame.Raw(1)); i += 3 }
                     c == '"' -> { frames.addLast(Frame.Str(1)); i++ }
-                    c == '\'' -> i = skipCharLiteral(source, i, ::blank)
+                    c == '\'' -> i = skipCharLiteral(source, i, ::blankLiteral)
                     c == '`' -> {
                         val close = source.indexOf('`', i + 1)
                         i = if (close < 0) source.length else close + 1
@@ -102,10 +119,10 @@ object KotlinSourceText {
                     else -> i++
                 }
                 is Frame.Str -> when {
-                    c == '\\' -> { blank(i, i + 2); i += 2 }
+                    c == '\\' -> { blankLiteral(i, i + 2); i += 2 }
                     c == '"' -> { frames.removeLast(); i++ }
-                    c == '$' -> i = template(frames, frame.dollars, i, ::at, ::blank, source)
-                    else -> { blank(i, i + 1); i++ }
+                    c == '$' -> i = template(frames, frame.dollars, i, ::at, ::blankLiteral, source)
+                    else -> { blankLiteral(i, i + 1); i++ }
                 }
                 is Frame.Raw -> when {
                     startsWith("\"\"\"") -> {
@@ -113,12 +130,12 @@ object KotlinSourceText {
                         // last three; the extra quotes belong to the content.
                         var end = i
                         while (at(end) == '"') end++
-                        blank(i, end - 3)
+                        blankLiteral(i, end - 3)
                         frames.removeLast()
                         i = end
                     }
-                    c == '$' -> i = template(frames, frame.dollars, i, ::at, ::blank, source)
-                    else -> { blank(i, i + 1); i++ }
+                    c == '$' -> i = template(frames, frame.dollars, i, ::at, ::blankLiteral, source)
+                    else -> { blankLiteral(i, i + 1); i++ }
                 }
             }
         }

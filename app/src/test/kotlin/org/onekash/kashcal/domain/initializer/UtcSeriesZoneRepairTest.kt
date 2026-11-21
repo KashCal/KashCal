@@ -2,7 +2,6 @@ package org.onekash.kashcal.domain.initializer
 
 import android.content.Context
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -20,6 +19,8 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.icaldav.parser.ICalParser
+import org.onekash.kashcal.data.db.EventIcsSource
+import org.onekash.kashcal.data.db.EventIcsStore
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
@@ -36,6 +37,7 @@ import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.onekash.kashcal.widget.WidgetUpdateManager
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -76,7 +78,7 @@ class UtcSeriesZoneRepairTest {
     fun setUp() {
         TimeZone.setDefault(TimeZone.getTimeZone("America/New_York"))
         val context: Context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        db = TestDatabases.inMemory(context)
             .addCallback(KashCalDatabase.testCallback())
             .allowMainThreadQueries().build()
         generator = OccurrenceGenerator(db, db.occurrencesDao(), db.eventsDao(), TestDataStoreFactory.createDefault())
@@ -109,7 +111,10 @@ class UtcSeriesZoneRepairTest {
         TimeZone.setDefault(savedZone)
     }
 
-    private fun repair(eventsDao: org.onekash.kashcal.data.db.dao.EventsDao = db.eventsDao()) = UtcSeriesZoneRepair(
+    private fun repair(
+        eventsDao: org.onekash.kashcal.data.db.dao.EventsDao = db.eventsDao(),
+        icsSource: EventIcsSource = icsStore,
+    ) = UtcSeriesZoneRepair(
         database = db,
         eventsDao = eventsDao,
         icsSubscriptionsDao = db.icsSubscriptionsDao(),
@@ -118,7 +123,10 @@ class UtcSeriesZoneRepairTest {
         eventReader = EventReader(db),
         widgetUpdateManager = widgets,
         dataStore = dataStore,
+        icsSource = icsSource,
     )
+
+    private val icsStore by lazy { EventIcsStore(db) }
 
     // ---- fixtures ----
 
@@ -131,16 +139,21 @@ class UtcSeriesZoneRepairTest {
     private fun weekly(start: String = "20270308T150000Z", end: String = "20270308T160000Z", vararg extra: String) =
         listOf("DTSTART:$start", "DTEND:$end", "RRULE:FREQ=WEEKLY;COUNT=4", "SUMMARY:Weekly") + extra
 
-    /** Stores [body]'s first VEVENT as the earlier mapper stored it (no zone) and expands it. */
+    /**
+     * Stores [body]'s first VEVENT as the earlier mapper stored it (no zone) with [copy] as its
+     * stored ICS, and expands it.
+     */
     private suspend fun seedAsBeforeFix(
         uid: String,
         body: String,
+        copy: String? = body,
         edit: (Event) -> Event = { it },
     ): Event {
         val parsed = ICalParser().parseAllEvents(body).getOrNull()!!.first()
         val mapped = ICalEventMapper.toEntity(parsed, body, calendarId, "https://caldav.example.test/cal/$uid.ics", "\"e1\"").event
         val row = edit(mapped.copy(timezone = if (parsed.dtStart.isUtc) null else mapped.timezone, updatedAt = 1L, createdAt = 1L))
         val id = db.eventsDao().insert(row)
+        icsStore.write(id, copy)
         val stored = db.eventsDao().getById(id)!!
         generator.regenerateOccurrences(stored)
         return stored
@@ -219,7 +232,7 @@ class UtcSeriesZoneRepairTest {
         val master = seedAsBeforeFix("shifted", body)
         val exceptionId = db.eventsDao().insert(Event(
             uid = master.uid, calendarId = calendarId, title = "Changed", startTs = changedAt, endTs = changedAt + 3_600_000,
-            originalEventId = master.id, originalInstanceTime = changedAt, rawIcal = body,
+            originalEventId = master.id, originalInstanceTime = changedAt,
             caldavUrl = master.caldavUrl, dtstamp = 1L, createdAt = 1L, updatedAt = 1L,
         ))
         val exception = db.eventsDao().getById(exceptionId)!!
@@ -246,9 +259,9 @@ class UtcSeriesZoneRepairTest {
             // No zone, but a floating start in the copy.
             seedAsBeforeFix("floating", ics("floating", weekly(start = "20270308T150000", end = "20270308T160000"))) { it.copy(timezone = null) },
             // No stored copy.
-            seedAsBeforeFix("nocopy", ics("nocopy", weekly())) { it.copy(rawIcal = null) },
+            seedAsBeforeFix("nocopy", ics("nocopy", weekly()), copy = null),
             // A copy that doesn't parse.
-            seedAsBeforeFix("garbage", ics("garbage", weekly())) { it.copy(rawIcal = "not a calendar") },
+            seedAsBeforeFix("garbage", ics("garbage", weekly()), copy = "not a calendar"),
             // A TZID start in the copy.
             seedAsBeforeFix("tzid", ics("tzid", weekly(start = "20270308T150000", end = "20270308T160000")).replace("DTSTART:", "DTSTART;TZID=Europe/Berlin:")) { it.copy(timezone = null) },
             // All-day.
@@ -298,7 +311,7 @@ class UtcSeriesZoneRepairTest {
         // A legacy duplicate master (same UID and calendar) makes the master-uniqueness trigger
         // abort the row's update.
         val failing = seedAsBeforeFix("dup", ics("dup", weekly()))
-        db.openHelper.writableDatabase.execSQL("DROP TRIGGER IF EXISTS trigger_master_event_unique_insert")
+        TestDatabases.raw(db).execSQL("DROP TRIGGER IF EXISTS trigger_master_event_unique_insert")
         db.eventsDao().insert(failing.copy(id = 0, caldavUrl = "https://caldav.example.test/cal/dup-2.ics", timezone = "Asia/Tokyo"))
         val feedId = db.icsSubscriptionsDao().insert(feed(etag = "\"v1\"", lastModified = "Sun, 25 Oct 2026 00:00:00 GMT"))
 
@@ -409,15 +422,14 @@ class UtcSeriesZoneRepairTest {
     fun `a row a write changes during the pass is counted as failed and retried`() = runTest {
         val row = seedAsBeforeFix("raced", ics("raced", weekly()))
         // A push stores the server's new copy between the read and the update.
-        val racing = object : org.onekash.kashcal.data.db.dao.EventsDao by db.eventsDao() {
-            override suspend fun getUtcSeriesRepairCandidates(): List<Event> {
-                val read = db.eventsDao().getUtcSeriesRepairCandidates()
-                db.eventsDao().update(db.eventsDao().getById(row.id)!!.copy(rawIcal = row.rawIcal + "\r\n"))
-                return read
+        val racing = object : EventIcsSource by icsStore {
+            var reads = 0
+            override suspend fun read(event: Event): String? = icsStore.read(event).also {
+                if (++reads == 1) icsStore.write(row.id, it + "\r\n")
             }
         }
 
-        val outcome = repair(racing).run()
+        val outcome = repair(icsSource = racing).run()
 
         assertEquals(1, outcome.failed)
         assertNull(db.eventsDao().getById(row.id)!!.timezone)
@@ -428,7 +440,7 @@ class UtcSeriesZoneRepairTest {
     fun `a regeneration that fails rolls the zone back and keeps the old occurrences`() = runTest {
         val row = seedAsBeforeFix("blocked", ics("blocked", weekly()))
         val before = shown(row.id)
-        db.openHelper.writableDatabase.execSQL(
+        TestDatabases.raw(db).execSQL(
             "CREATE TRIGGER block_occurrences BEFORE INSERT ON occurrences WHEN NEW.event_id = ${row.id} " +
                 "BEGIN SELECT RAISE(ABORT, 'blocked'); END"
         )
@@ -451,7 +463,7 @@ class UtcSeriesZoneRepairTest {
         val master = seedAsBeforeFix("relink", body)
         val exceptionId = db.eventsDao().insert(Event(
             uid = master.uid, calendarId = calendarId, title = "Moved", startTs = moved, endTs = moved + 3_600_000,
-            originalEventId = master.id, originalInstanceTime = original, rawIcal = body,
+            originalEventId = master.id, originalInstanceTime = original,
             caldavUrl = master.caldavUrl, dtstamp = 1L, createdAt = 1L, updatedAt = 1L,
         ))
         // The earlier expansion had 22 Mar at 14:00Z, so the pull's link found no occurrence and
@@ -474,7 +486,7 @@ class UtcSeriesZoneRepairTest {
         val at = Instant.parse("2027-03-15T15:00:00Z").toEpochMilli()
         val exceptionId = db.eventsDao().insert(Event(
             uid = master.uid, calendarId = calendarId, title = "Changed", startTs = at, endTs = at + 3_600_000,
-            originalEventId = master.id, originalInstanceTime = at, rawIcal = master.rawIcal,
+            originalEventId = master.id, originalInstanceTime = at,
             rrule = null, dtstamp = 1L, createdAt = 1L, updatedAt = 1L,
         ))
         val before = db.eventsDao().getById(exceptionId)

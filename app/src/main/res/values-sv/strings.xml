@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d till</string>
     <string name="tags_autocomplete_create_new">Skapa \"%1$s\"</string>
     <string name="cd_tag">Tagg: %1$s</string>
+    <string name="tags_show_events_click_label">Visa händelser med denna tagg</string>
+    <string name="tags_show_events">Visa händelser</string>
     <string name="cd_tags_move_menu">Flytta taggar</string>
     <string name="tags_move_above_notes">Flytta ovanför anteckningar</string>
     <string name="tags_move_below_notes">Flytta nedanför anteckningar</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Visa synk-sessioner (senaste 48 timmarna)</string>
     <string name="settings_import_subtitle">Lägg till händelser från en ICS-fil till valfri kalender</string>
     <string name="settings_birthday_reminder">Födelsedagspåminnelse</string>
-    <string name="settings_use_device_timezone">Använd enhetens tidszon</string>
     <string name="settings_section_calendars">Kalendrar &amp; konton</string>
     <string name="settings_section_appearance">Utseende</string>
     <string name="settings_section_creating_events">Händelseinställningar</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">Återkommande</string>
     <string name="cd_enabled">Aktiverad</string>
     <string name="cd_sync_error">Synkroniseringsfel</string>
-    <string name="cd_select_label">Välj %1$s</string>
     <string name="cd_wheel_picker">Hjulväljare med %1$d alternativ</string>
     <string name="cd_time_entry_keyboard">Ange exakt tid</string>
     <string name="time_entry_dialog_title">Ange tid</string>
@@ -835,6 +835,23 @@
     <string name="label_ends">Slutar</string>
     <string name="sheet_hint_change_end">Tryck på en dag för att ändra slutet</string>
     <string name="label_timezone">Tidszon</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Sök stad, land eller zon</string>
+    <string name="timezone_section_this_event">Den här händelsen</string>
+    <string name="timezone_section_device">Enhetens tidszon</string>
+    <string name="timezone_section_recent">Senaste</string>
+    <string name="timezone_section_all">Alla tidszoner</string>
+    <string name="timezone_offsets_on">Tidsskillnader den %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Från kalendern: %1$s</string>
+    <string name="timezone_shown_in_device_time">Visas i enhetens tid</string>
+    <string name="timezone_loading">Läser in tidszoner…</string>
+    <string name="timezone_no_match">Inga tidszoner matchar</string>
+    <string name="timezone_no_match_hint">Testa en stad, ett land eller en tidsskillnad som +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Påminnelser</string>
     <string name="label_add_alert">Lägg till påminnelse</string>
     <string name="label_recurrence_never">Aldrig</string>
@@ -844,7 +861,6 @@
     <string name="label_default_calendar_hint">Nya händelser skapas i denna kalender</string>
     <string name="label_reminders_truncated">%1$d visas inte (%2$d totalt, max %3$d redigerbara)</string>
     <string name="label_found_events">Hittade: %1$d händelser</string>
-    <string name="placeholder_search">Sök…</string>
     <string name="settings_search_placeholder">Sök i inställningar…</string>
     <string name="settings_search_no_results">Inga inställningar hittades för \"%1$s\"</string>
     <string name="cd_search_settings">Sök i inställningar</string>
@@ -1096,6 +1112,8 @@
     <string name="event_untitled">Händelse utan titel</string>
     <string name="recurring_this_event">Denna händelse</string>
     <string name="recurring_all_events">Alla händelser</string>
+    <string name="recurring_scope_move_not_expressible">Upprepningsregeln kan inte följa den här ändringen</string>
+    <string name="event_form_move_not_expressible">Upprepningsregeln kan inte följa den här ändringen. Inget sparades.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Deltagare</string>
@@ -1178,6 +1196,7 @@
     <string name="search_reason_guest">Gäst:</string>
     <string name="search_keep_typing">Fortsätt skriva för att söka</string>
     <string name="search_no_matches">Inga händelser matchar ”%1$s”</string>
+    <string name="search_no_events_tagged">Inga händelser taggade ”%1$s”</string>
     <string name="search_lookback_line">Synk-tillbakablick: %1$s</string>
     <string name="search_sync_settings">Synkinställningar</string>
     <string name="cd_search_sync_settings">Öppna inställningen för synk-tillbakablick</string>
@@ -1474,6 +1493,15 @@
     <string name="ics_feed_error_access_denied">Servern för det här flödet nekade åtkomst.</string>
     <string name="ics_feed_error_too_large">Det här kalenderflödet är för stort för att laddas ned.</string>
     <string name="ics_feed_error_unreadable">Händelserna i det här flödet kunde inte visas.</string>
+    <string name="ics_feed_error_event_not_saved">”%1$s” sparades inte.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d händelse sparades inte.</item>
+        <item quantity="other">%1$d händelser sparades inte.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d händelse sparades inte, bland annat ”%2$s”.</item>
+        <item quantity="other">%1$d händelser sparades inte, bland annat ”%2$s”.</item>
+    </plurals>
     <string name="insights_title">Insikter</string>
     <string name="insights_period_this_week">Vecka</string>
     <string name="insights_period_last_week">Förra veckan</string>

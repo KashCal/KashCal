@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d개 더</string>
     <string name="tags_autocomplete_create_new">\"%1$s\" 만들기</string>
     <string name="cd_tag">태그: %1$s</string>
+    <string name="tags_show_events_click_label">이 태그로 일정 보기</string>
+    <string name="tags_show_events">일정 보기</string>
     <string name="cd_tags_move_menu">태그 이동</string>
     <string name="tags_move_above_notes">메모 위로 이동</string>
     <string name="tags_move_below_notes">메모 아래로 이동</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">동기화 세션 보기 (최근 48시간)</string>
     <string name="settings_import_subtitle">ICS 파일의 일정을 원하는 캘린더에 추가해요</string>
     <string name="settings_birthday_reminder">생일 알림</string>
-    <string name="settings_use_device_timezone">기기 시간대 사용</string>
     <string name="settings_section_calendars">캘린더 및 계정</string>
     <string name="settings_section_appearance">표시</string>
     <string name="settings_section_creating_events">일정 환경설정</string>
@@ -461,7 +462,6 @@
     <string name="cd_recurring">반복</string>
     <string name="cd_enabled">활성화됨</string>
     <string name="cd_sync_error">동기화 오류</string>
-    <string name="cd_select_label">%1$s 선택</string>
     <string name="cd_wheel_picker">%1$d개 옵션의 휠 피커</string>
     <string name="cd_time_entry_keyboard">정확한 시간 입력하기</string>
     <string name="time_entry_dialog_title">시간 입력</string>
@@ -825,6 +825,23 @@
     <string name="label_ends">종료</string>
     <string name="sheet_hint_change_end">날짜를 탭하여 종료일 변경</string>
     <string name="label_timezone">시간대</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">도시, 국가 또는 시간대 검색</string>
+    <string name="timezone_section_this_event">이 일정</string>
+    <string name="timezone_section_device">기기 시간대</string>
+    <string name="timezone_section_recent">최근</string>
+    <string name="timezone_section_all">모든 시간대</string>
+    <string name="timezone_offsets_on">%1$s 기준 시차</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">캘린더 표기: %1$s</string>
+    <string name="timezone_shown_in_device_time">기기 시간으로 표시</string>
+    <string name="timezone_loading">시간대 불러오는 중…</string>
+    <string name="timezone_no_match">일치하는 시간대가 없어요</string>
+    <string name="timezone_no_match_hint">도시, 국가 또는 +5:30 같은 시차로 검색해 보세요</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">알림</string>
     <string name="label_add_alert">알림 추가</string>
     <string name="label_recurrence_never">없음</string>
@@ -834,7 +851,6 @@
     <string name="label_default_calendar_hint">새 일정이 이 캘린더에 만들어져요</string>
     <string name="label_reminders_truncated">%1$d개 미표시 (전체 %2$d개, 최대 %3$d개 편집 가능)</string>
     <string name="label_found_events">발견: 일정 %1$d개</string>
-    <string name="placeholder_search">검색…</string>
     <string name="settings_search_placeholder">설정 검색…</string>
     <string name="settings_search_no_results">\"%1$s\"에 대한 설정이 없어요</string>
     <string name="cd_search_settings">설정 검색</string>
@@ -1046,6 +1062,8 @@
     <string name="event_untitled">제목 없는 일정</string>
     <string name="recurring_this_event">이 일정만</string>
     <string name="recurring_all_events">모든 일정</string>
+    <string name="recurring_scope_move_not_expressible">반복 규칙으로는 이 변경을 반영할 수 없어요</string>
+    <string name="event_form_move_not_expressible">반복 규칙으로는 이 변경을 반영할 수 없어요. 아무것도 저장되지 않았어요.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">참석자</string>
@@ -1121,6 +1139,7 @@
     <string name="search_reason_guest">게스트:</string>
     <string name="search_keep_typing">검색하려면 계속 입력하세요</string>
     <string name="search_no_matches">‘%1$s’와(과) 일치하는 일정이 없어요</string>
+    <string name="search_no_events_tagged">‘%1$s’(으)로 태그된 일정이 없어요</string>
     <string name="search_lookback_line">동기화 조회 기간: %1$s</string>
     <string name="search_sync_settings">동기화 설정</string>
     <string name="cd_search_sync_settings">동기화 조회 기간 설정 열기</string>
@@ -1399,6 +1418,13 @@
     <string name="ics_feed_error_access_denied">이 피드의 서버가 접근을 거부했어요.</string>
     <string name="ics_feed_error_too_large">이 캘린더 피드는 너무 커서 다운로드할 수 없어요.</string>
     <string name="ics_feed_error_unreadable">이 피드의 일정을 표시할 수 없었어요.</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s”이(가) 저장되지 않았어요.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="other">일정 %1$d개가 저장되지 않았어요.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="other">“%2$s” 등 일정 %1$d개가 저장되지 않았어요.</item>
+    </plurals>
     <string name="insights_title">분석</string>
     <string name="insights_period_this_week">주</string>
     <string name="insights_period_last_week">지난주</string>

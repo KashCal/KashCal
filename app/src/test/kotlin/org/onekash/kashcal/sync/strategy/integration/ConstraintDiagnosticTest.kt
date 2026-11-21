@@ -1,8 +1,8 @@
 package org.onekash.kashcal.sync.strategy.integration
 
 import android.content.Context
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
@@ -37,6 +37,7 @@ import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.sync.session.SyncTrigger
 import org.onekash.kashcal.sync.session.SyncType
 import org.onekash.kashcal.sync.strategy.PullStrategy
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.io.File
@@ -135,14 +136,14 @@ class ConstraintDiagnosticTest {
      */
     private fun buildEnv(variant: String): TestEnv {
         val context: Context = ApplicationProvider.getApplicationContext()
-        val db = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        val db = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .addCallback(KashCalDatabase.testCallback())
             .build()
 
         if (variant == "proposed") {
             // Rebuild both exception indexes via raw SQL
-            val sqlDb = db.openHelper.writableDatabase
+            val sqlDb = TestDatabases.raw(db)
             // Drop the (original_event_id, original_instance_time) index
             // Room names it: index_events_original_event_id_original_instance_time
             sqlDb.execSQL("DROP INDEX IF EXISTS index_events_original_event_id_original_instance_time")
@@ -178,7 +179,8 @@ class ConstraintDiagnosticTest {
             dataStore = dataStore,
             inviteNotifier = mockk(relaxed = true),
             accountRepository = mockk(relaxed = true),
-            reminderScheduler = mockk(relaxed = true)
+            reminderScheduler = mockk(relaxed = true),
+            icsSource = EventIcsStore(db),
         )
 
         return TestEnv(db, eventsDao, occurrencesDao, pullStrategy)
@@ -372,7 +374,7 @@ class ConstraintDiagnosticTest {
 
                 // Simulate complete restart: reset ctag + clear all etags
                 env.db.calendarsDao().updateSyncToken(calId, null, null)
-                env.db.openHelper.writableDatabase.execSQL(
+                TestDatabases.raw(env.db).execSQL(
                     "UPDATE events SET etag = NULL WHERE calendar_id = $calId"
                 )
                 val resetCal = env.db.calendarsDao().getById(calId)!!
@@ -449,7 +451,7 @@ class ConstraintDiagnosticTest {
             ))
 
             // Drop master insert trigger so we can insert an orphan with same UID
-            val sqlDb = env.db.openHelper.writableDatabase
+            val sqlDb = TestDatabases.raw(env.db)
             sqlDb.execSQL("DROP TRIGGER IF EXISTS trigger_master_event_unique_insert")
 
             // Try inserting orphan exception: same (calendar_id, uid, original_instance_time)
@@ -514,7 +516,7 @@ class ConstraintDiagnosticTest {
 
         val env = buildEnv("current")
         val (calId, _) = setupDbCalendar(env, "https://example.com/cal", "Test")
-        val sqlDb = env.db.openHelper.writableDatabase
+        val sqlDb = TestDatabases.raw(env.db)
 
         val now = System.currentTimeMillis()
         val uid1 = "uid-orphan-linked"

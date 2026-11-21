@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d més</string>
     <string name="tags_autocomplete_create_new">Crea «%1$s»</string>
     <string name="cd_tag">Etiqueta: %1$s</string>
+    <string name="tags_show_events_click_label">Mostra els esdeveniments amb aquesta etiqueta</string>
+    <string name="tags_show_events">Mostra els esdeveniments</string>
     <string name="cd_tags_move_menu">Mou les etiquetes</string>
     <string name="tags_move_above_notes">Mou a sobre de les notes</string>
     <string name="tags_move_below_notes">Mou a sota de les notes</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Veure sessions de sincronització (últimes 48 hores)</string>
     <string name="settings_import_subtitle">Afegeix esdeveniments d\'un fitxer ICS a qualsevol calendari</string>
     <string name="settings_birthday_reminder">Recordatori d\'aniversari</string>
-    <string name="settings_use_device_timezone">Usar zona horària del dispositiu</string>
     <string name="settings_section_calendars">Calendaris i comptes</string>
     <string name="settings_section_appearance">Aparença</string>
     <string name="settings_section_creating_events">Preferències dels esdeveniments</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">Recurrent</string>
     <string name="cd_enabled">Activat</string>
     <string name="cd_sync_error">Error de sincronització</string>
-    <string name="cd_select_label">Seleccionar %1$s</string>
     <string name="cd_wheel_picker">Selector rotatiu amb %1$d opcions</string>
     <string name="cd_time_entry_keyboard">Introdueix l\'hora exacta</string>
     <string name="time_entry_dialog_title">Introdueix l\'hora</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">Finalitza</string>
     <string name="sheet_hint_change_end">Toca un dia per canviar el final</string>
     <string name="label_timezone">Zona horària</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Cerca ciutat, país o zona</string>
+    <string name="timezone_section_this_event">Aquest esdeveniment</string>
+    <string name="timezone_section_device">Zona horària del dispositiu</string>
+    <string name="timezone_section_recent">Recents</string>
+    <string name="timezone_section_all">Totes les zones horàries</string>
+    <string name="timezone_offsets_on">Desfasaments el %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Del calendari: %1$s</string>
+    <string name="timezone_shown_in_device_time">Es mostra a l\'hora del dispositiu</string>
+    <string name="timezone_loading">Carregant zones horàries…</string>
+    <string name="timezone_no_match">Cap zona horària coincideix</string>
+    <string name="timezone_no_match_hint">Prova una ciutat, un país o un desfasament com +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Alertes</string>
     <string name="label_add_alert">Afegir alerta</string>
     <string name="label_recurrence_never">Mai</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">Els nous esdeveniments es crearan en aquest calendari</string>
     <string name="label_reminders_truncated">%1$d no mostrats (%2$d en total, màxim %3$d editables)</string>
     <string name="label_found_events">Trobats: %1$d esdeveniments</string>
-    <string name="placeholder_search">Cercar…</string>
     <string name="settings_search_placeholder">Cerca a la configuració…</string>
     <string name="settings_search_no_results">No s\'ha trobat res a la configuració per a \"%1$s\"</string>
     <string name="cd_search_settings">Cerca a la configuració</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">Esdeveniment sense títol</string>
     <string name="recurring_this_event">Aquest esdeveniment</string>
     <string name="recurring_all_events">Tots els esdeveniments</string>
+    <string name="recurring_scope_move_not_expressible">La regla de repetició no pot seguir aquest canvi</string>
+    <string name="event_form_move_not_expressible">La regla de repetició no pot seguir aquest canvi. No s\'ha desat res.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Assistents</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">Convidat:</string>
     <string name="search_keep_typing">Continua escrivint per cercar</string>
     <string name="search_no_matches">Cap esdeveniment coincideix amb «%1$s»</string>
+    <string name="search_no_events_tagged">Cap esdeveniment etiquetat amb «%1$s»</string>
     <string name="search_lookback_line">Sincronitzar retrospectivament: %1$s</string>
     <string name="search_sync_settings">Configuració de sincronització</string>
     <string name="cd_search_sync_settings">Obre la configuració de sincronització retrospectiva</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">El servidor d\'aquest canal ha denegat l\'accés.</string>
     <string name="ics_feed_error_too_large">Aquest canal de calendari és massa gran per baixar-lo.</string>
     <string name="ics_feed_error_unreadable">No s\'han pogut mostrar els esdeveniments d\'aquest canal.</string>
+    <string name="ics_feed_error_event_not_saved">«%1$s» no s\'ha desat.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d esdeveniment no s\'ha desat.</item>
+        <item quantity="other">%1$d esdeveniments no s\'han desat.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d esdeveniment no s\'ha desat, incloent-hi «%2$s».</item>
+        <item quantity="other">%1$d esdeveniments no s\'han desat, incloent-hi «%2$s».</item>
+    </plurals>
     <string name="insights_title">Perspectiva</string>
     <string name="insights_period_this_week">Setmana</string>
     <string name="insights_period_last_week">Setm. passada</string>

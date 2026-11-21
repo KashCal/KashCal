@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d meer</string>
     <string name="tags_autocomplete_create_new">Skep \"%1$s\"</string>
     <string name="cd_tag">Etiket: %1$s</string>
+    <string name="tags_show_events_click_label">Wys gebeurtenisse met hierdie etiket</string>
+    <string name="tags_show_events">Wys gebeurtenisse</string>
     <string name="cd_tags_move_menu">Skuif etikette</string>
     <string name="tags_move_above_notes">Skuif bo notas</string>
     <string name="tags_move_below_notes">Skuif onder notas</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Bekyk sinkroniseringsessies (laaste 48 uur)</string>
     <string name="settings_import_subtitle">Voeg gebeurtenisse vanaf \'n ICS-lêer by enige kalender</string>
     <string name="settings_birthday_reminder">Verjaarsdagherinnering</string>
-    <string name="settings_use_device_timezone">Gebruik toesteltydzone</string>
     <string name="settings_section_calendars">Kalenders &amp; rekeninge</string>
     <string name="settings_section_appearance">Voorkoms</string>
     <string name="settings_section_creating_events">Gebeurtenisvoorkeure</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">Herhalend</string>
     <string name="cd_enabled">Geaktiveer</string>
     <string name="cd_sync_error">Sinkroniseringsfout</string>
-    <string name="cd_select_label">Kies %1$s</string>
     <string name="cd_wheel_picker">Wielkieser met %1$d opsies</string>
     <string name="cd_time_entry_keyboard">Voer presiese tyd in</string>
     <string name="time_entry_dialog_title">Voer tyd in</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">Eindig</string>
     <string name="sheet_hint_change_end">Tik op \'n dag om die einde te verander</string>
     <string name="label_timezone">Tydsone</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Soek stad, land of sone</string>
+    <string name="timezone_section_this_event">Hierdie gebeurtenis</string>
+    <string name="timezone_section_device">Toesteltydsone</string>
+    <string name="timezone_section_recent">Onlangs</string>
+    <string name="timezone_section_all">Alle tydsones</string>
+    <string name="timezone_offsets_on">Verskuiwings op %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Van die kalender: %1$s</string>
+    <string name="timezone_shown_in_device_time">Gewys in toesteltyd</string>
+    <string name="timezone_loading">Laai tydsones…</string>
+    <string name="timezone_no_match">Geen tydsones pas nie</string>
+    <string name="timezone_no_match_hint">Probeer \'n stad, \'n land of \'n verskuiwing soos +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Waarskuwings</string>
     <string name="label_add_alert">Voeg Waarskuwing By</string>
     <string name="label_recurrence_never">Nooit</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">Nuwe gebeurtenisse sal in hierdie kalender geskep word</string>
     <string name="label_reminders_truncated">%1$d nie gewys nie (%2$d totaal, maks %3$d redigeerbaar)</string>
     <string name="label_found_events">Gevind: %1$d gebeurtenisse</string>
-    <string name="placeholder_search">Soek…</string>
     <string name="settings_search_placeholder">Soek instellings…</string>
     <string name="settings_search_no_results">Geen instellings gevind vir \"%1$s\" nie</string>
     <string name="cd_search_settings">Soek instellings</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">Gebeurtenis sonder titel</string>
     <string name="recurring_this_event">Hierdie gebeurtenis</string>
     <string name="recurring_all_events">Alle gebeurtenisse</string>
+    <string name="recurring_scope_move_not_expressible">Die herhaalreël kan nie hierdie verandering volg nie</string>
+    <string name="event_form_move_not_expressible">Die herhaalreël kan nie hierdie verandering volg nie. Niks is gestoor nie.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Bywoners</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">Gas:</string>
     <string name="search_keep_typing">Hou aan tik om te soek</string>
     <string name="search_no_matches">Geen gebeurtenisse pas by “%1$s” nie</string>
+    <string name="search_no_events_tagged">Geen gebeurtenisse met etiket “%1$s” nie</string>
     <string name="search_lookback_line">Sinkroniseringsrugsig: %1$s</string>
     <string name="search_sync_settings">Sinkroniseringsinstellings</string>
     <string name="cd_search_sync_settings">Maak die sinkroniseringsrugsig-instelling oop</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">Hierdie voer se bediener het toegang geweier.</string>
     <string name="ics_feed_error_too_large">Hierdie kalendervoer is te groot om af te laai.</string>
     <string name="ics_feed_error_unreadable">Hierdie voer se gebeurtenisse kon nie gewys word nie.</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s” is nie gestoor nie.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d gebeurtenis is nie gestoor nie.</item>
+        <item quantity="other">%1$d gebeurtenisse is nie gestoor nie.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d gebeurtenis is nie gestoor nie, insluitend “%2$s”.</item>
+        <item quantity="other">%1$d gebeurtenisse is nie gestoor nie, insluitend “%2$s”.</item>
+    </plurals>
     <string name="insights_title">Insigte</string>
     <string name="insights_period_this_week">Week</string>
     <string name="insights_period_last_week">Verlede week</string>

@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -37,6 +37,7 @@ import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.io.IOException
@@ -84,7 +85,7 @@ class PushStrategyOperationIsolationTest {
             Credentials(username = "u", password = "p", serverUrl = base), DefaultQuirks(base)
         )
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .addCallback(PendingOperationTriggers.callback())
             .allowMainThreadQueries().build()
         val occurrenceGenerator = OccurrenceGenerator(
@@ -113,7 +114,8 @@ class PushStrategyOperationIsolationTest {
             pendingOperationsDao = database.pendingOperationsDao(),
             accountRepository = accountRepository,
             attendeesDao = attendees,
-            pendingCancelsDao = database.pendingCancelsDao()
+            pendingCancelsDao = database.pendingCancelsDao(),
+            icsSource = EventIcsStore(database),
         )
     }
 
@@ -130,6 +132,7 @@ class PushStrategyOperationIsolationTest {
         val parsed = ICalParser().parseAllEvents(ics).getOrNull()!!.single()
         val mapped = ICalEventMapper.toEntity(parsed, ics, calendarId, server.url(path(name)).toString(), dav.etag(path(name)))
         val id = database.eventsDao().insert(mapped.event)
+        EventIcsStore(database).write(id, mapped.ics)
         eventWriter.updateEvent(database.eventsDao().getById(id)!!.copy(title = "$name edited"), isLocal = false)
         return id
     }
@@ -142,7 +145,7 @@ class PushStrategyOperationIsolationTest {
                 uid = "big@example.test", calendarId = calendarId, title = "Big",
                 startTs = 1_796_119_200_000L, endTs = 1_796_122_800_000L, dtstamp = 0L,
                 caldavUrl = server.url(path("big")).toString(), etag = dav.etag(path("big")),
-                syncStatus = SyncStatus.PENDING_UPDATE, rawIcal = "x".repeat(2_500_000),
+                syncStatus = SyncStatus.PENDING_UPDATE, description = "x".repeat(2_500_000),
             )
         )
         database.pendingOperationsDao().insert(

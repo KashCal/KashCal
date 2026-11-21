@@ -140,10 +140,9 @@ class CriticalPatternMigrationTest {
             originalEventId = 1L,
             originalInstanceTime = masterEntity.startTs + 7 * 24 * 60 * 60 * 1000,
             rrule = null,  // Exceptions don't have RRULE
-            rawIcal = null  // No existing rawIcal
         )
 
-        val generatedIcs = IcsPatcher.serializeWithExceptions(masterEntity, listOf(exceptionEntity))
+        val generatedIcs = IcsPatcher.serializeWithExceptions(masterEntity, masterIcs, listOf(exceptionEntity))
 
         val parsedEvents = parser.parseAllEvents(generatedIcs).getOrNull()!!
 
@@ -483,7 +482,7 @@ class CriticalPatternMigrationTest {
             entity.rrule
         )
 
-        val regenerated = IcsPatcher.serialize(entity)
+        val regenerated = IcsPatcher.serialize(entity, rruleIcs)
         val reparsed = parser.parseAllEvents(regenerated).getOrNull()!![0]
         assertEquals(
             "RRULE should survive round-trip",
@@ -516,7 +515,7 @@ class CriticalPatternMigrationTest {
 
         // IcsPatcher writes SEQUENCE as stored; EventWriter decides bumps (SequenceBumper), so
         // a serialize round-trip doesn't change it.
-        val regenerated = IcsPatcher.serialize(entity)
+        val regenerated = IcsPatcher.serialize(entity, ics)
         val reparsed = parser.parseAllEvents(regenerated).getOrNull()!![0]
         assertEquals(
             "Sequence should be serialized verbatim by IcsPatcher",

@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d കൂടുതൽ</string>
     <string name="tags_autocomplete_create_new">\"%1$s\" സൃഷ്ടിക്കുക</string>
     <string name="cd_tag">ടാഗ്: %1$s</string>
+    <string name="tags_show_events_click_label">ഈ ടാഗുള്ള ഇവന്റുകൾ കാണിക്കുക</string>
+    <string name="tags_show_events">ഇവന്റുകൾ കാണിക്കുക</string>
     <string name="cd_tags_move_menu">ടാഗുകൾ നീക്കുക</string>
     <string name="tags_move_above_notes">കുറിപ്പുകൾക്ക് മുകളിൽ നീക്കുക</string>
     <string name="tags_move_below_notes">കുറിപ്പുകൾക്ക് താഴെ നീക്കുക</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">സിങ്ക് സെഷനുകൾ കാണുക (കഴിഞ്ഞ 48 മണിക്കൂർ)</string>
     <string name="settings_import_subtitle">ICS ഫയലിൽ നിന്നുള്ള ഇവന്റുകൾ ഏത് കലണ്ടറിലേക്കും ചേർക്കുക</string>
     <string name="settings_birthday_reminder">ജന്മദിന റിമൈൻഡർ</string>
-    <string name="settings_use_device_timezone">ഉപകരണ ടൈംസോൺ ഉപയോഗിക്കുക</string>
     <string name="settings_section_calendars">കലണ്ടറുകളും അക്കൗണ്ടുകളും</string>
     <string name="settings_section_appearance">രൂപഭാവം</string>
     <string name="settings_section_creating_events">ഇവന്റ് മുൻഗണനകൾ</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">ആവർത്തിക്കുന്ന</string>
     <string name="cd_enabled">ഓൺ ആക്കി</string>
     <string name="cd_sync_error">സിങ്ക് പിശക്</string>
-    <string name="cd_select_label">%1$s തിരഞ്ഞെടുക്കുക</string>
     <string name="cd_wheel_picker">%1$d ഓപ്ഷനുകളുള്ള വീൽ പിക്കർ</string>
     <string name="cd_time_entry_keyboard">കൃത്യമായ സമയം നൽകുക</string>
     <string name="time_entry_dialog_title">സമയം നൽകുക</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">അവസാനിക്കുന്നു</string>
     <string name="sheet_hint_change_end">അവസാനം മാറ്റാൻ ഒരു ദിവസം ടാപ്പ് ചെയ്യുക</string>
     <string name="label_timezone">സമയ മേഖല</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">നഗരം, രാജ്യം അല്ലെങ്കിൽ സമയ മേഖല തിരയുക</string>
+    <string name="timezone_section_this_event">ഈ ഇവന്റ്</string>
+    <string name="timezone_section_device">ഉപകരണ സമയ മേഖല</string>
+    <string name="timezone_section_recent">സമീപകാലം</string>
+    <string name="timezone_section_all">എല്ലാ സമയ മേഖലകളും</string>
+    <string name="timezone_offsets_on">%1$s-ലെ ഓഫ്‌സെറ്റുകൾ</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">കലണ്ടറിൽ നിന്ന്: %1$s</string>
+    <string name="timezone_shown_in_device_time">ഉപകരണ സമയത്തിൽ കാണിക്കുന്നു</string>
+    <string name="timezone_loading">സമയ മേഖലകൾ ലോഡ് ചെയ്യുന്നു…</string>
+    <string name="timezone_no_match">ഒരു സമയ മേഖലയും യോജിക്കുന്നില്ല</string>
+    <string name="timezone_no_match_hint">ഒരു നഗരം, രാജ്യം അല്ലെങ്കിൽ +5:30 പോലുള്ള ഓഫ്‌സെറ്റ് ശ്രമിക്കുക</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">അലേർട്ടുകൾ</string>
     <string name="label_add_alert">അലേർട്ട് ചേർക്കുക</string>
     <string name="label_recurrence_never">ഒരിക്കലും ഇല്ല</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">പുതിയ ഇവന്റുകൾ ഈ കലണ്ടറിൽ സൃഷ്ടിക്കും</string>
     <string name="label_reminders_truncated">%1$d കാണിച്ചില്ല (%2$d ആകെ, പരമാവധി %3$d തിരുത്താവുന്നവ)</string>
     <string name="label_found_events">കണ്ടെത്തി: %1$d ഇവന്റുകൾ</string>
-    <string name="placeholder_search">തിരയുക…</string>
     <string name="settings_search_placeholder">ക്രമീകരണങ്ങൾ തിരയുക…</string>
     <string name="settings_search_no_results">\"%1$s\" എന്നതിനായി ക്രമീകരണങ്ങളൊന്നും കണ്ടെത്തിയില്ല</string>
     <string name="cd_search_settings">ക്രമീകരണങ്ങൾ തിരയുക</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">ശീർഷകമില്ലാത്ത ഇവന്റ്</string>
     <string name="recurring_this_event">ഈ ഇവന്റ്</string>
     <string name="recurring_all_events">എല്ലാ ഇവന്റുകളും</string>
+    <string name="recurring_scope_move_not_expressible">ആവർത്തന നിയമത്തിന് ഈ മാറ്റം പിന്തുടരാനാകില്ല</string>
+    <string name="event_form_move_not_expressible">ആവർത്തന നിയമത്തിന് ഈ മാറ്റം പിന്തുടരാനാകില്ല. ഒന്നും സംരക്ഷിച്ചില്ല.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">പങ്കെടുക്കുന്നവർ</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">അതിഥി:</string>
     <string name="search_keep_typing">തിരയാൻ ടൈപ്പ് ചെയ്യുന്നത് തുടരുക</string>
     <string name="search_no_matches">“%1$s” എന്നതുമായി പൊരുത്തപ്പെടുന്ന ഇവന്റുകൾ ഇല്ല</string>
+    <string name="search_no_events_tagged">“%1$s” ടാഗ് ചെയ്ത ഇവന്റുകൾ ഇല്ല</string>
     <string name="search_lookback_line">സിങ്ക് ലുക്ക്ബാക്ക്: %1$s</string>
     <string name="search_sync_settings">സിങ്ക് ക്രമീകരണങ്ങൾ</string>
     <string name="cd_search_sync_settings">സിങ്ക് ലുക്ക്ബാക്ക് ക്രമീകരണം തുറക്കുക</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">ഈ ഫീഡിന്റെ സെർവർ ആക്സസ് നിഷേധിച്ചു.</string>
     <string name="ics_feed_error_too_large">ഈ കലണ്ടർ ഫീഡ് ഡൗൺലോഡ് ചെയ്യാൻ കഴിയാത്തത്ര വലുതാണ്.</string>
     <string name="ics_feed_error_unreadable">ഈ ഫീഡിലെ ഇവന്റുകൾ കാണിക്കാനായില്ല.</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s” സേവ് ചെയ്തിട്ടില്ല.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d ഇവന്റ് സേവ് ചെയ്തിട്ടില്ല.</item>
+        <item quantity="other">%1$d ഇവന്റുകൾ സേവ് ചെയ്തിട്ടില്ല.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">“%2$s” ഉൾപ്പെടെ %1$d ഇവന്റ് സേവ് ചെയ്തിട്ടില്ല.</item>
+        <item quantity="other">“%2$s” ഉൾപ്പെടെ %1$d ഇവന്റുകൾ സേവ് ചെയ്തിട്ടില്ല.</item>
+    </plurals>
     <string name="insights_title">ഇൻസൈറ്റുകൾ</string>
     <string name="insights_period_this_week">ആഴ്ച</string>
     <string name="insights_period_last_week">കഴിഞ്ഞ ആഴ്ച</string>

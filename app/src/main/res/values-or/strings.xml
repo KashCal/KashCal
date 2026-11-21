@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d ଅଧିକ</string>
     <string name="tags_autocomplete_create_new">\"%1$s\" ତିଆରି କରନ୍ତୁ</string>
     <string name="cd_tag">ଟ୍ୟାଗ: %1$s</string>
+    <string name="tags_show_events_click_label">ଏହି ଟ୍ୟାଗର ଇଭେଣ୍ଟ ଦେଖାନ୍ତୁ</string>
+    <string name="tags_show_events">ଇଭେଣ୍ଟ ଦେଖାନ୍ତୁ</string>
     <string name="cd_tags_move_menu">ଟ୍ୟାଗ ସ୍ଥାନାନ୍ତର କରନ୍ତୁ</string>
     <string name="tags_move_above_notes">ନୋଟସ ଉପରକୁ ସ୍ଥାନାନ୍ତର କରନ୍ତୁ</string>
     <string name="tags_move_below_notes">ନୋଟସ ତଳକୁ ସ୍ଥାନାନ୍ତର କରନ୍ତୁ</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">ସିଙ୍କ ସେସନଗୁଡ଼ିକ ଦେଖନ୍ତୁ (ଶେଷ 48 ଘଣ୍ଟା)</string>
     <string name="settings_import_subtitle">ICS ଫାଇଲରୁ ଇଭେଣ୍ଟଗୁଡ଼ିକୁ ଯେକୌଣସି କ୍ୟାଲେଣ୍ଡରରେ ଯୋଡ଼ନ୍ତୁ</string>
     <string name="settings_birthday_reminder">ଜନ୍ମଦିନ ରିମାଇଣ୍ଡର</string>
-    <string name="settings_use_device_timezone">ଡିଭାଇସ ଟାଇମଜୋନ ବ୍ୟବହାର କରନ୍ତୁ</string>
     <string name="settings_section_calendars">କ୍ୟାଲେଣ୍ଡର ଓ ଆକାଉଣ୍ଟ</string>
     <string name="settings_section_appearance">ଚେହେରା</string>
     <string name="settings_section_creating_events">ଇଭେଣ୍ଟ ପସନ୍ଦ</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">ପୁନରାବୃତ୍ତ</string>
     <string name="cd_enabled">ଚାଲୁ ଅଛି</string>
     <string name="cd_sync_error">ସିଙ୍କ ତ୍ରୁଟି</string>
-    <string name="cd_select_label">%1$s ବାଛନ୍ତୁ</string>
     <string name="cd_wheel_picker">%1$d ବିକଳ୍ପ ସହ ହୁଇଲ ପିକର</string>
     <string name="cd_time_entry_keyboard">ସଠିକ୍ ସମୟ ପ୍ରବେଶ କରନ୍ତୁ</string>
     <string name="time_entry_dialog_title">ସମୟ ପ୍ରବେଶ କରନ୍ତୁ</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">ସମାପ୍ତି</string>
     <string name="sheet_hint_change_end">ଶେଷ ବଦଳାଇବାକୁ ଏକ ଦିନରେ ଟ୍ୟାପ୍ କରନ୍ତୁ</string>
     <string name="label_timezone">ସମୟ ମଣ୍ଡଳ</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">ସହର, ଦେଶ କିମ୍ବା ସମୟ ମଣ୍ଡଳ ଖୋଜନ୍ତୁ</string>
+    <string name="timezone_section_this_event">ଏହି ଇଭେଣ୍ଟ</string>
+    <string name="timezone_section_device">ଡିଭାଇସ ସମୟ ମଣ୍ଡଳ</string>
+    <string name="timezone_section_recent">ସାମ୍ପ୍ରତିକ</string>
+    <string name="timezone_section_all">ସମସ୍ତ ସମୟ ମଣ୍ଡଳ</string>
+    <string name="timezone_offsets_on">%1$s ରେ ଅଫସେଟ</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">କ୍ୟାଲେଣ୍ଡରରୁ: %1$s</string>
+    <string name="timezone_shown_in_device_time">ଡିଭାଇସ ସମୟରେ ଦେଖାଯାଇଛି</string>
+    <string name="timezone_loading">ସମୟ ମଣ୍ଡଳ ଲୋଡ ହେଉଛି…</string>
+    <string name="timezone_no_match">କୌଣସି ସମୟ ମଣ୍ଡଳ ମେଳ ଖାଉନାହିଁ</string>
+    <string name="timezone_no_match_hint">ଏକ ସହର, ଦେଶ କିମ୍ବା +5:30 ପରି ଅଫସେଟ ଚେଷ୍ଟା କରନ୍ତୁ</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">ସତର୍କତା</string>
     <string name="label_add_alert">ସତର୍କତା ଯୋଡ଼ନ୍ତୁ</string>
     <string name="label_recurrence_never">କେବେ ନୁହେଁ</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">ନୂଆ ଇଭେଣ୍ଟ ଏହି କ୍ୟାଲେଣ୍ଡରରେ ତିଆରି ହେବ</string>
     <string name="label_reminders_truncated">%1$d ଦେଖାଯାଉନାହିଁ (%2$d ମୋଟ, ସର୍ବାଧିକ %3$d ସମ୍ପାଦନାଯୋଗ୍ୟ)</string>
     <string name="label_found_events">ମିଳିଲା: %1$d ଇଭେଣ୍ଟ</string>
-    <string name="placeholder_search">ଖୋଜନ୍ତୁ…</string>
     <string name="settings_search_placeholder">ସେଟିଂସ ଖୋଜନ୍ତୁ…</string>
     <string name="settings_search_no_results">\"%1$s\" ପାଇଁ କୌଣସି ସେଟିଂ ମିଳିଲା ନାହିଁ</string>
     <string name="cd_search_settings">ସେଟିଂସ ଖୋଜନ୍ତୁ</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">ଶୀର୍ଷକହୀନ ଇଭେଣ୍ଟ</string>
     <string name="recurring_this_event">ଏହି ଇଭେଣ୍ଟ</string>
     <string name="recurring_all_events">ସମସ୍ତ ଇଭେଣ୍ଟ</string>
+    <string name="recurring_scope_move_not_expressible">ପୁନରାବୃତ୍ତି ନିୟମ ଏହି ପରିବର୍ତ୍ତନକୁ ଅନୁସରଣ କରିପାରିବ ନାହିଁ</string>
+    <string name="event_form_move_not_expressible">ପୁନରାବୃତ୍ତି ନିୟମ ଏହି ପରିବର୍ତ୍ତନକୁ ଅନୁସରଣ କରିପାରିବ ନାହିଁ। କିଛି ସେଭ୍ ହୋଇନାହିଁ।</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">ଅଂଶଗ୍ରହଣକାରୀ</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">ଅତିଥି:</string>
     <string name="search_keep_typing">ଖୋଜିବାକୁ ଟାଇପ୍ କରିଚାଲନ୍ତୁ</string>
     <string name="search_no_matches">“%1$s” ସହ କୌଣସି ଇଭେଣ୍ଟ ମେଳ ଖାଉନାହିଁ</string>
+    <string name="search_no_events_tagged">“%1$s” ଟ୍ୟାଗ କରାଯାଇଥିବା କୌଣସି ଇଭେଣ୍ଟ ନାହିଁ</string>
     <string name="search_lookback_line">ସିଙ୍କ ଲୁକବ୍ୟାକ: %1$s</string>
     <string name="search_sync_settings">ସିଙ୍କ ସେଟିଂସ</string>
     <string name="cd_search_sync_settings">ସିଙ୍କ ଲୁକବ୍ୟାକ ସେଟିଂ ଖୋଲନ୍ତୁ</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">ଏହି ଫିଡର ସର୍ଭର ପ୍ରବେଶ ଅନୁମତି ଦେଲା ନାହିଁ।</string>
     <string name="ics_feed_error_too_large">ଏହି କ୍ୟାଲେଣ୍ଡର ଫିଡ୍ ଡାଉନଲୋଡ କରିବା ପାଇଁ ବହୁତ ବଡ଼।</string>
     <string name="ics_feed_error_unreadable">ଏହି ଫିଡର ଇଭେଣ୍ଟଗୁଡ଼ିକ ଦେଖାଯାଇପାରିଲା ନାହିଁ।</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s” ସଞ୍ଚୟ ହୋଇନାହିଁ।</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d ଇଭେଣ୍ଟ ସଞ୍ଚୟ ହୋଇନାହିଁ।</item>
+        <item quantity="other">%1$d ଇଭେଣ୍ଟ ସଞ୍ଚୟ ହୋଇନାହିଁ।</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">“%2$s” ସମେତ %1$d ଇଭେଣ୍ଟ ସଞ୍ଚୟ ହୋଇନାହିଁ।</item>
+        <item quantity="other">“%2$s” ସମେତ %1$d ଇଭେଣ୍ଟ ସଞ୍ଚୟ ହୋଇନାହିଁ।</item>
+    </plurals>
     <string name="insights_title">ଇନସାଇଟସ</string>
     <string name="insights_period_this_week">ସପ୍ତାହ</string>
     <string name="insights_period_last_week">ଗତ ସପ୍ତାହ</string>

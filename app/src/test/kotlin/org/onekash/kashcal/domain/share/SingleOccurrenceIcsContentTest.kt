@@ -9,29 +9,32 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.model.toEventForShareCard
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
+import org.onekash.kashcal.util.IcsExporter
 
 /**
- * Tests that an event from [singleOccurrenceForShare], serialized through [IcsPatcher.serialize]
- * (the path IcsExporter uses at runtime), gives a VCALENDAR with one standalone event: a fresh
- * UID, the title and location kept, no series data, and no attendee, organizer or X- properties
- * from the master. Covers Room masters and exceptions, multi-day all-day events west and east
- * of UTC, and device events through `toEventForShareCard`.
+ * Tests that an event from [singleOccurrenceForShare], written by [IcsExporter.shareCopyText]
+ * (the share card's runtime path), gives a VCALENDAR with one standalone event: a fresh UID, the
+ * title and location kept, no series data, and no attendee, organizer or X- properties from the
+ * master. Covers Room masters and exceptions, multi-day all-day events west and east of UTC, and
+ * device events through `toEventForShareCard` (their copy built as [IcsPatcher.serialize] does
+ * with no stored ICS).
  *
- * Why IcsPatcher.serialize and not the mapper: an event synced from a CalDAV server (iCloud,
- * Nextcloud, Radicale and others) carries the server's ICS body in `Event.rawIcal`.
- * `IcsExporter.exportEvent` delegates to `IcsPatcher.serialize`, which patches that body in
- * place and keeps its ATTENDEE, ORGANIZER and X-* properties. If `singleOccurrenceForShare`
- * doesn't clear `rawIcal`, the recipient of the share-card .ics gets every attendee's email and
- * RSVP. A test of only `EventToICalEventMapper.toICalEvent(...)`, as this test's v23.7.71
- * version was, bypasses that path and passes while production leaks PII.
+ * Why the patcher path and not the mapper: an event synced from a CalDAV server (iCloud,
+ * Nextcloud, Radicale and others) has the server's ICS body stored
+ * ([org.onekash.kashcal.data.db.EventIcsSource]). Patching that body keeps its ATTENDEE,
+ * ORGANIZER and X-* properties, so a share copy built from it would give the recipient every
+ * attendee's email and RSVP; the share path must generate the copy without it. The positive
+ * controls below patch the stored bodies and show what that would leak. A test of only
+ * `EventToICalEventMapper.toICalEvent(...)`, as this test's v23.7.71 version was, bypasses that
+ * path and passes while production leaks PII.
  *
  * Pure JVM: IcsPatcher has no Android dependencies.
  */
 class SingleOccurrenceIcsContentTest {
 
-    /** A realistic CalDAV-fetched master event with attendees and an organizer. */
-    private val recurringMasterWithAttendees: Event = run {
-        val rawIcal = """
+    /** The stored ICS of [recurringMasterWithAttendees]: the server's body. */
+    private val masterStoredIcs: String =
+        """
             BEGIN:VCALENDAR
             VERSION:2.0
             PRODID:-//Apple Inc.//Mac OS X 10.16//EN
@@ -70,6 +73,8 @@ class SingleOccurrenceIcsContentTest {
             END:VCALENDAR
         """.trimIndent().replace("\n", "\r\n")
 
+    /** A realistic CalDAV-fetched master event with attendees and an organizer. */
+    private val recurringMasterWithAttendees: Event = run {
         Event(
             id = 42L,
             uid = "master-uid-original",
@@ -84,7 +89,6 @@ class SingleOccurrenceIcsContentTest {
             dtstamp = 1704067200000L, // 2024-01-01
             createdAt = 1704067200000L,
             updatedAt = 1704067200000L,
-            rawIcal = rawIcal,
             organizerEmail = "alice.sender@example.com",
             organizerName = "Alice Sender",
             caldavUrl = "https://caldav.icloud.com/12345/calendars/home/master.ics",
@@ -110,10 +114,22 @@ class SingleOccurrenceIcsContentTest {
             occurrenceEndTs = 1749316800000L,
             nowMs = 1748736000000L, // 2025-06-01T00:00:00Z, deterministic
         )
-        return IcsPatcher.serialize(occurrence)
+        return IcsExporter().shareCopyText(occurrence, fromDevice = false)
     }
 
     // =================== Privacy / no-leak ===================
+
+    @Test
+    fun `patching the master's stored ICS would leak its attendees, which the share path avoids`() {
+        val occurrence = singleOccurrenceForShare(
+            recurringMasterWithAttendees,
+            occurrenceStartTs = 1749311400000L,
+            occurrenceEndTs = 1749316800000L,
+            nowMs = 1748736000000L,
+        )
+        assertTrue(IcsPatcher.serialize(occurrence, masterStoredIcs).contains("bob.friend@example.com"))
+        assertFalse(shareIcs(recurringMasterWithAttendees).contains("bob.friend@example.com"))
+    }
 
     @Test
     fun `share-card ics does NOT contain attendee emails from master`() {
@@ -218,9 +234,9 @@ class SingleOccurrenceIcsContentTest {
 
     // =================== Exception event share ===================
 
-    /** A modified-occurrence (exception) event. */
-    private val exceptionEvent: Event = run {
-        val rawIcal = """
+    /** The stored ICS of [exceptionEvent]'s resource. */
+    private val exceptionStoredIcs: String =
+        """
             BEGIN:VCALENDAR
             VERSION:2.0
             PRODID:-//Apple Inc.//Mac OS X 10.16//EN
@@ -245,6 +261,8 @@ class SingleOccurrenceIcsContentTest {
             END:VCALENDAR
         """.trimIndent().replace("\n", "\r\n")
 
+    /** A modified-occurrence (exception) event. */
+    private val exceptionEvent: Event = run {
         Event(
             id = 43L,
             uid = "master-uid-original",
@@ -257,7 +275,6 @@ class SingleOccurrenceIcsContentTest {
             originalEventId = 42L,
             originalInstanceTime = 1749311400000L,
             dtstamp = 1705276800000L,
-            rawIcal = rawIcal,
             organizerEmail = "alice.sender@example.com",
             organizerName = "Alice Sender",
         )
@@ -299,7 +316,7 @@ class SingleOccurrenceIcsContentTest {
             occurrenceEndTs = event.endTs,
             nowMs = 1748736000000L,
         )
-        val ics = IcsPatcher.serialize(occurrence)
+        val ics = IcsExporter().shareCopyText(occurrence, fromDevice = false)
         val veventBody = extractVeventBody(ics)
 
         // DTSTART must be 20260531 (May 31 in the event's zone), not 20260530. The regex takes
@@ -326,7 +343,7 @@ class SingleOccurrenceIcsContentTest {
             occurrenceEndTs = event.endTs,
             nowMs = 1748736000000L,
         )
-        val ics = IcsPatcher.serialize(occurrence)
+        val ics = IcsExporter().shareCopyText(occurrence, fromDevice = false)
         val veventBody = extractVeventBody(ics)
 
         // An all-day DTEND is exclusive (RFC 5545): the first day not covered. May 31 + 4 days
@@ -353,7 +370,7 @@ class SingleOccurrenceIcsContentTest {
             occurrenceEndTs = event.endTs,
             nowMs = 1748736000000L,
         )
-        val ics = IcsPatcher.serialize(occurrence)
+        val ics = IcsExporter().shareCopyText(occurrence, fromDevice = false)
         val veventBody = extractVeventBody(ics)
 
         // Reading an all-day timestamp stored as local midnight in the event's zone as UTC can
@@ -402,12 +419,24 @@ class SingleOccurrenceIcsContentTest {
             occurrenceEndTs = sydney.endTs,
             nowMs = 1780000000000L,
         )
-        val ics = IcsPatcher.serialize(occurrence)
+        val ics = IcsExporter().shareCopyText(occurrence, fromDevice = false)
         val veventBody = extractVeventBody(ics)
         val dtstart = Regex("""DTSTART(?:;[^:]*)?:(\d{8})""").find(veventBody)?.groupValues?.get(1)
         val dtend = Regex("""DTEND(?:;[^:]*)?:(\d{8})""").find(veventBody)?.groupValues?.get(1)
         assertEquals("Sydney all-day DTSTART must show May 31, not May 30", "20260531", dtstart)
         assertEquals("Sydney all-day DTEND must show Jun 4 (exclusive of 4-day span)", "20260604", dtend)
+    }
+
+    @Test
+    fun `patching the exception's stored ICS would keep its attendees, which the share path avoids`() {
+        val occurrence = singleOccurrenceForShare(
+            exceptionEvent,
+            occurrenceStartTs = exceptionEvent.startTs,
+            occurrenceEndTs = exceptionEvent.endTs,
+            nowMs = 1748736000000L,
+        )
+        assertTrue(IcsPatcher.serialize(occurrence, exceptionStoredIcs).contains("ATTENDEE"))
+        assertFalse(IcsExporter().shareCopyText(occurrence, fromDevice = false).contains("ATTENDEE"))
     }
 
     @Test
@@ -418,7 +447,7 @@ class SingleOccurrenceIcsContentTest {
             occurrenceEndTs = exceptionEvent.endTs,
             nowMs = 1748736000000L,
         )
-        val ics = IcsPatcher.serialize(occurrence)
+        val ics = IcsExporter().shareCopyText(occurrence, fromDevice = false)
         val veventBody = extractVeventBody(ics)
         assertFalse(
             "exception share must not leak ATTENDEE",
@@ -481,7 +510,7 @@ class SingleOccurrenceIcsContentTest {
             occurrenceEndTs = synthetic.endTs,
             nowMs = 1748736000000L,
         )
-        return IcsPatcher.serialize(occurrence)
+        return IcsPatcher.serialize(occurrence, ics = null)
     }
 
     @Test

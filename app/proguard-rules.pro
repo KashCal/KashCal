@@ -60,7 +60,8 @@
 # Keep Room converters
 -keep class org.onekash.kashcal.data.db.converter.** { *; }
 
-# Room generated code
+# Room 2 classes, which WorkManager's own database uses; the app's Room 3 database, DAOs,
+# entities and converters are kept by name above.
 -keep class * extends androidx.room.RoomDatabase { *; }
 -keep @androidx.room.Entity class * { *; }
 -keep @androidx.room.Dao class * { *; }

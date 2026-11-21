@@ -10,9 +10,13 @@ import org.onekash.kashcal.data.db.entity.Event
  *
  * The attendee rows are what an export writes as the event's guests, the user's own answer
  * included; a row with none is handled as [org.onekash.kashcal.util.IcsExporter] describes.
+ * [icsByEventId] holds the stored ICS the export patches
+ * ([org.onekash.kashcal.domain.reader.EventReader.getIcsForExport]); a row without one is
+ * generated from its fields.
  */
 data class EventExport(
     val event: Event,
     val exceptions: List<Event>,
     val attendeesByEventId: Map<Long, List<Attendee>>,
+    val icsByEventId: Map<Long, String> = emptyMap(),
 )

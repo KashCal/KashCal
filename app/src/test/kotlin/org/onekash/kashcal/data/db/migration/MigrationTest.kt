@@ -1,10 +1,10 @@
 package org.onekash.kashcal.data.db.migration
 
-import android.database.sqlite.SQLiteConstraintException
 import android.util.Log
-import androidx.sqlite.db.SupportSQLiteDatabase
-import androidx.sqlite.db.SupportSQLiteOpenHelper
-import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
+import androidx.room3.migration.Migration
+import androidx.sqlite.SQLiteConnection
+import androidx.sqlite.SQLiteException
+import androidx.sqlite.execSQL
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
@@ -18,20 +18,24 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.PendingOperationTriggers
+import org.onekash.kashcal.testutil.ConnectionSql
+import org.onekash.kashcal.testutil.execSQL
+import org.onekash.kashcal.testutil.queryRows
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 /**
- * Runs the manual KashCalDatabase migrations from 1→2 to 24→25 against an in-memory SQLite
- * database (through Robolectric) and checks tables, columns, indexes, triggers and data. The 3→4
- * AutoMigration isn't run here; [MigrationHashValidationTest] and the Room test in
+ * Runs the manual KashCalDatabase migrations from 1→2 to 27→28 on a database file opened through
+ * `AndroidSQLiteDriver` (under Robolectric) and checks tables, columns, indexes, triggers and data;
+ * [Migration28To29Test] covers 28→29.
+ * The 3→4 AutoMigration isn't run here; [MigrationHashValidationTest] and the Room test in
  * [MigrationGoldenTest] run it.
  *
- * Each test builds the schema the migration needs, runs `migrate(db)` and inspects the result
- * through `sqlite_master`, PRAGMA and queries. The registry tests at the end check
- * `Migrations.ALL_MIGRATIONS`. [MigrationHashValidationTest] checks the results against Room's
- * exported schemas.
+ * Each test builds the schema the migration needs, runs it inside a transaction as Room does
+ * ([ConnectionSql.migrate]) and inspects the result through `sqlite_master`, PRAGMA and
+ * queries. The registry tests at the end check `Migrations.ALL_MIGRATIONS`.
+ * [MigrationHashValidationTest] checks the results against Room's exported schemas.
  *
  * Reference: https://developer.android.com/training/data-storage/room/migrating-db-versions
  */
@@ -39,8 +43,7 @@ import org.robolectric.annotation.Config
 @Config(manifest = Config.NONE, sdk = [34])
 class MigrationTest {
 
-    private lateinit var db: SupportSQLiteDatabase
-    private lateinit var helper: SupportSQLiteOpenHelper
+    private lateinit var db: SQLiteConnection
 
     @Before
     fun setup() {
@@ -51,36 +54,28 @@ class MigrationTest {
         every { Log.e(any(), any(), any()) } returns 0
         every { Log.e(any(), any()) } returns 0
 
-        val context = RuntimeEnvironment.getApplication()
-        val config = SupportSQLiteOpenHelper.Configuration.builder(context)
-            .name(null) // in-memory database
-            .callback(object : SupportSQLiteOpenHelper.Callback(1) {
-                override fun onCreate(db: SupportSQLiteDatabase) {
-                    // Each test creates its own tables
-                }
-                override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) {}
-            })
-            .build()
-        helper = FrameworkSQLiteOpenHelperFactory().create(config)
-        db = helper.writableDatabase
+        db = ConnectionSql.open(RuntimeEnvironment.getApplication(), DB_NAME)
     }
 
     @After
     fun tearDown() {
-        db.close()
+        ConnectionSql.close(RuntimeEnvironment.getApplication(), db, DB_NAME)
         unmockkStatic(Log::class)
     }
+
+    /** Runs [migration] inside a transaction, as Room does; see [ConnectionSql.migrate]. */
+    private fun migrate(migration: Migration) = ConnectionSql.migrate(db, migration)
 
     // ==================== Schema Query Helpers ====================
 
     private fun tableExists(tableName: String): Boolean {
-        db.query("SELECT name FROM sqlite_master WHERE type='table' AND name=?", arrayOf(tableName)).use { cursor ->
+        db.queryRows("SELECT name FROM sqlite_master WHERE type='table' AND name=?", arrayOf(tableName)).use { cursor ->
             return cursor.count > 0
         }
     }
 
     private fun columnExists(tableName: String, columnName: String): Boolean {
-        db.query("PRAGMA table_info($tableName)").use { cursor ->
+        db.queryRows("PRAGMA table_info($tableName)").use { cursor ->
             val nameIndex = cursor.getColumnIndex("name")
             while (cursor.moveToNext()) {
                 if (cursor.getString(nameIndex) == columnName) return true
@@ -91,29 +86,29 @@ class MigrationTest {
 
     private fun getColumnNames(tableName: String): Set<String> {
         val columns = mutableSetOf<String>()
-        db.query("PRAGMA table_info($tableName)").use { cursor ->
+        db.queryRows("PRAGMA table_info($tableName)").use { cursor ->
             val nameIndex = cursor.getColumnIndex("name")
             while (cursor.moveToNext()) {
-                columns.add(cursor.getString(nameIndex))
+                columns.add(cursor.getString(nameIndex)!!)
             }
         }
         return columns
     }
 
     private fun indexExists(indexName: String): Boolean {
-        db.query("SELECT name FROM sqlite_master WHERE type='index' AND name=?", arrayOf(indexName)).use { cursor ->
+        db.queryRows("SELECT name FROM sqlite_master WHERE type='index' AND name=?", arrayOf(indexName)).use { cursor ->
             return cursor.count > 0
         }
     }
 
     private fun triggerExists(triggerName: String): Boolean {
-        db.query("SELECT name FROM sqlite_master WHERE type='trigger' AND name=?", arrayOf(triggerName)).use { cursor ->
+        db.queryRows("SELECT name FROM sqlite_master WHERE type='trigger' AND name=?", arrayOf(triggerName)).use { cursor ->
             return cursor.count > 0
         }
     }
 
     private fun isIndexUnique(indexName: String): Boolean {
-        db.query(
+        db.queryRows(
             "SELECT sql FROM sqlite_master WHERE type='index' AND name=?",
             arrayOf(indexName)
         ).use { cursor ->
@@ -157,7 +152,7 @@ class MigrationTest {
         createV1Schema()
         assertFalse(tableExists("ics_subscriptions"))
 
-        Migrations.MIGRATION_1_2.migrate(db)
+        migrate(Migrations.MIGRATION_1_2)
 
         assertTrue(tableExists("ics_subscriptions"))
         val columns = getColumnNames("ics_subscriptions")
@@ -180,7 +175,7 @@ class MigrationTest {
     fun `migration 1 to 2 creates unique indexes`() {
         createV1Schema()
 
-        Migrations.MIGRATION_1_2.migrate(db)
+        migrate(Migrations.MIGRATION_1_2)
 
         assertTrue(indexExists("index_ics_subscriptions_url"))
         assertTrue(indexExists("index_ics_subscriptions_calendar_id"))
@@ -191,8 +186,8 @@ class MigrationTest {
         createV1Schema()
 
         // Run twice - should not crash
-        Migrations.MIGRATION_1_2.migrate(db)
-        Migrations.MIGRATION_1_2.migrate(db)
+        migrate(Migrations.MIGRATION_1_2)
+        migrate(Migrations.MIGRATION_1_2)
 
         assertTrue(tableExists("ics_subscriptions"))
     }
@@ -202,9 +197,9 @@ class MigrationTest {
     @Test
     fun `migration 2 to 3 creates scheduled_reminders table with all columns`() {
         createV1Schema()
-        Migrations.MIGRATION_1_2.migrate(db)
+        migrate(Migrations.MIGRATION_1_2)
 
-        Migrations.MIGRATION_2_3.migrate(db)
+        migrate(Migrations.MIGRATION_2_3)
 
         assertTrue(tableExists("scheduled_reminders"))
         val columns = getColumnNames("scheduled_reminders")
@@ -225,9 +220,9 @@ class MigrationTest {
     @Test
     fun `migration 2 to 3 creates all required indexes`() {
         createV1Schema()
-        Migrations.MIGRATION_1_2.migrate(db)
+        migrate(Migrations.MIGRATION_1_2)
 
-        Migrations.MIGRATION_2_3.migrate(db)
+        migrate(Migrations.MIGRATION_2_3)
 
         assertTrue(indexExists("index_scheduled_reminders_event_id"))
         assertTrue(indexExists("index_scheduled_reminders_trigger_time"))
@@ -243,7 +238,7 @@ class MigrationTest {
         // 1→2 and 2→3 skipped: pending_operations doesn't depend on them
         assertFalse(columnExists("pending_operations", "target_url"))
 
-        Migrations.MIGRATION_4_5.migrate(db)
+        migrate(Migrations.MIGRATION_4_5)
 
         assertTrue(columnExists("pending_operations", "target_url"))
         assertTrue(columnExists("pending_operations", "target_calendar_id"))
@@ -254,15 +249,15 @@ class MigrationTest {
     @Test
     fun `migration 5 to 6 adds move_phase column with default 0`() {
         createV1Schema()
-        Migrations.MIGRATION_4_5.migrate(db)
+        migrate(Migrations.MIGRATION_4_5)
 
-        Migrations.MIGRATION_5_6.migrate(db)
+        migrate(Migrations.MIGRATION_5_6)
 
         assertTrue(columnExists("pending_operations", "move_phase"))
 
         // Insert a row and verify default value
         db.execSQL("INSERT INTO pending_operations (event_id, operation, created_at, updated_at) VALUES (1, 'MOVE', 0, 0)")
-        db.query("SELECT move_phase FROM pending_operations WHERE event_id = 1").use { cursor ->
+        db.queryRows("SELECT move_phase FROM pending_operations WHERE event_id = 1").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals(0, cursor.getInt(0))
         }
@@ -273,10 +268,10 @@ class MigrationTest {
     @Test
     fun `migration 6 to 7 adds raw_ical import_id and alarm_count columns`() {
         createV1Schema()
-        Migrations.MIGRATION_4_5.migrate(db)
-        Migrations.MIGRATION_5_6.migrate(db)
+        migrate(Migrations.MIGRATION_4_5)
+        migrate(Migrations.MIGRATION_5_6)
 
-        Migrations.MIGRATION_6_7.migrate(db)
+        migrate(Migrations.MIGRATION_6_7)
 
         assertTrue(columnExists("events", "raw_ical"))
         assertTrue(columnExists("events", "import_id"))
@@ -286,18 +281,18 @@ class MigrationTest {
     @Test
     fun `migration 6 to 7 initializes import_id from uid`() {
         createV1Schema()
-        Migrations.MIGRATION_4_5.migrate(db)
-        Migrations.MIGRATION_5_6.migrate(db)
+        migrate(Migrations.MIGRATION_4_5)
+        migrate(Migrations.MIGRATION_5_6)
 
         // Insert an event with a known UID
         db.execSQL("""INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'ICLOUD', 'test@test.com', 0)""")
         db.execSQL("""INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://cal.example.com/', 'Cal', -1)""")
         db.execSQL("""INSERT INTO events (uid, calendar_id, title, start_ts, end_ts, dtstamp, created_at, updated_at) VALUES ('test-uid-123', 1, 'Test', 0, 1, 0, 0, 0)""")
 
-        Migrations.MIGRATION_6_7.migrate(db)
+        migrate(Migrations.MIGRATION_6_7)
 
         // Verify import_id was initialized from uid
-        db.query("SELECT import_id FROM events WHERE uid = 'test-uid-123'").use { cursor ->
+        db.queryRows("SELECT import_id FROM events WHERE uid = 'test-uid-123'").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals("test-uid-123", cursor.getString(0))
         }
@@ -306,10 +301,10 @@ class MigrationTest {
     @Test
     fun `migration 6 to 7 creates import_id indexes`() {
         createV1Schema()
-        Migrations.MIGRATION_4_5.migrate(db)
-        Migrations.MIGRATION_5_6.migrate(db)
+        migrate(Migrations.MIGRATION_4_5)
+        migrate(Migrations.MIGRATION_5_6)
 
-        Migrations.MIGRATION_6_7.migrate(db)
+        migrate(Migrations.MIGRATION_6_7)
 
         assertTrue(indexExists("index_events_import_id"))
         assertTrue(indexExists("index_events_calendar_id_import_id"))
@@ -318,10 +313,10 @@ class MigrationTest {
     @Test
     fun `migration 6 to 7 creates uniqueness triggers`() {
         createV1Schema()
-        Migrations.MIGRATION_4_5.migrate(db)
-        Migrations.MIGRATION_5_6.migrate(db)
+        migrate(Migrations.MIGRATION_4_5)
+        migrate(Migrations.MIGRATION_5_6)
 
-        Migrations.MIGRATION_6_7.migrate(db)
+        migrate(Migrations.MIGRATION_6_7)
 
         assertTrue(triggerExists("trigger_master_event_unique_insert"))
         assertTrue(triggerExists("trigger_master_event_unique_update"))
@@ -332,12 +327,12 @@ class MigrationTest {
     @Test
     fun `migration 7 to 8 adds RFC property columns`() {
         createV1Schema()
-        Migrations.MIGRATION_1_2.migrate(db) // ics_subscriptions needed for boolean index
-        Migrations.MIGRATION_4_5.migrate(db)
-        Migrations.MIGRATION_5_6.migrate(db)
-        Migrations.MIGRATION_6_7.migrate(db)
+        migrate(Migrations.MIGRATION_1_2) // ics_subscriptions needed for boolean index
+        migrate(Migrations.MIGRATION_4_5)
+        migrate(Migrations.MIGRATION_5_6)
+        migrate(Migrations.MIGRATION_6_7)
 
-        Migrations.MIGRATION_7_8.migrate(db)
+        migrate(Migrations.MIGRATION_7_8)
 
         assertTrue(columnExists("events", "priority"))
         assertTrue(columnExists("events", "geo_lat"))
@@ -350,12 +345,12 @@ class MigrationTest {
     @Test
     fun `migration 7 to 8 creates boolean indexes`() {
         createV1Schema()
-        Migrations.MIGRATION_1_2.migrate(db)
-        Migrations.MIGRATION_4_5.migrate(db)
-        Migrations.MIGRATION_5_6.migrate(db)
-        Migrations.MIGRATION_6_7.migrate(db)
+        migrate(Migrations.MIGRATION_1_2)
+        migrate(Migrations.MIGRATION_4_5)
+        migrate(Migrations.MIGRATION_5_6)
+        migrate(Migrations.MIGRATION_6_7)
 
-        Migrations.MIGRATION_7_8.migrate(db)
+        migrate(Migrations.MIGRATION_7_8)
 
         assertTrue(indexExists("index_calendars_is_visible"))
         assertTrue(indexExists("index_accounts_is_enabled"))
@@ -366,14 +361,14 @@ class MigrationTest {
     @Test
     fun `migration 7 to 8 is idempotent via addColumnIfNotExists`() {
         createV1Schema()
-        Migrations.MIGRATION_1_2.migrate(db)
-        Migrations.MIGRATION_4_5.migrate(db)
-        Migrations.MIGRATION_5_6.migrate(db)
-        Migrations.MIGRATION_6_7.migrate(db)
+        migrate(Migrations.MIGRATION_1_2)
+        migrate(Migrations.MIGRATION_4_5)
+        migrate(Migrations.MIGRATION_5_6)
+        migrate(Migrations.MIGRATION_6_7)
 
         // Run twice - addColumnIfNotExists should prevent crash
-        Migrations.MIGRATION_7_8.migrate(db)
-        Migrations.MIGRATION_7_8.migrate(db)
+        migrate(Migrations.MIGRATION_7_8)
+        migrate(Migrations.MIGRATION_7_8)
 
         assertTrue(columnExists("events", "priority"))
     }
@@ -383,13 +378,13 @@ class MigrationTest {
     @Test
     fun `migration 8 to 9 creates exception lookup index`() {
         createV1Schema()
-        Migrations.MIGRATION_1_2.migrate(db)
-        Migrations.MIGRATION_4_5.migrate(db)
-        Migrations.MIGRATION_5_6.migrate(db)
-        Migrations.MIGRATION_6_7.migrate(db)
-        Migrations.MIGRATION_7_8.migrate(db)
+        migrate(Migrations.MIGRATION_1_2)
+        migrate(Migrations.MIGRATION_4_5)
+        migrate(Migrations.MIGRATION_5_6)
+        migrate(Migrations.MIGRATION_6_7)
+        migrate(Migrations.MIGRATION_7_8)
 
-        Migrations.MIGRATION_8_9.migrate(db)
+        migrate(Migrations.MIGRATION_8_9)
 
         assertTrue(indexExists("index_events_calendar_id_uid_original_instance_time"))
     }
@@ -397,15 +392,15 @@ class MigrationTest {
     @Test
     fun `migration 8 to 9 is idempotent`() {
         createV1Schema()
-        Migrations.MIGRATION_1_2.migrate(db)
-        Migrations.MIGRATION_4_5.migrate(db)
-        Migrations.MIGRATION_5_6.migrate(db)
-        Migrations.MIGRATION_6_7.migrate(db)
-        Migrations.MIGRATION_7_8.migrate(db)
+        migrate(Migrations.MIGRATION_1_2)
+        migrate(Migrations.MIGRATION_4_5)
+        migrate(Migrations.MIGRATION_5_6)
+        migrate(Migrations.MIGRATION_6_7)
+        migrate(Migrations.MIGRATION_7_8)
 
         // Run twice - indexExists check prevents crash
-        Migrations.MIGRATION_8_9.migrate(db)
-        Migrations.MIGRATION_8_9.migrate(db)
+        migrate(Migrations.MIGRATION_8_9)
+        migrate(Migrations.MIGRATION_8_9)
 
         assertTrue(indexExists("index_events_calendar_id_uid_original_instance_time"))
     }
@@ -415,14 +410,14 @@ class MigrationTest {
     @Test
     fun `migration 9 to 10 creates unique occurrence index`() {
         createV1Schema()
-        Migrations.MIGRATION_1_2.migrate(db)
-        Migrations.MIGRATION_4_5.migrate(db)
-        Migrations.MIGRATION_5_6.migrate(db)
-        Migrations.MIGRATION_6_7.migrate(db)
-        Migrations.MIGRATION_7_8.migrate(db)
-        Migrations.MIGRATION_8_9.migrate(db)
+        migrate(Migrations.MIGRATION_1_2)
+        migrate(Migrations.MIGRATION_4_5)
+        migrate(Migrations.MIGRATION_5_6)
+        migrate(Migrations.MIGRATION_6_7)
+        migrate(Migrations.MIGRATION_7_8)
+        migrate(Migrations.MIGRATION_8_9)
 
-        Migrations.MIGRATION_9_10.migrate(db)
+        migrate(Migrations.MIGRATION_9_10)
 
         assertTrue(indexExists("index_occurrences_event_id_start_ts_unique"))
     }
@@ -430,12 +425,12 @@ class MigrationTest {
     @Test
     fun `migration 9 to 10 removes duplicate occurrences before creating index`() {
         createV1Schema()
-        Migrations.MIGRATION_1_2.migrate(db)
-        Migrations.MIGRATION_4_5.migrate(db)
-        Migrations.MIGRATION_5_6.migrate(db)
-        Migrations.MIGRATION_6_7.migrate(db)
-        Migrations.MIGRATION_7_8.migrate(db)
-        Migrations.MIGRATION_8_9.migrate(db)
+        migrate(Migrations.MIGRATION_1_2)
+        migrate(Migrations.MIGRATION_4_5)
+        migrate(Migrations.MIGRATION_5_6)
+        migrate(Migrations.MIGRATION_6_7)
+        migrate(Migrations.MIGRATION_7_8)
+        migrate(Migrations.MIGRATION_8_9)
 
         // Two identical occurrence rows for one event
         db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'ICLOUD', 'test@test.com', 0)")
@@ -444,15 +439,15 @@ class MigrationTest {
         db.execSQL("INSERT INTO occurrences (event_id, calendar_id, start_ts, end_ts, start_day, end_day) VALUES (1, 1, 1000, 2000, 20240101, 20240101)")
         db.execSQL("INSERT INTO occurrences (event_id, calendar_id, start_ts, end_ts, start_day, end_day) VALUES (1, 1, 1000, 2000, 20240101, 20240101)")
 
-        db.query("SELECT COUNT(*) FROM occurrences").use { cursor ->
+        db.queryRows("SELECT COUNT(*) FROM occurrences").use { cursor ->
             cursor.moveToFirst()
             assertEquals(2, cursor.getInt(0))
         }
 
-        Migrations.MIGRATION_9_10.migrate(db)
+        migrate(Migrations.MIGRATION_9_10)
 
         // Should have removed the duplicate
-        db.query("SELECT COUNT(*) FROM occurrences").use { cursor ->
+        db.queryRows("SELECT COUNT(*) FROM occurrences").use { cursor ->
             cursor.moveToFirst()
             assertEquals(1, cursor.getInt(0))
         }
@@ -463,10 +458,10 @@ class MigrationTest {
     @Test
     fun `migration 10 to 11 adds lifetime_reset_at and failed_at columns`() {
         createV1Schema()
-        Migrations.MIGRATION_4_5.migrate(db)
-        Migrations.MIGRATION_5_6.migrate(db)
+        migrate(Migrations.MIGRATION_4_5)
+        migrate(Migrations.MIGRATION_5_6)
 
-        Migrations.MIGRATION_10_11.migrate(db)
+        migrate(Migrations.MIGRATION_10_11)
 
         assertTrue(columnExists("pending_operations", "lifetime_reset_at"))
         assertTrue(columnExists("pending_operations", "failed_at"))
@@ -475,15 +470,15 @@ class MigrationTest {
     @Test
     fun `migration 10 to 11 initializes lifetime_reset_at from created_at`() {
         createV1Schema()
-        Migrations.MIGRATION_4_5.migrate(db)
-        Migrations.MIGRATION_5_6.migrate(db)
+        migrate(Migrations.MIGRATION_4_5)
+        migrate(Migrations.MIGRATION_5_6)
 
         // Insert an operation with a known created_at
         db.execSQL("INSERT INTO pending_operations (event_id, operation, created_at, updated_at) VALUES (1, 'UPDATE', 12345, 0)")
 
-        Migrations.MIGRATION_10_11.migrate(db)
+        migrate(Migrations.MIGRATION_10_11)
 
-        db.query("SELECT lifetime_reset_at FROM pending_operations WHERE event_id = 1").use { cursor ->
+        db.queryRows("SELECT lifetime_reset_at FROM pending_operations WHERE event_id = 1").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals(12345, cursor.getLong(0))
         }
@@ -492,12 +487,12 @@ class MigrationTest {
     @Test
     fun `migration 10 to 11 is idempotent`() {
         createV1Schema()
-        Migrations.MIGRATION_4_5.migrate(db)
-        Migrations.MIGRATION_5_6.migrate(db)
+        migrate(Migrations.MIGRATION_4_5)
+        migrate(Migrations.MIGRATION_5_6)
 
         // Run twice
-        Migrations.MIGRATION_10_11.migrate(db)
-        Migrations.MIGRATION_10_11.migrate(db)
+        migrate(Migrations.MIGRATION_10_11)
+        migrate(Migrations.MIGRATION_10_11)
 
         assertTrue(columnExists("pending_operations", "lifetime_reset_at"))
         assertTrue(columnExists("pending_operations", "failed_at"))
@@ -508,11 +503,11 @@ class MigrationTest {
     @Test
     fun `migration 11 to 12 adds source_calendar_id column`() {
         createV1Schema()
-        Migrations.MIGRATION_4_5.migrate(db)
-        Migrations.MIGRATION_5_6.migrate(db)
-        Migrations.MIGRATION_10_11.migrate(db)
+        migrate(Migrations.MIGRATION_4_5)
+        migrate(Migrations.MIGRATION_5_6)
+        migrate(Migrations.MIGRATION_10_11)
 
-        Migrations.MIGRATION_11_12.migrate(db)
+        migrate(Migrations.MIGRATION_11_12)
 
         assertTrue(columnExists("pending_operations", "source_calendar_id"))
     }
@@ -520,25 +515,25 @@ class MigrationTest {
     @Test
     fun `migration 11 to 12 marks in-flight MOVE ops as FAILED`() {
         createV1Schema()
-        Migrations.MIGRATION_4_5.migrate(db)
-        Migrations.MIGRATION_5_6.migrate(db)
-        Migrations.MIGRATION_10_11.migrate(db)
+        migrate(Migrations.MIGRATION_4_5)
+        migrate(Migrations.MIGRATION_5_6)
+        migrate(Migrations.MIGRATION_10_11)
 
         // Insert an in-flight MOVE at phase 0 (DELETE)
         db.execSQL("INSERT INTO pending_operations (event_id, operation, move_phase, status, created_at, updated_at) VALUES (1, 'MOVE', 0, 'PENDING', 0, 0)")
         // Also a normal UPDATE (should not be affected)
         db.execSQL("INSERT INTO pending_operations (event_id, operation, move_phase, status, created_at, updated_at) VALUES (2, 'UPDATE', 0, 'PENDING', 0, 0)")
 
-        Migrations.MIGRATION_11_12.migrate(db)
+        migrate(Migrations.MIGRATION_11_12)
 
         // MOVE at phase 0 should be marked FAILED
-        db.query("SELECT status FROM pending_operations WHERE event_id = 1").use { cursor ->
+        db.queryRows("SELECT status FROM pending_operations WHERE event_id = 1").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals("FAILED", cursor.getString(0))
         }
 
         // UPDATE should remain PENDING
-        db.query("SELECT status FROM pending_operations WHERE event_id = 2").use { cursor ->
+        db.queryRows("SELECT status FROM pending_operations WHERE event_id = 2").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals("PENDING", cursor.getString(0))
         }
@@ -550,7 +545,7 @@ class MigrationTest {
     fun `migration 12 to 13 replaces unique index with home_set_url`() {
         createV1Schema()
 
-        Migrations.MIGRATION_12_13.migrate(db)
+        migrate(Migrations.MIGRATION_12_13)
 
         // Old index should be gone
         assertFalse(indexExists("index_accounts_provider_email"))
@@ -562,14 +557,14 @@ class MigrationTest {
     fun `migration 12 to 13 allows same email on different servers`() {
         createV1Schema()
 
-        Migrations.MIGRATION_12_13.migrate(db)
+        migrate(Migrations.MIGRATION_12_13)
 
         // Insert two accounts with same provider+email but different home_set_url
         db.execSQL("INSERT INTO accounts (provider, email, home_set_url, created_at) VALUES ('CALDAV', 'user@example.com', 'https://server1.com/dav/', 0)")
         db.execSQL("INSERT INTO accounts (provider, email, home_set_url, created_at) VALUES ('CALDAV', 'user@example.com', 'https://server2.com/dav/', 0)")
 
         // Both should exist
-        db.query("SELECT COUNT(*) FROM accounts WHERE email = 'user@example.com'").use { cursor ->
+        db.queryRows("SELECT COUNT(*) FROM accounts WHERE email = 'user@example.com'").use { cursor ->
             cursor.moveToFirst()
             assertEquals(2, cursor.getInt(0))
         }
@@ -588,17 +583,17 @@ class MigrationTest {
             "CREATE UNIQUE INDEX IF NOT EXISTS index_events_original_event_id_original_instance_time " +
             "ON events (original_event_id, original_instance_time)"
         )
-        Migrations.MIGRATION_1_2.migrate(db)
-        Migrations.MIGRATION_2_3.migrate(db)
-        Migrations.MIGRATION_4_5.migrate(db)
-        Migrations.MIGRATION_5_6.migrate(db)
-        Migrations.MIGRATION_6_7.migrate(db)
-        Migrations.MIGRATION_7_8.migrate(db)
-        Migrations.MIGRATION_8_9.migrate(db)
-        Migrations.MIGRATION_9_10.migrate(db)
-        Migrations.MIGRATION_10_11.migrate(db)
-        Migrations.MIGRATION_11_12.migrate(db)
-        Migrations.MIGRATION_12_13.migrate(db)
+        migrate(Migrations.MIGRATION_1_2)
+        migrate(Migrations.MIGRATION_2_3)
+        migrate(Migrations.MIGRATION_4_5)
+        migrate(Migrations.MIGRATION_5_6)
+        migrate(Migrations.MIGRATION_6_7)
+        migrate(Migrations.MIGRATION_7_8)
+        migrate(Migrations.MIGRATION_8_9)
+        migrate(Migrations.MIGRATION_9_10)
+        migrate(Migrations.MIGRATION_10_11)
+        migrate(Migrations.MIGRATION_11_12)
+        migrate(Migrations.MIGRATION_12_13)
     }
 
     /**
@@ -636,7 +631,7 @@ class MigrationTest {
         assertTrue(indexExists("index_events_calendar_id_uid_original_instance_time"))
         assertFalse(isIndexUnique("index_events_calendar_id_uid_original_instance_time"))
 
-        Migrations.MIGRATION_13_14.migrate(db)
+        migrate(Migrations.MIGRATION_13_14)
 
         // After: original_event_id_original_instance_time is non-unique
         assertTrue(indexExists("index_events_original_event_id_original_instance_time"))
@@ -670,16 +665,16 @@ class MigrationTest {
             "VALUES (3, 'master-uid', $calId, 'Exception Orphan', 3000, 4000, 0, 0, 0, NULL, 3000)"
         )
 
-        Migrations.MIGRATION_13_14.migrate(db)
+        migrate(Migrations.MIGRATION_13_14)
 
         // Orphan (id=3) deleted, linked (id=2) survives
-        db.query("SELECT id FROM events WHERE original_instance_time IS NOT NULL").use { cursor ->
+        db.queryRows("SELECT id FROM events WHERE original_instance_time IS NOT NULL").use { cursor ->
             assertEquals(1, cursor.count)
             cursor.moveToFirst()
             assertEquals(2, cursor.getInt(0))
         }
         // Master untouched
-        db.query("SELECT COUNT(*) FROM events WHERE original_instance_time IS NULL").use { cursor ->
+        db.queryRows("SELECT COUNT(*) FROM events WHERE original_instance_time IS NULL").use { cursor ->
             cursor.moveToFirst()
             assertEquals(1, cursor.getInt(0))
         }
@@ -708,10 +703,10 @@ class MigrationTest {
             "VALUES (3, 'master-uid', $calId, 'Orphan New', 3000, 4000, 0, 0, 0, NULL, 3000)"
         )
 
-        Migrations.MIGRATION_13_14.migrate(db)
+        migrate(Migrations.MIGRATION_13_14)
 
         // Highest id (3) survives
-        db.query("SELECT id, title FROM events WHERE original_instance_time IS NOT NULL").use { cursor ->
+        db.queryRows("SELECT id, title FROM events WHERE original_instance_time IS NOT NULL").use { cursor ->
             assertEquals(1, cursor.count)
             cursor.moveToFirst()
             assertEquals(3, cursor.getInt(0))
@@ -738,9 +733,9 @@ class MigrationTest {
             "VALUES (3, 'uid-c', $calId, 'Master C', 5000, 6000, 0, 0, 0)"
         )
 
-        Migrations.MIGRATION_13_14.migrate(db)
+        migrate(Migrations.MIGRATION_13_14)
 
-        db.query("SELECT COUNT(*) FROM events").use { cursor ->
+        db.queryRows("SELECT COUNT(*) FROM events").use { cursor ->
             cursor.moveToFirst()
             assertEquals(3, cursor.getInt(0))
         }
@@ -750,8 +745,8 @@ class MigrationTest {
     fun `migration 13 to 14 is idempotent`() {
         setupV13Schema()
 
-        Migrations.MIGRATION_13_14.migrate(db)
-        Migrations.MIGRATION_13_14.migrate(db)
+        migrate(Migrations.MIGRATION_13_14)
+        migrate(Migrations.MIGRATION_13_14)
 
         assertTrue(indexExists("index_events_original_event_id_original_instance_time"))
         assertFalse(isIndexUnique("index_events_original_event_id_original_instance_time"))
@@ -762,9 +757,9 @@ class MigrationTest {
     fun `migration 13 to 14 handles empty table`() {
         setupV13Schema()
 
-        Migrations.MIGRATION_13_14.migrate(db)
+        migrate(Migrations.MIGRATION_13_14)
 
-        db.query("SELECT COUNT(*) FROM events").use { cursor ->
+        db.queryRows("SELECT COUNT(*) FROM events").use { cursor ->
             cursor.moveToFirst()
             assertEquals(0, cursor.getInt(0))
         }
@@ -772,12 +767,12 @@ class MigrationTest {
         assertTrue(isIndexUnique("index_events_calendar_id_uid_original_instance_time"))
     }
 
-    @Test(expected = SQLiteConstraintException::class)
+    @Test
     fun `migration 13 to 14 new unique index blocks duplicate exceptions`() {
         setupV13Schema()
         val calId = insertTestAccountAndCalendar()
 
-        Migrations.MIGRATION_13_14.migrate(db)
+        migrate(Migrations.MIGRATION_13_14)
 
         // Insert master
         db.execSQL(
@@ -791,11 +786,17 @@ class MigrationTest {
             "VALUES (2, 'master-uid', $calId, 'Exception', 3000, 4000, 0, 0, 0, 1, 3000)"
         )
         // Second exception with the same (calendar_id, uid, original_instance_time) must throw
-        db.execSQL(
-            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, dtstamp, created_at, updated_at, " +
-            "original_event_id, original_instance_time) " +
-            "VALUES (3, 'master-uid', $calId, 'Duplicate', 3000, 4000, 0, 0, 0, 1, 3000)"
-        )
+        val error = try {
+            db.execSQL(
+                "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, dtstamp, created_at, updated_at, " +
+                "original_event_id, original_instance_time) " +
+                "VALUES (3, 'master-uid', $calId, 'Duplicate', 3000, 4000, 0, 0, 0, 1, 3000)"
+            )
+            null
+        } catch (e: SQLiteException) {
+            e
+        }
+        assertTrue("expected a UNIQUE failure, got $error", error?.message.orEmpty().contains("UNIQUE constraint failed"))
     }
 
     // ==================== Migration 15 to 16: calendar columns + end_timezone ====================
@@ -804,7 +805,7 @@ class MigrationTest {
     fun `migration 15 to 16 adds calendar columns`() {
         createV1Schema()
 
-        Migrations.MIGRATION_15_16.migrate(db)
+        migrate(Migrations.MIGRATION_15_16)
 
         assertTrue(columnExists("calendars", "is_notification_muted"))
         assertTrue(columnExists("calendars", "local_color_override"))
@@ -815,7 +816,7 @@ class MigrationTest {
     fun `migration 15 to 16 adds event end_timezone column`() {
         createV1Schema()
 
-        Migrations.MIGRATION_15_16.migrate(db)
+        migrate(Migrations.MIGRATION_15_16)
 
         assertTrue(columnExists("events", "end_timezone"))
     }
@@ -829,17 +830,17 @@ class MigrationTest {
         db.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://cal.example.com/', 'Work', -16711936)")
         db.execSQL("INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, timezone, dtstamp, created_at, updated_at) VALUES (1, 'uid-1', 1, 'Team Meeting', 1000, 2000, 'America/New_York', 0, 0, 0)")
 
-        Migrations.MIGRATION_15_16.migrate(db)
+        migrate(Migrations.MIGRATION_15_16)
 
         // Verify calendar data preserved
-        db.query("SELECT display_name, color FROM calendars WHERE id = 1").use { cursor ->
+        db.queryRows("SELECT display_name, color FROM calendars WHERE id = 1").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals("Work", cursor.getString(0))
             assertEquals(-16711936, cursor.getInt(1))
         }
 
         // Verify event data preserved
-        db.query("SELECT title, timezone FROM events WHERE id = 1").use { cursor ->
+        db.queryRows("SELECT title, timezone FROM events WHERE id = 1").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals("Team Meeting", cursor.getString(0))
             assertEquals("America/New_York", cursor.getString(1))
@@ -851,8 +852,8 @@ class MigrationTest {
         createV1Schema()
 
         // Run twice - addColumnIfNotExists prevents crash
-        Migrations.MIGRATION_15_16.migrate(db)
-        Migrations.MIGRATION_15_16.migrate(db)
+        migrate(Migrations.MIGRATION_15_16)
+        migrate(Migrations.MIGRATION_15_16)
 
         assertTrue(columnExists("calendars", "is_notification_muted"))
         assertTrue(columnExists("calendars", "local_color_override"))
@@ -864,13 +865,13 @@ class MigrationTest {
     fun `migration 15 to 16 default values are correct`() {
         createV1Schema()
 
-        Migrations.MIGRATION_15_16.migrate(db)
+        migrate(Migrations.MIGRATION_15_16)
 
         // Insert rows after migration and verify defaults
         db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'ICLOUD', 'test@test.com', 0)")
         db.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://cal.example.com/', 'Cal', -1)")
 
-        db.query("SELECT is_notification_muted, local_color_override, default_reminder FROM calendars WHERE id = 1").use { cursor ->
+        db.queryRows("SELECT is_notification_muted, local_color_override, default_reminder FROM calendars WHERE id = 1").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals(0, cursor.getInt(0))  // is_notification_muted default = 0
             assertTrue(cursor.isNull(1))       // local_color_override default = NULL
@@ -879,7 +880,7 @@ class MigrationTest {
 
         db.execSQL("INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, dtstamp, created_at, updated_at) VALUES (1, 'uid-1', 1, 'Test', 0, 1, 0, 0, 0)")
 
-        db.query("SELECT end_timezone FROM events WHERE id = 1").use { cursor ->
+        db.queryRows("SELECT end_timezone FROM events WHERE id = 1").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertTrue(cursor.isNull(0))  // end_timezone default = NULL
         }
@@ -897,33 +898,33 @@ class MigrationTest {
             "CREATE UNIQUE INDEX IF NOT EXISTS index_events_original_event_id_original_instance_time " +
                 "ON events (original_event_id, original_instance_time)"
         )
-        Migrations.MIGRATION_1_2.migrate(db)
-        Migrations.MIGRATION_2_3.migrate(db)
+        migrate(Migrations.MIGRATION_1_2)
+        migrate(Migrations.MIGRATION_2_3)
         // 3→4 is AutoMigration (skip in unit tests)
-        Migrations.MIGRATION_4_5.migrate(db)
-        Migrations.MIGRATION_5_6.migrate(db)
-        Migrations.MIGRATION_6_7.migrate(db)
-        Migrations.MIGRATION_7_8.migrate(db)
-        Migrations.MIGRATION_8_9.migrate(db)
-        Migrations.MIGRATION_9_10.migrate(db)
-        Migrations.MIGRATION_10_11.migrate(db)
-        Migrations.MIGRATION_11_12.migrate(db)
-        Migrations.MIGRATION_12_13.migrate(db)
-        Migrations.MIGRATION_13_14.migrate(db)
-        Migrations.MIGRATION_14_15.migrate(db)
-        Migrations.MIGRATION_15_16.migrate(db)
+        migrate(Migrations.MIGRATION_4_5)
+        migrate(Migrations.MIGRATION_5_6)
+        migrate(Migrations.MIGRATION_6_7)
+        migrate(Migrations.MIGRATION_7_8)
+        migrate(Migrations.MIGRATION_8_9)
+        migrate(Migrations.MIGRATION_9_10)
+        migrate(Migrations.MIGRATION_10_11)
+        migrate(Migrations.MIGRATION_11_12)
+        migrate(Migrations.MIGRATION_12_13)
+        migrate(Migrations.MIGRATION_13_14)
+        migrate(Migrations.MIGRATION_14_15)
+        migrate(Migrations.MIGRATION_15_16)
     }
 
     @Test
     fun `migration 16 to 17 adds calendar_user_addresses to accounts with default empty array`() {
         migrateUpToV16()
-        Migrations.MIGRATION_16_17.migrate(db)
+        migrate(Migrations.MIGRATION_16_17)
 
         assertTrue(columnExists("accounts", "calendar_user_addresses"))
 
         // An insert that omits the new column gets the default
         db.execSQL("INSERT INTO accounts (provider, email, created_at) VALUES ('CALDAV', 'a@example.com', 0)")
-        db.query("SELECT calendar_user_addresses FROM accounts WHERE email = 'a@example.com'").use { cursor ->
+        db.queryRows("SELECT calendar_user_addresses FROM accounts WHERE email = 'a@example.com'").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals("[]", cursor.getString(0))
         }
@@ -932,7 +933,7 @@ class MigrationTest {
     @Test
     fun `migration 16 to 17 adds organizer_sent_by and organizer_schedule_status to events`() {
         migrateUpToV16()
-        Migrations.MIGRATION_16_17.migrate(db)
+        migrate(Migrations.MIGRATION_16_17)
 
         assertTrue(columnExists("events", "organizer_sent_by"))
         assertTrue(columnExists("events", "organizer_schedule_status"))
@@ -941,7 +942,7 @@ class MigrationTest {
     @Test
     fun `migration 16 to 17 creates attendees table with all 16 columns`() {
         migrateUpToV16()
-        Migrations.MIGRATION_16_17.migrate(db)
+        migrate(Migrations.MIGRATION_16_17)
 
         assertTrue(tableExists("attendees"))
         val expected = setOf(
@@ -956,7 +957,7 @@ class MigrationTest {
     @Test
     fun `migration 16 to 17 creates index_attendees_event_id`() {
         migrateUpToV16()
-        Migrations.MIGRATION_16_17.migrate(db)
+        migrate(Migrations.MIGRATION_16_17)
 
         assertTrue(indexExists("index_attendees_event_id"))
     }
@@ -964,7 +965,7 @@ class MigrationTest {
     @Test
     fun `migration 16 to 17 creates index_attendees_address`() {
         migrateUpToV16()
-        Migrations.MIGRATION_16_17.migrate(db)
+        migrate(Migrations.MIGRATION_16_17)
 
         assertTrue(indexExists("index_attendees_address"))
     }
@@ -972,7 +973,7 @@ class MigrationTest {
     @Test
     fun `migration 16 to 17 enforces FK CASCADE from attendees to events`() {
         migrateUpToV16()
-        Migrations.MIGRATION_16_17.migrate(db)
+        migrate(Migrations.MIGRATION_16_17)
         // Foreign keys must be enabled per-connection in SQLite.
         db.execSQL("PRAGMA foreign_keys = ON")
 
@@ -984,14 +985,14 @@ class MigrationTest {
                 "VALUES (1, 'fk-uid', 1, 'T', 1000, 2000, 'UTC', 0, 0, 0)"
         )
         db.execSQL("INSERT INTO attendees (event_id, address) VALUES (1, 'mailto:a@example.com')")
-        db.query("SELECT COUNT(*) FROM attendees WHERE event_id = 1").use { cursor ->
+        db.queryRows("SELECT COUNT(*) FROM attendees WHERE event_id = 1").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals(1, cursor.getInt(0))
         }
 
         db.execSQL("DELETE FROM events WHERE id = 1")
 
-        db.query("SELECT COUNT(*) FROM attendees WHERE event_id = 1").use { cursor ->
+        db.queryRows("SELECT COUNT(*) FROM attendees WHERE event_id = 1").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals(0, cursor.getInt(0))
         }
@@ -1006,9 +1007,9 @@ class MigrationTest {
                 "VALUES (1, 'ICLOUD', 'preserved@test.com', 'Preserved', 12345)"
         )
 
-        Migrations.MIGRATION_16_17.migrate(db)
+        migrate(Migrations.MIGRATION_16_17)
 
-        db.query(
+        db.queryRows(
             "SELECT email, display_name, calendar_user_addresses FROM accounts WHERE id = 1"
         ).use { cursor ->
             assertTrue(cursor.moveToFirst())
@@ -1028,9 +1029,9 @@ class MigrationTest {
                 "VALUES (1, 'preserve-uid', 1, 'Preserved Event', 1000, 2000, 'UTC', 0, 0, 0)"
         )
 
-        Migrations.MIGRATION_16_17.migrate(db)
+        migrate(Migrations.MIGRATION_16_17)
 
-        db.query(
+        db.queryRows(
             "SELECT title, organizer_sent_by, organizer_schedule_status FROM events WHERE id = 1"
         ).use { cursor ->
             assertTrue(cursor.moveToFirst())
@@ -1043,9 +1044,9 @@ class MigrationTest {
     @Test
     fun `migration 16 to 17 is idempotent`() {
         migrateUpToV16()
-        Migrations.MIGRATION_16_17.migrate(db)
+        migrate(Migrations.MIGRATION_16_17)
         // The second run must be a no-op: no exception, schema unchanged
-        Migrations.MIGRATION_16_17.migrate(db)
+        migrate(Migrations.MIGRATION_16_17)
 
         assertTrue(columnExists("accounts", "calendar_user_addresses"))
         assertTrue(columnExists("events", "organizer_sent_by"))
@@ -1062,7 +1063,7 @@ class MigrationTest {
         db.execSQL("CREATE TABLE attendees (id INTEGER PRIMARY KEY, junk TEXT)")
         db.execSQL("INSERT INTO attendees (junk) VALUES ('rogue-data')")
 
-        Migrations.MIGRATION_16_17.migrate(db)
+        migrate(Migrations.MIGRATION_16_17)
 
         assertTrue(tableExists("attendees"))
         // Verify the table now has the proper 16-column shape.
@@ -1074,7 +1075,7 @@ class MigrationTest {
         )
         assertEquals(expected, getColumnNames("attendees"))
         // And the rogue data was dropped (table is empty).
-        db.query("SELECT COUNT(*) FROM attendees").use { cursor ->
+        db.queryRows("SELECT COUNT(*) FROM attendees").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals(0, cursor.getInt(0))
         }
@@ -1113,10 +1114,10 @@ class MigrationTest {
         )
         db.execSQL("INSERT INTO attendees (event_id, address) VALUES (1, 'mailto:keep@example.com')")
 
-        Migrations.MIGRATION_16_17.migrate(db)
+        migrate(Migrations.MIGRATION_16_17)
 
         // The row from before the migration is still there, so the table wasn't dropped
-        db.query("SELECT address FROM attendees WHERE event_id = 1").use { cursor ->
+        db.queryRows("SELECT address FROM attendees WHERE event_id = 1").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals("mailto:keep@example.com", cursor.getString(0))
         }
@@ -1133,23 +1134,23 @@ class MigrationTest {
             "ON events (original_event_id, original_instance_time)"
         )
         // Also create ics_subscriptions for migration 7→8 (needs it for boolean index)
-        Migrations.MIGRATION_1_2.migrate(db)
+        migrate(Migrations.MIGRATION_1_2)
 
         // Run all migrations sequentially
-        Migrations.MIGRATION_2_3.migrate(db)
+        migrate(Migrations.MIGRATION_2_3)
         // 3→4 is AutoMigration (skip)
-        Migrations.MIGRATION_4_5.migrate(db)
-        Migrations.MIGRATION_5_6.migrate(db)
-        Migrations.MIGRATION_6_7.migrate(db)
-        Migrations.MIGRATION_7_8.migrate(db)
-        Migrations.MIGRATION_8_9.migrate(db)
-        Migrations.MIGRATION_9_10.migrate(db)
-        Migrations.MIGRATION_10_11.migrate(db)
-        Migrations.MIGRATION_11_12.migrate(db)
-        Migrations.MIGRATION_12_13.migrate(db)
-        Migrations.MIGRATION_13_14.migrate(db)
-        Migrations.MIGRATION_14_15.migrate(db)
-        Migrations.MIGRATION_15_16.migrate(db)
+        migrate(Migrations.MIGRATION_4_5)
+        migrate(Migrations.MIGRATION_5_6)
+        migrate(Migrations.MIGRATION_6_7)
+        migrate(Migrations.MIGRATION_7_8)
+        migrate(Migrations.MIGRATION_8_9)
+        migrate(Migrations.MIGRATION_9_10)
+        migrate(Migrations.MIGRATION_10_11)
+        migrate(Migrations.MIGRATION_11_12)
+        migrate(Migrations.MIGRATION_12_13)
+        migrate(Migrations.MIGRATION_13_14)
+        migrate(Migrations.MIGRATION_14_15)
+        migrate(Migrations.MIGRATION_15_16)
 
         // Verify final schema has all expected tables
         assertTrue(tableExists("accounts"))
@@ -1186,7 +1187,7 @@ class MigrationTest {
     @Test
     fun `full migration chain 1 to 17 executes without error`() {
         migrateUpToV16()
-        Migrations.MIGRATION_16_17.migrate(db)
+        migrate(Migrations.MIGRATION_16_17)
 
         // Verify the scheduling schema landed on top of full chain
         assertTrue(columnExists("accounts", "calendar_user_addresses"))
@@ -1202,20 +1203,20 @@ class MigrationTest {
     /** Runs the v1→v17 chain for the v18 tests. */
     private fun migrateUpToV17() {
         migrateUpToV16()
-        Migrations.MIGRATION_16_17.migrate(db)
+        migrate(Migrations.MIGRATION_16_17)
     }
 
     @Test
     fun `migration 17 to 18 adds partstat_only to pending_operations with default 0`() {
         migrateUpToV17()
 
-        Migrations.MIGRATION_17_18.migrate(db)
+        migrate(Migrations.MIGRATION_17_18)
 
         assertTrue(columnExists("pending_operations", "partstat_only"))
 
         // Default fires when the column is omitted on insert.
         db.execSQL("INSERT INTO pending_operations (event_id, operation, created_at, updated_at) VALUES (1, 'UPDATE', 0, 0)")
-        db.query("SELECT partstat_only FROM pending_operations WHERE event_id = 1").use { cursor ->
+        db.queryRows("SELECT partstat_only FROM pending_operations WHERE event_id = 1").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals(0, cursor.getInt(0))
         }
@@ -1225,13 +1226,13 @@ class MigrationTest {
     fun `migration 17 to 18 adds partstat_target to pending_operations as nullable TEXT`() {
         migrateUpToV17()
 
-        Migrations.MIGRATION_17_18.migrate(db)
+        migrate(Migrations.MIGRATION_17_18)
 
         assertTrue(columnExists("pending_operations", "partstat_target"))
 
         // Default is NULL.
         db.execSQL("INSERT INTO pending_operations (event_id, operation, created_at, updated_at) VALUES (2, 'UPDATE', 0, 0)")
-        db.query("SELECT partstat_target FROM pending_operations WHERE event_id = 2").use { cursor ->
+        db.queryRows("SELECT partstat_target FROM pending_operations WHERE event_id = 2").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertTrue(cursor.isNull(0))
         }
@@ -1241,7 +1242,7 @@ class MigrationTest {
     fun `migration 17 to 18 adds notified_at to attendees as nullable INTEGER`() {
         migrateUpToV17()
 
-        Migrations.MIGRATION_17_18.migrate(db)
+        migrate(Migrations.MIGRATION_17_18)
 
         assertTrue(columnExists("attendees", "notified_at"))
 
@@ -1253,7 +1254,7 @@ class MigrationTest {
                 "VALUES (1, 'uid', 1, 'T', 1000, 2000, 'UTC', 0, 0, 0)"
         )
         db.execSQL("INSERT INTO attendees (event_id, address) VALUES (1, 'mailto:a@example.com')")
-        db.query("SELECT notified_at FROM attendees WHERE event_id = 1").use { cursor ->
+        db.queryRows("SELECT notified_at FROM attendees WHERE event_id = 1").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertTrue(cursor.isNull(0))
         }
@@ -1277,10 +1278,10 @@ class MigrationTest {
         )
         db.execSQL("INSERT INTO attendees (id, event_id, address) VALUES (50, 99, 'mailto:keep@example.com')")
 
-        Migrations.MIGRATION_17_18.migrate(db)
+        migrate(Migrations.MIGRATION_17_18)
 
         // pending_operations row survives, new columns at defaults.
-        db.query(
+        db.queryRows(
             "SELECT operation, partstat_only, partstat_target FROM pending_operations WHERE id = 10"
         ).use { cursor ->
             assertTrue(cursor.moveToFirst())
@@ -1289,7 +1290,7 @@ class MigrationTest {
             assertTrue(cursor.isNull(2))
         }
         // attendees row survives, new column at default NULL.
-        db.query(
+        db.queryRows(
             "SELECT address, notified_at FROM attendees WHERE id = 50"
         ).use { cursor ->
             assertTrue(cursor.moveToFirst())
@@ -1302,8 +1303,8 @@ class MigrationTest {
     fun `migration 17 to 18 is idempotent`() {
         migrateUpToV17()
 
-        Migrations.MIGRATION_17_18.migrate(db)
-        Migrations.MIGRATION_17_18.migrate(db)
+        migrate(Migrations.MIGRATION_17_18)
+        migrate(Migrations.MIGRATION_17_18)
 
         assertTrue(columnExists("pending_operations", "partstat_only"))
         assertTrue(columnExists("pending_operations", "partstat_target"))
@@ -1318,7 +1319,7 @@ class MigrationTest {
         db.execSQL("ALTER TABLE pending_operations ADD COLUMN partstat_only TEXT")
 
         // The migration must throw IllegalStateException, not silently keep a mis-typed column
-        Migrations.MIGRATION_17_18.migrate(db)
+        migrate(Migrations.MIGRATION_17_18)
     }
 
     @Test
@@ -1336,7 +1337,7 @@ class MigrationTest {
         assertFalse(columnExists("attendees", "notified_at"))
 
         // The migration must succeed
-        Migrations.MIGRATION_17_18.migrate(db)
+        migrate(Migrations.MIGRATION_17_18)
 
         // All three columns now exist
         assertTrue(columnExists("pending_operations", "partstat_only"))
@@ -1349,7 +1350,7 @@ class MigrationTest {
     @Test
     fun `full migration chain 1 to 18 executes without error`() {
         migrateUpToV17()
-        Migrations.MIGRATION_17_18.migrate(db)
+        migrate(Migrations.MIGRATION_17_18)
 
         assertTrue(columnExists("pending_operations", "partstat_only"))
         assertTrue(columnExists("pending_operations", "partstat_target"))
@@ -1366,20 +1367,20 @@ class MigrationTest {
     /** Runs the v1→v18 chain for the v19 tests. */
     private fun migrateUpToV18() {
         migrateUpToV17()
-        Migrations.MIGRATION_17_18.migrate(db)
+        migrate(Migrations.MIGRATION_17_18)
     }
 
     @Test
     fun `migration 18 to 19 adds schedule_outbox_url to accounts as nullable TEXT`() {
         migrateUpToV18()
 
-        Migrations.MIGRATION_18_19.migrate(db)
+        migrate(Migrations.MIGRATION_18_19)
 
         assertTrue(columnExists("accounts", "schedule_outbox_url"))
 
         // Default is NULL when the column is omitted on insert.
         db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'CALDAV', 'a@test.com', 0)")
-        db.query("SELECT schedule_outbox_url FROM accounts WHERE id = 1").use { cursor ->
+        db.queryRows("SELECT schedule_outbox_url FROM accounts WHERE id = 1").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertTrue(cursor.isNull(0))
         }
@@ -1389,14 +1390,14 @@ class MigrationTest {
     fun `migration 18 to 19 adds auto_schedule_supported to calendars as nullable INTEGER`() {
         migrateUpToV18()
 
-        Migrations.MIGRATION_18_19.migrate(db)
+        migrate(Migrations.MIGRATION_18_19)
 
         assertTrue(columnExists("calendars", "auto_schedule_supported"))
 
         // Default is NULL (tri-state unknown) when omitted on insert.
         db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'CALDAV', 'a@test.com', 0)")
         db.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://x/', 'C', 0)")
-        db.query("SELECT auto_schedule_supported FROM calendars WHERE id = 1").use { cursor ->
+        db.queryRows("SELECT auto_schedule_supported FROM calendars WHERE id = 1").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertTrue(cursor.isNull(0))
         }
@@ -1415,10 +1416,10 @@ class MigrationTest {
                 "VALUES (3, 7, 'https://keep/', 'Keep', 42)"
         )
 
-        Migrations.MIGRATION_18_19.migrate(db)
+        migrate(Migrations.MIGRATION_18_19)
 
         // Account row survives, prior columns intact, new column NULL.
-        db.query(
+        db.queryRows(
             "SELECT email, calendar_user_addresses, schedule_outbox_url FROM accounts WHERE id = 7"
         ).use { cursor ->
             assertTrue(cursor.moveToFirst())
@@ -1427,7 +1428,7 @@ class MigrationTest {
             assertTrue(cursor.isNull(2))
         }
         // Calendar row survives, prior columns intact, new column NULL.
-        db.query(
+        db.queryRows(
             "SELECT display_name, color, auto_schedule_supported FROM calendars WHERE id = 3"
         ).use { cursor ->
             assertTrue(cursor.moveToFirst())
@@ -1440,7 +1441,7 @@ class MigrationTest {
     @Test
     fun `migration 18 to 19 round-trips tri-state capability values`() {
         migrateUpToV18()
-        Migrations.MIGRATION_18_19.migrate(db)
+        migrate(Migrations.MIGRATION_18_19)
 
         db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'CALDAV', 'a@test.com', 0)")
         db.execSQL(
@@ -1449,7 +1450,7 @@ class MigrationTest {
                 "(2, 1, 'https://no/', 'No', 0, 0), " +
                 "(3, 1, 'https://unknown/', 'Unknown', 0, NULL)"
         )
-        db.query("SELECT id, auto_schedule_supported FROM calendars ORDER BY id").use { cursor ->
+        db.queryRows("SELECT id, auto_schedule_supported FROM calendars ORDER BY id").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals(1, cursor.getInt(1)) // true
             assertTrue(cursor.moveToNext())
@@ -1463,8 +1464,8 @@ class MigrationTest {
     fun `migration 18 to 19 is idempotent`() {
         migrateUpToV18()
 
-        Migrations.MIGRATION_18_19.migrate(db)
-        Migrations.MIGRATION_18_19.migrate(db)
+        migrate(Migrations.MIGRATION_18_19)
+        migrate(Migrations.MIGRATION_18_19)
 
         assertTrue(columnExists("accounts", "schedule_outbox_url"))
         assertTrue(columnExists("calendars", "auto_schedule_supported"))
@@ -1475,7 +1476,7 @@ class MigrationTest {
     @Test
     fun `full migration chain 1 to 19 executes without error`() {
         migrateUpToV18()
-        Migrations.MIGRATION_18_19.migrate(db)
+        migrate(Migrations.MIGRATION_18_19)
 
         assertTrue(columnExists("accounts", "schedule_outbox_url"))
         assertTrue(columnExists("calendars", "auto_schedule_supported"))
@@ -1491,29 +1492,29 @@ class MigrationTest {
     /** Runs the v1→v19 chain for the v20 tests. */
     private fun migrateUpToV19() {
         migrateUpToV18()
-        Migrations.MIGRATION_18_19.migrate(db)
+        migrate(Migrations.MIGRATION_18_19)
     }
 
     private fun migrateUpToV20() {
         migrateUpToV19()
-        Migrations.MIGRATION_19_20.migrate(db)
+        migrate(Migrations.MIGRATION_19_20)
     }
 
     private fun migrateUpToV21() {
         migrateUpToV20()
-        Migrations.MIGRATION_20_21.migrate(db)
+        migrate(Migrations.MIGRATION_20_21)
     }
 
     private fun migrateUpToV22() {
         migrateUpToV21()
-        Migrations.MIGRATION_21_22.migrate(db)
+        migrate(Migrations.MIGRATION_21_22)
     }
 
     @Test
     fun `migration 22 to 23 creates address_books table with expected columns`() {
         migrateUpToV22()
 
-        Migrations.MIGRATION_22_23.migrate(db)
+        migrate(Migrations.MIGRATION_22_23)
 
         assertTrue(tableExists("address_books"))
         assertTrue(columnExists("address_books", "id"))
@@ -1531,14 +1532,14 @@ class MigrationTest {
     @Test
     fun `migration 22 to 23 address_books row round-trips`() {
         migrateUpToV22()
-        Migrations.MIGRATION_22_23.migrate(db)
+        migrate(Migrations.MIGRATION_22_23)
 
         db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'ICLOUD', 'a@example.test', 0)")
         db.execSQL(
             "INSERT INTO address_books (account_id, url, display_name, vcard_version, is_read_only, is_sync_enabled) " +
                 "VALUES (1, 'https://contacts.example.test/books/home/', 'Home', '3.0', 1, 1)"
         )
-        db.query(
+        db.queryRows(
             "SELECT url, display_name, vcard_version FROM address_books WHERE account_id = 1"
         ).use { cursor ->
             assertTrue(cursor.moveToFirst())
@@ -1551,7 +1552,7 @@ class MigrationTest {
     @Test
     fun `migration 22 to 23 enforces per-account url uniqueness`() {
         migrateUpToV22()
-        Migrations.MIGRATION_22_23.migrate(db)
+        migrate(Migrations.MIGRATION_22_23)
 
         db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'ICLOUD', 'a@example.test', 0)")
         db.execSQL(
@@ -1564,8 +1565,8 @@ class MigrationTest {
                 "INSERT INTO address_books (account_id, url, display_name, vcard_version, is_read_only, is_sync_enabled) " +
                     "VALUES (1, 'https://contacts.example.test/dup/', 'Two', '3.0', 1, 1)"
             )
-        } catch (e: SQLiteConstraintException) {
-            threw = true
+        } catch (e: SQLiteException) {
+            threw = e.message.orEmpty().contains("UNIQUE constraint failed")
         }
         assertTrue("duplicate (account_id, url) must violate the unique index", threw)
     }
@@ -1573,7 +1574,7 @@ class MigrationTest {
     @Test
     fun `migration 22 to 23 cascades address_books on account delete`() {
         migrateUpToV22()
-        Migrations.MIGRATION_22_23.migrate(db)
+        migrate(Migrations.MIGRATION_22_23)
         db.execSQL("PRAGMA foreign_keys = ON")
 
         db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (5, 'ICLOUD', 'a@example.test', 0)")
@@ -1583,7 +1584,7 @@ class MigrationTest {
         )
         db.execSQL("DELETE FROM accounts WHERE id = 5")
 
-        db.query("SELECT COUNT(*) FROM address_books WHERE account_id = 5").use { cursor ->
+        db.queryRows("SELECT COUNT(*) FROM address_books WHERE account_id = 5").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals(0, cursor.getInt(0))
         }
@@ -1593,8 +1594,8 @@ class MigrationTest {
     fun `migration 22 to 23 is idempotent`() {
         migrateUpToV22()
 
-        Migrations.MIGRATION_22_23.migrate(db)
-        Migrations.MIGRATION_22_23.migrate(db)
+        migrate(Migrations.MIGRATION_22_23)
+        migrate(Migrations.MIGRATION_22_23)
 
         assertTrue(tableExists("address_books"))
     }
@@ -1603,7 +1604,7 @@ class MigrationTest {
     fun `migration 20 to 21 creates pending_cancels table`() {
         migrateUpToV20()
 
-        Migrations.MIGRATION_20_21.migrate(db)
+        migrate(Migrations.MIGRATION_20_21)
 
         assertTrue(tableExists("pending_cancels"))
         assertTrue(columnExists("pending_cancels", "event_id"))
@@ -1618,7 +1619,7 @@ class MigrationTest {
     @Test
     fun `migration 20 to 21 pending_cancels row round-trips`() {
         migrateUpToV20()
-        Migrations.MIGRATION_20_21.migrate(db)
+        migrate(Migrations.MIGRATION_20_21)
 
         db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'CALDAV', 'a@test.com', 0)")
         db.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://x/', 'C', 0)")
@@ -1630,7 +1631,7 @@ class MigrationTest {
             "INSERT INTO pending_cancels (event_id, recurrence_id, address, schedule_agent, schedule_status, sequence, attempt_count) " +
                 "VALUES (1, NULL, 'mailto:gone@example.test', 'CLIENT', NULL, 3, 0)"
         )
-        db.query("SELECT address, sequence, attempt_count FROM pending_cancels WHERE event_id = 1").use { cursor ->
+        db.queryRows("SELECT address, sequence, attempt_count FROM pending_cancels WHERE event_id = 1").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals("mailto:gone@example.test", cursor.getString(0))
             assertEquals(3, cursor.getInt(1))
@@ -1642,8 +1643,8 @@ class MigrationTest {
     fun `migration 20 to 21 is idempotent`() {
         migrateUpToV20()
 
-        Migrations.MIGRATION_20_21.migrate(db)
-        Migrations.MIGRATION_20_21.migrate(db)
+        migrate(Migrations.MIGRATION_20_21)
+        migrate(Migrations.MIGRATION_20_21)
 
         assertTrue(tableExists("pending_cancels"))
     }
@@ -1651,7 +1652,7 @@ class MigrationTest {
     @Test
     fun `migration 20 to 21 cascades pending_cancels on event delete`() {
         migrateUpToV20()
-        Migrations.MIGRATION_20_21.migrate(db)
+        migrate(Migrations.MIGRATION_20_21)
         db.execSQL("PRAGMA foreign_keys = ON")
 
         db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'CALDAV', 'a@test.com', 0)")
@@ -1666,7 +1667,7 @@ class MigrationTest {
         )
         db.execSQL("DELETE FROM events WHERE id = 7")
 
-        db.query("SELECT COUNT(*) FROM pending_cancels WHERE event_id = 7").use { cursor ->
+        db.queryRows("SELECT COUNT(*) FROM pending_cancels WHERE event_id = 7").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals(0, cursor.getInt(0))
         }
@@ -1676,7 +1677,7 @@ class MigrationTest {
     fun `migration 19 to 20 adds itip_request_sequence to attendees as nullable INTEGER`() {
         migrateUpToV19()
 
-        Migrations.MIGRATION_19_20.migrate(db)
+        migrate(Migrations.MIGRATION_19_20)
 
         assertTrue(columnExists("attendees", "itip_request_sequence"))
 
@@ -1688,7 +1689,7 @@ class MigrationTest {
                 "VALUES (1, 'u', 1, 'E', 0, 0, 'UTC', 0, 0, 0)"
         )
         db.execSQL("INSERT INTO attendees (id, event_id, address) VALUES (1, 1, 'mailto:g@example.test')")
-        db.query("SELECT itip_request_sequence FROM attendees WHERE id = 1").use { cursor ->
+        db.queryRows("SELECT itip_request_sequence FROM attendees WHERE id = 1").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertTrue(cursor.isNull(0))
         }
@@ -1698,7 +1699,7 @@ class MigrationTest {
     fun `migration 19 to 20 adds itip_request_status to attendees as nullable TEXT`() {
         migrateUpToV19()
 
-        Migrations.MIGRATION_19_20.migrate(db)
+        migrate(Migrations.MIGRATION_19_20)
 
         assertTrue(columnExists("attendees", "itip_request_status"))
 
@@ -1709,7 +1710,7 @@ class MigrationTest {
                 "VALUES (1, 'u', 1, 'E', 0, 0, 'UTC', 0, 0, 0)"
         )
         db.execSQL("INSERT INTO attendees (id, event_id, address) VALUES (1, 1, 'mailto:g@example.test')")
-        db.query("SELECT itip_request_status FROM attendees WHERE id = 1").use { cursor ->
+        db.queryRows("SELECT itip_request_status FROM attendees WHERE id = 1").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertTrue(cursor.isNull(0))
         }
@@ -1730,10 +1731,10 @@ class MigrationTest {
                 "VALUES (50, 99, 'mailto:keep@example.test', 'NEEDS-ACTION', 'CLIENT')"
         )
 
-        Migrations.MIGRATION_19_20.migrate(db)
+        migrate(Migrations.MIGRATION_19_20)
 
         // Row survives, prior columns intact, new columns NULL.
-        db.query(
+        db.queryRows(
             "SELECT address, partstat, schedule_agent, itip_request_sequence, itip_request_status " +
                 "FROM attendees WHERE id = 50"
         ).use { cursor ->
@@ -1750,8 +1751,8 @@ class MigrationTest {
     fun `migration 19 to 20 is idempotent`() {
         migrateUpToV19()
 
-        Migrations.MIGRATION_19_20.migrate(db)
-        Migrations.MIGRATION_19_20.migrate(db)
+        migrate(Migrations.MIGRATION_19_20)
+        migrate(Migrations.MIGRATION_19_20)
 
         assertTrue(columnExists("attendees", "itip_request_sequence"))
         assertTrue(columnExists("attendees", "itip_request_status"))
@@ -1761,14 +1762,14 @@ class MigrationTest {
 
     /** Reads a category row's color, or null if the color is null or the row is absent. */
     private fun categoryColor(name: String): Int? {
-        db.query("SELECT color FROM categories WHERE name = ?", arrayOf(name)).use { cursor ->
+        db.queryRows("SELECT color FROM categories WHERE name = ?", arrayOf(name)).use { cursor ->
             if (!cursor.moveToFirst() || cursor.isNull(0)) return null
             return cursor.getInt(0)
         }
     }
 
     private fun categoryCount(): Int {
-        db.query("SELECT COUNT(*) FROM categories").use { cursor ->
+        db.queryRows("SELECT COUNT(*) FROM categories").use { cursor ->
             cursor.moveToFirst()
             return cursor.getInt(0)
         }
@@ -1776,14 +1777,14 @@ class MigrationTest {
 
     private fun categoryNames(): List<String> {
         val names = mutableListOf<String>()
-        db.query("SELECT name FROM categories ORDER BY name").use { cursor ->
-            while (cursor.moveToNext()) names.add(cursor.getString(0))
+        db.queryRows("SELECT name FROM categories ORDER BY name").use { cursor ->
+            while (cursor.moveToNext()) names.add(cursor.getString(0)!!)
         }
         return names
     }
 
     private fun categoryLastUsed(name: String): Long? {
-        db.query("SELECT last_used_at FROM categories WHERE name = ?", arrayOf(name)).use { cursor ->
+        db.queryRows("SELECT last_used_at FROM categories WHERE name = ?", arrayOf(name)).use { cursor ->
             if (!cursor.moveToFirst()) return null
             return cursor.getLong(0)
         }
@@ -1793,7 +1794,7 @@ class MigrationTest {
     fun `migration 21 to 22 creates categories table with expected columns`() {
         migrateUpToV21()
 
-        Migrations.MIGRATION_21_22.migrate(db)
+        migrate(Migrations.MIGRATION_21_22)
 
         assertTrue(tableExists("categories"))
         assertTrue(columnExists("categories", "name"))
@@ -1804,7 +1805,7 @@ class MigrationTest {
     @Test
     fun `migration 21 to 22 name primary key is COLLATE NOCASE`() {
         migrateUpToV21()
-        Migrations.MIGRATION_21_22.migrate(db)
+        migrate(Migrations.MIGRATION_21_22)
 
         // "Chores", then "chores": a NOCASE PK collapses them to one row
         db.execSQL("INSERT OR IGNORE INTO categories (name, color, last_used_at) VALUES ('Chores', 100, 1)")
@@ -1818,7 +1819,7 @@ class MigrationTest {
     fun `migration 21 to 22 seeds Work Personal Family with non-null colors`() {
         migrateUpToV21()
 
-        Migrations.MIGRATION_21_22.migrate(db)
+        migrate(Migrations.MIGRATION_21_22)
 
         assertTrue(categoryNames().containsAll(listOf("Work", "Personal", "Family")))
         assertNotNull("seeded defaults carry curated colors", categoryColor("Work"))
@@ -1836,7 +1837,7 @@ class MigrationTest {
                 "VALUES (1, 'u1', 1, 'E', 500, 600, 'UTC', 0, 0, 0, '[\"Gym\"]')"
         )
 
-        Migrations.MIGRATION_21_22.migrate(db)
+        migrate(Migrations.MIGRATION_21_22)
 
         assertTrue(categoryNames().contains("Gym"))
         assertNull("backfilled tags render via hash color, so color is NULL", categoryColor("Gym"))
@@ -1857,7 +1858,7 @@ class MigrationTest {
                 "VALUES (2, 'u2', 1, 'E2', 0, 0, 'UTC', 0, 0, 0, '[\"travel\"]', 5000)"
         )
 
-        Migrations.MIGRATION_21_22.migrate(db)
+        migrate(Migrations.MIGRATION_21_22)
 
         val travelRows = categoryNames().filter { it.equals("travel", ignoreCase = true) }
         assertEquals("one row for the deduped name", 1, travelRows.size)
@@ -1877,7 +1878,7 @@ class MigrationTest {
                 "VALUES (1, 'u1', 1, 'E', 0, 0, 'UTC', 0, 0, 0, '[\"work\"]')"
         )
 
-        Migrations.MIGRATION_21_22.migrate(db)
+        migrate(Migrations.MIGRATION_21_22)
 
         val workRows = categoryNames().filter { it.equals("work", ignoreCase = true) }
         assertEquals(1, workRows.size)
@@ -1900,7 +1901,7 @@ class MigrationTest {
                 "VALUES (2, 'u2', 1, 'Good', 0, 0, 'UTC', 0, 0, 0, '[\"Hobby\"]')"
         )
 
-        Migrations.MIGRATION_21_22.migrate(db)
+        migrate(Migrations.MIGRATION_21_22)
 
         assertTrue("the well-formed tag still backfills", categoryNames().contains("Hobby"))
     }
@@ -1915,9 +1916,9 @@ class MigrationTest {
                 "VALUES (7, 'keep', 1, 'Keep Me', 111, 222, 'UTC', 0, 0, 0, '[\"Work\",\"Gym\"]')"
         )
 
-        Migrations.MIGRATION_21_22.migrate(db)
+        migrate(Migrations.MIGRATION_21_22)
 
-        db.query("SELECT title, start_ts, categories FROM events WHERE id = 7").use { cursor ->
+        db.queryRows("SELECT title, start_ts, categories FROM events WHERE id = 7").use { cursor ->
             assertTrue("the event row still exists", cursor.moveToFirst())
             assertEquals("Keep Me", cursor.getString(0))
             assertEquals(111L, cursor.getLong(1))
@@ -1929,9 +1930,9 @@ class MigrationTest {
     fun `migration 21 to 22 is idempotent`() {
         migrateUpToV21()
 
-        Migrations.MIGRATION_21_22.migrate(db)
+        migrate(Migrations.MIGRATION_21_22)
         val countAfterFirst = categoryCount()
-        Migrations.MIGRATION_21_22.migrate(db)
+        migrate(Migrations.MIGRATION_21_22)
 
         assertTrue(tableExists("categories"))
         assertEquals("re-running adds no duplicate rows", countAfterFirst, categoryCount())
@@ -1942,7 +1943,7 @@ class MigrationTest {
     @Test
     fun `full migration chain 1 to 20 executes without error`() {
         migrateUpToV19()
-        Migrations.MIGRATION_19_20.migrate(db)
+        migrate(Migrations.MIGRATION_19_20)
 
         assertTrue(columnExists("attendees", "itip_request_sequence"))
         assertTrue(columnExists("attendees", "itip_request_status"))
@@ -1957,12 +1958,12 @@ class MigrationTest {
 
     private fun migrateUpToV24() {
         migrateUpToV22()
-        Migrations.MIGRATION_22_23.migrate(db)
-        Migrations.MIGRATION_23_24.migrate(db)
+        migrate(Migrations.MIGRATION_22_23)
+        migrate(Migrations.MIGRATION_23_24)
     }
 
     private fun intColumn(sql: String): Int =
-        db.query(sql).use { cursor ->
+        db.queryRows(sql).use { cursor ->
             assertTrue(cursor.moveToFirst())
             cursor.getInt(0)
         }
@@ -1995,7 +1996,7 @@ class MigrationTest {
     fun `migration 24 to 25 creates recent_changes with every column and index`() {
         migrateUpToV24()
 
-        Migrations.MIGRATION_24_25.migrate(db)
+        migrate(Migrations.MIGRATION_24_25)
 
         assertTrue(tableExists("recent_changes"))
         for (col in listOf(
@@ -2021,9 +2022,9 @@ class MigrationTest {
         migrateUpToV24()
         seedV24Calendars()
 
-        Migrations.MIGRATION_24_25.migrate(db)
+        migrate(Migrations.MIGRATION_24_25)
 
-        db.query("SELECT id, initial_pull_done, display_name, color, sync_token, ctag FROM calendars ORDER BY id").use { c ->
+        db.queryRows("SELECT id, initial_pull_done, display_name, color, sync_token, ctag FROM calendars ORDER BY id").use { c ->
             assertTrue(c.moveToNext())
             assertEquals(1, c.getInt(1)); assertEquals("Token", c.getString(2)); assertEquals(11, c.getInt(3))
             assertEquals("tok", c.getString(4))
@@ -2044,9 +2045,9 @@ class MigrationTest {
                 "VALUES (9, 'keep', 1, 'Kept', 100, 200, 'UTC', 0, 0, 0)"
         )
 
-        Migrations.MIGRATION_24_25.migrate(db)
+        migrate(Migrations.MIGRATION_24_25)
 
-        db.query("SELECT uid, title, start_ts, end_ts FROM events WHERE id = 9").use { c ->
+        db.queryRows("SELECT uid, title, start_ts, end_ts FROM events WHERE id = 9").use { c ->
             assertTrue(c.moveToFirst())
             assertEquals("keep", c.getString(0)); assertEquals("Kept", c.getString(1))
             assertEquals(100L, c.getLong(2)); assertEquals(200L, c.getLong(3))
@@ -2058,9 +2059,9 @@ class MigrationTest {
         migrateUpToV24()
         seedV24Calendars()
 
-        Migrations.MIGRATION_24_25.migrate(db)
+        migrate(Migrations.MIGRATION_24_25)
         insertRecentChange(1, 1, "u", 0, null)
-        Migrations.MIGRATION_24_25.migrate(db)
+        migrate(Migrations.MIGRATION_24_25)
 
         assertTrue(tableExists("recent_changes"))
         assertEquals("a re-run keeps the rows of a well-formed table", 1, intColumn("SELECT COUNT(*) FROM recent_changes"))
@@ -2073,7 +2074,7 @@ class MigrationTest {
         db.execSQL("CREATE TABLE recent_changes (id INTEGER PRIMARY KEY, calendar_id INTEGER, title TEXT)")
         db.execSQL("CREATE INDEX index_recent_changes_calendar_id ON recent_changes (calendar_id)")
 
-        Migrations.MIGRATION_24_25.migrate(db)
+        migrate(Migrations.MIGRATION_24_25)
 
         assertTrue(columnExists("recent_changes", "event_uid"))
         assertTrue(columnExists("recent_changes", "dismissed_at"))
@@ -2086,7 +2087,7 @@ class MigrationTest {
         seedV24Calendars()
         db.execSQL("ALTER TABLE calendars ADD COLUMN initial_pull_done INTEGER NOT NULL DEFAULT 0")
 
-        Migrations.MIGRATION_24_25.migrate(db)
+        migrate(Migrations.MIGRATION_24_25)
 
         assertEquals(2, intColumn("SELECT COUNT(*) FROM calendars WHERE initial_pull_done = 1"))
     }
@@ -2098,7 +2099,7 @@ class MigrationTest {
 
         var threw = false
         try {
-            Migrations.MIGRATION_24_25.migrate(db)
+            migrate(Migrations.MIGRATION_24_25)
         } catch (e: IllegalStateException) {
             threw = true
         }
@@ -2112,7 +2113,7 @@ class MigrationTest {
     fun `migration 24 to 25 cascades on calendar delete and nulls event_id on event delete`() {
         migrateUpToV24()
         seedV24Calendars()
-        Migrations.MIGRATION_24_25.migrate(db)
+        migrate(Migrations.MIGRATION_24_25)
         db.execSQL("PRAGMA foreign_keys = ON")
         db.execSQL(
             "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, timezone, dtstamp, created_at, updated_at) " +
@@ -2122,7 +2123,7 @@ class MigrationTest {
         insertRecentChange(2, 2, "u8", 0, null)
 
         db.execSQL("DELETE FROM events WHERE id = 7")
-        db.query("SELECT event_id FROM recent_changes WHERE id = 1").use { c ->
+        db.queryRows("SELECT event_id FROM recent_changes WHERE id = 1").use { c ->
             assertTrue(c.moveToFirst())
             assertTrue("deleting the event keeps the row with event_id null", c.isNull(0))
         }
@@ -2136,7 +2137,7 @@ class MigrationTest {
     fun `migration 24 to 25 enforces one row per calendar, uid and instance`() {
         migrateUpToV24()
         seedV24Calendars()
-        Migrations.MIGRATION_24_25.migrate(db)
+        migrate(Migrations.MIGRATION_24_25)
         insertRecentChange(1, 1, "same", 0, null)
         insertRecentChange(2, 2, "same", 0, null) // same UID in another calendar is allowed
         insertRecentChange(3, 1, "same", 1000, null) // a changed occurrence of it is allowed
@@ -2144,8 +2145,8 @@ class MigrationTest {
         var threw = false
         try {
             insertRecentChange(4, 1, "same", 0, null)
-        } catch (e: SQLiteConstraintException) {
-            threw = true
+        } catch (e: SQLiteException) {
+            threw = e.message.orEmpty().contains("UNIQUE constraint failed")
         }
         assertTrue("a duplicate (calendar_id, event_uid, instance_ts) must be refused", threw)
     }
@@ -2154,7 +2155,7 @@ class MigrationTest {
     fun `full migration chain 1 to 25 executes without error`() {
         migrateUpToV24()
 
-        Migrations.MIGRATION_24_25.migrate(db)
+        migrate(Migrations.MIGRATION_24_25)
 
         assertTrue(tableExists("recent_changes"))
         assertTrue(tableExists("address_books"))
@@ -2165,7 +2166,7 @@ class MigrationTest {
 
     private fun migrateUpToV25() {
         migrateUpToV24()
-        Migrations.MIGRATION_24_25.migrate(db)
+        migrate(Migrations.MIGRATION_24_25)
     }
 
     @Test
@@ -2177,11 +2178,11 @@ class MigrationTest {
                 "VALUES (9, 'keep', 1, 'Kept', 100, 200, 'UTC', 55, 0, 0)"
         )
 
-        Migrations.MIGRATION_25_26.migrate(db)
+        migrate(Migrations.MIGRATION_25_26)
 
         assertTrue(columnExists("events", "import_source"))
         assertTrue(columnExists("events", "itip_dtstamp"))
-        db.query("SELECT uid, title, start_ts, end_ts, dtstamp, import_source, itip_dtstamp FROM events WHERE id = 9").use { c ->
+        db.queryRows("SELECT uid, title, start_ts, end_ts, dtstamp, import_source, itip_dtstamp FROM events WHERE id = 9").use { c ->
             assertTrue(c.moveToFirst())
             assertEquals("keep", c.getString(0)); assertEquals("Kept", c.getString(1))
             assertEquals(100L, c.getLong(2)); assertEquals(200L, c.getLong(3)); assertEquals(55L, c.getLong(4))
@@ -2195,14 +2196,14 @@ class MigrationTest {
         migrateUpToV25()
         seedV24Calendars()
 
-        Migrations.MIGRATION_25_26.migrate(db)
+        migrate(Migrations.MIGRATION_25_26)
         db.execSQL(
             "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, timezone, dtstamp, created_at, updated_at, " +
                 "import_source, itip_dtstamp) VALUES (5, 'imp', 1, 'I', 0, 0, 'UTC', 0, 0, 0, 'ics_file', 77)"
         )
-        Migrations.MIGRATION_25_26.migrate(db)
+        migrate(Migrations.MIGRATION_25_26)
 
-        db.query("SELECT import_source, itip_dtstamp FROM events WHERE id = 5").use { c ->
+        db.queryRows("SELECT import_source, itip_dtstamp FROM events WHERE id = 5").use { c ->
             assertTrue(c.moveToFirst())
             assertEquals("a re-run keeps the values", "ics_file", c.getString(0)); assertEquals(77L, c.getLong(1))
         }
@@ -2215,7 +2216,7 @@ class MigrationTest {
 
         var threw = false
         try {
-            Migrations.MIGRATION_25_26.migrate(db)
+            migrate(Migrations.MIGRATION_25_26)
         } catch (e: IllegalStateException) {
             threw = true
         }
@@ -2228,7 +2229,7 @@ class MigrationTest {
     fun `full migration chain 1 to 26 executes without error`() {
         migrateUpToV25()
 
-        Migrations.MIGRATION_25_26.migrate(db)
+        migrate(Migrations.MIGRATION_25_26)
 
         assertTrue(tableExists("recent_changes"))
         assertTrue(columnExists("events", "import_source"))
@@ -2238,7 +2239,7 @@ class MigrationTest {
 
     private fun migrateUpToV26() {
         migrateUpToV25()
-        Migrations.MIGRATION_25_26.migrate(db)
+        migrate(Migrations.MIGRATION_25_26)
     }
 
     private fun insertEvent(id: Long, calendarId: Long = 1) {
@@ -2267,11 +2268,11 @@ class MigrationTest {
     }
 
     private fun opIds(): Set<Long> =
-        db.query("SELECT id FROM pending_operations").use { c -> buildSet { while (c.moveToNext()) add(c.getLong(0)) } }
+        db.queryRows("SELECT id FROM pending_operations").use { c -> buildSet { while (c.moveToNext()) add(c.getLong(0)) } }
 
     /** Every column of every row of [table], as text, for an exact before/after comparison. */
     private fun rows(table: String): List<List<String?>> =
-        db.query("SELECT * FROM $table ORDER BY rowid").use { c ->
+        db.queryRows("SELECT * FROM $table ORDER BY rowid").use { c ->
             buildList { while (c.moveToNext()) add((0 until c.columnCount).map { c.getString(it) }) }
         }
 
@@ -2318,7 +2319,7 @@ class MigrationTest {
         val (kept, removed) = seedV26Queue()
         val keptRowsBefore = rows("pending_operations").filter { it[0]!!.toLong() in kept }
 
-        Migrations.MIGRATION_26_27.migrate(db)
+        migrate(Migrations.MIGRATION_26_27)
 
         assertEquals(kept, opIds())
         assertEquals(keptRowsBefore, rows("pending_operations"))
@@ -2331,7 +2332,7 @@ class MigrationTest {
         seedV26Queue()
         val before = listOf("events", "calendars", "accounts", "attendees", "occurrences").map { rows(it) }
 
-        Migrations.MIGRATION_26_27.migrate(db)
+        migrate(Migrations.MIGRATION_26_27)
 
         assertEquals(before, listOf("events", "calendars", "accounts", "attendees", "occurrences").map { rows(it) })
     }
@@ -2341,11 +2342,11 @@ class MigrationTest {
         migrateUpToV26()
         seedV26Queue()
 
-        Migrations.MIGRATION_26_27.migrate(db)
+        migrate(Migrations.MIGRATION_26_27)
         assertTrue(triggerExists(PendingOperationTriggers.EVENT_DELETE_TRIGGER))
         db.execSQL("DELETE FROM events WHERE id = 2")
 
-        assertTrue(db.query("SELECT 1 FROM pending_operations WHERE event_id = 2").use { !it.moveToFirst() })
+        assertTrue(db.queryRows("SELECT 1 FROM pending_operations WHERE event_id = 2").use { !it.moveToFirst() })
     }
 
     @Test
@@ -2353,9 +2354,9 @@ class MigrationTest {
         migrateUpToV26()
         val (kept, _) = seedV26Queue()
 
-        Migrations.MIGRATION_26_27.migrate(db)
+        migrate(Migrations.MIGRATION_26_27)
         val afterFirst = rows("pending_operations")
-        Migrations.MIGRATION_26_27.migrate(db)
+        migrate(Migrations.MIGRATION_26_27)
 
         assertEquals(afterFirst, rows("pending_operations"))
         assertEquals(kept, opIds())
@@ -2372,9 +2373,9 @@ class MigrationTest {
             insertOp(i, eventId = if (i % 2 == 0L) 1 else 10_000 + i, operation = "UPDATE", status = "ABANDONED", lastError = longError)
         }
 
-        Migrations.MIGRATION_26_27.migrate(db)
+        migrate(Migrations.MIGRATION_26_27)
 
-        assertEquals(2_500L, db.query("SELECT COUNT(*) FROM pending_operations").use { it.moveToFirst(); it.getLong(0) })
+        assertEquals(2_500L, db.queryRows("SELECT COUNT(*) FROM pending_operations").use { it.moveToFirst(); it.getLong(0) })
     }
 
     @Test
@@ -2391,7 +2392,7 @@ class MigrationTest {
 
         var threw = false
         try {
-            Migrations.MIGRATION_26_27.migrate(db)
+            migrate(Migrations.MIGRATION_26_27)
         } catch (e: IllegalStateException) {
             threw = true
         }
@@ -2405,7 +2406,7 @@ class MigrationTest {
     fun `full migration chain 1 to 27 executes without error`() {
         migrateUpToV26()
 
-        Migrations.MIGRATION_26_27.migrate(db)
+        migrate(Migrations.MIGRATION_26_27)
 
         assertTrue(triggerExists(PendingOperationTriggers.EVENT_DELETE_TRIGGER))
     }
@@ -2414,7 +2415,7 @@ class MigrationTest {
 
     private fun migrateUpToV27() {
         migrateUpToV26()
-        Migrations.MIGRATION_26_27.migrate(db)
+        migrate(Migrations.MIGRATION_26_27)
     }
 
     /** Creates the v27 FTS4 search index and Room's four sync triggers, as `27.json` lists them. */
@@ -2444,7 +2445,7 @@ class MigrationTest {
     }
 
     private fun searchIndexObjects(): Long =
-        db.query("SELECT COUNT(*) FROM sqlite_master WHERE name LIKE '%events_fts%' OR sql LIKE '%events_fts%'")
+        db.queryRows("SELECT COUNT(*) FROM sqlite_master WHERE name LIKE '%events_fts%' OR sql LIKE '%events_fts%'")
             .use { it.moveToFirst(); it.getLong(0) }
 
     @Test
@@ -2456,7 +2457,7 @@ class MigrationTest {
         val before = listOf("events", "calendars", "accounts", "attendees", "occurrences").map { rows(it) }
         assertTrue(searchIndexObjects() > 0)
 
-        Migrations.MIGRATION_27_28.migrate(db)
+        migrate(Migrations.MIGRATION_27_28)
 
         assertEquals(0L, searchIndexObjects())
         assertEquals(before, listOf("events", "calendars", "accounts", "attendees", "occurrences").map { rows(it) })
@@ -2470,12 +2471,12 @@ class MigrationTest {
         seedV24Calendars()
         insertEvent(1)
 
-        Migrations.MIGRATION_27_28.migrate(db)
+        migrate(Migrations.MIGRATION_27_28)
 
         insertEvent(2)
         db.execSQL("UPDATE events SET title = 'Renamed' WHERE id = 1")
         db.execSQL("DELETE FROM events WHERE id = 2")
-        val titles = db.query("SELECT title FROM events").use { c -> buildList { while (c.moveToNext()) add(c.getString(0)) } }
+        val titles = db.queryRows("SELECT title FROM events").use { c -> buildList { while (c.moveToNext()) add(c.getString(0)) } }
         assertEquals(listOf("Renamed"), titles)
     }
 
@@ -2486,8 +2487,8 @@ class MigrationTest {
         insertEvent(1)
         val before = rows("events")
 
-        Migrations.MIGRATION_27_28.migrate(db)
-        Migrations.MIGRATION_27_28.migrate(db)
+        migrate(Migrations.MIGRATION_27_28)
+        migrate(Migrations.MIGRATION_27_28)
 
         assertEquals(0L, searchIndexObjects())
         assertEquals(before, rows("events"))
@@ -2503,7 +2504,7 @@ class MigrationTest {
         )
         seedV24Calendars()
 
-        Migrations.MIGRATION_27_28.migrate(db)
+        migrate(Migrations.MIGRATION_27_28)
 
         assertFalse(triggerExists("legacy_events_search_sync"))
         assertEquals(0L, searchIndexObjects())
@@ -2514,7 +2515,7 @@ class MigrationTest {
 
     @Test
     fun `all migrations array contains expected migrations`() {
-        assertEquals(26, Migrations.ALL_MIGRATIONS.size)
+        assertEquals(27, Migrations.ALL_MIGRATIONS.size)
     }
 
     @Test
@@ -2573,16 +2574,22 @@ class MigrationTest {
         assertEquals(27, migrations[24].endVersion)
         assertEquals(27, migrations[25].startVersion)
         assertEquals(28, migrations[25].endVersion)
+        assertEquals(28, migrations[26].startVersion)
+        assertEquals(29, migrations[26].endVersion)
     }
 
     @Test
     fun `migration versions form valid chain with gaps`() {
         val migrations = Migrations.ALL_MIGRATIONS.toList()
-        // Manual: 1→2, 2→3, then 4→5 through 27→28 (3→4 is the AutoMigration)
+        // Manual: 1→2, 2→3, then 4→5 through 28→29 (3→4 is the AutoMigration)
         assertTrue(migrations[0].endVersion == migrations[1].startVersion) // 2
         assertTrue(migrations[2].startVersion == 4) // gap at 3→4
         for (i in 2 until migrations.size - 1) {
             assertTrue(migrations[i].endVersion == migrations[i + 1].startVersion)
         }
+    }
+
+    private companion object {
+        const val DB_NAME = "migration-test.db"
     }
 }

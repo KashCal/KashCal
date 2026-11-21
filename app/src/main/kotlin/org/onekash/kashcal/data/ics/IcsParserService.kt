@@ -33,18 +33,30 @@ object IcsParserService {
             content.contains("END:VCALENDAR")
     }
 
+    /** What [parseFeed] read: the kept [events] and [parsedCount], the events read in all. */
+    data class ParsedFeed(val events: List<Event>, val parsedCount: Int)
+
+    /** Returns [parseFeed]'s events. */
+    fun parseIcsContent(
+        content: String,
+        calendarId: Long,
+        subscriptionId: Long
+    ): List<Event> = parseFeed(content, calendarId, subscriptionId).events
+
     /**
-     * Parses [content] into events, without CANCELLED ones; returns an empty list if parsing fails.
+     * Parses [content] into events without the CANCELLED ones, and counts every event read
+     * before they were dropped (0 when parsing fails), so a feed of only cancelled events isn't
+     * taken for one that failed to parse.
      *
      * @param calendarId assigned to every parsed event.
      * @param subscriptionId builds each event's `caldavUrl` source key
      *   ([IcsSubscription.eventSourcePrefix] plus the event's import id).
      */
-    fun parseIcsContent(
+    fun parseFeed(
         content: String,
         calendarId: Long,
         subscriptionId: Long
-    ): List<Event> {
+    ): ParsedFeed {
         val result = parser.parseAllEvents(content)
         return when (result) {
             is ParseResult.Success -> {
@@ -62,11 +74,11 @@ object IcsParserService {
                         ).event
                     }
                 Log.d(TAG, "Parsed ${events.size} events from ICS (filtered ${result.value.size - events.size} cancelled)")
-                events
+                ParsedFeed(events, result.value.size)
             }
             is ParseResult.Error -> {
                 Log.e(TAG, "Failed to parse ICS content: ${result.error.message}")
-                emptyList()
+                ParsedFeed(emptyList(), 0)
             }
         }
     }
@@ -81,7 +93,7 @@ object IcsParserService {
      * (they describe a server's delivery, not this import). An exception is mapped with its
      * group's master DTSTART so its RECURRENCE-ID normalizes as the pull's does.
      *
-     * Every component of a group carries the group's text from the file as its stored copy
+     * Every component of a group carries the group's text from the file as [ImportedComponent.ics]
      * ([ImportedCopy]; the rules for a file's copy are on [Event.holdsFileCopy]). A group whose
      * copy doesn't re-parse to the same (UID, RECURRENCE-ID) set, or whose copy can't be built,
      * gets none and imports from its fields alone.
@@ -129,6 +141,7 @@ object IcsParserService {
                         )
                     },
                     thisAndFuture = recurrenceDigits != null && "$uid|$recurrenceDigits" in thisAndFuture,
+                    ics = mapped.ics,
                 )
             }
             ImportGroup(

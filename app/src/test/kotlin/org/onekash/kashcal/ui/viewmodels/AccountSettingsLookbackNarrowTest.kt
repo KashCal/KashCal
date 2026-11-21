@@ -1,8 +1,8 @@
 package org.onekash.kashcal.ui.viewmodels
 
 import android.content.Context
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -64,6 +64,7 @@ import org.onekash.kashcal.sync.strategy.PullResult
 import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.sync.strategy.PushResult
 import org.onekash.kashcal.sync.strategy.PushStrategy
+import org.onekash.kashcal.testutil.TestDatabases
 import org.onekash.kashcal.ui.permission.FakePermissionChecker
 import org.onekash.kashcal.widget.WidgetUpdateManager
 import org.robolectric.RobolectricTestRunner
@@ -135,7 +136,7 @@ class AccountSettingsLookbackNarrowTest {
         TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
         Dispatchers.setMain(Dispatchers.Unconfined)
         context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java).allowMainThreadQueries().build()
+        db = TestDatabases.inMemory(context).allowMainThreadQueries().build()
         dataStoreScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
         dataStoreFile = File(context.filesDir, "lookback_narrow_${System.nanoTime()}.preferences_pb")
         dataStore = KashCalDataStore(context, PreferenceDataStoreFactory.create(scope = dataStoreScope) { dataStoreFile })
@@ -463,6 +464,7 @@ class AccountSettingsLookbackNarrowTest {
         inviteNotifier = mockk(relaxed = true),
         accountRepository = accountRepository,
         reminderScheduler = mockk(relaxed = true),
+        icsSource = EventIcsStore(db),
     )
 
     private fun pushStrategy() = PushStrategy(
@@ -472,6 +474,7 @@ class AccountSettingsLookbackNarrowTest {
         accountRepository = accountRepository,
         attendeesDao = db.attendeesDao(),
         pendingCancelsDao = db.pendingCancelsDao(),
+        icsSource = EventIcsStore(db),
     )
 
     // ---- fixtures ----

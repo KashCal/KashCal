@@ -51,7 +51,7 @@ fun InvitationCard(
         todayLabel = todayLabel,
         tomorrowLabel = tomorrowLabel
     )
-    val timeLabel = if (invitation.event.isAllDay) {
+    val timeLabel = if (invitation.isAllDay) {
         allDayLabel
     } else {
         WeekViewUtils.formatTimeRange(
@@ -90,7 +90,7 @@ fun InvitationCard(
             }
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = invitation.event.title,
+                text = invitation.title,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 2,
@@ -105,7 +105,7 @@ fun InvitationCard(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            val location = invitation.event.location?.takeIf { it.isNotBlank() }
+            val location = invitation.location?.takeIf { it.isNotBlank() }
             if (location != null) {
                 Text(
                     text = location,
@@ -118,7 +118,7 @@ fun InvitationCard(
             Spacer(modifier = Modifier.height(12.dp))
             RsvpCards(
                 currentUserPartstat = AttendeeStatus.NeedsAction,
-                onRsvp = { status -> onRsvp(invitation.event.id, status) },
+                onRsvp = { status -> onRsvp(invitation.eventId, status) },
                 modifier = Modifier.fillMaxWidth(),
             )
         }

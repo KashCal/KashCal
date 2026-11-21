@@ -57,6 +57,8 @@ object TestDataStoreFactory {
         every { this@mockk.defaultAllDayReminder } returns MutableStateFlow(defaultAllDayReminder)
         every { userInitials } returns MutableStateFlow("")
         every { tagsAboveNotes } returns MutableStateFlow(false)
+        every { recentTimeZones } returns MutableStateFlow(emptyList())
+        coJustRun { addRecentTimeZone(any(), any()) }
         every { syncPastDays } returns MutableStateFlow(KashCalDataStore.DEFAULT_SYNC_PAST_DAYS)
         every { shownShareCardTooltip } returns MutableStateFlow(true)
         every { showWeekNumbers } returns MutableStateFlow(false)

@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.integration.multiserver
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -24,6 +24,7 @@ import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.util.UUID
@@ -37,12 +38,12 @@ import java.util.UUID
  *   fetch, on servers that echo attendees.
  *
  * Covers:
- *  1. Editing the attendee set (add and remove) on a server-synced event, which has rawIcal,
+ *  1. Editing the attendee set (add and remove) on a server-synced event, which has a stored ICS,
  *     reaches the wire; the picker must not be a silent no-op for synced events.
  *  2. Adding an attendee to a synced event with no ORGANIZER ships an ORGANIZER with it.
  *  3. Rescheduling one occurrence of a recurring invite carries the series' attendees on the
  *     bundled override VEVENT (asserted on the client body; nothing is PUT).
- *  4. An empty attendee table means "no authoritative set", so the server's rawIcal attendees
+ *  4. An empty attendee table means "no authoritative set", so the server's stored attendees
  *     are preserved on a cosmetic edit, not silently cleared.
  *
  * Notification safety: on iCloud, Zoho and Mailbox the attendee is another account the user owns
@@ -98,7 +99,7 @@ class MultiServerAttendeeEditRoundTripTest(
     @Before
     fun setup() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries().build()
         occurrenceGenerator = OccurrenceGenerator(
             database, database.occurrencesDao(), database.eventsDao(),
@@ -197,7 +198,7 @@ class MultiServerAttendeeEditRoundTripTest(
         Attendee(eventId = 0, address = "mailto:$addr", displayName = addr.substringBefore('@'),
             role = "REQ-PARTICIPANT", partstat = partstat, sortOrder = order)
 
-    // ---- Editing attendees on a synced (rawIcal) event reaches the wire ----
+    // ---- Editing attendees on a synced (stored ICS) event reaches the wire ----
 
     @Test
     fun `editing attendees on a synced event reaches the wire (add and remove)`() = runBlocking {
@@ -219,7 +220,7 @@ class MultiServerAttendeeEditRoundTripTest(
             attendees = listOf(attendee("jane.synthetic@example.test", order = 0))
         )
         val createBody = IcsPatcher.serialize(
-            created, database.attendeesDao().getForEventOnce(created.id)
+            created, ics = null, attendees = database.attendeesDao().getForEventOnce(created.id)
         )
         val createResult = client!!.createEvent(calendarUrl!!, uid, createBody)
         assumeTrue("create failed on ${config.name}: ${(createResult as? CalDavResult.Error)?.message}",
@@ -233,9 +234,9 @@ class MultiServerAttendeeEditRoundTripTest(
             isLocal = true,
             attendees = listOf(attendee(cross, order = 0))
         )
+        val editRow = database.eventsDao().getById(created.id)!!
         val editBody = IcsPatcher.serialize(
-            database.eventsDao().getById(created.id)!!,
-            database.attendeesDao().getForEventOnce(created.id)
+            editRow, EventIcsStore(database).read(editRow), database.attendeesDao().getForEventOnce(created.id)
         )
 
         // The client body must reflect the edit regardless of server policy.
@@ -278,7 +279,7 @@ class MultiServerAttendeeEditRoundTripTest(
         val uid = "$UID_PREFIX${config.name.lowercase()}-${UUID.randomUUID()}"
 
         // 1. Create a synced event with no organizer and no attendees, the body an event
-        //    created without invitees produces and what lands in Event.rawIcal after it syncs.
+        //    created without invitees produces and what becomes its stored ICS after it syncs.
         val created = eventWriter.createEvent(
             Event(uid = uid, calendarId = calendarId, title = "No-organizer event",
                 startTs = START_MS, endTs = START_MS + 3_600_000L, dtstamp = START_MS,
@@ -286,7 +287,7 @@ class MultiServerAttendeeEditRoundTripTest(
             isLocal = true,
             attendees = null
         )
-        val createBody = IcsPatcher.serialize(created, attendees = null)
+        val createBody = IcsPatcher.serialize(created, ics = null, attendees = null)
         assertFalse("precondition: stored body has no ORGANIZER: ${FixtureRedactor.redact(createBody)}",
             hasOrganizer(createBody))
         val createResult = client!!.createEvent(calendarUrl!!, uid, createBody)
@@ -294,11 +295,12 @@ class MultiServerAttendeeEditRoundTripTest(
             createResult.isSuccess())
         val (url, etag) = createResult.getOrNull()!!
         trackEvent(url, etag)
-        // Store the body as the row's rawIcal, as a pull would: that rawIcal, with no
+        // Store the body as the row's stored ICS, as a pull would: that body, with no
         // ORGANIZER, is what the patch reads.
         database.eventsDao().update(
-            database.eventsDao().getById(created.id)!!.copy(rawIcal = createBody, caldavUrl = url, etag = etag)
+            database.eventsDao().getById(created.id)!!.copy(caldavUrl = url, etag = etag)
         )
+        EventIcsStore(database).write(created.id, createBody)
 
         // 2. The user adds an attendee and the coordinator sets organizerEmail from the
         //    account address; replicate that here.
@@ -307,9 +309,9 @@ class MultiServerAttendeeEditRoundTripTest(
             isLocal = true,
             attendees = listOf(attendee(cross, order = 0))
         )
+        val editRow = database.eventsDao().getById(created.id)!!
         val editBody = IcsPatcher.serialize(
-            database.eventsDao().getById(created.id)!!,
-            database.attendeesDao().getForEventOnce(created.id)
+            editRow, EventIcsStore(database).read(editRow), database.attendeesDao().getForEventOnce(created.id)
         )
 
         // The added ATTENDEE needs an ORGANIZER on the wire, or the resource isn't a scheduling
@@ -365,8 +367,10 @@ class MultiServerAttendeeEditRoundTripTest(
         // carries the attendee on the client body.
         val bundle = IcsPatcher.serializeWithExceptions(
             master = masterRow,
+            masterIcs = EventIcsStore(database).read(masterRow),
             masterAttendees = database.attendeesDao().getForEventOnce(master.id),
-            exceptionsWithAttendees = listOf(exception to database.attendeesDao().getForEventOnce(exception.id))
+            exceptionsWithAttendees = listOf(exception to database.attendeesDao().getForEventOnce(exception.id)),
+            ownIcs = emptyMap()
         )
         val overrideBlock = unfold(bundle).split("BEGIN:VEVENT").drop(1)
             .map { it.substringBefore("END:VEVENT") }
@@ -376,7 +380,7 @@ class MultiServerAttendeeEditRoundTripTest(
         println("EXC-ATT ${config.name}: override VEVENT carries the series attendee")
     }
 
-    // ---- An empty attendee table preserves rawIcal attendees ----
+    // ---- An empty attendee table preserves stored attendees ----
 
     @Test
     fun `empty attendee table preserves server attendees on a cosmetic edit`() = runBlocking {
@@ -408,18 +412,18 @@ class MultiServerAttendeeEditRoundTripTest(
         val (url, etag) = createResult.getOrNull()!!
         trackEvent(url, etag)
 
-        // An event synced before the attendee table existed: the row has the server rawIcal but
-        // an empty attendee table (nothing has backfilled it from rawIcal yet, neither a pull
-        // nor [org.onekash.kashcal.domain.reader.AttendeeBackfill]). A title-only edit must not
-        // strip the rawIcal attendee.
+        // An event synced before the attendee table existed: the row has the server's body as
+        // its stored ICS but an empty attendee table (nothing has backfilled it yet, neither a
+        // pull nor [org.onekash.kashcal.domain.reader.AttendeeBackfill]). A title-only edit must
+        // not strip the stored attendee.
         val event = Event(uid = uid, calendarId = calendarId, title = "Title changed",
             startTs = START_MS, endTs = START_MS + 3_600_000L, dtstamp = START_MS,
-            rawIcal = serverIcs, caldavUrl = url, etag = etag, syncStatus = SyncStatus.SYNCED)
+            caldavUrl = url, etag = etag, syncStatus = SyncStatus.SYNCED)
         // PushStrategy turns an empty table into null, which preserves; this exercises
         // IcsPatcher.serialize with null.
-        val editBody = IcsPatcher.serialize(event, attendees = null)
+        val editBody = IcsPatcher.serialize(event, ics = serverIcs, attendees = null)
 
-        assertTrue("empty table must NOT strip the rawIcal attendee: ${FixtureRedactor.redact(editBody)}",
+        assertTrue("empty table must NOT strip the stored attendee: ${FixtureRedactor.redact(editBody)}",
             attendeeEmails(editBody).contains("jane.synthetic@example.test"))
 
         val updateResult = client!!.updateEvent(url, editBody, etag)

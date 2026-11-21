@@ -1,7 +1,6 @@
 package org.onekash.kashcal.data.ics
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.every
 import io.mockk.mockk
@@ -29,6 +28,7 @@ import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.onekash.kashcal.util.IcsExporter
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -39,11 +39,12 @@ import java.io.File
  * changed occurrence, through single-event and whole-calendar export, and they come back on a
  * re-import.
  *
- * Covers a series stored the way the pull stores it (each VEVENT mapped with the whole resource
- * as its copy) and invitation files imported into an offline calendar, over real Room, the real
- * [EventCoordinator] export reads and the real [IcsExporter]. The rows hold the guests; the
- * stored copy of an imported file contributes none ([Event.holdsFileCopy]), so only the rows can
- * supply them. Run the class alone: Robolectric runs of more than one class hit a native crash.
+ * Covers a series stored the way the pull stores it (each VEVENT mapped, the resource's body
+ * stored once on the series row) and invitation files imported into an offline calendar, over
+ * real Room, the real [EventCoordinator] export reads and the real [IcsExporter]. The rows hold
+ * the guests; the stored copy of an imported file contributes none ([Event.holdsFileCopy]), so
+ * only the rows can supply them. Run the class alone: Robolectric runs of more than one class
+ * hit a native crash.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -66,7 +67,7 @@ class ExportKeepsGuestsTest {
     fun tearDown() = openDbs.forEach { it.close() }
 
     private fun newCoordinator(): Pair<KashCalDatabase, EventCoordinator> {
-        val database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        val database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
             .also { openDbs += it }
@@ -284,6 +285,8 @@ class ExportKeepsGuestsTest {
         val masterIcal = parsed.first { it.recurrenceId == null }
         val master = ICalEventMapper.toEntity(masterIcal, body, calendarId, url, "\"e1\"")
         val masterId = db.eventsDao().insert(master.event)
+        // The pull keeps the resource's body once, on the series row.
+        org.onekash.kashcal.data.db.EventIcsStore(db).write(masterId, master.ics)
         if (withAttendeeRows) db.attendeesDao().replaceForEvent(masterId, master.attendees.map { it.copy(eventId = masterId) })
         parsed.filter { it.recurrenceId != null }.forEach { occurrence ->
             val mapped = ICalEventMapper.toEntity(occurrence, body, calendarId, url, "\"e1\"", masterIcal.dtStart)

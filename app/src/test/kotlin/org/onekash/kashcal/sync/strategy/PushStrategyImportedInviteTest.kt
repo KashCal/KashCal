@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -45,6 +45,7 @@ import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.util.Collections
@@ -142,7 +143,7 @@ class PushStrategyImportedInviteTest {
             Credentials(username = "u", password = "p", serverUrl = base), DefaultQuirks(base)
         )
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .addCallback(PendingOperationTriggers.callback()).allowMainThreadQueries().build()
         generator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
         eventWriter = EventWriter(database, generator)
@@ -161,7 +162,8 @@ class PushStrategyImportedInviteTest {
             pendingOperationsDao = database.pendingOperationsDao(),
             accountRepository = accountRepository,
             attendeesDao = database.attendeesDao(),
-            pendingCancelsDao = database.pendingCancelsDao()
+            pendingCancelsDao = database.pendingCancelsDao(),
+            icsSource = EventIcsStore(database),
         )
     }
 
@@ -228,6 +230,7 @@ class PushStrategyImportedInviteTest {
         // The client stores etags unquoted and quotes them on the wire.
         val mapped = ICalEventMapper.toEntity(master, stored, calendarId, server.url(path).toString(), "e1")
         val id = database.eventsDao().insert(mapped.event.copy(syncStatus = SyncStatus.SYNCED))
+        EventIcsStore(database).write(id, mapped.ics)
         database.attendeesDao().replaceForEvent(id, mapped.attendees.map { it.copy(eventId = id) })
         generator.regenerateOccurrences(database.eventsDao().getById(id)!!)
         return database.eventsDao().getById(id)!!

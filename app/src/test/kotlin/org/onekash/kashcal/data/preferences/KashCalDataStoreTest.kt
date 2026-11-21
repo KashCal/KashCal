@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -521,5 +522,44 @@ class KashCalDataStoreTest {
             dataStore.setDefaultCalendarView(mode.key)
             assertEquals(mode.key, dataStore.getDefaultCalendarView())
         }
+    }
+
+    // ---- recent time zones ----
+
+    @Test
+    fun `recent time zones start empty`() = runTest {
+        assertEquals(emptyList<String>(), dataStore.recentTimeZones.first())
+    }
+
+    @Test
+    fun `a pick goes first and repeats of one zone collapse`() = runTest {
+        dataStore.addRecentTimeZone("Europe/Berlin", "America/Chicago")
+        dataStore.addRecentTimeZone("Asia/Kolkata", "America/Chicago")
+        dataStore.addRecentTimeZone("Asia/Calcutta", "America/Chicago")
+        assertEquals(listOf("Asia/Calcutta", "Europe/Berlin"), dataStore.recentTimeZones.first())
+    }
+
+    @Test
+    fun `recent time zones keep at most five`() = runTest {
+        listOf("Europe/Berlin", "Asia/Tokyo", "Asia/Kolkata", "Europe/London", "Australia/Sydney", "UTC")
+            .forEach { dataStore.addRecentTimeZone(it, "America/Chicago") }
+        assertEquals(
+            listOf("UTC", "Australia/Sydney", "Europe/London", "Asia/Kolkata", "Asia/Tokyo"),
+            dataStore.recentTimeZones.first(),
+        )
+    }
+
+    @Test
+    fun `the device zone and unreadable ids are not recorded`() = runTest {
+        dataStore.addRecentTimeZone("America/Chicago", "America/Chicago")
+        dataStore.addRecentTimeZone("US/Central", "America/Chicago")
+        dataStore.addRecentTimeZone("Somewhere Standard Time", "America/Chicago")
+        assertEquals(emptyList<String>(), dataStore.recentTimeZones.first())
+    }
+
+    @Test
+    fun `junk in the stored value is dropped on read`() = runTest {
+        dataStore.setPreference(PreferencesKeys.RECENT_TIME_ZONES, "Europe/Berlin,,Not/AZone, Asia/Tokyo")
+        assertEquals(listOf("Europe/Berlin", "Asia/Tokyo"), dataStore.recentTimeZones.first())
     }
 }

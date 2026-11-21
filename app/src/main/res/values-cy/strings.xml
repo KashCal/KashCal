@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d arall</string>
     <string name="tags_autocomplete_create_new">Creu «%1$s»</string>
     <string name="cd_tag">Tag: %1$s</string>
+    <string name="tags_show_events_click_label">Dangos digwyddiadau gyda\'r tag hwn</string>
+    <string name="tags_show_events">Dangos digwyddiadau</string>
     <string name="cd_tags_move_menu">Symud tagiau</string>
     <string name="tags_move_above_notes">Symud uwchben nodiadau</string>
     <string name="tags_move_below_notes">Symud islaw nodiadau</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Gweld sesiynau cysoni (48 awr diwethaf)</string>
     <string name="settings_import_subtitle">Ychwanegu digwyddiadau o ffeil ICS at unrhyw galendr</string>
     <string name="settings_birthday_reminder">Atgoffa Pen-blwydd</string>
-    <string name="settings_use_device_timezone">Defnyddio cylchfa amser y ddyfais</string>
     <string name="settings_section_calendars">Calendrau a chyfrifon</string>
     <string name="settings_section_appearance">Golwg</string>
     <string name="settings_section_creating_events">Dewisiadau digwyddiadau</string>
@@ -466,7 +467,6 @@
     <string name="cd_recurring">Ailadroddol</string>
     <string name="cd_enabled">Wedi\'i alluogi</string>
     <string name="cd_sync_error">Gwall cysoni</string>
-    <string name="cd_select_label">Dewis %1$s</string>
     <string name="cd_wheel_picker">Dewisydd olwyn gyda %1$d opsiwn</string>
     <string name="cd_time_entry_keyboard">Nodi\'r union amser</string>
     <string name="time_entry_dialog_title">Nodi amser</string>
@@ -880,6 +880,23 @@
     <string name="label_ends">Yn Gorffen</string>
     <string name="sheet_hint_change_end">Tapiwch ddiwrnod i newid y diwedd</string>
     <string name="label_timezone">Cylchfa amser</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Chwilio am ddinas, gwlad neu gylchfa</string>
+    <string name="timezone_section_this_event">Y digwyddiad hwn</string>
+    <string name="timezone_section_device">Cylchfa amser y ddyfais</string>
+    <string name="timezone_section_recent">Diweddar</string>
+    <string name="timezone_section_all">Pob cylchfa amser</string>
+    <string name="timezone_offsets_on">Gwrthbwysau ar %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">O\'r calendr: %1$s</string>
+    <string name="timezone_shown_in_device_time">Wedi\'i ddangos yn amser y ddyfais</string>
+    <string name="timezone_loading">Yn llwytho cylchfaoedd amser…</string>
+    <string name="timezone_no_match">Dim cylchfa amser yn cyfateb</string>
+    <string name="timezone_no_match_hint">Rhowch gynnig ar ddinas, gwlad neu wrthbwysiad fel +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Rhybuddion</string>
     <string name="label_add_alert">Ychwanegu Rhybudd</string>
     <string name="label_recurrence_never">Byth</string>
@@ -889,7 +906,6 @@
     <string name="label_default_calendar_hint">Bydd digwyddiadau newydd yn cael eu creu yn y calendr hwn</string>
     <string name="label_reminders_truncated">%1$d heb eu dangos (%2$d cyfanswm, uchafswm %3$d y gellir eu golygu)</string>
     <string name="label_found_events">Wedi canfod: %1$d digwyddiad</string>
-    <string name="placeholder_search">Chwilio…</string>
     <string name="settings_search_placeholder">Chwilio gosodiadau…</string>
     <string name="settings_search_no_results">Heb ganfod gosodiadau ar gyfer \"%1$s\"</string>
     <string name="cd_search_settings">Chwilio gosodiadau</string>
@@ -1301,6 +1317,8 @@
     <string name="event_untitled">Digwyddiad heb deitl</string>
     <string name="recurring_this_event">Y digwyddiad hwn</string>
     <string name="recurring_all_events">Pob digwyddiad</string>
+    <string name="recurring_scope_move_not_expressible">Ni all y rheol ailadrodd ddilyn y newid hwn</string>
+    <string name="event_form_move_not_expressible">Ni all y rheol ailadrodd ddilyn y newid hwn. Ni chadwyd dim.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Mynychwyr</string>
@@ -1411,6 +1429,7 @@
     <string name="search_reason_guest">Gwestai:</string>
     <string name="search_keep_typing">Dal ati i deipio i chwilio</string>
     <string name="search_no_matches">Dim digwyddiadau\'n cyfateb i “%1$s”</string>
+    <string name="search_no_events_tagged">Dim digwyddiadau wedi\'u tagio gyda “%1$s”</string>
     <string name="search_lookback_line">Edrych yn Ôl Cysoni: %1$s</string>
     <string name="search_sync_settings">Gosodiadau cysoni</string>
     <string name="cd_search_sync_settings">Agor y gosodiad edrych yn ôl cysoni</string>
@@ -1779,6 +1798,23 @@
     <string name="ics_feed_error_access_denied">Gwrthododd gweinydd y ffrwd hon fynediad.</string>
     <string name="ics_feed_error_too_large">Mae\'r ffrwd galendr hon yn rhy fawr i\'w llwytho i lawr.</string>
     <string name="ics_feed_error_unreadable">Methu dangos digwyddiadau\'r ffrwd hon.</string>
+    <string name="ics_feed_error_event_not_saved">Ni chafodd “%1$s” ei gadw.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="zero">Ni chafodd %1$d digwyddiad eu cadw.</item>
+        <item quantity="one">Ni chafodd %1$d digwyddiad ei gadw.</item>
+        <item quantity="two">Ni chafodd %1$d ddigwyddiad eu cadw.</item>
+        <item quantity="few">Ni chafodd %1$d digwyddiad eu cadw.</item>
+        <item quantity="many">Ni chafodd %1$d digwyddiad eu cadw.</item>
+        <item quantity="other">Ni chafodd %1$d digwyddiad eu cadw.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="zero">Ni chafodd %1$d digwyddiad eu cadw, gan gynnwys “%2$s”.</item>
+        <item quantity="one">Ni chafodd %1$d digwyddiad ei gadw, gan gynnwys “%2$s”.</item>
+        <item quantity="two">Ni chafodd %1$d ddigwyddiad eu cadw, gan gynnwys “%2$s”.</item>
+        <item quantity="few">Ni chafodd %1$d digwyddiad eu cadw, gan gynnwys “%2$s”.</item>
+        <item quantity="many">Ni chafodd %1$d digwyddiad eu cadw, gan gynnwys “%2$s”.</item>
+        <item quantity="other">Ni chafodd %1$d digwyddiad eu cadw, gan gynnwys “%2$s”.</item>
+    </plurals>
     <string name="insights_title">Mewnwelediadau</string>
     <string name="insights_period_this_week">Wythnos</string>
     <string name="insights_period_last_week">Wythnos ddiwethaf</string>

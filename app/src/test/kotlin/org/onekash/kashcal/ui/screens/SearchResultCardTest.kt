@@ -59,11 +59,12 @@ class SearchResultCardTest {
         caldavUrl: String? = null,
         description: String? = null,
         allDay: Boolean = false,
+        tags: List<String>? = null,
     ): SearchHit {
         val end = start + 3_600_000L
         val event = Event(
             id = start, uid = "u$start", calendarId = 1, title = title, startTs = start, endTs = end, dtstamp = 0,
-            rrule = rrule, caldavUrl = caldavUrl, description = description, isAllDay = allDay,
+            rrule = rrule, caldavUrl = caldavUrl, description = description, isAllDay = allDay, categories = tags,
         )
         val day = { t: Long -> java.time.Instant.ofEpochMilli(t).atZone(zone).toLocalDate().let { it.year * 10000 + it.monthValue * 100 + it.dayOfMonth } }
         val occurrence = Occurrence(eventId = event.id, calendarId = 1, startTs = start, endTs = end, startDay = day(start), endDay = day(end))
@@ -108,6 +109,36 @@ class SearchResultCardTest {
         val line = annotated("search_card_reason")
         assertEquals("Guest: Dr. Amara Lee", line.text)
         assertEquals(listOf("Lee"), highlights(line))
+    }
+
+    private fun pillTexts(): List<String> =
+        rule.onAllNodesWithTag("search_card_tags", useUnmergedTree = true).fetchSemanticsNodes().flatMap { node ->
+            node.children.mapNotNull { child ->
+                child.config.getOrElseNullable(SemanticsProperties.Text) { null }?.joinToString { it.text }
+            }
+        }
+
+    @Test
+    fun `a tag search highlights nothing and shows the event's tags, the searched ones first`() {
+        show("#doctor", SearchOutcome(upcoming = listOf(hit("Checkup", ms(today.plusDays(3)), tags = listOf("Family", "Doctor"))).toPersistentList()))
+
+        assertEquals(emptyList<String>(), highlights(annotated("search_card_title")))
+        assertEquals(listOf("Doctor", "Family"), pillTexts())
+    }
+
+    @Test
+    fun `a tag and words highlight the words only`() {
+        show("#doctor check", SearchOutcome(upcoming = listOf(hit("Checkup doctor", ms(today.plusDays(3)), tags = listOf("Doctor"))).toPersistentList()))
+
+        assertEquals(listOf("Check"), highlights(annotated("search_card_title")))
+        assertEquals(listOf("Doctor"), pillTexts())
+    }
+
+    @Test
+    fun `a word search shows no tag pills`() {
+        show("check", SearchOutcome(upcoming = listOf(hit("Checkup", ms(today.plusDays(3)), tags = listOf("Doctor"))).toPersistentList()))
+
+        rule.onNodeWithTag("search_card_tags").assertDoesNotExist()
     }
 
     @Test

@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d మరిన్ని</string>
     <string name="tags_autocomplete_create_new">\"%1$s\" సృష్టించండి</string>
     <string name="cd_tag">ట్యాగ్: %1$s</string>
+    <string name="tags_show_events_click_label">ఈ ట్యాగ్‌తో ఉన్న ఈవెంట్‌లను చూపించు</string>
+    <string name="tags_show_events">ఈవెంట్‌లను చూపించు</string>
     <string name="cd_tags_move_menu">ట్యాగ్‌లను తరలించు</string>
     <string name="tags_move_above_notes">నోట్స్ పైన తరలించు</string>
     <string name="tags_move_below_notes">నోట్స్ కింద తరలించు</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">సింక్ సెషన్‌లు చూడు (గత 48 గంటలు)</string>
     <string name="settings_import_subtitle">ICS ఫైల్ నుండి ఈవెంట్‌లను ఏదైనా క్యాలెండర్‌కు జోడించండి</string>
     <string name="settings_birthday_reminder">పుట్టినరోజు రిమైండర్</string>
-    <string name="settings_use_device_timezone">పరికర టైమ్‌జోన్ ఉపయోగించు</string>
     <string name="settings_section_calendars">క్యాలెండర్లు &amp; ఖాతాలు</string>
     <string name="settings_section_appearance">రూపం</string>
     <string name="settings_section_creating_events">ఈవెంట్ ప్రాధాన్యతలు</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">పునరావృత</string>
     <string name="cd_enabled">ఆన్ చేయబడింది</string>
     <string name="cd_sync_error">సింక్ లోపం</string>
-    <string name="cd_select_label">%1$s ఎంచుకో</string>
     <string name="cd_wheel_picker">%1$d ఎంపికలతో వీల్ పికర్</string>
     <string name="cd_time_entry_keyboard">ఖచ్చితమైన సమయాన్ని నమోదు చేయండి</string>
     <string name="time_entry_dialog_title">సమయాన్ని నమోదు చేయండి</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">ముగింపు</string>
     <string name="sheet_hint_change_end">ముగింపును మార్చడానికి ఒక రోజును నొక్కండి</string>
     <string name="label_timezone">సమయ మండలం</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">నగరం, దేశం లేదా సమయ మండలాన్ని వెతకండి</string>
+    <string name="timezone_section_this_event">ఈ ఈవెంట్</string>
+    <string name="timezone_section_device">పరికర సమయ మండలం</string>
+    <string name="timezone_section_recent">ఇటీవలివి</string>
+    <string name="timezone_section_all">అన్ని సమయ మండలాలు</string>
+    <string name="timezone_offsets_on">%1$s నాటి ఆఫ్‌సెట్‌లు</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">క్యాలెండర్ నుండి: %1$s</string>
+    <string name="timezone_shown_in_device_time">పరికర సమయంలో చూపబడింది</string>
+    <string name="timezone_loading">సమయ మండలాలు లోడ్ అవుతున్నాయి…</string>
+    <string name="timezone_no_match">ఏ సమయ మండలమూ సరిపోలలేదు</string>
+    <string name="timezone_no_match_hint">నగరం, దేశం లేదా +5:30 వంటి ఆఫ్‌సెట్‌ను ప్రయత్నించండి</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">హెచ్చరికలు</string>
     <string name="label_add_alert">హెచ్చరిక జోడించు</string>
     <string name="label_recurrence_never">ఎప్పుడూ కాదు</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">కొత్త ఈవెంట్‌లు ఈ క్యాలెండర్‌లో సృష్టించబడతాయి</string>
     <string name="label_reminders_truncated">%1$d చూపబడలేదు (%2$d మొత్తం, గరిష్టం %3$d మార్చగలవి)</string>
     <string name="label_found_events">కనుగొన్నవి: %1$d ఈవెంట్‌లు</string>
-    <string name="placeholder_search">శోధించు…</string>
     <string name="settings_search_placeholder">సెట్టింగ్‌లను శోధించు…</string>
     <string name="settings_search_no_results">\"%1$s\" కోసం సెట్టింగ్‌లు ఏవీ కనుగొనబడలేదు</string>
     <string name="cd_search_settings">సెట్టింగ్‌లను శోధించు</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">శీర్షిక లేని ఈవెంట్</string>
     <string name="recurring_this_event">ఈ ఈవెంట్</string>
     <string name="recurring_all_events">అన్ని ఈవెంట్‌లు</string>
+    <string name="recurring_scope_move_not_expressible">పునరావృత నియమం ఈ మార్పును అనుసరించలేదు</string>
+    <string name="event_form_move_not_expressible">పునరావృత నియమం ఈ మార్పును అనుసరించలేదు. ఏదీ సేవ్ కాలేదు.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">హాజరయ్యేవారు</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">అతిథి:</string>
     <string name="search_keep_typing">శోధించడానికి టైప్ చేస్తూ ఉండండి</string>
     <string name="search_no_matches">“%1$s”కు సరిపోలే ఈవెంట్‌లు లేవు</string>
+    <string name="search_no_events_tagged">“%1$s” ట్యాగ్ చేసిన ఈవెంట్‌లు లేవు</string>
     <string name="search_lookback_line">సింక్ లుక్‌బ్యాక్: %1$s</string>
     <string name="search_sync_settings">సింక్ సెట్టింగ్‌లు</string>
     <string name="cd_search_sync_settings">సింక్ లుక్‌బ్యాక్ సెట్టింగ్‌ను తెరవండి</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">ఈ ఫీడ్ సర్వర్ ప్రాప్యతను నిరాకరించింది.</string>
     <string name="ics_feed_error_too_large">ఈ క్యాలెండర్ ఫీడ్ డౌన్‌లోడ్ చేయడానికి చాలా పెద్దదిగా ఉంది.</string>
     <string name="ics_feed_error_unreadable">ఈ ఫీడ్‌లోని ఈవెంట్‌లను చూపించలేకపోయింది.</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s” సేవ్ కాలేదు.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d ఈవెంట్ సేవ్ కాలేదు.</item>
+        <item quantity="other">%1$d ఈవెంట్‌లు సేవ్ కాలేదు.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">“%2$s”తో సహా %1$d ఈవెంట్ సేవ్ కాలేదు.</item>
+        <item quantity="other">“%2$s”తో సహా %1$d ఈవెంట్‌లు సేవ్ కాలేదు.</item>
+    </plurals>
     <string name="insights_title">ఇన్‌సైట్స్</string>
     <string name="insights_period_this_week">వారం</string>
     <string name="insights_period_last_week">గత వారం</string>

@@ -1,7 +1,6 @@
 package org.onekash.kashcal.sync.provider.icloud
 
 import android.util.Log
-import androidx.room.Room
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -28,6 +27,7 @@ import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
@@ -55,10 +55,7 @@ class ICloudUrlMigrationTest {
         every { Log.w(any(), any<String>()) } returns 0
         every { Log.e(any(), any<String>()) } returns 0
 
-        database = Room.inMemoryDatabaseBuilder(
-            RuntimeEnvironment.getApplication(),
-            KashCalDatabase::class.java
-        )
+        database = TestDatabases.inMemory(RuntimeEnvironment.getApplication())
             .allowMainThreadQueries()
             .build()
 

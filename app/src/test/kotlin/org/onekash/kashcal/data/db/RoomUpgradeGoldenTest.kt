@@ -18,20 +18,21 @@ import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.search.SearchQuery
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.util.UUID
 
 /**
  * Pins the Room behavior the app relies on, so a Room upgrade that changes it fails here.
- * Written against Room 2.6.1 before the move to 2.8.x. Covers:
+ * Covers:
  * 1. Event search (LIKE on title, location, description and guests)
  * 2. TypeConverters (SyncStatus, List<String>, Map<String, String>)
  * 3. Flow queries and emissions
  * 4. `runInTransaction` rollback and commit
  * 5. Edge cases and null handling
  * 6. RFC 5545/7986 fields (categories, color, url, priority, geo)
- * 7. Database build and TypeConverter validation (Room 2.7.1 fix for b/409804755)
+ * 7. Database build and column type converter validation
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -508,15 +509,15 @@ class RoomUpgradeGoldenTest : BaseDaoTest() {
     }
 
     // ==================== Database Build + TypeConverter Validation ====================
-    // Room 2.7.1 fixed an IndexOutOfBoundsException during TypeConverter validation
-    // (b/409804755). The app uses plain @TypeConverters, not @ProvidedTypeConverter, but these
-    // tests check the database builds and the events-table converters work through Room.
+    // The database builds, which runs Room's converter validation, and the events-table
+    // converters work through Room. The app uses plain @ColumnTypeConverters, not
+    // @ProvidedColumnTypeConverter.
 
     @Test
     fun `golden - database builds without IndexOutOfBoundsException`() {
         // BaseDaoTest.setup() builds the database, so reaching here means Room's
         // TypeConverter validation passed; this makes that implicit coverage explicit.
-        assertTrue("Database should be open", database.isOpen)
+        assertEquals("Database should open and answer", listOf(1L), TestDatabases.query(database, "SELECT 1") { it.getLong(0) })
         assertNotNull("AccountsDao should be accessible", database.accountsDao())
         assertNotNull("CalendarsDao should be accessible", database.calendarsDao())
         assertNotNull("EventsDao should be accessible", database.eventsDao())

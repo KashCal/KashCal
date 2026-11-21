@@ -163,4 +163,11 @@ class TagTokenizerTest {
     fun `trailing hash prefix returns the last in-progress fragment`() {
         assertEquals("b", TagTokenizer.trailingHashPrefix("#a #b"))
     }
+
+    @Test
+    fun `a tag in a script with vowel signs is read whole`() {
+        assertEquals(listOf("काम", "วันหยุด", "திட்டம்"), TagTokenizer.extract("#काम #วันหยุด #திட்டம்").tags)
+        assertEquals("", TagTokenizer.extract("#काम #วันหยุด #திட்டம்").text)
+    }
 }
+

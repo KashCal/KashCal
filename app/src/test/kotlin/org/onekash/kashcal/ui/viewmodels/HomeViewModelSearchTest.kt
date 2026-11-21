@@ -51,7 +51,7 @@ class HomeViewModelSearchTest {
     private val dispatcher = StandardTestDispatcher()
     private lateinit var factory: DeviceHomeViewModelTestFactory
 
-    private data class Call(val words: List<String>, val zone: ZoneId, val range: LongRange?)
+    private data class Call(val words: List<String>, val zone: ZoneId, val range: LongRange?, val tags: List<String> = emptyList())
 
     private val calls = mutableListOf<Call>()
     private val results = mutableListOf<MutableSharedFlow<SearchOutcome>>()
@@ -63,7 +63,7 @@ class HomeViewModelSearchTest {
         factory = DeviceHomeViewModelTestFactory()
         coEvery { factory.accountRepository.getAllAccounts() } returns emptyList()
         every { factory.displayEventRepository.observeSearch(any(), any(), any(), any()) } answers {
-            calls += Call(firstArg<SearchQuery>().words, thirdArg(), arg(3))
+            calls += Call(firstArg<SearchQuery>().words, thirdArg(), arg(3), firstArg<SearchQuery>().tags)
             MutableSharedFlow<SearchOutcome>(replay = 1).also { results += it } as Flow<SearchOutcome>
         }
     }
@@ -88,6 +88,7 @@ class HomeViewModelSearchTest {
         val state = vm.uiState.value
         assertTrue(state.isSearchActive)
         assertEquals("", state.searchQuery)
+        assertTrue("a search opened from the icon focuses the field", state.searchFocusOnOpen)
         assertEquals(SearchResultsState.Idle, state.searchState)
         assertEquals(SearchTab.UPCOMING, state.searchTab)
         assertNull(state.searchDateFilter)
@@ -156,6 +157,81 @@ class HomeViewModelSearchTest {
         advanceUntilIdle()
 
         assertEquals(listOf(listOf("歯")), calls.map { it.words })
+    }
+
+    @Test
+    fun `a tag search opens search on that tag and searches it`() = runTest(dispatcher) {
+        val vm = createViewModel()
+
+        vm.openTagSearch("Team meeting")
+        advanceUntilIdle()
+
+        val state = vm.uiState.value
+        assertTrue(state.isSearchActive)
+        assertFalse("the keyboard stays down", state.searchFocusOnOpen)
+        assertEquals("#\"Team meeting\"", state.searchQuery)
+        assertEquals(listOf(listOf("Team meeting")), calls.map { it.tags })
+        assertEquals(listOf(emptyList<String>()), calls.map { it.words })
+    }
+
+    @Test
+    fun `a tag search replaces the query of an open search`() = runTest(dispatcher) {
+        val vm = createViewModel()
+        vm.activateSearch()
+        vm.updateSearchQuery("dentist")
+        advanceUntilIdle()
+
+        vm.openTagSearch("Doctor")
+        advanceUntilIdle()
+
+        assertEquals("#Doctor", vm.uiState.value.searchQuery)
+        assertEquals(listOf("Doctor"), calls.last().tags)
+    }
+
+    @Test
+    fun `a tag search closes the day sheet it was opened over`() = runTest(dispatcher) {
+        val vm = createViewModel()
+        vm.showDayDetail(System.currentTimeMillis())
+        assertTrue(vm.uiState.value.showDayDetailSheet)
+
+        vm.openTagSearch("Doctor")
+        advanceUntilIdle()
+
+        assertFalse(vm.uiState.value.showDayDetailSheet)
+        assertTrue(vm.uiState.value.isSearchActive)
+    }
+
+    @Test
+    fun `each tag search is counted so the keyboard closes again`() = runTest(dispatcher) {
+        val vm = createViewModel()
+
+        vm.openTagSearch("Doctor")
+        vm.openTagSearch("Family")
+        advanceUntilIdle()
+
+        assertEquals(2, vm.uiState.value.tagSearchOpens)
+        assertFalse(vm.uiState.value.searchFocusOnOpen)
+    }
+
+    @Test
+    fun `a tag no search text can hold opens nothing`() = runTest(dispatcher) {
+        val vm = createViewModel()
+
+        vm.openTagSearch("x\"b")
+        advanceUntilIdle()
+
+        assertFalse(vm.uiState.value.isSearchActive)
+        assertTrue(calls.isEmpty())
+    }
+
+    @Test
+    fun `one tag letter searches`() = runTest(dispatcher) {
+        val vm = createViewModel()
+        vm.activateSearch()
+        vm.updateSearchQuery("#a")
+        advanceUntilIdle()
+
+        assertEquals(listOf(listOf("a")), calls.map { it.tags })
     }
 
     @Test
@@ -268,7 +344,7 @@ class HomeViewModelSearchTest {
     fun `each search logs one timing line without the query text`() = runTest(dispatcher) {
         val vm = createViewModel()
         vm.activateSearch()
-        vm.updateSearchQuery("dermatology clinic")
+        vm.updateSearchQuery("dermatology clinic #health")
         advanceUntilIdle()
         results.single().emit(outcome(timing = SearchTiming(roomMs = 12, deviceMs = 7, totalMs = 30, coverageMs = 40)))
         results.single().emit(outcome())
@@ -279,6 +355,8 @@ class HomeViewModelSearchTest {
         val line = lines.single()
         assertEquals(Log.INFO, line.type)
         assertTrue(line.msg, line.msg.contains("words=2"))
+        assertTrue(line.msg, line.msg.contains("tags=1"))
+        assertFalse(line.msg, line.msg.contains("health"))
         assertTrue(line.msg, line.msg.contains("room=12ms"))
         assertTrue(line.msg, line.msg.contains("device=7ms"))
         assertTrue(line.msg, Regex("total=\\d+ms").containsMatchIn(line.msg))

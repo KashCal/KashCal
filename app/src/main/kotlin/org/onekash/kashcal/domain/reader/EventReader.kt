@@ -9,6 +9,10 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import android.util.Log
+import org.onekash.kashcal.data.db.EventIcsSource
+import org.onekash.kashcal.data.db.EventIcsStore
+import org.onekash.kashcal.data.db.IcsPartsCorrupt
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.EventSearchSql
 import org.onekash.kashcal.data.db.dao.EventWithOccurrenceAndColor
@@ -38,7 +42,8 @@ import javax.inject.Singleton
  */
 @Singleton
 class EventReader @Inject constructor(
-    private val database: KashCalDatabase
+    private val database: KashCalDatabase,
+    private val icsSource: EventIcsSource = EventIcsStore(database),
 ) {
     private val eventsDao by lazy { database.eventsDao() }
     private val occurrencesDao by lazy { database.occurrencesDao() }
@@ -152,8 +157,30 @@ class EventReader @Inject constructor(
     // ========== Attendee Lookups ==========
 
     /**
+     * Returns [event]'s stored ICS ([EventIcsSource.read]), or null when it has none or its
+     * stored pieces can't be read, which is logged; for callers that fall back to the row's
+     * fields.
+     */
+    suspend fun getStoredIcsOrNull(event: Event): String? = try {
+        icsSource.read(event)
+    } catch (e: IcsPartsCorrupt) {
+        Log.w("EventReader", "Stored ICS of event ${event.id} unreadable: ${e.message}")
+        null
+    }
+
+    /**
+     * Returns the stored ICS an export of [event] and its [exceptions] patches, by row id:
+     * [event]'s as [EventIcsSource.read] gives it (its own, else its series'), and each
+     * exception's own. Rows without one are absent.
+     */
+    suspend fun getIcsForExport(event: Event, exceptions: List<Event>): Map<Long, String> = buildMap {
+        icsSource.read(event)?.let { put(event.id, it) }
+        for (exception in exceptions) icsSource.readOwn(exception.id)?.let { put(exception.id, it) }
+    }
+
+    /**
      * Observes one event's attendee rows; empty when none are stored. [AttendeeBackfill] fills
-     * the rows from [Event.rawIcal] for an event the pull skipped on an unchanged etag.
+     * the rows from the stored ICS for an event the pull skipped on an unchanged etag.
      */
     fun getAttendeesForEvent(eventId: Long): Flow<List<Attendee>> =
         attendeesDao.getForEvent(eventId).distinctUntilChanged()
@@ -194,10 +221,10 @@ class EventReader @Inject constructor(
             eventsDao.getMasterEventsWithFutureOccurrenceFlow(now),
             accountsDao.getAll(),
             calendarsDao.getAll()
-        ) { eventsWithNext, accounts, calendars ->
-            Triple(eventsWithNext, accounts, calendars)
-        }.flatMapLatest { (eventsWithNext, accounts, calendars) ->
-            val eventIds = eventsWithNext.map { it.event.id }
+        ) { invitationRows, accounts, calendars ->
+            Triple(invitationRows, accounts, calendars)
+        }.flatMapLatest { (invitationRows, accounts, calendars) ->
+            val eventIds = invitationRows.map { it.id }
             val attendeesFlow: Flow<List<Attendee>> = if (eventIds.isEmpty()) {
                 flowOf(emptyList())
             } else {
@@ -205,7 +232,7 @@ class EventReader @Inject constructor(
             }
             attendeesFlow.map { needsActionRows ->
                 buildPendingInvitations(
-                    eventsWithNext = eventsWithNext,
+                    invitationRows = invitationRows,
                     needsActionAttendees = needsActionRows,
                     accountsById = accounts.associateBy { it.id },
                     calendarsById = calendars.associateBy { it.id }

@@ -483,6 +483,8 @@ class ContactBirthdayRepositoryTest {
         assertEquals(ContactEventUtils.YEARLY_RRULE, event.rrule)
         assertTrue(event.isAllDay)
         assertNull(event.reminders)
+        // A birthday carries no tags, so a tag search never lists it.
+        assertNull(event.categories)
     }
 
     /**

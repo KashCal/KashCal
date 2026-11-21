@@ -1,6 +1,5 @@
 package org.onekash.kashcal.domain.reader
 
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.every
@@ -25,6 +24,7 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.onekash.kashcal.ui.components.buildAgendaListModel
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -55,7 +55,7 @@ class DisplayEventRepositoryZoneChangeTest {
     fun setUp() {
         savedZone = TimeZone.getDefault()
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
         generator = OccurrenceGenerator(

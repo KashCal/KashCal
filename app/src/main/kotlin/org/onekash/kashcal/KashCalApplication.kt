@@ -12,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.onekash.icaldav.model.ICalDateTime
+import org.onekash.kashcal.util.resolveWindowsZone
 import org.onekash.kashcal.calendarbackup.CalendarBackupNotifications
 import org.onekash.kashcal.calendarbackup.CalendarBackupReconciler
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderManager
@@ -37,7 +38,6 @@ import org.onekash.kashcal.ui.appicon.ForegroundActivityTracker
 import org.onekash.kashcal.util.JobSchedulerIds
 import org.onekash.kashcal.widget.WidgetPreviewRegistrar
 import org.onekash.kashcal.widget.WidgetUpdateManager
-import java.time.ZoneId
 import javax.inject.Inject
 
 /**
@@ -148,12 +148,7 @@ class KashCalApplication : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
 
-        // Resolve Windows zone names ("Eastern Standard Time" to America/New_York) with Android
-        // ICU, which follows CLDR. The icaldav library's properties file is the JVM fallback.
-        ICalDateTime.customTimezoneResolver = { tzid ->
-            android.icu.util.TimeZone.getIDForWindowsID(tzid, null)
-                ?.let { try { ZoneId.of(it) } catch (_: Exception) { null } }
-        }
+        ICalDateTime.customTimezoneResolver = ::resolveWindowsZone
 
         handleAppUpgrade()
 

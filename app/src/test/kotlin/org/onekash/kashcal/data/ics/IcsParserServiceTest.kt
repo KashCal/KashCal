@@ -116,6 +116,32 @@ class IcsParserServiceTest {
     }
 
     @Test
+    fun `a feed reports how many events it read before dropping CANCELLED ones`() {
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            BEGIN:VEVENT
+            UID:a@test.com
+            DTSTART:20231215T140000Z
+            DTEND:20231215T150000Z
+            STATUS:CANCELLED
+            END:VEVENT
+            BEGIN:VEVENT
+            UID:b@test.com
+            DTSTART:20231216T140000Z
+            DTEND:20231216T150000Z
+            STATUS:CANCELLED
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val feed = IcsParserService.parseFeed(ics, CALENDAR_ID, SUBSCRIPTION_ID)
+
+        assertEquals(2, feed.parsedCount)
+        assertTrue(feed.events.isEmpty())
+    }
+
+    @Test
     fun `filters CANCELLED exception events`() {
         val ics = """
             BEGIN:VCALENDAR

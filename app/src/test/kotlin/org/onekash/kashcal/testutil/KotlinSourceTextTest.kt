@@ -155,4 +155,14 @@ class KotlinSourceTextTest {
     fun `references refuse a source the reader lost track of`() {
         KotlinSourceText.references("val a = \"unterminated org.x.Y", Regex("org"))
     }
+
+    @Test
+    fun `commentFreeLines blanks comments and keeps string contents`() {
+        val lines = KotlinSourceText.commentFreeLines(
+            "@Query(\"SELECT * FROM t // not a comment\") // dropped\n/* gone */ val s = \"\"\"raw t\"\"\"\nval c = 'x'"
+        )
+        assertEquals("@Query(\"SELECT * FROM t // not a comment\")", lines[0].trim())
+        assertEquals("val s = \"\"\"raw t\"\"\"", lines[1].trim())
+        assertEquals("val c = 'x'", lines[2].trim())
+    }
 }

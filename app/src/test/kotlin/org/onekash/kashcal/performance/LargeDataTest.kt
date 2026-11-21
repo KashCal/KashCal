@@ -1,7 +1,6 @@
 package org.onekash.kashcal.performance
 
 import android.util.Log
-import androidx.room.Room
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
@@ -22,6 +21,7 @@ import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.search.SearchQuery
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
@@ -52,10 +52,7 @@ class LargeDataTest {
         every { Log.w(any(), any<String>()) } returns 0
         every { Log.e(any(), any<String>()) } returns 0
 
-        database = Room.inMemoryDatabaseBuilder(
-            RuntimeEnvironment.getApplication(),
-            KashCalDatabase::class.java
-        )
+        database = TestDatabases.inMemory(RuntimeEnvironment.getApplication())
             .allowMainThreadQueries()
             .build()
 

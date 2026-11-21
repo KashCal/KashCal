@@ -37,6 +37,7 @@ import org.robolectric.annotation.Config
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.UUID
+import org.onekash.kashcal.testutil.TestDatabases
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -116,7 +117,7 @@ class LocalCalendarDeleteTest {
     }
 
     private fun rowsInCalendar(table: String, calendarId: Long): Int =
-        db.query("SELECT COUNT(*) FROM $table WHERE calendar_id = ?", arrayOf(calendarId)).use {
+        TestDatabases.raw(db).query("SELECT COUNT(*) FROM $table WHERE calendar_id = ?", arrayOf(calendarId)).use {
             it.moveToFirst()
             it.getInt(0)
         }
@@ -243,7 +244,7 @@ class LocalCalendarDeleteTest {
     fun `a failed row delete leaves events, reminders, alarms and the default as they were`() = runBlocking {
         val seeded = seed(db.insertOfflineCalendar("Work"))
         fixture.dataStore.setDefaultCalendar(DefaultCalendar.Room(seeded.calendarId))
-        db.openHelper.writableDatabase.execSQL(
+        TestDatabases.raw(db).execSQL(
             "CREATE TRIGGER fail_cal_delete BEFORE DELETE ON calendars WHEN OLD.id = ${seeded.calendarId} " +
                 "BEGIN SELECT RAISE(ABORT, 'test'); END"
         )

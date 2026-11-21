@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d lainnya</string>
     <string name="tags_autocomplete_create_new">Buat \"%1$s\"</string>
     <string name="cd_tag">Tag: %1$s</string>
+    <string name="tags_show_events_click_label">Tampilkan acara dengan tag ini</string>
+    <string name="tags_show_events">Tampilkan acara</string>
     <string name="cd_tags_move_menu">Pindahkan tag</string>
     <string name="tags_move_above_notes">Pindahkan ke atas catatan</string>
     <string name="tags_move_below_notes">Pindahkan ke bawah catatan</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Lihat sesi sinkronisasi (48 jam terakhir)</string>
     <string name="settings_import_subtitle">Tambahkan acara dari file ICS ke kalender mana pun</string>
     <string name="settings_birthday_reminder">Pengingat Ulang Tahun</string>
-    <string name="settings_use_device_timezone">Gunakan zona waktu perangkat</string>
     <string name="settings_section_calendars">Kalender &amp; akun</string>
     <string name="settings_section_appearance">Tampilan</string>
     <string name="settings_section_creating_events">Preferensi acara</string>
@@ -461,7 +462,6 @@
     <string name="cd_recurring">Berulang</string>
     <string name="cd_enabled">Diaktifkan</string>
     <string name="cd_sync_error">Kesalahan sinkronisasi</string>
-    <string name="cd_select_label">Pilih %1$s</string>
     <string name="cd_wheel_picker">Pemilih roda dengan %1$d opsi</string>
     <string name="cd_time_entry_keyboard">Masukkan waktu persis</string>
     <string name="time_entry_dialog_title">Masukkan waktu</string>
@@ -825,6 +825,23 @@
     <string name="label_ends">Berakhir</string>
     <string name="sheet_hint_change_end">Ketuk hari untuk mengubah akhir</string>
     <string name="label_timezone">Zona waktu</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Cari kota, negara, atau zona</string>
+    <string name="timezone_section_this_event">Acara ini</string>
+    <string name="timezone_section_device">Zona waktu perangkat</string>
+    <string name="timezone_section_recent">Terbaru</string>
+    <string name="timezone_section_all">Semua zona waktu</string>
+    <string name="timezone_offsets_on">Selisih waktu pada %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Dari kalender: %1$s</string>
+    <string name="timezone_shown_in_device_time">Ditampilkan dalam waktu perangkat</string>
+    <string name="timezone_loading">Memuat zona waktu…</string>
+    <string name="timezone_no_match">Tidak ada zona waktu yang cocok</string>
+    <string name="timezone_no_match_hint">Coba kota, negara, atau selisih waktu seperti +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Peringatan</string>
     <string name="label_add_alert">Tambah Peringatan</string>
     <string name="label_recurrence_never">Tidak pernah</string>
@@ -834,7 +851,6 @@
     <string name="label_default_calendar_hint">Acara baru akan dibuat di kalender ini</string>
     <string name="label_reminders_truncated">%1$d tidak ditampilkan (%2$d total, maks %3$d dapat diedit)</string>
     <string name="label_found_events">Ditemukan: %1$d acara</string>
-    <string name="placeholder_search">Cari…</string>
     <string name="settings_search_placeholder">Cari pengaturan…</string>
     <string name="settings_search_no_results">Tidak ada pengaturan ditemukan untuk \"%1$s\"</string>
     <string name="cd_search_settings">Cari pengaturan</string>
@@ -1046,6 +1062,8 @@
     <string name="event_untitled">Acara tanpa judul</string>
     <string name="recurring_this_event">Acara ini</string>
     <string name="recurring_all_events">Semua acara</string>
+    <string name="recurring_scope_move_not_expressible">Aturan pengulangan tidak dapat mengikuti perubahan ini</string>
+    <string name="event_form_move_not_expressible">Aturan pengulangan tidak dapat mengikuti perubahan ini. Tidak ada yang disimpan.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Peserta</string>
@@ -1121,6 +1139,7 @@
     <string name="search_reason_guest">Tamu:</string>
     <string name="search_keep_typing">Terus ketik untuk mencari</string>
     <string name="search_no_matches">Tidak ada acara yang cocok dengan “%1$s”</string>
+    <string name="search_no_events_tagged">Tidak ada acara dengan tag “%1$s”</string>
     <string name="search_lookback_line">Rentang Sinkronisasi Mundur: %1$s</string>
     <string name="search_sync_settings">Pengaturan sinkronisasi</string>
     <string name="cd_search_sync_settings">Buka pengaturan rentang sinkronisasi mundur</string>
@@ -1399,6 +1418,13 @@
     <string name="ics_feed_error_access_denied">Server umpan ini menolak akses.</string>
     <string name="ics_feed_error_too_large">Umpan kalender ini terlalu besar untuk diunduh.</string>
     <string name="ics_feed_error_unreadable">Acara umpan ini tidak dapat ditampilkan.</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s” tidak disimpan.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="other">%1$d acara tidak disimpan.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="other">%1$d acara tidak disimpan, termasuk “%2$s”.</item>
+    </plurals>
     <string name="insights_title">Wawasan</string>
     <string name="insights_period_this_week">Minggu</string>
     <string name="insights_period_last_week">Minggu lalu</string>

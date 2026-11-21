@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -36,6 +36,7 @@ import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.Instant
@@ -121,7 +122,7 @@ class PushStrategyAttendeeCancelTest {
         val base = server.url("/").toString()
         client = OkHttpCalDavClientFactory().createClient(Credentials(username = "u", password = "p", serverUrl = base), DefaultQuirks(base))
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .addCallback(PendingOperationTriggers.callback()).allowMainThreadQueries().build()
         occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
         eventWriter = EventWriter(database, occurrenceGenerator)
@@ -138,7 +139,8 @@ class PushStrategyAttendeeCancelTest {
             pendingOperationsDao = database.pendingOperationsDao(),
             accountRepository = accountRepository,
             attendeesDao = database.attendeesDao(),
-            pendingCancelsDao = database.pendingCancelsDao()
+            pendingCancelsDao = database.pendingCancelsDao(),
+            icsSource = EventIcsStore(database),
         )
         seedPulled()
     }
@@ -149,13 +151,14 @@ class PushStrategyAttendeeCancelTest {
         server.shutdown()
     }
 
-    /** Stores the server copy the way pull does: every row carries the body, URL and etag. */
+    /** Stores the server copy as pull does: each row the URL and etag, the series the body. */
     private suspend fun seedPulled() {
         val url = server.url(path).toString()
         val parsed = ICalParser().parseAllEvents(resource).getOrNull()!!
         val series = parsed.single { it.recurrenceId == null }
         val mapped = ICalEventMapper.toEntity(series, resource, calendarId, url, "e1")
         masterId = database.eventsDao().insert(mapped.event)
+        EventIcsStore(database).write(masterId, mapped.ics)
         database.attendeesDao().replaceForEvent(masterId, mapped.attendees.map { it.copy(eventId = masterId) })
         occurrenceGenerator.regenerateOccurrences(database.eventsDao().getById(masterId)!!)
         val change = parsed.single { it.recurrenceId != null }
@@ -178,7 +181,7 @@ class PushStrategyAttendeeCancelTest {
         assertEquals(1, puts.size)
         assertTrue(statuses(puts.single()).values.all { it == "CANCELLED" })
         assertTrue("SEQUENCE as the server holds it", puts.single().contains("SEQUENCE:1"))
-        assertTrue(rows().all { it.status == "CANCELLED" && it.rawIcal == puts.single() })
+        assertTrue(rows().all { it.status == "CANCELLED" && EventIcsStore(database).read(it) == puts.single() })
         assertTrue(database.pendingOperationsDao().getForEvent(masterId).isEmpty())
     }
 
@@ -228,7 +231,7 @@ class PushStrategyAttendeeCancelTest {
 
     @Test
     fun `a series still waiting for its create queues no cancel`() = runTest {
-        database.openHelper.writableDatabase.execSQL("UPDATE events SET sync_status = 'PENDING_CREATE' WHERE id = $masterId")
+        TestDatabases.raw(database).execSQL("UPDATE events SET sync_status = 'PENDING_CREATE' WHERE id = $masterId")
 
         eventWriter.applyImportedCancel(masterId, null, 2, 5L, isLocal = false)
 

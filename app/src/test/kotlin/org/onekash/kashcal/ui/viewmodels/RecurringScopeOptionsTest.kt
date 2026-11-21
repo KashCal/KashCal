@@ -49,6 +49,39 @@ class RecurringScopeOptionsTest {
         resources = resources,
     ).associate { it.scope to it.enabled }
 
+    // ========== a move the repeat rule can't follow ==========
+
+    private fun blockedOptions(blocked: Set<EditScope>?) = computeEditScopeOptions(
+        context = ctx(),
+        originalRrule = "FREQ=WEEKLY;COUNT=10",
+        currentRrule = "FREQ=WEEKLY;COUNT=10",
+        resources = resources,
+        blockedScopes = blocked,
+    ).associateBy { it.scope }
+
+    @Test
+    fun `a blocked series scope is disabled with the reason`() {
+        val options = blockedOptions(setOf(EditScope.ALL_EVENTS))
+        val reason = resources.getString(org.onekash.kashcal.R.string.recurring_scope_move_not_expressible)
+
+        assertFalse(options.getValue(EditScope.ALL_EVENTS).enabled)
+        assertEquals(reason, options.getValue(EditScope.ALL_EVENTS).reason)
+        assertTrue(options.getValue(EditScope.THIS_AND_FUTURE).enabled)
+        assertEquals(null, options.getValue(EditScope.THIS_AND_FUTURE).reason)
+        assertTrue(options.getValue(EditScope.THIS_EVENT).enabled)
+    }
+
+    @Test
+    fun `while the check runs both series scopes are disabled without a reason`() {
+        val options = blockedOptions(null)
+
+        assertFalse(options.getValue(EditScope.ALL_EVENTS).enabled)
+        assertFalse(options.getValue(EditScope.THIS_AND_FUTURE).enabled)
+        assertEquals(null, options.getValue(EditScope.ALL_EVENTS).reason)
+        assertEquals(null, options.getValue(EditScope.THIS_AND_FUTURE).reason)
+        assertTrue(options.getValue(EditScope.THIS_EVENT).enabled)
+    }
+
     // ========== a changed date on a later occurrence ==========
 
     @Test

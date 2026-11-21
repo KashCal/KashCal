@@ -1,7 +1,6 @@
 package org.onekash.kashcal.domain.writer
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.WorkManager
 import io.mockk.coEvery
@@ -29,6 +28,7 @@ import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.sync.adapter.ContactSystemAccountRegistrar
 import org.onekash.kashcal.sync.contacts.FakeContactsProviderRepository
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -51,7 +51,7 @@ class EventDeleteDropsQueuedOperationsTest {
     @Before
     fun setUp() = runTest {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .addCallback(PendingOperationTriggers.callback())
             .allowMainThreadQueries()
             .build()
@@ -112,15 +112,15 @@ class EventDeleteDropsQueuedOperationsTest {
     // ==================== Fresh installs ====================
 
     @Test
-    fun `the trigger callback and the app's test callback both install the trigger`() {
+    fun `the trigger callback and the app's create callback both install the trigger`() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        assertTrue(PendingOperationTriggers.exists(database.openHelper.readableDatabase))
-        val withAppCallback = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        assertTrue(TestDatabases.triggerExists(database, PendingOperationTriggers.EVENT_DELETE_TRIGGER))
+        val withAppCallback = TestDatabases.inMemory(context)
             .addCallback(KashCalDatabase.testCallback())
             .allowMainThreadQueries()
             .build()
         try {
-            assertTrue(PendingOperationTriggers.exists(withAppCallback.openHelper.readableDatabase))
+            assertTrue(TestDatabases.triggerExists(withAppCallback, PendingOperationTriggers.EVENT_DELETE_TRIGGER))
         } finally {
             withAppCallback.close()
         }

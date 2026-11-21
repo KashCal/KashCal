@@ -30,6 +30,13 @@ object PreferencesKeys {
     /** Render the event form's tag row above the notes/attendees block. */
     val TAGS_ABOVE_NOTES = booleanPreferencesKey("tags_above_notes")
 
+    /**
+     * Zones picked in the event form's time zone sheet, newest first, joined with commas (a zone
+     * id never contains one); read by [KashCalDataStore.recentTimeZones], written by
+     * [KashCalDataStore.addRecentTimeZone].
+     */
+    val RECENT_TIME_ZONES = stringPreferencesKey("recent_time_zones")
+
     /** Shows events the user declined. */
     val SHOW_DECLINED_EVENTS = booleanPreferencesKey("show_declined_events")
 

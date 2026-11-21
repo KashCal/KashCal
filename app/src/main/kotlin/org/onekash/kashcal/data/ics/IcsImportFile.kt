@@ -43,11 +43,15 @@ data class ImportedAttendee(
  *
  * @param thisAndFuture true when its RECURRENCE-ID carries RANGE=THISANDFUTURE, which import
  *   doesn't apply.
+ * @param ics the group's text from the file, the stored ICS an import keeps
+ *   ([org.onekash.kashcal.data.ics.ImportedCopy]); the same for every component of a group, null
+ *   when the group's text couldn't be verified.
  */
 data class ImportedComponent(
     val event: Event,
     val attendees: List<ImportedAttendee>,
     val thisAndFuture: Boolean = false,
+    val ics: String? = null,
 ) {
     val isCancelled: Boolean get() = event.status == STATUS_CANCELLED
     val isInstance: Boolean get() = event.originalInstanceTime != null

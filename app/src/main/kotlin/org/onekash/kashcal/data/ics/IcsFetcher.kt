@@ -89,41 +89,45 @@ class OkHttpIcsFetcher @Inject constructor() : IcsFetcher {
 
         repeat(MAX_RETRIES) { attempt ->
             try {
-                val response = httpClient.newCall(request).execute()
+                // Each response is closed before the next attempt or the return; an unclosed one
+                // holds its connection, so the next request can't reuse it.
+                val retryDelay: Long? = httpClient.newCall(request).execute().use { response ->
+                    when {
+                        // Retryable codes wait and retry, except on the last attempt.
+                        response.code == 429 && attempt < MAX_RETRIES - 1 -> {
+                            val retryAfter = parseRetryAfterHeader(response) ?: currentBackoff
+                            Log.w(TAG, "Rate limited (429), waiting ${retryAfter}ms before retry ${attempt + 1}")
+                            retryAfter
+                        }
 
-                // Retryable codes wait and retry, except on the last attempt.
-                when {
-                    response.code == 429 && attempt < MAX_RETRIES - 1 -> {
-                        val retryAfter = parseRetryAfterHeader(response) ?: currentBackoff
-                        Log.w(TAG, "Rate limited (429), waiting ${retryAfter}ms before retry ${attempt + 1}")
-                        delay(retryAfter)
-                        currentBackoff = (currentBackoff * BACKOFF_MULTIPLIER).toLong().coerceAtMost(MAX_BACKOFF_MS)
-                        return@repeat // next attempt
-                    }
+                        response.code == 503 && attempt < MAX_RETRIES - 1 -> {
+                            val retryAfter = parseRetryAfterHeader(response) ?: currentBackoff
+                            Log.w(TAG, "Service unavailable (503), waiting ${retryAfter}ms before retry ${attempt + 1}")
+                            retryAfter
+                        }
 
-                    response.code == 503 && attempt < MAX_RETRIES - 1 -> {
-                        val retryAfter = parseRetryAfterHeader(response) ?: currentBackoff
-                        Log.w(TAG, "Service unavailable (503), waiting ${retryAfter}ms before retry ${attempt + 1}")
-                        delay(retryAfter)
-                        currentBackoff = (currentBackoff * BACKOFF_MULTIPLIER).toLong().coerceAtMost(MAX_BACKOFF_MS)
-                        return@repeat
-                    }
+                        response.code in 500..599 && attempt < MAX_RETRIES - 1 -> {
+                            Log.w(TAG, "Server error (${response.code}), retry ${attempt + 1}/$MAX_RETRIES")
+                            currentBackoff
+                        }
 
-                    response.code in 500..599 && attempt < MAX_RETRIES - 1 -> {
-                        Log.w(TAG, "Server error (${response.code}), retry ${attempt + 1}/$MAX_RETRIES")
-                        delay(currentBackoff)
-                        currentBackoff = (currentBackoff * BACKOFF_MULTIPLIER).toLong().coerceAtMost(MAX_BACKOFF_MS)
-                        return@repeat
+                        else -> {
+                            val result = processResponse(response)
+                            if (result != null) {
+                                return result
+                            }
+                            // A retryable code on the last attempt; reported after the loop.
+                            lastResult = IcsFetcher.FetchResult.Error(IcsFeedErrors.http(response.code, response.message))
+                            null
+                        }
                     }
                 }
-
-                val result = processResponse(response)
-                if (result != null) {
-                    return result
+                if (retryDelay != null) {
+                    // The response is closed by now, so a long Retry-After holds no connection.
+                    delay(retryDelay)
+                    currentBackoff = (currentBackoff * BACKOFF_MULTIPLIER).toLong().coerceAtMost(MAX_BACKOFF_MS)
+                    return@repeat // next attempt
                 }
-
-                // A retryable code on the last attempt; reported after the loop.
-                lastResult = IcsFetcher.FetchResult.Error(IcsFeedErrors.http(response.code, response.message))
 
             } catch (e: SSLHandshakeException) {
                 // Some servers (e.g., Moodle) serve an incomplete chain: the intermediate is
@@ -140,9 +144,10 @@ class OkHttpIcsFetcher @Inject constructor() : IcsFetcher {
                     is AiaCertificateChainCompleter.Result.Success -> {
                         Log.i(TAG, "AIA succeeded, retrying fetch")
                         return try {
-                            val retryResponse = aiaResult.client.newCall(request).execute()
-                            processResponse(retryResponse)
-                                ?: IcsFetcher.FetchResult.Error(IcsFeedErrors.http(retryResponse.code, retryResponse.message))
+                            aiaResult.client.newCall(request).execute().use { retryResponse ->
+                                processResponse(retryResponse)
+                                    ?: IcsFetcher.FetchResult.Error(IcsFeedErrors.http(retryResponse.code, retryResponse.message))
+                            }
                         } catch (retryEx: Exception) {
                             Log.e(TAG, "Retry after AIA failed: ${retryEx.message}", retryEx)
                             IcsFetcher.FetchResult.Error(IcsFeedErrors.ssl(e.message))

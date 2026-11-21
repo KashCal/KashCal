@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d pa</string>
     <string name="tags_autocomplete_create_new">Gumawa ng \"%1$s\"</string>
     <string name="cd_tag">Tag: %1$s</string>
+    <string name="tags_show_events_click_label">Ipakita ang mga event na may tag na ito</string>
+    <string name="tags_show_events">Ipakita ang mga event</string>
     <string name="cd_tags_move_menu">Ilipat ang mga tag</string>
     <string name="tags_move_above_notes">Ilipat sa itaas ng mga tala</string>
     <string name="tags_move_below_notes">Ilipat sa ibaba ng mga tala</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Tingnan ang mga sync session (huling 48 oras)</string>
     <string name="settings_import_subtitle">Magdagdag ng mga event mula sa ICS file sa anumang kalendaryo</string>
     <string name="settings_birthday_reminder">Paalala ng Kaarawan</string>
-    <string name="settings_use_device_timezone">Gamitin ang timezone ng device</string>
     <string name="settings_section_calendars">Mga kalendaryo &amp; account</string>
     <string name="settings_section_appearance">Hitsura</string>
     <string name="settings_section_creating_events">Mga kagustuhan sa kaganapan</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">Paulit-ulit</string>
     <string name="cd_enabled">Naka-enable</string>
     <string name="cd_sync_error">Sync error</string>
-    <string name="cd_select_label">Piliin ang %1$s</string>
     <string name="cd_wheel_picker">Wheel picker na may %1$d opsyon</string>
     <string name="cd_time_entry_keyboard">Ilagay ang eksaktong oras</string>
     <string name="time_entry_dialog_title">Ilagay ang oras</string>
@@ -836,6 +836,23 @@
     <string name="label_ends">Natatapos</string>
     <string name="sheet_hint_change_end">I-tap ang isang araw para baguhin ang dulo</string>
     <string name="label_timezone">Time zone</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Maghanap ng lungsod, bansa o zone</string>
+    <string name="timezone_section_this_event">Ang event na ito</string>
+    <string name="timezone_section_device">Time zone ng device</string>
+    <string name="timezone_section_recent">Kamakailan</string>
+    <string name="timezone_section_all">Lahat ng time zone</string>
+    <string name="timezone_offsets_on">Mga offset sa %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Mula sa kalendaryo: %1$s</string>
+    <string name="timezone_shown_in_device_time">Ipinapakita sa oras ng device</string>
+    <string name="timezone_loading">Nilo-load ang mga time zone…</string>
+    <string name="timezone_no_match">Walang tugmang time zone</string>
+    <string name="timezone_no_match_hint">Subukan ang lungsod, bansa o offset tulad ng +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Mga Alerto</string>
     <string name="label_add_alert">Magdagdag ng Alerto</string>
     <string name="label_recurrence_never">Hindi kailanman</string>
@@ -845,7 +862,6 @@
     <string name="label_default_calendar_hint">Ang mga bagong event ay gagawin sa kalendaryong ito</string>
     <string name="label_reminders_truncated">%1$d hindi ipinakita (%2$d kabuuan, max %3$d na mae-edit)</string>
     <string name="label_found_events">Natagpuan: %1$d event</string>
-    <string name="placeholder_search">Maghanap…</string>
     <string name="settings_search_placeholder">Maghanap ng mga setting…</string>
     <string name="settings_search_no_results">Walang nahanap na setting para sa \"%1$s\"</string>
     <string name="cd_search_settings">Maghanap ng mga setting</string>
@@ -1097,6 +1113,8 @@
     <string name="event_untitled">Event na walang pamagat</string>
     <string name="recurring_this_event">Event na ito</string>
     <string name="recurring_all_events">Lahat ng event</string>
+    <string name="recurring_scope_move_not_expressible">Hindi masusundan ng tuntunin sa pag-ulit ang pagbabagong ito</string>
+    <string name="event_form_move_not_expressible">Hindi masusundan ng tuntunin sa pag-ulit ang pagbabagong ito. Walang na-save.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Mga dadalo</string>
@@ -1179,6 +1197,7 @@
     <string name="search_reason_guest">Bisita:</string>
     <string name="search_keep_typing">Mag-type pa para maghanap</string>
     <string name="search_no_matches">Walang event na tugma sa “%1$s”</string>
+    <string name="search_no_events_tagged">Walang event na may tag na “%1$s”</string>
     <string name="search_lookback_line">Saklaw ng Sync Lookback: %1$s</string>
     <string name="search_sync_settings">Mga setting ng sync</string>
     <string name="cd_search_sync_settings">Buksan ang setting ng sync lookback</string>
@@ -1475,6 +1494,15 @@
     <string name="ics_feed_error_access_denied">Tinanggihan ng server ng feed na ito ang pag-access.</string>
     <string name="ics_feed_error_too_large">Masyadong malaki ang feed ng kalendaryong ito para i-download.</string>
     <string name="ics_feed_error_unreadable">Hindi maipakita ang mga event ng feed na ito.</string>
+    <string name="ics_feed_error_event_not_saved">Hindi naitago ang “%1$s”.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">Hindi naitago ang %1$d event.</item>
+        <item quantity="other">Hindi naitago ang %1$d event.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">Hindi naitago ang %1$d event, kasama ang “%2$s”.</item>
+        <item quantity="other">Hindi naitago ang %1$d event, kasama ang “%2$s”.</item>
+    </plurals>
     <string name="insights_title">Mga Pananaw</string>
     <string name="insights_period_this_week">Linggo</string>
     <string name="insights_period_last_week">Nakaraang linggo</string>

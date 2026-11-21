@@ -1,8 +1,8 @@
 package org.onekash.kashcal.sync.strategy
 
 import android.content.Context
+import org.onekash.kashcal.data.db.EventIcsStore
 import android.database.sqlite.SQLiteBlobTooBigException
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -40,6 +40,7 @@ import org.onekash.kashcal.sync.session.SyncSessionBuilder
 import org.onekash.kashcal.sync.session.SyncTrigger
 import org.onekash.kashcal.sync.session.SyncType
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.Instant
@@ -93,7 +94,7 @@ class PullStrategyOversizedRowTest {
     @Before
     fun setup() = runTest {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .addCallback(PendingOperationTriggers.callback())
             .allowMainThreadQueries()
             .build()
@@ -131,6 +132,7 @@ class PullStrategyOversizedRowTest {
         inviteNotifier = mockk(relaxed = true),
         accountRepository = accountRepository,
         reminderScheduler = mockk(relaxed = true),
+        icsSource = EventIcsStore(database),
     )
 
     private fun url(file: String) = "${calendar.caldavUrl}$file"
@@ -155,11 +157,11 @@ class PullStrategyOversizedRowTest {
     private fun bigBody(uid: String) =
         ical(uid, "Big", extra = "DESCRIPTION:${"x".repeat(BIG_CHARS)}\r\n")
 
-    /** Inserts a synced row; [rawIcal] decides whether it can be read back. */
+    /** Inserts a synced row; [body], stored as its description, decides if it reads back. */
     private suspend fun seedRow(
         uid: String,
         file: String,
-        rawIcal: String,
+        body: String,
         rrule: String? = null,
         originalEventId: Long? = null,
         originalInstanceTime: Long? = null,
@@ -177,18 +179,18 @@ class PullStrategyOversizedRowTest {
             caldavUrl = url(file),
             etag = etag,
             syncStatus = SyncStatus.SYNCED,
-            rawIcal = rawIcal,
+            description = body,
             originalEventId = originalEventId,
             originalInstanceTime = originalInstanceTime,
         )
     )
 
-    /** The synced series row whose stored server copy is too large to read back. */
+    /** The synced series row too large to read back. */
     private suspend fun seedOversizedRow(rrule: String? = null): Long =
         seedRow(BIG_UID, "big.ics", bigBody(BIG_UID), rrule = rrule, etag = "etag-big-1")
 
     private fun countRows(uid: String): Long =
-        database.openHelper.readableDatabase.query(
+        TestDatabases.raw(database).query(
             "SELECT COUNT(*) FROM events WHERE uid = ?", arrayOf(uid)
         ).use { c -> c.moveToFirst(); c.getLong(0) }
 
@@ -407,16 +409,18 @@ class PullStrategyOversizedRowTest {
 
         pullStrategy.pull(calendar, client = client)
 
-        val sizes = database.openHelper.readableDatabase.query(
-            "SELECT length(raw_ical), length(extra_properties), length(description) " +
-                "FROM events WHERE uid = ?",
+        val sizes = TestDatabases.raw(database).query(
+            "SELECT length(extra_properties), length(description) FROM events WHERE uid = ?",
             arrayOf(BIG_UID)
-        ).use { c -> if (c.moveToFirst()) listOf(c.getLong(0), c.getLong(1), c.getLong(2)) else null }
+        ).use { c -> if (c.moveToFirst()) listOf(c.getLong(0), c.getLong(1)) else null }
         assertNotNull("the event must be stored", sizes)
-        try {
-            assertNotNull(database.eventsDao().getMasterByUidAndCalendar(BIG_UID, calendar.id))
+        val row = try {
+            database.eventsDao().getMasterByUidAndCalendar(BIG_UID, calendar.id)
         } catch (e: SQLiteBlobTooBigException) {
             fail("a ${body.length}-char server body must read back; stored column lengths $sizes")
+            null
         }
+        assertNotNull(row)
+        assertEquals("the stored ICS is the whole body", body, EventIcsStore(database).read(row!!))
     }
 }

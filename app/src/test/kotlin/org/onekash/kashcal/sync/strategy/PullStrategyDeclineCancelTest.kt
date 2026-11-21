@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import io.mockk.MockKAnnotations
+import org.onekash.kashcal.testutil.FakeEventIcsSource
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -119,7 +120,8 @@ class PullStrategyDeclineCancelTest {
             dataStore = dataStore,
             inviteNotifier = inviteNotifier,
             accountRepository = accountRepository,
-            reminderScheduler = reminderScheduler
+            reminderScheduler = reminderScheduler,
+            icsSource = FakeEventIcsSource(),
         )
     }
 

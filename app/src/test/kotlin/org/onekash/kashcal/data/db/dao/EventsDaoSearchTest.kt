@@ -218,13 +218,13 @@ class EventsDaoSearchTest : BaseDaoTest() {
 
     @Test
     fun `search takes the escape character literally`() = runTest {
-        eventsDao.insert(createEvent(title = "Room #4"))
-        eventsDao.insert(createEvent(title = "Room 4"))
+        eventsDao.insert(createEvent(title = "Room x#4"))
+        eventsDao.insert(createEvent(title = "Room x4"))
 
-        val results = search("#4").map { it.event }
+        val results = search("x#4").map { it.event }
 
         assertEquals(1, results.size)
-        assertEquals("Room #4", results[0].title)
+        assertEquals("Room x#4", results[0].title)
     }
 
     @Test
@@ -782,6 +782,133 @@ class EventsDaoSearchTest : BaseDaoTest() {
         row(id, now - 7 * day)
 
         assertTrue(flow.first().single().hasOccurrences)
+    }
+
+    // ========== Tags ==========
+
+    private suspend fun tagged(title: String, vararg tags: String, startTs: Long = now + day): Long =
+        eventsDao.insert(createEvent(title = title, startTs = startTs).copy(categories = tags.toList()))
+
+    private suspend fun titles(text: String) = search(text).map { it.event.title }.sorted()
+
+    @Test
+    fun `a tag finds every event carrying that tag in any position`() = runTest {
+        tagged("First", "Work")
+        tagged("Later", "Home", "work")
+        tagged("Untagged")
+        tagged("Other", "Home")
+
+        assertEquals(listOf("First", "Later"), titles("#work"))
+    }
+
+    @Test
+    fun `a tag matches the whole name only`() = runTest {
+        tagged("Team", "Teamwork")
+        tagged("Gym", "Workout")
+        tagged("Quoted", "x\"work")
+        tagged("Comma", "a\",\"work")
+        tagged("Exact", "work")
+
+        assertEquals(listOf("Exact"), titles("#work"))
+    }
+
+    @Test
+    fun `a tag with a quote is not found by part of its name`() = runTest {
+        tagged("Quoted", "x\"b")
+
+        assertEquals(emptyList<String>(), titles("#b"))
+    }
+
+    @Test
+    fun `a quoted tag with spaces finds its events`() = runTest {
+        tagged("Planning", "Team Meeting")
+        tagged("Lunch", "Team")
+
+        assertEquals(listOf("Planning"), titles("#\"team meeting\""))
+    }
+
+    @Test
+    fun `a tag holding LIKE specials or a backslash matches only itself`() = runTest {
+        tagged("Percent", "50%off")
+        tagged("Underscore", "a_b")
+        tagged("Hash", "x#y")
+        tagged("Backslash", "a\\b")
+        tagged("Decoys", "50Xoff", "aXb", "xy", "ab")
+
+        assertEquals(listOf("Percent"), titles("#\"50%off\""))
+        assertEquals(listOf("Underscore"), titles("#a_b"))
+        assertEquals(listOf("Hash"), titles("#\"x#y\""))
+        assertEquals(listOf("Backslash"), titles("#\"a\\b\""))
+    }
+
+    @Test
+    fun `a tag folds case the way LIKE does and keeps accents`() = runTest {
+        tagged("Russian", "Работа")
+        tagged("Cafe", "Café")
+
+        assertEquals(listOf("Russian"), titles("#работа"))
+        assertEquals(emptyList<String>(), titles("#cafe"))
+        assertEquals(listOf("Cafe"), titles("#CAFÉ"))
+    }
+
+    @Test
+    fun `a tag and words must all match`() = runTest {
+        tagged("Doctor kids checkup", "Doctor")
+        tagged("Doctor adults", "Doctor")
+        tagged("Kids party", "Fun")
+        tagged("Kids doctor", "Doctor", "Kids")
+
+        assertEquals(listOf("Doctor kids checkup", "Kids doctor"), titles("#doctor kids"))
+        assertEquals(listOf("Kids doctor"), titles("#doctor #kids"))
+    }
+
+    @Test
+    fun `a changed occurrence is matched by its own tags and dated by its master's row`() = runTest {
+        val master = series("Review", now - 14 * day)
+        val exception = eventsDao.insert(
+            createEvent(title = "Review moved", startTs = now - 6 * day)
+                .copy(originalEventId = master, originalInstanceTime = now - 7 * day, categories = listOf("Focus"))
+        )
+        val linked = row(master, now - 6 * day, exceptionId = exception)
+        row(master, now - 14 * day)
+
+        val match = nextAndLast("#focus").single()
+
+        assertEquals(exception, match.event.id)
+        assertEquals(linked, match.lastOccurrenceId)
+    }
+
+    @Test
+    fun `tags pulled from a server or a feed are found`() = runTest {
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//test//EN
+            BEGIN:VEVENT
+            UID:tag-pull-1@example.test
+            DTSTAMP:20240301T000000Z
+            DTSTART:20240310T090000Z
+            DTEND:20240310T100000Z
+            SUMMARY:Server checkup
+            CATEGORIES:Doctor,Family
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent().replace("\n", "\r\n")
+        val pulled = org.onekash.icaldav.parser.ICalParser().parseAllEvents(ics).getOrNull()!!.single()
+        val mapped = org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper.toEntity(
+            pulled, ics, testCalendarId, "https://caldav.example.test/cal/1.ics", "\"e1\"",
+        )
+        eventsDao.insert(mapped.event)
+        val feed = org.onekash.kashcal.data.ics.IcsParserService.parseIcsContent(
+            ics.replace("tag-pull-1", "tag-feed-1").replace("Server checkup", "Feed checkup"),
+            testCalendarId,
+            subscriptionId = 1,
+        ).single()
+        eventsDao.insert(feed)
+        tagged("Local checkup", "doctor")
+
+        assertEquals(listOf("Feed checkup", "Local checkup", "Server checkup"), titles("#doctor"))
+        assertEquals(listOf("Feed checkup", "Server checkup"), titles("#family"))
     }
 
     @Test

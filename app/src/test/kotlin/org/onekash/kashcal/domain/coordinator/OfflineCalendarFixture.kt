@@ -3,7 +3,6 @@ package org.onekash.kashcal.domain.coordinator
 import android.app.AlarmManager
 import android.content.Context
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import androidx.room.Room
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +25,7 @@ import org.onekash.kashcal.reminder.receiver.ReminderAlarmReceiver
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.onekash.kashcal.widget.WidgetUpdateManager
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.shadows.ShadowAlarmManager
@@ -46,9 +46,8 @@ class OfflineCalendarFixture(private val context: Context) {
     @Volatile
     var onQuery: ((String) -> Unit)? = null
 
-    val db: KashCalDatabase = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+    val db: KashCalDatabase = TestDatabases.inMemoryObserving(context) { sql -> onQuery?.invoke(sql) }
         .addCallback(PendingOperationTriggers.callback())
-        .setQueryCallback({ sql, _ -> onQuery?.invoke(sql) }, { it.run() })
         .allowMainThreadQueries()
         .build()
 

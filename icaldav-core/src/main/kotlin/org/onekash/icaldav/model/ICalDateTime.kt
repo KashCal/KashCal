@@ -197,8 +197,8 @@ data class ICalDateTime(
         }
 
         /**
-         * Resolves a non-standard TZID such as a Windows zone name; [parseTimezone] calls it after
-         * `ZoneId.of` fails and before [timezoneAliases]. Must be thread-safe; set once at
+         * Resolves a non-standard TZID such as a Windows zone name; [resolveTimezoneOrNull] calls
+         * it after `ZoneId.of` fails and before [timezoneAliases]. Must be thread-safe; set once at
          * startup (`KashCalApplication.onCreate` sets one backed by Android ICU).
          */
         @Volatile
@@ -241,9 +241,11 @@ data class ICalDateTime(
          * 1. `ZoneId.of`, which takes IANA IDs and legacy aliases like US/Eastern
          * 2. [customTimezoneResolver]
          * 3. [timezoneAliases]
-         * 4. the system default, when none of these resolve it
+         *
+         * Returns null when none of these resolve it. The parser's zone rewrite treats such a
+         * TZID as unresolved (`TzidRewrite`).
          */
-        private fun parseTimezone(tzid: String): ZoneId {
+        internal fun resolveTimezoneOrNull(tzid: String): ZoneId? {
             try { return ZoneId.of(tzid) } catch (_: Exception) {}
 
             customTimezoneResolver?.invoke(tzid)?.let { return it }
@@ -252,7 +254,10 @@ data class ICalDateTime(
                 try { return ZoneId.of(it) } catch (_: Exception) {}
             }
 
-            return ZoneId.systemDefault()
+            return null
         }
+
+        /** Resolves [tzid] with [resolveTimezoneOrNull], else the system default. */
+        private fun parseTimezone(tzid: String): ZoneId = resolveTimezoneOrNull(tzid) ?: ZoneId.systemDefault()
     }
 }

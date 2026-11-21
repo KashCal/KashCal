@@ -1,7 +1,7 @@
 package org.onekash.kashcal.scheduling.integration
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -28,6 +28,7 @@ import org.onekash.kashcal.sync.integration.multiserver.ServerCredentials
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.text.SimpleDateFormat
@@ -78,7 +79,7 @@ class InvitationInboxIntegrationTest {
     @Before
     fun setup() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
         eventReader = EventReader(database)
@@ -167,13 +168,14 @@ class InvitationInboxIntegrationTest {
         val eventId = persistFromIcs(fetched.icalData, eventUrl, fetchedEtag, calendarId)
 
         val pending = eventReader.getPendingInvitations(now = 0L).first()
-        val mine = pending.firstOrNull { it.event.id == eventId }
+        val mine = pending.firstOrNull { it.eventId == eventId }
         check(mine != null) {
             "${ctx.config.name}: getPendingInvitations did not surface the seeded invite. " +
                 "Pending size=${pending.size}"
         }
-        check(mine.event.uid == uid) {
-            "${ctx.config.name}: surfaced invite UID mismatch: ${mine.event.uid} != $uid"
+        val surfaced = database.eventsDao().getById(mine.eventId)!!
+        check(surfaced.uid == uid) {
+            "${ctx.config.name}: surfaced invite UID mismatch: ${surfaced.uid} != $uid"
         }
 
         val account = database.accountsDao().getById(accountId)!!
@@ -182,7 +184,7 @@ class InvitationInboxIntegrationTest {
         }
 
         val patched = IcsPatcher.patchAttendeeReply(
-            rawIcal = mine.event.rawIcal,
+            rawIcal = EventIcsStore(database).read(surfaced),
             account = account,
             partstat = "ACCEPTED"
         )
@@ -315,6 +317,7 @@ END:VCALENDAR
             eventId,
             mapped.attendees.map { it.copy(eventId = eventId) }
         )
+        EventIcsStore(database).write(eventId, mapped.ics)
         val savedEvent = database.eventsDao().getById(eventId)!!
         val rangeStart = savedEvent.startTs - 24L * 60 * 60 * 1000
         val rangeEnd = savedEvent.endTs + 365L * 24 * 60 * 60 * 1000

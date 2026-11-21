@@ -120,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d weitere</string>
     <string name="tags_autocomplete_create_new">\"%1$s\" erstellen</string>
     <string name="cd_tag">Tag: %1$s</string>
+    <string name="tags_show_events_click_label">Termine mit diesem Tag anzeigen</string>
+    <string name="tags_show_events">Termine anzeigen</string>
     <string name="cd_tags_move_menu">Tags verschieben</string>
     <string name="tags_move_above_notes">Über Notizen verschieben</string>
     <string name="tags_move_below_notes">Unter Notizen verschieben</string>
@@ -197,7 +199,6 @@
     <string name="settings_sync_history_subtitle">Sync-Sitzungen anzeigen (letzte 48 Stunden)</string>
     <string name="settings_import_subtitle">Termine aus einer ICS-Datei in einen beliebigen Kalender hinzufügen</string>
     <string name="settings_birthday_reminder">Geburtstagserinnerung</string>
-    <string name="settings_use_device_timezone">Geräte-Zeitzone verwenden</string>
     <string name="settings_section_calendars">Kalender &amp; Konten</string>
     <string name="settings_section_appearance">Aussehen</string>
     <string name="settings_section_creating_events">Termineinstellungen</string>
@@ -462,7 +463,6 @@
     <string name="cd_recurring">Wiederkehrend</string>
     <string name="cd_enabled">Aktiviert</string>
     <string name="cd_sync_error">Sync-Fehler</string>
-    <string name="cd_select_label">%1$s auswählen</string>
     <string name="cd_wheel_picker">Auswahlrad mit %1$d Optionen</string>
     <string name="cd_time_entry_keyboard">Genaue Uhrzeit eingeben</string>
     <string name="time_entry_dialog_title">Uhrzeit eingeben</string>
@@ -835,6 +835,23 @@
     <string name="label_ends">Endet</string>
     <string name="sheet_hint_change_end">Tippe auf einen Tag, um das Ende zu ändern</string>
     <string name="label_timezone">Zeitzone</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Stadt, Land oder Zone suchen</string>
+    <string name="timezone_section_this_event">Dieser Termin</string>
+    <string name="timezone_section_device">Zeitzone des Geräts</string>
+    <string name="timezone_section_recent">Zuletzt verwendet</string>
+    <string name="timezone_section_all">Alle Zeitzonen</string>
+    <string name="timezone_offsets_on">Zeitverschiebungen am %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Aus dem Kalender: %1$s</string>
+    <string name="timezone_shown_in_device_time">In Gerätezeit angezeigt</string>
+    <string name="timezone_loading">Zeitzonen werden geladen…</string>
+    <string name="timezone_no_match">Keine passenden Zeitzonen</string>
+    <string name="timezone_no_match_hint">Versuch es mit einer Stadt, einem Land oder einer Zeitverschiebung wie +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Erinnerungen</string>
     <string name="label_add_alert">Erinnerung hinzufügen</string>
     <string name="label_recurrence_never">Nie</string>
@@ -844,7 +861,6 @@
     <string name="label_default_calendar_hint">Neue Termine werden in diesem Kalender erstellt</string>
     <string name="label_reminders_truncated">%1$d nicht angezeigt (%2$d gesamt, max. %3$d bearbeitbar)</string>
     <string name="label_found_events">Gefunden: %1$d Termine</string>
-    <string name="placeholder_search">Suche…</string>
     <string name="settings_search_placeholder">Einstellungen durchsuchen…</string>
     <string name="settings_search_no_results">Keine Einstellungen gefunden für \"%1$s\"</string>
     <string name="cd_search_settings">Einstellungen durchsuchen</string>
@@ -1096,6 +1112,8 @@
     <string name="event_untitled">Termin ohne Titel</string>
     <string name="recurring_this_event">Diesen Termin</string>
     <string name="recurring_all_events">Alle Termine</string>
+    <string name="recurring_scope_move_not_expressible">Die Wiederholungsregel kann dieser Änderung nicht folgen</string>
+    <string name="event_form_move_not_expressible">Die Wiederholungsregel kann dieser Änderung nicht folgen. Nichts wurde gespeichert.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Teilnehmer</string>
@@ -1178,6 +1196,7 @@
     <string name="search_reason_guest">Gast:</string>
     <string name="search_keep_typing">Tippe weiter, um zu suchen</string>
     <string name="search_no_matches">Keine Termine passen zu „%1$s“</string>
+    <string name="search_no_events_tagged">Keine Termine mit Tag „%1$s“</string>
     <string name="search_lookback_line">Sync-Rückblick: %1$s</string>
     <string name="search_sync_settings">Sync-Einstellungen</string>
     <string name="cd_search_sync_settings">Sync-Rückblick-Einstellung öffnen</string>
@@ -1474,6 +1493,15 @@
     <string name="ics_feed_error_access_denied">Der Server dieses Feeds hat den Zugriff verweigert.</string>
     <string name="ics_feed_error_too_large">Dieser Kalender-Feed ist zu groß zum Herunterladen.</string>
     <string name="ics_feed_error_unreadable">Die Termine dieses Feeds konnten nicht angezeigt werden.</string>
+    <string name="ics_feed_error_event_not_saved">„%1$s“ wurde nicht gespeichert.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d Termin wurde nicht gespeichert.</item>
+        <item quantity="other">%1$d Termine wurden nicht gespeichert.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d Termin wurde nicht gespeichert, darunter „%2$s“.</item>
+        <item quantity="other">%1$d Termine wurden nicht gespeichert, darunter „%2$s“.</item>
+    </plurals>
     <string name="insights_title">Statistiken</string>
     <string name="insights_period_this_week">Woche</string>
     <string name="insights_period_last_week">Letzte Woche</string>

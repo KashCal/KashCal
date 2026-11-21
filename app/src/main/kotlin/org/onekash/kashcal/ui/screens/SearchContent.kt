@@ -91,11 +91,13 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.search.MatchField
+import org.onekash.kashcal.domain.search.SearchFold
 import org.onekash.kashcal.domain.search.SearchHit
 import org.onekash.kashcal.domain.search.SearchOutcome
 import org.onekash.kashcal.domain.search.SearchQuery
 import org.onekash.kashcal.domain.search.SearchSplitter
 import org.onekash.kashcal.ui.components.cardFillAlpha
+import org.onekash.kashcal.ui.components.category.CategoryPillRow
 import org.onekash.kashcal.ui.components.declinedCardAlpha
 import org.onekash.kashcal.ui.components.eventStateDescription
 import org.onekash.kashcal.ui.components.formatEventTitle
@@ -150,6 +152,7 @@ internal fun SearchResultCard(
     list: SearchList,
     words: List<String>,
     today: LocalDate,
+    tags: List<String> = emptyList(),
     isPast: Boolean,
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mm a",
@@ -242,6 +245,14 @@ internal fun SearchResultCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+                if (tags.isNotEmpty()) {
+                    // The searched tags first, so the pills show why the event is listed.
+                    val searched = remember(tags) { tags.mapTo(HashSet(), SearchFold::fold) }
+                    val pills = remember(displayEvent.categories, searched) {
+                        displayEvent.categories.sortedBy { if (SearchFold.fold(it) in searched) 0 else 1 }
+                    }
+                    CategoryPillRow(pills, modifier = Modifier.padding(top = 4.dp).testTag("search_card_tags"))
                 }
             }
         }
@@ -521,7 +532,8 @@ internal fun SearchContent(
     val listState = key(listKey) { rememberLazyListState() }
     val scope = rememberCoroutineScope()
     val zone = LocalDisplayZone.current
-    val words = remember(query) { SearchQuery.of(query).words }
+    val parsed = remember(query) { SearchQuery.of(query) }
+    val words = parsed.words
     val today = remember(zone, outcome) { LocalDate.now(zone) }
     val keyboard = LocalSoftwareKeyboardController.current
     // Scrolling the results closes the keyboard, so the list is free to read.
@@ -596,7 +608,7 @@ internal fun SearchContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
             ) {
                 if (nothingAnywhere) {
-                    SearchNoMatches(query, outcome.lookbackDays, onOpenSyncSettings)
+                    SearchNoMatches(query, tagsOnly = parsed.isTagsOnly, outcome.lookbackDays, onOpenSyncSettings)
                 } else {
                     val empty = when (list) {
                         SearchList.RANGE -> R.string.search_no_events_in_dates
@@ -659,6 +671,7 @@ internal fun SearchContent(
                             searchResult = hit,
                             list = list,
                             words = words,
+                            tags = parsed.tags,
                             today = today,
                             isPast = isPast,
                             showEventEmojis = showEventEmojis,
@@ -728,12 +741,14 @@ private fun SearchMessage(text: String, modifier: Modifier = Modifier) {
 }
 
 /**
- * Says that nothing matched [query] and, when the phone holds only [lookbackDays] of events
- * (not "All events"), how far back it searched, with a link to the Sync lookback setting.
+ * Says that nothing matched [query] ([tagsOnly]: no event carries its tags) and, when the phone
+ * holds only [lookbackDays] of events (not "All events"), how far back it searched, with a link
+ * to the Sync lookback setting.
  */
 @Composable
-private fun SearchNoMatches(query: String, lookbackDays: Int, onOpenSyncSettings: () -> Unit) {
-    SearchMessage(stringResource(R.string.search_no_matches, query.trim()))
+private fun SearchNoMatches(query: String, tagsOnly: Boolean, lookbackDays: Int, onOpenSyncSettings: () -> Unit) {
+    val message = if (tagsOnly) R.string.search_no_events_tagged else R.string.search_no_matches
+    SearchMessage(stringResource(message, query.trim()))
     if (lookbackDays != Int.MAX_VALUE) {
         val resources = LocalResources.current
         Text(

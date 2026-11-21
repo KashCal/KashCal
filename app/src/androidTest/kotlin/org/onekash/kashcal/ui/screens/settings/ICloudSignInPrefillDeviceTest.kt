@@ -5,8 +5,6 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
-import androidx.room.Room
-import androidx.room.RoomDatabase
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -19,12 +17,13 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.R
+import org.onekash.kashcal.SettingsActivity
 import org.onekash.kashcal.data.credential.UnifiedCredentialManager
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.entity.Account
-import org.onekash.kashcal.data.db.migration.Migrations
+import org.onekash.kashcal.data.db.kashCalProductionConfig
 import org.onekash.kashcal.domain.model.AccountProvider
-import org.onekash.kashcal.SettingsActivity
+import org.onekash.kashcal.testutil.DeviceTestDatabases
 
 /**
  * An iCloud account whose credentials are gone opens "Add iCloud" with its Apple ID prefilled,
@@ -49,11 +48,9 @@ class ICloudSignInPrefillDeviceTest {
 
     @Before
     fun setUp() = runBlocking {
-        // Same recipe as the app's database, so a test that creates the file leaves it complete.
-        db = Room.databaseBuilder(context, KashCalDatabase::class.java, KashCalDatabase.DATABASE_NAME)
-            .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
-            .addMigrations(*Migrations.ALL_MIGRATIONS)
-            .addCallback(KashCalDatabase.testCallback())
+        // The app's configuration, so a test that creates the file leaves it complete.
+        db = DeviceTestDatabases.file(context, KashCalDatabase.DATABASE_NAME)
+            .kashCalProductionConfig()
             .build()
         assumeTrue(
             "an iCloud account exists; not running beside it",
