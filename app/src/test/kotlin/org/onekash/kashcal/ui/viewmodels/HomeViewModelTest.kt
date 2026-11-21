@@ -1432,6 +1432,28 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `refreshSync during a resume sync still refreshes ICS feeds`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        networkStateFlow.value = true
+        viewModel.syncOnResumeIfNeeded()
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.isSyncing)
+        io.mockk.clearMocks(syncScheduler, answers = false, recordedCalls = true, childMocks = false)
+
+        viewModel.refreshSync()
+        advanceUntilIdle()
+
+        // The running resume sync covers the accounts but not the feeds.
+        verify(exactly = 0) { syncScheduler.requestImmediateSync(any(), any()) }
+        verify(exactly = 1) { syncScheduler.requestImmediateIcsRefresh() }
+    }
+
+    @Test
     fun `syncOnResumeIfNeeded does not trigger contact sync`() = runTest {
         coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
@@ -3528,6 +3550,8 @@ class HomeViewModelTest {
 
         // Requested once, by the first refreshSync.
         verify(exactly = 1) { syncScheduler.requestImmediateSync(any(), any()) }
+        // A pull's own feed refresh is not replaced by the blocked pulls.
+        verify(exactly = 1) { syncScheduler.requestImmediateIcsRefresh() }
     }
 
     @Test

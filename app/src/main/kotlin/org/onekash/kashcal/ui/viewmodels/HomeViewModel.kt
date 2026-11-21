@@ -1606,7 +1606,8 @@ class HomeViewModel(
     /**
      * Runs a pull-to-refresh sync, the only sync that shows the refresh spinner, a contact sync
      * and a refresh of every feed that is not paused. Unconfigured it shows a snackbar and
-     * offline an error; while a sync runs it does nothing.
+     * offline an error; while another sync runs it only refreshes the feeds, unless that sync is
+     * a pull too.
      */
     fun refreshSync() {
         if (!_uiState.value.isConfigured) {
@@ -1616,6 +1617,10 @@ class HomeViewModel(
         }
         if (_uiState.value.isSyncing) {
             Log.d(TAG, "Sync already in progress, ignoring refresh")
+            // A resume or startup sync doesn't refresh the feeds, so the pull still requests
+            // them; a running pull (the spinner) already did, and a second request would
+            // restart its download.
+            if (!_uiState.value.showRefreshSpinner) syncScheduler.requestImmediateIcsRefresh()
             return
         }
         if (!networkMonitor.isOnline.value) {
@@ -1630,9 +1635,9 @@ class HomeViewModel(
         // The contact worker syncs only accounts with contact sync enabled, so requesting it
         // unconditionally is cheap.
         syncScheduler.requestImmediateContactSync()
-        // Feeds are not accounts, so the sync above doesn't reach them. Only this gesture
-        // refreshes them; a resume would re-download every feed each time the app is opened.
-        // The worker refreshes only enabled feeds, so a paused feed is skipped.
+        // Feeds are not accounts, so the sync above doesn't reach them. Of the syncs Home
+        // starts only the pull refreshes them: a resume would re-download every feed each time
+        // the app is opened. [IcsSubscriptionRepository.forceRefreshAll] skips paused feeds.
         syncScheduler.requestImmediateIcsRefresh()
     }
 

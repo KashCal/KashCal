@@ -30,9 +30,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Schedules calendar and contact sync on WorkManager, and holds the sync UI state shared
- * across ViewModels (banner flag, last sync changes). It also clears the change notification
- * once the app shows its changes.
+ * Schedules calendar and contact sync on WorkManager, and the one-shot refresh of the ICS feeds
+ * that pull-to-refresh requests ([requestImmediateIcsRefresh]); the feeds' periodic refresh is
+ * [IcsScheduler]'s. Holds the sync UI state shared across ViewModels (banner flag, last sync
+ * changes), and clears the change notification once the app shows its changes.
  *
  * Provides periodic background sync (configurable, at least 15 minutes), one-shot sync for
  * user-initiated refresh, expedited sync after a local change, per-calendar and per-account
