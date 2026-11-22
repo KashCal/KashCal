@@ -196,15 +196,18 @@ class SyncSchedulerTest {
     }
 
     @Test
-    fun `requestImmediateIcsRefresh enqueues one one-shot refresh of every feed`() {
-        scheduler.requestImmediateIcsRefresh()
+    fun `requestImmediateIcsRefresh keeps an unfinished refresh and ignores the repeat`() {
+        val first = scheduler.requestImmediateIcsRefresh()
 
-        val workId = scheduler.requestImmediateIcsRefresh()
+        val second = scheduler.requestImmediateIcsRefresh()
 
-        assertNotNull(workId)
-        val workInfos =
-            workManager.getWorkInfosForUniqueWork(IcsRefreshWorker.ONE_SHOT_REFRESH_WORK).get()
-        assertEquals(1, workInfos.count { !it.state.isFinished })
+        // The network constraint holds the first request in the queue, so the repeat finds it
+        // unfinished and must leave it in place rather than cancel it.
+        val unfinished = workManager
+            .getWorkInfosForUniqueWork(IcsRefreshWorker.ONE_SHOT_REFRESH_WORK).get()
+            .filter { !it.state.isFinished }
+        assertEquals(listOf(first), unfinished.map { it.id })
+        assertNotEquals(first, second)
     }
 
     @Test

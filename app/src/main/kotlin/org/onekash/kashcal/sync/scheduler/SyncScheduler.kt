@@ -251,11 +251,12 @@ class SyncScheduler @Inject constructor(
     }
 
     /**
-     * Requests a one-shot refresh of every enabled ICS feed, replacing a queued or running one.
-     * Feeds are not accounts, so [requestImmediateSync] never reaches them; pull-to-refresh
-     * calls this as well. The worker's constraints live in [IcsRefreshWorker.requestImmediateRefresh].
+     * Requests a one-shot refresh of every enabled ICS feed through
+     * [IcsRefreshWorker.requestImmediateRefresh], which decides what happens to an unfinished
+     * one. The calendar sync ([requestImmediateSync]) syncs CalDAV accounts only, and feeds live
+     * under a non-CalDAV account, so pull-to-refresh calls this as well.
      *
-     * @return the work request's id, for status tracking
+     * @return the id [IcsRefreshWorker.requestImmediateRefresh] returns
      */
     fun requestImmediateIcsRefresh(): java.util.UUID =
         IcsRefreshWorker.requestImmediateRefresh(context)

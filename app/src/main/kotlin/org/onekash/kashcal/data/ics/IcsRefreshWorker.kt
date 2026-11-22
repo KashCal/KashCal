@@ -27,8 +27,9 @@ import java.util.concurrent.TimeUnit
  * Refreshes ICS subscriptions in WorkManager, by [KEY_REFRESH_TYPE]: the periodic run refreshes
  * due feeds ([REFRESH_TYPE_DUE]); one-shot requests refresh every enabled feed
  * ([REFRESH_TYPE_ALL]) or one feed ([REFRESH_TYPE_SINGLE]). Pull-to-refresh enqueues the
- * all-feeds request through [org.onekash.kashcal.sync.scheduler.SyncScheduler.requestImmediateIcsRefresh];
- * nothing in app code enqueues the one-feed request today.
+ * all-feeds request through
+ * [org.onekash.kashcal.sync.scheduler.SyncScheduler.requestImmediateIcsRefresh]; nothing in
+ * app code enqueues the one-feed request today.
  */
 @HiltWorker
 class IcsRefreshWorker @AssistedInject constructor(
@@ -129,7 +130,15 @@ class IcsRefreshWorker @AssistedInject constructor(
             WorkManager.getInstance(context).cancelUniqueWork(PERIODIC_REFRESH_WORK).await()
         }
 
-        /** Enqueues a one-shot refresh of every enabled feed, replacing a queued or running one. */
+        /**
+         * Enqueues a one-shot refresh of every enabled feed unless one is unfinished: a refresh
+         * that is queued (including one waiting for the network or a retry) or running is kept,
+         * and the new request is dropped. A request made while a refresh runs therefore gets no
+         * fetch of its own; a feed that run already fetched is read again only by a later one.
+         *
+         * @return the new request's id; WorkManager drops that request when it keeps an
+         *   unfinished one
+         */
         fun requestImmediateRefresh(context: Context): java.util.UUID {
             Log.i(TAG, "Requesting immediate ICS refresh")
 
@@ -153,7 +162,7 @@ class IcsRefreshWorker @AssistedInject constructor(
 
             WorkManager.getInstance(context).enqueueUniqueWork(
                 ONE_SHOT_REFRESH_WORK,
-                ExistingWorkPolicy.REPLACE,
+                ExistingWorkPolicy.KEEP,
                 work
             )
 

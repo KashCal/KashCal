@@ -1298,8 +1298,8 @@ class HomeViewModelTest {
         viewModel.refreshSync()
         advanceUntilIdle()
 
-        // A second refreshSync while the first is live returns at the isSyncing guard
-        // (asserted by `concurrent refreshSync calls are blocked when isSyncing is true`).
+        // A second refreshSync while the first is live returns at the isSyncing guard (asserted
+        // by `concurrent refreshSync calls start one calendar sync while isSyncing is true`).
         viewModel.refreshSync()
         advanceUntilIdle()
 
@@ -1351,6 +1351,8 @@ class HomeViewModelTest {
         verify(exactly = 0) { syncScheduler.requestImmediateSync(any(), any()) }
         // No contact sync either.
         verify(exactly = 0) { syncScheduler.requestImmediateContactSync() }
+        // No feed refresh either.
+        verify(exactly = 0) { syncScheduler.requestImmediateIcsRefresh() }
     }
 
     @Test
@@ -1409,7 +1411,6 @@ class HomeViewModelTest {
         viewModel.refreshSync()
         advanceUntilIdle()
 
-        // Feeds are not accounts, so the calendar sync doesn't reach them.
         verify(exactly = 1) { syncScheduler.requestImmediateIcsRefresh() }
     }
 
@@ -1426,7 +1427,7 @@ class HomeViewModelTest {
         viewModel.syncOnResumeIfNeeded()
         advanceUntilIdle()
 
-        // Only the pull-to-refresh gesture refreshes feeds; each resume would re-download them all.
+        // Of Home's syncs only the pull refreshes feeds; a resume would re-download them all.
         verify { syncScheduler.requestImmediateSync(any(), any()) }
         verify(exactly = 0) { syncScheduler.requestImmediateIcsRefresh() }
     }
@@ -1451,6 +1452,36 @@ class HomeViewModelTest {
         // The running resume sync covers the accounts but not the feeds.
         verify(exactly = 0) { syncScheduler.requestImmediateSync(any(), any()) }
         verify(exactly = 1) { syncScheduler.requestImmediateIcsRefresh() }
+    }
+
+    @Test
+    fun `second refreshSync after the first sync succeeded refreshes ICS feeds again`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        networkStateFlow.value = true
+        io.mockk.clearMocks(syncScheduler, answers = false, recordedCalls = true, childMocks = false)
+
+        viewModel.refreshSync()
+        syncStatusFlow.value = SyncStatus.Running
+        advanceUntilIdle()
+        syncStatusFlow.value = SyncStatus.Succeeded(calendarsSynced = 1, eventsPulled = 1)
+        testScheduler.advanceTimeBy(100)
+        testScheduler.runCurrent()
+        // The calendar sync is done while its feed refresh may still run.
+        assertFalse(viewModel.uiState.value.isSyncing)
+        assertFalse(viewModel.uiState.value.showRefreshSpinner)
+
+        viewModel.refreshSync()
+        advanceUntilIdle()
+
+        // Both pulls ask for the feeds. That a repeat leaves an unfinished refresh running is
+        // pinned by SyncSchedulerTest `requestImmediateIcsRefresh keeps an unfinished refresh
+        // and ignores the repeat`.
+        verify(exactly = 2) { syncScheduler.requestImmediateSync(any(), any()) }
+        verify(exactly = 2) { syncScheduler.requestImmediateIcsRefresh() }
     }
 
     @Test
@@ -1507,6 +1538,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         verify(exactly = 0) { syncScheduler.requestImmediateSync(any(), any()) }
+        verify(exactly = 0) { syncScheduler.requestImmediateIcsRefresh() }
     }
 
     @Test
@@ -3529,7 +3561,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `concurrent refreshSync calls are blocked when isSyncing is true`() = runTest {
+    fun `concurrent refreshSync calls start one calendar sync while isSyncing is true`() = runTest {
         coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
@@ -3542,7 +3574,8 @@ class HomeViewModelTest {
         // so isSyncing is true.
         assertTrue(viewModel.uiState.value.isSyncing)
 
-        // Later refreshes while isSyncing is true are blocked.
+        // Later refreshes while isSyncing is true start no calendar sync, but each requests the
+        // feeds.
         viewModel.refreshSync()
         viewModel.refreshSync()
         viewModel.refreshSync()
@@ -3550,8 +3583,9 @@ class HomeViewModelTest {
 
         // Requested once, by the first refreshSync.
         verify(exactly = 1) { syncScheduler.requestImmediateSync(any(), any()) }
-        // A pull's own feed refresh is not replaced by the blocked pulls.
-        verify(exactly = 1) { syncScheduler.requestImmediateIcsRefresh() }
+        // One feed request per pull; the scheduler test named in the test above pins that
+        // repeats don't restart the first.
+        verify(exactly = 4) { syncScheduler.requestImmediateIcsRefresh() }
     }
 
     @Test
