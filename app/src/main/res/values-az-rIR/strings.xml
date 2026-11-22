@@ -1,0 +1,1685 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KashCal</string>
+
+    <!-- ==================== Widget ==================== -->
+    <string name="widget_name">بو گونون گۆندَلی</string>
+    <string name="widget_description">بو گونون تقویم حادیثه‌لرینی گؤستریر</string>
+    <string name="week_widget_name">هفته گؤرونوشو</string>
+    <string name="week_widget_description">گله‌ن ۷ گونون تقویم حادیثه‌لرینی گؤستریر</string>
+    <string name="month_widget_name">آی گؤرونوشو</string>
+    <string name="month_widget_description">حادیثه نشانه نوقطه‌لری ایله تام آی تقویم شبکه‌سینی گؤستریر</string>
+    <string name="date_widget_name">تاریخ</string>
+    <string name="date_widget_description">بو گونون تاریخینی تطبیق آیکونو کیمی گؤستریر</string>
+    <string name="upcoming_widget_name">گله‌ن</string>
+    <string name="upcoming_widget_description">گله‌ن ۱۰ گونون حادیثه‌لرینی گؤستریر، بوش گونلری آتلیار</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
+    <string name="widget_loading_upcoming">گله‌ن حادیثه‌لر یوکلنیر…</string>
+    <string name="widget_error_load_events">حادیثه‌لر یوکلنه بیلمدی، آچماق اوچون وورون</string>
+    <string name="widget_no_events_today">بو گون حادیثه یوخدور</string>
+    <string name="widget_add_event">+ حادیثه آرتیر</string>
+    <string name="widget_no_events">حادیثه یوخدور</string>
+    <string name="widget_no_upcoming_events">گله‌ن حادیثه یوخدور</string>
+    <string name="widget_preview_event_standup">تیم گؤروشو</string>
+    <string name="widget_preview_event_lunch">ناهار آراسی</string>
+    <string name="widget_preview_event_review">دیزاین یوخلاماسی</string>
+    <string name="widget_preview_event_gym">ایدمان زالی</string>
+    <string name="widget_preview_event_birthday">آد گونو</string>
+    <string name="widget_preview_event_trip">هفته‌سونو سفری</string>
+    <string name="widget_preview_event_dentist">دیش حکیمی</string>
+    <string name="widget_preview_event_call">پروژه زنگی</string>
+    <string name="cd_widget_calendar">تقویم</string>
+    <string name="cd_widget_add_event">حادیثه آرتیر</string>
+    <string name="cd_widget_refresh">یئنیله</string>
+    <string name="cd_widget_day_cell">%1$s، %2$s</string>
+    <string name="cd_widget_no_events">حادیثه یوخدور</string>
+    <string name="cd_widget_event_cancelled">%1$s، %2$s، لغو اولونموش</string>
+    <string name="channel_event_reminders">حادیثه خاطیرلاتمالاری</string>
+    <string name="channel_event_reminders_desc">گله‌ن تقویم حادیثه‌لری اوچون بیلدیریشلر</string>
+    <string name="channel_sync_progress">همزمانلاشدیرما پیشرفتی</string>
+    <string name="channel_sync_progress_desc">تقویم‌لر همزمانلاشدیریلارکن پیشرفتی گؤستریر</string>
+    <string name="channel_sync_status">همزمانلاشدیرما دورومو</string>
+    <string name="channel_sync_status_desc">همزمانلاشدیرما تاماملانماسی و خطالار باره‌ده بیلدیریشلر</string>
+    <string name="channel_event_invitations">حادیثه دعوتلری</string>
+    <string name="channel_event_invitations_desc">یئنی تقویم دعوتی آلدیغینیزدا بیلدیریشلر</string>
+    <string name="channel_calendar_updates">تقویم یئنیله‌مه‌لری</string>
+    <string name="channel_calendar_backup">اوتوماتیک تقویم یِدکله‌مه‌سی</string>
+    <string name="channel_calendar_backup_description">تقویم یِدکله‌مه‌سی اوغورسوز اولاندا خبر وئریر</string>
+    <string name="invite_notification_body">%1$s دن · جواب وئرمک اوچون وورون</string>
+
+    <!-- ==================== App Shortcuts ==================== -->
+    <string name="shortcut_new_event">یئنی حادیثه</string>
+    <string name="shortcut_new_event_long">یئنی حادیثه یارات</string>
+    <string name="shortcut_today">بو گون</string>
+    <string name="shortcut_today_long">بو گونه گئت</string>
+    <string name="shortcut_search">آختار</string>
+    <string name="shortcut_search_long">حادیثه‌لری آختار</string>
+
+    <!-- ==================== Common Actions ==================== -->
+    <string name="action_retry">تکرار ائت</string>
+    <string name="action_try_again">یئنی‌دن جهد ائت</string>
+    <string name="action_cancel">لغو ائت</string>
+    <string name="action_close">باغلا</string>
+    <string name="action_ok">اولدو</string>
+    <string name="action_not_now">ایندی یوخ</string>
+    <string name="action_allow">ایجازه وئر</string>
+    <string name="action_no_thanks">یوخ، ساغ اول</string>
+    <string name="action_sign_in">داخیل اول</string>
+    <string name="action_select">سئچ</string>
+    <string name="action_show_password">پارولی گؤستر</string>
+    <string name="action_hide_password">پارولی گیزلت</string>
+    <string name="action_sign_out">چیخیش ائت</string>
+    <string name="action_learn_more">داها چوخ اؤیرن</string>
+    <string name="action_open_apple_id">Apple ID آچ</string>
+    <string name="action_open_settings">تنظیماتلاری آچ</string>
+    <string name="action_force_sync">زورلا همزمانلاشدیر</string>
+    <string name="action_sync_now">ایندی همزمانلاشدیر</string>
+    <string name="action_details">تفصیلات</string>
+    <string name="action_set_up">قور</string>
+    <string name="action_report_issue">مشکل بیلدیر</string>
+    <string name="action_view">باخ</string>
+    <string name="action_enable">فعال ائت</string>
+    <string name="action_done">تمام</string>
+    <string name="action_back">گئری</string>
+    <string name="action_save">ساخلا</string>
+    <string name="action_add">آرتیر</string>
+    <string name="action_edit">دَییشدیر</string>
+    <string name="action_open">آچ</string>
+    <string name="action_delete">سیل</string>
+    <string name="action_confirm">تصدیق ائت</string>
+    <string name="action_discard">آت</string>
+    <string name="action_discard_confirm">آت؟</string>
+    <string name="action_dismiss">ردد ائت</string>
+    <string name="action_connect">باغلان</string>
+    <string name="action_duplicate">کؤچور</string>
+    <string name="action_share">پایلاش</string>
+    <string name="action_share_as_text">متن کیمی پایلاش</string>
+    <string name="action_export_ics">.ics کیمی ائکسپورت ائت</string>
+    <string name="action_confirm_delete">سیلمه‌نی تصدیق ائت</string>
+    <string name="action_delete_event">حادیثه‌نی سیل</string>
+
+    <!-- ==================== RSVP Actions ==================== -->
+    <string name="rsvp_series_disclosure">جوابینیز بوتون سلسله‌یه شامیل اولور.</string>
+    <string name="rsvp_receipt_pending">جواب گؤزله‌نیلیر</string>
+    <string name="rsvp_receipt_sent">جواب گؤندریلدی</string>
+    <string name="rsvp_receipt_not_delivered">جواب چاتدیریلمادی</string>
+
+    <!-- ==================== Recurring Event Actions ==================== -->
+    <string name="recurring_this_and_future">بو و بوتون گله‌جک</string>
+
+    <!-- ==================== Form Labels ==================== -->
+    <string name="label_event_title">حادیثه باشلیغی</string>
+    <string name="label_location">مکان</string>
+    <string name="label_location_hint">آدرس یا لینک</string>
+    <string name="label_notes">قئیدلر</string>
+    <string name="label_categories">اِتیکتلر</string>
+    <string name="tags_new">یئنی اِتیکت</string>
+    <string name="tags_empty_reject">اِتیکت آدی یاز</string>
+    <string name="tags_too_long">اِتیکت چوخ اوزوندور</string>
+    <string name="tags_comma_reject">اِتیکتلر ویرگول داخیل اده بیلمز</string>
+    <string name="tags_hint_n_more">+%1$d داها</string>
+    <string name="tags_autocomplete_create_new">\"%1$s\" یارات</string>
+    <string name="cd_tag">اِتیکت: %1$s</string>
+    <string name="tags_show_events_click_label">بو اِتیکتلی حادیثه‌لری گؤستر</string>
+    <string name="tags_show_events">حادیثه‌لری گؤستر</string>
+    <string name="cd_tags_move_menu">اِتیکتلری کؤچور</string>
+    <string name="tags_move_above_notes">قئیدلرین اوستونه کؤچور</string>
+    <string name="tags_move_below_notes">قئیدلرین آلتینا کؤچور</string>
+    <string name="tags_row_label">اِتیکتلری ایداره ائت</string>
+    <string name="tags_manage_note">اِتیکتلرینیزه رنگ وئرین، آدینی دَییشدیرین یا سیلین.</string>
+    <string name="tags_info_content_desc">اِتیکتلر و همزمانلاشدیرما حاقدا</string>
+    <string name="tags_device_interop_note">بورادا اِتیکتی سیلمک اونو یالنیز بو سیاهه‌دن تمیزلیر؛ حادیثه‌لرینیز اؤز اِتیکتلرینی ساخلاییر. اِتیکتلر CalDAV حساب‌لاریندا دیگر جیهازلارینیزا همزمانلاشیر، آنجاق بعضی جیهاز تقویم‌لری اونلاری ساخلایا بیلمز.</string>
+    <string name="tags_screen_title">اِتیکتلر</string>
+    <string name="tags_screen_empty">حادیثه‌لره آرتیردیغینیز اِتیکتلر بورادا گؤرونور. هر بیرینه رنگ وئره، آدینی دَییشدیره یا سیله بیلرسینیز.</string>
+    <string name="tags_swatch_content_desc">%1$s اوچون رنگ</string>
+    <string name="tags_action_color">رنگی دَییشدیر</string>
+    <string name="tags_action_rename">آدینی دَییشدیر</string>
+    <string name="tags_action_delete">سیل</string>
+    <string name="tags_actions_content_desc">%1$s اوچون عمل‌لر</string>
+    <string name="tags_rename_title">اِتیکتین آدینی دَییشدیر</string>
+    <string name="tags_rename_hint">اِتیکت آدی</string>
+    <string name="tags_deleted">\"%1$s\" سیلیندی</string>
+    <string name="tags_delete_undo">گئری آل</string>
+    <string name="label_starts">باشلاییر</string>
+    <string name="label_apple_id">Apple ID</string>
+    <string name="label_app_password">تطبیقه خاص پارول</string>
+    <string name="label_password_hint">۱۶ کاراکتر، تیره‌لر ایختیاری</string>
+    <string name="label_calendar_url">تقویم URL</string>
+    <string name="label_calendar_name">تقویم آدی</string>
+    <string name="label_name">آد</string>
+    <string name="label_hex_color">هگز رنگی</string>
+    <string name="label_enter_hex">۶ هگز کاراکتری داخیل ائدین (0–9, A–F)</string>
+
+    <!-- ==================== View Labels ==================== -->
+    <string name="view_week">هفته</string>
+    <string name="view_month">آی</string>
+    <string name="label_all_day">بوتون گون</string>
+    <string name="label_today">بو گون</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
+    <string name="label_go_to_date">تاریخه گئت</string>
+    <string name="label_week">ه</string>
+
+    <!-- ==================== Settings ==================== -->
+    <string name="settings_title">تنظیمات</string>
+    <string name="settings_theme">تم</string>
+    <string name="settings_theme_system_desc">تلفونونوزون آچیق یا تیره تنظیمینی ایزلیین</string>
+    <string name="settings_theme_light_desc">همیشه آچیق</string>
+    <string name="settings_theme_dark_desc">همیشه تیره</string>
+    <string name="settings_accent_color">رنگ تاکید</string>
+    <string name="settings_accent_color_brand">KashCal فیروزه‌ای</string>
+    <string name="settings_accent_color_dynamic">اوتوماتیک</string>
+    <string name="settings_accent_color_dynamic_desc">جیهازینیزین Material You رنگلرینی ایزلیین</string>
+    <string name="settings_widgets_section">ویجت‌لر</string>
+    <string name="settings_widget_theme">تم</string>
+    <string name="settings_widget_accent_color">تاکید</string>
+    <string name="hub_widget_theme">ویجت تمی</string>
+    <string name="hub_widget_accent">ویجت تاکیدی</string>
+    <string name="settings_widget_color_follow_app">تطبیقی ایزله</string>
+    <string name="settings_widget_color_follow_app_desc">تطبیقین تاکید رنگی و منبعینی ایستفاده ائت</string>
+    <string name="settings_widget_theme_follow_app">تطبیقی ایزله</string>
+    <string name="settings_widget_theme_follow_app_desc">تطبیقین آچیق یا تیره گؤرونوشونه اویغونلاش</string>
+    <string name="settings_app_icon">تطبیق آیکونو</string>
+    <string name="app_icon_default">پیش‌فرض</string>
+    <string name="app_icon_supporter">دستکچی</string>
+    <string name="app_icon_supporter_calendar">دستکچی، تقویم آدلی</string>
+    <string name="app_icon_todays_date">بو گونون تاریخی</string>
+    <string name="app_icon_label_calendar">تقویم</string>
+    <string name="app_icon_support_cta">KashCal-ی دستکله</string>
+    <string name="app_icon_switch_note">آیکونو دَییشمک تطبیقی یئنی‌دن باشلادا بیلر. بیلدیریشلر همیشه پیش‌فرض آیکون و آدی ایستفاده ائدیر.</string>
+    <string name="settings_time_format">وقت فورماتی</string>
+    <string name="settings_start_week_on">هفته باشلانغیجی</string>
+    <string name="settings_event_emojis">حادیثه اموجی‌لری</string>
+    <string name="settings_event_emojis_info">باشلیغا گؤره حادیثه‌لره اموجی آرتیریر، مثلاً \"آد گونو\" اوچون 🎂.</string>
+    <string name="settings_force_sync">تام همزمانلاشدیرمایا زورلا</string>
+    <string name="settings_force_sync_subtitle">بوتون تقویم وئری‌لرینی یئنی‌دن یوکله</string>
+    <string name="settings_force_sync_no_account">همزمانلاشدیرما حسابی قورولمامیش</string>
+    <string name="force_sync_confirm">%1$s، %2$s-دان یئنی‌دن یوکلنه‌جک. هله همزمانلاشمامیش دَییشیکلیکلر ساخلانیر.</string>
+    <string name="action_start">باشلا</string>
+    <string name="settings_sync_history">همزمانلاشدیرما تاریخی</string>
+    <string name="settings_sync_history_subtitle">همزمانلاشدیرما سئشنلرینه باخ (سون ۴۸ ساعت)</string>
+    <string name="settings_import_subtitle">ICS فایلین‌دان هرتقویمه حادیثه‌لر آرتیر</string>
+    <string name="settings_birthday_reminder">آد گونو خاطیرلاتماسی</string>
+    <string name="settings_section_calendars">تقویم‌لر و حساب‌لار</string>
+    <string name="settings_section_appearance">گؤرونوش</string>
+    <string name="settings_section_creating_events">حادیثه ترجیحلری</string>
+    <string name="settings_section_sync">همزمانلاشدیرما</string>
+    <string name="settings_section_data">یِدک و برپا ائتمه</string>
+    <string name="settings_section_troubleshooting">پروبلئم‌لری حل ائتمک</string>
+
+    <!-- ==================== Debug report (Settings > Troubleshooting) ==================== -->
+    <string name="debug_report_row_label">دیباگ حساباتینی ائکسپورت ائت</string>
+    <string name="debug_report_row_subtitle">باگ حساباتی ایله گؤندرمک اوچون چؤکمه، همزمانلاشدیرما و قوروم بیلگیلری</string>
+    <string name="debug_report_sheet_title">دیباگ حساباتی</string>
+    <string name="debug_report_sheet_body">باگ حساباتی ایله گؤندرمک اوچون بیر متن فایلی. پروبلئمدن تئز سونرا گؤندرین: تطبیق ژورنالی یالنیز سون فعالیتی ساخلاییر.</string>
+    <string name="debug_report_item_exits">تطبیق سون واختلار نییه باغلاندی</string>
+    <string name="debug_report_item_exits_detail">چؤکمه‌لر، دونمالار، آز یادداش</string>
+    <string name="debug_report_item_log">تطبیق ژورنالی</string>
+    <string name="debug_report_item_log_detail">KashCal-ین اؤز مئساژلاری، چؤکمه بیلگیلری داخیل</string>
+    <string name="debug_report_item_sync_detail">سون همزمانلاشدیرمالار، ۴۸ ساعاتا قدر گئری</string>
+    <string name="debug_report_item_pending">گؤزله‌ین دَییشیکلیکلر</string>
+    <string name="debug_report_item_pending_detail">هله سرورونوزا گؤندریلمه‌میش دَییشیکلیکلر</string>
+    <string name="debug_report_item_setup">قوروم</string>
+    <string name="debug_report_item_setup_detail">تطبیق و Android نوسخه‌سی، ایجازه‌لر، باطری تنظیماتی، حساب نوعلری</string>
+    <string name="debug_report_privacy_note">ایمیل آدرسلری، وب آدرسلری و توکن‌لر گیزله‌دیلیر. حادیثه باشلیقلاری، تقویم آدلاری و کونتاکت آدلاری گیزله‌دیلمیر. اونو ایمیل ایله گؤندرین، آچیق پایلاشیمدا یوخ.</string>
+    <string name="debug_report_share">حساباتی پایلاش</string>
+    <string name="debug_report_chooser_title">دیباگ حساباتینی پایلاش</string>
+    <string name="debug_report_failed">دیباگ حساباتی یارادیلا بیلمدی</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">تطبیق قیفلی</string>
+    <string name="settings_app_lock_info">KashCal-ی آچماق اوچون جیهاز تصدیقی طلب اولونور.</string>
+    <string name="app_lock_veil_locked">قیفلی</string>
+    <string name="app_lock_veil_unlock">قیفلی آچ</string>
+    <string name="app_lock_veil_footnote">بارماق ایزی، اوز یا صفحه قیفلی</string>
+    <string name="app_lock_prompt_title">حادیثه‌لرینیزه باخماق اوچون قیفلی آچین</string>
+    <string name="app_lock_enroll_message">تطبیق قیفلینی ایستفاده ائتمک اوچون سیستم تنظیماتلاریندا بارماق ایزی، اوز یا صفحه قیفلی قورون.</string>
+    <string name="app_lock_unsupported_message">بو جیهاز تطبیق قیفلینی ایستفاده اده بیلمز.</string>
+    <string name="app_lock_enabled_message">تطبیق قیفلی آچیقدیر. KashCal گله‌ن دفعه آچدیغینیزدا تصدیق ایسته‌یه‌جک.</string>
+    <string name="app_lock_disable_prompt_title">تطبیق قیفلینی سؤندورمک اوچون قیفلی آچین</string>
+
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <string name="backup_settings_label">تنظیماتلاری یِدکله</string>
+    <string name="backup_settings_subtitle">KashCal کونفیقوراسیونونو JSON فایلینه ساخلا</string>
+    <string name="restore_settings_label">تنظیماتلاری برپا ائت</string>
+    <string name="restore_settings_subtitle">KashCal کونفیقوراسیونونو یِدک فایلین‌دان برپا ائت</string>
+    <string name="restore_confirm_title">یِدک برپا ائدیلسین؟</string>
+    <string name="restore_confirm_from">KashCal %1$s، %2$s دن یِدک</string>
+    <string name="restore_confirm_message_prefs_only">بو ترجیحلرینیزینو ایمپورت ائده‌جک.</string>
+    <string name="action_restore">برپا ائت</string>
+    <string name="restore_success_title">برپا ائتمه تاماملاندی</string>
+    <string name="restore_success_message_prefs_only">ترجیحلرینیز ایمپورت ائدیلدی.</string>
+    <string name="restore_success_device_calendars_note">اگر بو اؤزللیغی ایستفاده ائدیرسینیز، جیهاز تقویم‌لرینیزین یئنی‌دن سئچین.</string>
+    <string name="restore_error_title">برپا ائتمه اوغورسوز اولدو</string>
+    <string name="restore_error_version_too_new">بو یِدک KashCal-ین داها یئنی بیر نوسخه‌سی ایله یارادیلیب. لطفاً KashCal-ی یئنی‌له‌یین و یئنی‌دن جهد ائدین.</string>
+    <string name="restore_error_malformed_json">بو فایل کئچرلی بیر KashCal یِدکی دئییل.</string>
+    <string name="restore_error_invalid_value">بو یِدک فایلی کئچرسز وئری‌لر ایحتیوا ائدیر و برپا ائدیله بیلمز.</string>
+    <string name="restore_error_apply_failure">یِدکی تطبیق ائدرکن بیر شئی یانلیش گئتدی. هئچ بیر دَییشیکلیک ساخلانمادی.</string>
+    <string name="backup_error_build_failed">یِدکله‌مه اوغورسوز اولدو</string>
+    <string name="backup_error_write_failed">یِدکله‌مه اوغورسوز اولدو. فایله یازا بیلمدی.</string>
+    <string name="backup_error_read_failed">فایل اوخونا بیلمدی</string>
+
+    <!-- ==================== Onboarding ==================== -->
+    <string name="onboarding_title">تقویم‌لرینیز هارادادیر؟</string>
+    <string name="onboarding_subtitle">باغلاماق اوچون بیرینی سئچین.</string>
+    <string name="onboarding_icloud_detail">Apple ID و تطبیق پارولو</string>
+    <string name="onboarding_caldav_title">CalDAV سرورو</string>
+    <string name="onboarding_caldav_detail">Nextcloud، Fastmail، Radicale و باشقالاری</string>
+    <string name="onboarding_device_title">بو جیهازدا</string>
+    <string name="onboarding_phone_detail">Google، Outlook و همزمانلاشدیرما تطبیق‌لری</string>
+    <string name="onboarding_use_offline">آفلاین تقویم ایستفاده ائت</string>
+    <string name="onboarding_trust">آچیق قایناق. رئکلام یوخ. ایزله‌مه یوخ.</string>
+
+    <!-- ==================== Reminders are off ==================== -->
+    <string name="reminders_off_title">خاطیرلاتمالار سؤنولودور</string>
+    <plurals name="reminders_off_body">
+        <item quantity="one">بو هفته %d حادیثه‌نین خاطیرلاتماسی وار.</item>
+        <item quantity="other">بو هفته %d حادیثه‌نین خاطیرلاتماسی وار.</item>
+    </plurals>
+    <string name="reminders_off_not_now">ایندی یوخ</string>
+    <string name="reminders_off_turn_on">یاندیر</string>
+    <string name="reminders_on_snackbar">خاطیرلاتمالار یاندی</string>
+
+    <!-- ==================== About ==================== -->
+    <string name="about_tagline">بوتون تقویم‌لرینیز بیر شخصی تطبیقده.</string>
+    <string name="about_help_title">کؤمک و بلدچیلر</string>
+    <string name="about_help_detail">قوروم، همزمانلاشدیرما و سوال‌لار</string>
+    <string name="about_source_title">قایناق کودو</string>
+    <string name="about_source_detail">Apache 2.0، GitHub-دا</string>
+    <string name="about_support_title">KashCal-ا دستک اول</string>
+    <string name="about_support_detail">آرتیق دستک اولان هر کسه تشکورلر</string>
+    <string name="about_link_failed">بو لینکی آچا بیلن تطبیق یوخدور.</string>
+    <string name="about_built_in_austin">Austin-دا ❤️ ایله یارادیلیب</string>
+    <string name="about_version">نوسخه %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_skip">آتلا</string>
+    <string name="whats_new_next">سونراکی</string>
+    <string name="whats_new_page_of">صفحه %1$d / %2$d</string>
+    <string name="whats_new_find_it_in">بورادا تاپ</string>
+    <string name="whats_new_v598_title">Android-ی آچیق ساخلاماغا کؤمک ائدین</string>
+    <string name="whats_new_v598_body">Google جیهازینیزدا تطبیق‌لری قورما اوصولونو دَییشدیریر. سیزین کؤمگینیزه احتیاجیمیز وار.</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org-ا باش چکین</string>
+    <string name="whats_new_v732_title">بیر دایمی تشککور</string>
+    <string name="whats_new_v732_body">بو بوراخیلیش KashCal-ین دستکچیلرینه حصر اولونوب. کیچیک بیر گیریش، بؤیوک بیر تکرارلانان فایده.</string>
+    <string name="whats_new_v732_caption">هله دستکچی دئییلسینیز؟</string>
+    <string name="whats_new_v732_action_label">بیزی پلانلارینیزا آرتیرین</string>
+    <string name="whats_new_v772_icon_title">آیکونونوز تاریخی بیلیر</string>
+    <string name="whats_new_v772_icon_body">\"بو گونون تاریخی\" آیکونونو سئچین و KashCal صفحه‌اینده آیین گونونو گؤستریر. هر گئجه اؤز-اؤزونه دؤنور.</string>
+    <string name="whats_new_v772_changes_title">نه دَییشدیگینه باخین</string>
+    <string name="whats_new_v772_changes_body">iCloud و CalDAV تقویم‌لرینیزدن یئنی، دَییشدیریلمیش و سیلینمیش حادیثه‌لر ۷ گون عرضینده \"سون دَییشیکلیکلر\"ده توپلانیر. آچماق اوچون بیرینه وورون.</string>
+    <string name="whats_new_v772_notifications_body">آرخا پلان همزمانلاشدیرما iCloud یا CalDAV حادیثه‌لرینیزده دَییشیکلیک تاپدیغیندا بیلدیریش آلین. سیز یاندیرانا قدر سؤنولو قالیر.</string>
+    <string name="whats_new_v803_offline_title">ائوده قالان تقویم‌لر</string>
+    <string name="whats_new_v803_offline_body">بعضی پلان‌لارین یئری سرور دئییل. اونلارا اؤز آفلاین تقویم‌لرینی وئرین، ایسته‌دیگینیز قدر.</string>
+    <string name="whats_new_v803_backup_title">اونودا بیله‌جه‌ییز یِدکلر</string>
+    <string name="whats_new_v803_backup_body">بیر دفعه قوولوق سئچین، KashCal آفلاین تقویم‌لرینیزین تزه نوسخه‌سینی اوردا ساخلاییر.</string>
+    <string name="whats_new_v803_print_title">هفته‌نیز، کاغیذ اوستونده</string>
+    <string name="whats_new_v803_print_body">باخدیغینیز هفته‌نی چاپ ائدین. هانسی سویودوجویا یاپیشاجاغی سیزه قالیر.</string>
+    <string name="whats_new_hero_sample_lunch">تیم ناهاری</string>
+    <string name="whats_new_hero_sample_review">دیزاین یوخلاماسی</string>
+    <string name="whats_new_hero_sample_book_club">کیتاب کلوبو</string>
+    <string name="whats_new_hero_sample_dentist">دیش حکیمی</string>
+    <string name="whats_new_hero_sample_yoga">یوگا</string>
+    <string name="whats_new_hero_sample_calendar">ایش</string>
+    <string name="whats_new_hero_sample_family">عائله</string>
+    <string name="whats_new_hero_sample_garden">باغچا</string>
+    <string name="whats_new_hero_sample_folder">تقویم یِدکلری</string>
+    <string name="whats_new_hero_now">ایندی</string>
+
+    <!-- ==================== Sign-In Sheets ==================== -->
+    <string name="signin_icloud_title">iCloud-ا باغلان</string>
+    <string name="signin_caldav_title">CalDAV حسابی آرتیر</string>
+    <string name="signin_caldav_sign_in_again_title">یئنی‌دن داخیل اول</string>
+    <string name="signin_connected_to">%1$s-ا باغلاندی</string>
+
+    <!-- ==================== Dialogs ==================== -->
+    <string name="dialog_new_event_title">یئنی حادیثه</string>
+    <string name="dialog_edit_event_title">حادیثه‌نی دَییشدیر</string>
+    <string name="dialog_enable_notifications">بیلدیریشلری فعال ائدسین؟</string>
+    <string name="dialog_action_required">دوام ائتمک اوچون بو عمل لازیمدیر.</string>
+    <string name="dialog_add_to_calendar">تقویمه آرتیر</string>
+    <string name="dialog_select_calendar">تقویم سئچ</string>
+    <string name="dialog_choose_color">رنگ سئچ</string>
+    <string name="dialog_add_subscription">آبونه آرتیر</string>
+    <string name="dialog_edit_subscription">آبونه‌نی دَییشدیر</string>
+
+    <!-- ==================== Status Messages ==================== -->
+    <string name="status_no_events_week">بو هفته حادیثه یوخدور</string>
+    <string name="status_more_events">+%1$d داها</string>
+    <string name="status_no_sync_sessions">هله همزمانلاشدیرما سئشنسی یوخدور.\n\nتقویم گؤرونوشونده آشاغی چکیب یئنیله‌یه‌رک همزمانلاشدیرما باشلادین.</string>
+    <string name="status_no_sync_account">همزمانلاشدیرما حسابی قورولمامیش. آفلاین تقویم‌لر بو جیهازدا قالیر؛ جیهاز تقویم‌لری اؤز حسابلاری ایله همزمانلاشیر.</string>
+    <string name="status_no_writable_calendars">یازیلا بیلن تقویم یوخدور</string>
+    <string name="status_events_count">%1$d حادیثه</string>
+    <string name="status_sync_history">همزمانلاشدیرما تاریخی</string>
+    <string name="status_parse_failures">پارس خطالاری</string>
+    <string name="status_error">خطا</string>
+    <string name="status_failed_to_parse">⚠ %1$d پارس ائدیله بیلمدی</string>
+    <string name="status_built_with_love">سِوگی ایله یارادیلیب</string>
+    <string name="status_in_austin">Austin-دا</string>
+    <string name="status_version">KashCal v%1$s</string>
+
+    <!-- ==================== Success Messages ==================== -->
+    <string name="success_sync_complete">همزمانلاشدیرما تاماملاندی</string>
+
+    <!-- ==================== Error Messages ==================== -->
+    <string name="error_auth_title">داخیل اولما اوغورسوز اولدو</string>
+    <string name="error_auth_invalid_credentials">کئچرسز Apple ID یا تطبیقه خاص پارول. لطفاً معلوماتلارینیزین یوخ‌لایین و یئنی‌دن جهد ائدین.</string>
+    <string name="error_auth_app_specific_password_required">iCloud تطبیقه خاص پارول طلب ائدیر. عادی Apple ID پارولونوز بورادا ایشله‌مز.</string>
+    <string name="error_auth_session_expired_title">سئشنین واختی گئدیب</string>
+    <string name="error_auth_session_expired">iCloud سئشنینیزین واختی گئدیب. همزمانلاشدیرمایا دوام ائتمک اوچون یئنی‌دن داخیل اولون.</string>
+    <string name="error_auth_account_locked">Apple ID-ینیز قیفلیدی. آچماق اوچون appleid.apple.com-ا باش چکین.</string>
+    <string name="error_network_offline">آفلاینسینیز. آنلاین اولدوقدا دَییشیکلیکلر همزمانلاشاجاق.</string>
+    <string name="error_network_timeout">باغلانتی واختی کئچدی. لطفاً اینترنتینیزین یوخ‌لایین و یئنی‌دن جهد ائدین.</string>
+    <string name="error_network_ssl">گوونلی باغلانتی اوغورسوز اولدو. لطفاً شبکه تنظیماتلارینیزین یوخ‌لایین.</string>
+    <string name="error_network_unknown_host">iCloud-ا چاتا بیلمدی. لطفاً اینترنت باغلانتینیزین یوخ‌لایین.</string>
+    <string name="error_network_connection_failed">باغلانتی اوغورسوز اولدو. لطفاً یئنی‌دن جهد ائدین.</string>
+    <string name="error_server_unavailable">iCloud موقتاً الده یوخدور. لطفاً سونرا یئنی‌دن جهد ائدین.</string>
+    <string name="error_server_rate_limited">چوخ طلب وار. لطفاً بیر آز گؤزله‌یین و یئنی‌دن جهد ائدین.</string>
+    <string name="error_server_forbidden">گیریش ردد ائدیلدی. بو تقویم اوچون ایجازه‌نیز اولمایا بیلر.</string>
+    <string name="error_server_not_found">طلب اولونان عونصر سروردا تاپیلمادی.</string>
+    <string name="error_conflict_title">همزمانلاشدیرما تضادی</string>
+    <string name="error_conflict_generic">بو حادیثه باشقا جیهازدا دَییشدیریلیب. ان سون نوسخه‌نی آلماق اوچون زورلا همزمانلاشدیرین.</string>
+    <string name="error_conflict_with_event">\"%1$s\" باشقا جیهازدا دَییشدیریلیب. ان سون نوسخه‌نی آلماق اوچون زورلا همزمانلاشدیرین.</string>
+    <string name="error_sync_token_expired">همزمانلاشدیرما وئری‌لری‌نین واختی گئدیب. تام همزمانلاشدیرما آپاریلیر…</string>
+    <string name="error_event_not_found">حادیثه تاپیلمادی.</string>
+    <string name="error_calendar_not_found">تقویم تاپیلمادی.</string>
+    <string name="error_calendar_read_only">\"%1$s\"-ده حادیثه‌لری دَییشدیره بیلمزسینیز (یالنیز اوخونا بیله‌ن تقویم).</string>
+    <string name="error_event_invalid_data">کئچرسز حادیثه وئری‌لری. لطفاً باشلانغیج و سون واختلارینی یوخ‌لایین.</string>
+    <string name="error_event_invalid_recurrence">کئچرسز تکرارلانما الگوییشی.</string>
+    <string name="error_display_name_exists">\"%1$s\" آدلی بیر حساب آرتیق وار.</string>
+    <string name="icloud_error_credentials_required">Apple ID و پارول لازیمدیر</string>
+    <string name="icloud_error_connection_timeout">باغلانتی واختی کئچدی. لطفاً یئنی‌دن جهد ائدین.</string>
+    <string name="caldav_error_display_name_required">گؤرونن آد لازیمدیر</string>
+    <string name="caldav_error_credentials_required">سرور URL، ایستفاده‌چی آدی و پارول لازیمدیر</string>
+    <string name="caldav_error_connection_timeout">باغلانتی واختی کئچدی. لطفاً یئنی‌دن جهد ائدین.</string>
+    <string name="caldav_error_no_calendars">بو سروردا تقویم تاپیلمادی.</string>
+    <string name="caldav_error_unexpected">گؤزله‌نیلمه‌ین خطا. لطفاً یئنی‌دن جهد ائدین.</string>
+    <string name="caldav_error_with_lan_hint">%1$s\n\nاگر بو یئرلی شبکه‌نیزده بیر سروردورسا، باغلانماق اوچون یئرلی شبکه گیریشینه ایجازه وئرین.</string>
+    <string name="caldav_error_connection_refused_insecure">سرور باغلانتی‌نی KashCal-ین ایزله‌مه‌یه‌جگی بیر یئره یؤنلندیردی (شیفرله‌نمه‌میش بیر آدرس یا دؤنگو یؤنلندیرمه)، بو سبب‌دن KashCal پارولونوزو گؤندرمه‌دن دایاندی. سرور آدرسینی یوخ‌لایین.</string>
+    <string name="caldav_error_sign_in_again_mismatch">بو باشقا حسابدیر. بو حسابین ایستفاده ائتدیگی ایستفاده‌چی آدی و سرور ایله داخیل اولون.</string>
+    <string name="local_network_banner_title">یئرلی شبکه گیریشی لازیمدیر</string>
+    <string name="local_network_banner_body">بو سرور یئرلی شبکه‌نیزده کیمی گؤرونور. KashCal-ین باغلانا بیلمه‌سی اوچون یئرلی شبکه گیریشینه ایجازه وئرین.</string>
+    <string name="local_network_banner_allow">گیریشه ایجازه وئر</string>
+    <string name="local_network_banner_dismiss">ایندی یوخ</string>
+    <string name="hub_app_permissions">تطبیق ایجازه‌لری</string>
+    <string name="status_allowed">ایجازه وئریلیب</string>
+    <string name="permission_name_notifications">بیلدیریشلر</string>
+    <string name="permission_why_notifications">KashCal-ین سیزی حادیثه‌لرینیز باره‌ده خاطیرلادا بیلمه‌سی اوچون. اولمادا، خاطیرلاتمالار سس‌سیز قالار.</string>
+    <string name="permission_name_contacts">کونٹاکتلار</string>
+    <string name="permission_why_contacts">حادیثه‌یه آدام آرتیرارکن قوناق‌لار پیشنهاد ائدیر و کونٹاکت آد گونلرینی گؤستریر. کونٹاکتلارینیز جیهازینیزدا قالیر.</string>
+    <string name="permission_name_calendars">تقویم‌لر</string>
+    <string name="permission_why_calendars">جیهازینیزداکی دیگر تقویم‌لردن حادیثه‌لری اؤزونوزون یانیندا گؤستریر.</string>
+    <string name="permission_name_local_network">یئرلی شبکه</string>
+    <string name="permission_why_local_network">ائو یا ایش شبکه‌نیزده بیر تقویم سرورونا چاتیر. Android 17 بونو اینترنت گیریشیندن آیریجا طلب ائدیر.</string>
+    <string name="password_change_error_account_not_found">حساب تاپیلمادی</string>
+    <string name="password_change_error_no_credentials">مؤوجود معلومات یوخدور</string>
+    <string name="password_change_error_unsupported_provider">بو تدارکچی پارول دَییشدیرمگی دستکلمیر</string>
+    <string name="password_change_error_invalid">کئچرسز پارول</string>
+    <string name="password_change_error_network">شبکه خطاسی، لطفاً یئنی‌دن جهد ائدین</string>
+    <string name="error_import_file_not_found">فایل تاپیلمادی یا اوخونا بیلمز.</string>
+    <string name="error_import_invalid_format">کئچرسز تقویم فایل فورماتی.</string>
+    <string name="error_import_no_events">فایلدا حادیثه تاپیلمادی</string>
+    <string name="error_import_failed">ایمپورت اوغورسوز اولدو</string>
+    <string name="error_import_partial">%1$d حادیثه ایمپورت ائدیلدی، %2$d اوغورسوز اولدو.</string>
+    <string name="error_export_failed">حادیثه‌لری ائکسپورت ائتمک اوغورسوز اولدو.</string>
+    <string name="error_export_no_events">ائکسپورت ائدیله‌جک حادیثه یوخدور.</string>
+    <string name="error_end_before_start">سون واخت باشلانغیج واختین‌دان سونرا اولمالیدیر</string>
+    <string name="error_storage_full_title">یادداش دولودور</string>
+    <string name="error_storage_full">کیفایت قدر یادداش یوخدور. لطفاً بیر آز یئر بوشالدین و یئنی‌دن جهد ائدین.</string>
+    <string name="error_database_corruption_title">وئری خطاسی</string>
+    <string name="error_database_corruption">تقویم وئری‌لرینیز زده‌لنمیش اولا بیلر. لطفاً دستک ایله علاقه ساخلایین.</string>
+    <string name="error_migration_title">یئنیله‌مه خطاسی</string>
+    <string name="error_migration_failed">تطبیق وئری‌لرینی یئنیله‌مک اوغورسوز اولدو. لطفاً تطبیقی یئنی‌دن قورون.</string>
+    <string name="error_permission_notification_title">بیلدیریشلری فعال ائدسین؟</string>
+    <string name="error_permission_notification">KashCal-ین سیزی گله‌ن حادیثه‌لر باره‌ده خاطیرلادا بیلمه‌سی اوچون بیلدیریش ایجازه‌سی لازیمدیر.</string>
+    <string name="error_permission_alarm_title">دقیق زنگلری فعال ائدسین؟</string>
+    <string name="error_permission_alarm">KashCal-ین دقیق خاطیرلاتمالار اوچون دقیق زنگ ایجازه‌سی لازیمدیر.</string>
+    <string name="error_permission_storage">ایمپورت/ائکسپورت اوچون یادداش ایجازه‌سی لازیمدیر.</string>
+    <string name="error_device_calendar_title">تقویم خطاسی</string>
+    <string name="error_device_calendar_write_failed">جیهاز تقویمینه ساخلاماق اوغورسوز اولدو. لطفاً یئنی‌دن جهد ائدین.</string>
+    <string name="error_device_calendar_permission">تقویم یازما ایجازه‌سی لازیمدیر. لطفاً تنظیماتلاردا ایجازه وئرین.</string>
+    <string name="error_device_calendar_not_found">تقویم تاپیلمادی. سیلینمیش اولا بیلر.</string>
+    <string name="error_device_event_not_found">حادیثه تاپیلمادی. سیلینمیش اولا بیلر.</string>
+    <string name="error_device_calendar_read_only">بو تقویم یالنیز اوخونا بیله‌ن‌دیر.</string>
+    <string name="error_sync_no_accounts">iCloud حسابی قورولماییب. تقویم‌لرینیزین همزمانلاشدیریلماسی اوچون iCloud-ا قورون.</string>
+    <string name="error_sync_partial">%1$d تقویم همزمانلاشدیریلدی، %2$d اوغورسوز اولدو.</string>
+    <string name="error_unknown">بیر شئی یانلیش گئتدی. لطفاً یئنی‌دن جهد ائدین.</string>
+
+    <!-- ==================== Content Descriptions (Accessibility) ==================== -->
+    <string name="cd_selected">سئچیلمیش</string>
+    <string name="cd_back">گئری</string>
+    <string name="cd_opens_in_browser">تاراییدا آچیلیر</string>
+    <string name="cd_search">آختار</string>
+    <string name="cd_create_event">حادیثه یارات</string>
+    <string name="cd_delete">سیل</string>
+    <string name="cd_refresh">یئنیله</string>
+    <string name="cd_more_options">داها چوخ سئچنک</string>
+    <string name="cd_duplicate">کؤچور</string>
+    <string name="cd_share">پایلاش</string>
+    <string name="cd_export_ics">ICS کیمی ائکسپورت ائت</string>
+    <string name="cd_open_link">لینکی آچ</string>
+    <string name="cd_open_maps">خریطه‌ده آچ</string>
+    <string name="cd_copy_clipboard">کلیپبوردا کؤچور</string>
+    <string name="cd_clear_history">تاریخی تمیزله</string>
+    <string name="cd_recurring">تکرارلانان</string>
+    <string name="cd_enabled">فعال</string>
+    <string name="cd_sync_error">همزمانلاشدیرما خطاسی</string>
+    <string name="cd_wheel_picker">%1$d سئچنکلی چرخ سئچیجی</string>
+    <string name="cd_time_entry_keyboard">دقیق واختی داخیل ائت</string>
+    <string name="time_entry_dialog_title">واخت داخیل ائت</string>
+    <string name="time_entry_tap_to_edit">دَییشدیرمک اوچون وور</string>
+    <string name="cd_version_info">KashCal نوسخه‌سی %1$s. دیباگ سئچنکلری اوچون اوزون باس.</string>
+    <string name="cd_about_setting">%1$s حاقدا</string>
+    <string name="cd_color_slider">رنگ سوروشر، حاضیردا %1$s</string>
+    <string name="cd_color_slider_state">%1$s، %2$d درجه</string>
+
+    <!-- ==================== Form Labels (Additional) ==================== -->
+    <string name="label_calendar">تقویم</string>
+    <string name="label_color">رنگ:</string>
+    <string name="label_repeat">تکرار</string>
+    <string name="label_sync_interval">همزمانلاشدیرما آرالیغی:</string>
+    <string name="label_server_url">سرور URL</string>
+    <string name="label_username">ایستفاده‌چی آدی</string>
+    <string name="label_password">پارول</string>
+    <string name="label_display_name_optional">گؤرونن آد</string>
+
+    <!-- ==================== Placeholders (Additional) ==================== -->
+    <string name="placeholder_search_events">حادیثه‌لری آختار…</string>
+
+    <!-- ==================== Hints ==================== -->
+    <string name="hint_https_default">اگر بیلدییریلمه‌سه، https://-ا پیش‌فرض اولور</string>
+    <string name="hint_name_shown_in_settings">تنظیماتلاردا گؤرونن آد</string>
+    <string name="caldav_trust_insecure_subtitle">اؤز-اؤزونه ایمضالانمیش سرتیفیکات‌لار یا یئرلی HTTP سرورلاری اوچون</string>
+
+    <!-- ==================== Recurrence ==================== -->
+    <string name="label_recurrence_after">سونرا</string>
+    <string name="label_recurrence_occurrences">دفعه</string>
+    <string name="label_recurrence_on_date">تاریخده</string>
+
+    <!-- ==================== Settings (Additional) ==================== -->
+    <string name="settings_default_calendar">پیش‌فرض تقویم</string>
+    <string name="settings_default_event_length">پیش‌فرض حادیثه اوزونلوغو</string>
+    <string name="settings_default_event_length_hint">یئنی حادیثه‌لر اوچون پیش‌فرض اوزونلوق</string>
+    <string name="settings_timed_event_alert">واختلی حادیثه خاطیرلاتماسی</string>
+    <string name="settings_all_day_event_alert">بوتون گون حادیثه خاطیرلاتماسی</string>
+    <string name="settings_custom_alert_value">خاص (%1$s)</string>
+    <string name="settings_notifications">بیلدیریشلر</string>
+
+    <!-- ==================== Settings Options ==================== -->
+    <string name="option_system_default">سیستم پیش‌فرضی</string>
+    <string name="option_light">آچیق</string>
+    <string name="option_dark">تیره</string>
+    <string name="option_12_hour">۱۲-ساعت</string>
+    <string name="option_24_hour">۲۴-ساعت</string>
+    <string name="option_sunday">بازار</string>
+    <string name="option_monday">دوشنبه</string>
+    <string name="option_saturday">شنبه</string>
+
+    <!-- ==================== Empty States ==================== -->
+    <string name="empty_no_upcoming_events">گله‌ن حادیثه یوخدور</string>
+    <string name="empty_no_calendars">تقویم الده یوخدور</string>
+
+    <!-- ==================== Status (Additional) ==================== -->
+    <string name="status_connecting">باغلانیر…</string>
+    <string name="status_fetching">گتیریلیر…</string>
+
+    <!-- ==================== Actions (Additional) ==================== -->
+    <string name="action_fetch_calendar">تقویمی گتیر</string>
+    <string name="action_import_from_file">فایل‌دان حادیثه‌لری ایمپورت ائت</string>
+    <string name="settings_export_calendars">تقویم‌لری ائکسپورت ائت</string>
+    <string name="settings_export_calendars_subtitle">بیر تقویمی ICS فایلی کیمی ساخلا</string>
+    <string name="export_calendar_no_events">حادیثه یوخدور</string>
+    <string name="export_calendar_preparing">حاضیرلانیر…</string>
+    <string name="cd_export_calendar">%1$s ائکسپورت ائت</string>
+    <string name="cd_export_calendar_preparing">%1$s حاضیرلانیر</string>
+    <string name="export_calendar_chooser_title">تقویمی ائکسپورت ائت</string>
+    <string name="export_event_chooser_title">حادیثه‌نی ائکسپورت ائت</string>
+    <string name="export_file_failed">فایل یارادیلا بیلمدی.</string>
+
+    <!-- ==================== Providers ==================== -->
+    <string name="provider_icloud">iCloud</string>
+
+    <!-- ==================== Help Text ==================== -->
+    <string name="help_app_password_description">تطبیقه خاص پاروللار اساس Apple ID پارولونوزو پایلاشمادان اۆچونجو طرف تطبیق‌لره داخیل اولماغینیزا ایمکان وئریر.</string>
+    <string name="help_app_password_steps_header">یاراتماق اوچون:</string>
+    <string name="help_app_password_step_1">۱. appleid.apple.com-ا گئدین</string>
+    <string name="help_app_password_step_2">۲. Apple ID-ینیزله داخیل اولون</string>
+    <string name="help_app_password_step_3">۳. داخیل اولما و گوونلییه گئدین</string>
+    <string name="help_app_password_step_4">۴. تطبیقه خاص پاروللارا کلیک ائدین</string>
+    <string name="help_app_password_step_5">۵. یاراتا کلیک ائدین و بورایا کؤچورون</string>
+
+    <!-- ==================== Notification Permission Dialog ==================== -->
+    <string name="dialog_notification_permission_message">KashCal-ین سیزی گله‌ن حادیثه‌لر باره‌ده خاطیرلادا بیلمه‌سی اوچون بیلدیریش ایجازه‌سی لازیمدیر.</string>
+    <string name="dialog_notification_permission_settings_hint">بونو سونرا تنظیماتلاردا دَییشدیره بیلرسینیز.</string>
+
+    <!-- ==================== Accounts Screen ==================== -->
+    <string name="accounts_title">حساب‌لار</string>
+    <string name="accounts_section_connected">باغلانمیش</string>
+    <string name="accounts_section_add">حساب آرتیر</string>
+    <string name="accounts_empty_title">باغلانمیش حساب یوخدور</string>
+    <string name="accounts_empty_subtitle">تقویم‌لرینیزین جیهازلار آراسیندا همزمانلاشدیریلماسی اوچون بیر حساب آرتیرین</string>
+    <string name="accounts_row_label">تقویم حساب‌لاری</string>
+    <string name="accounts_row_hint">مثلاً iCloud، Nextcloud، Fastmail</string>
+    <string name="accounts_add_icloud">iCloud آرتیر</string>
+    <string name="accounts_add_caldav">CalDAV آرتیر</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud، Fastmail و داها چوخو</string>
+    <string name="accounts_caldav_help_title">CalDAV نهدیر؟</string>
+    <string name="accounts_caldav_help_description">CalDAV تقویم‌لری همزمانلاشدیرماق اوچون آچیق بیر استاندارت‌دیر. دستکلینن‌لر:</string>
+    <string name="accounts_caldav_help_more">و داها چوخو</string>
+    <string name="accounts_calendars_syncing">همزمانلاشدیریلیر…</string>
+    <string name="accounts_cd_icloud_icon">iCloud حسابی</string>
+    <string name="accounts_cd_caldav_icon">CalDAV حسابی</string>
+    <string name="accounts_cd_back">گئری گئت</string>
+    <string name="accounts_sync_issue">همزمانلاشدیرما پروبلئمی</string>
+    <string name="accounts_cd_sync_warning">همزمانلاشدیرما خبَردارلیغی</string>
+    <string name="accounts_cd_sync_off">همزمانلاشدیرما سؤنولو</string>
+
+    <!-- ==================== Subscriptions Screen ==================== -->
+    <string name="subscriptions_title">تقویم فیدلری</string>
+    <string name="subscriptions_section_add">آرتیر</string>
+    <string name="subscriptions_empty_ics">ICS آبونه‌لیگی یوخدور</string>
+    <string name="subscriptions_empty_ics_hint">حادیثه‌لری گؤرمک اوچون بیر تقویم فیدی آرتیرین</string>
+    <string name="subscriptions_swipe_hint">سیلمک اوچون فیدی سوروشدورون.</string>
+    <string name="subscriptions_add_ics">ICS تقویمی آرتیر</string>
+    <string name="qs_tile_label">حادیثه آرتیر</string>
+    <string name="holiday_catalog_add">تعطیلات تقویمی آرتیر</string>
+    <string name="holiday_catalog_search_label">آختار</string>
+    <string name="holiday_catalog_already_added">آرتیریلدی</string>
+    <string name="holiday_catalog_empty">اؤلکه تاپیلمادی</string>
+    <string name="holiday_catalog_empty_hint">فرقلی بیر آد جهد ائدین</string>
+    <string name="holiday_catalog_validate_error">بو تقویمه چاتا بیلمدی. باغلانتینیزین یوخ‌لایین و یئنی‌دن جهد ائدین.</string>
+    <string name="holiday_catalog_attribution">Mozilla Thunderbird-دان تعطیلات تقویم‌لری، %1$s آلتیندا لیسانس‌لانمیش.</string>
+    <string name="account_feeds_add">حسابدان آرتیر</string>
+    <string name="account_feeds_note">iCloud و CalDAV حسابلارینیزدا ساخلانان تقویم فیدلرینی گؤستریر. تقویم فیدلرینه آرتیرماق اوچون یاندیرین.</string>
+    <string name="account_feeds_checking">یوخلانیر…</string>
+    <string name="account_feeds_none">تقویم فیدی تاپیلمادی</string>
+    <string name="account_feeds_failed">تقویم فیدلری یوکلنه بیلمدی</string>
+    <string name="subscriptions_row_label">تقویم فیدلری (ICS)</string>
+    <string name="subscriptions_row_hint">مثلاً تعطیلات، ایدمان، مکتب</string>
+
+    <!-- ==================== Birthdays & Anniversaries ==================== -->
+    <string name="birthdays_anniversaries_row_label">آد گونلری و ایل‌دؤنوملری</string>
+    <string name="birthdays_anniversaries_row_hint">تلفون کونٹاکتلارینیزدان</string>
+    <string name="birthdays_section_title">آد گونلری</string>
+    <string name="anniversaries_section_title">ایل‌دؤنوملری</string>
+    <string name="settings_contact_birthdays">کونٹاکت آد گونلری</string>
+    <string name="settings_contact_birthdays_description">تلفون کونٹاکتلارینیزدان آد گونلرینی بوتون گون تقویم حادیثه‌لری کیمی گؤستر.</string>
+    <string name="settings_contact_anniversaries">کونٹاکت ایل‌دؤنوملری</string>
+    <string name="settings_contact_anniversaries_description">تلفون کونٹاکتلارینیزدان ایل‌دؤنوملرینی بوتون گون تقویم حادیثه‌لری کیمی گؤستر.</string>
+    <string name="settings_anniversary_reminder">ایل‌دؤنومو خاطیرلاتماسی</string>
+    <string name="settings_calendar_color">تقویم رنگی</string>
+    <string name="settings_default_reminder">پیش‌فرض خاطیرلاتما</string>
+    <string name="action_change">دَییشدیر</string>
+    <string name="settings_contacts_footer">جیهاز کونٹاکتلارینیزدان اوخویور. کونٹاکت ایجازه‌سی طلب ائدیر.</string>
+    <string name="settings_contacts_permission_required">کونٹاکت ایجازه‌سی لازیمدیر</string>
+    <string name="subscriptions_cd_back">گئری گئت</string>
+    <string name="subscriptions_cd_add">آبونه آرتیر</string>
+    <string name="snackbar_subscription_removed">آبونه سیلیندی</string>
+    <string name="snackbar_action_undo">گئری آل</string>
+    <string name="snackbar_subscription_already_exists">بو URL-ا آرتیق آبونه‌سینیز</string>
+
+    <!-- ==================== Account Detail Sheet ==================== -->
+    <string name="account_detail_section_sync">همزمانلاشدیرما</string>
+    <string name="account_detail_section_calendars">تقویم‌لر</string>
+    <string name="account_detail_section_account">حساب</string>
+    <string name="account_detail_enabled">فعال</string>
+    <string name="account_detail_enabled_subtitle">بو حسابی اوتوماتیک همزمانلاشدیر</string>
+    <string name="account_detail_sync_calendar">تقویم</string>
+    <string name="account_detail_sync_calendar_subtitle">بو حسابین تقویم‌لرینی همزمانلاشدیر</string>
+    <string name="account_detail_sync_contacts">کونٹاکتلار</string>
+    <string name="account_detail_sync_contacts_subtitle">بو حسابین کونٹاکتلارینی همزمانلاشدیر</string>
+    <string name="account_detail_contacts_permission_needed">کونٹاکت ایجازه‌سی سؤنولو. کونٹاکتلارین همزمانلاشدیریلماسینا دوام ائتمک اوچون گیریش وئرین.</string>
+    <string name="account_detail_contacts_grant">گیریش وئر</string>
+    <string name="contact_sync_enabled_for">%1$s اوچون کونٹاکتلار همزمانلاشدیریلیر</string>
+    <string name="contact_sync_disabled_for">%1$s اوچون جیهاز کونٹاکتلاری سیلیندی</string>
+    <string name="contact_sync_disabled_kept">%1$s اوچون کونٹاکت همزمانلاشدیرما سؤنولو. کونٹاکتلار قالیر چونکی باشقا بیر گیریش هله‌ده اونلاری همزمانلاشدیریر.</string>
+    <string name="contact_sync_disabled_incomplete">%1$s اوچون کونٹاکت همزمانلاشدیرما سؤنولو، آنجاق بعضی جیهاز کونٹاکتلاری قالا بیلر. کونٹاکت ایجازه‌سینی یوخ‌لایین.</string>
+    <string name="account_detail_sync_now">ایندی همزمانلاشدیر</string>
+    <string name="account_detail_syncing">همزمانلاشدیریلیر…</string>
+    <string name="account_detail_discovering">کشف ائدیلیر…</string>
+    <string name="account_detail_discover_calendars">یئنی تقویم‌لری کشف ائت</string>
+    <string name="account_detail_change_password">پارولی دَییشدیر</string>
+    <string name="account_detail_sign_in_again">یئنی‌دن داخیل اول</string>
+    <string name="account_detail_sign_in_again_subtitle">KashCal-دا بو حسابین پارولو آرتیق یوخدور. یئنی‌دن همزمانلاشدیرماق اوچون داخیل اولون. تقویم‌لرینیز و حادیثه‌لرینیز قالیر.</string>
+    <string name="account_detail_sign_out">چیخیش ائت</string>
+    <string name="account_detail_never_synced">هئچ واخت همزمانلاشدیریلماییب</string>
+    <string name="account_detail_last_success">سون اوغور: %1$s</string>
+    <string name="account_detail_cd_rename">آدینی دَییشدیر</string>
+    <string name="account_detail_cd_show_password">پارولی گؤستر</string>
+    <string name="account_detail_cd_hide_password">پارولی گیزلت</string>
+
+    <!-- ==================== Rename Account Sheet ==================== -->
+    <string name="rename_account_title">حسابین آدینی دَییشدیر</string>
+    <string name="rename_account_label">حساب آدی</string>
+
+    <!-- ==================== Change Password Sheet ==================== -->
+    <string name="change_password_title">پارولی دَییشدیر</string>
+    <string name="change_password_label_icloud">تطبیقه خاص پارول</string>
+    <string name="change_password_label_default">پارول</string>
+
+    <!-- ==================== System Account ==================== -->
+    <string name="kashcal_account_label">KashCal</string>
+    <string name="kashcal_contacts_account_label">KashCal Contacts</string>
+
+    <!-- ==================== Settings Screen ==================== -->
+    <string name="settings_device_calendars">جیهاز تقویم‌لری</string>
+    <string name="settings_device_calendars_hint">دیگر تطبیق‌لردن تقویم‌لر</string>
+    <string name="offline_calendars_row_label">آفلاین تقویم‌لر</string>
+    <string name="offline_calendars_row_hint">بو جیهازدا قالان تقویم‌لر</string>
+    <string name="offline_calendars_manage_note">سیلمک اوچون تقویمی سوروشدورون.</string>
+    <string name="offline_calendars_info">بو جیهازدا ساخلانیر و هئچ واخت همزمانلاشدیریلمیر.</string>
+    <string name="offline_calendars_info_cd">آفلاین تقویم‌لر حاققیندا</string>
+    <string name="offline_calendar_default_state">پیش‌فرض</string>
+    <string name="offline_calendar_new">یئنی تقویم</string>
+    <string name="offline_calendar_new_in_picker">یئنی آفلاین تقویم</string>
+    <string name="action_create">یارات</string>
+    <string name="offline_calendar_rename">آدینی دَییشدیر</string>
+    <string name="offline_calendar_color">رنگ</string>
+    <string name="offline_calendar_export">تقویمی ائکسپورت ائت</string>
+    <string name="offline_calendar_builtin_info">داخیلی تقویمین آدی دَییشدیریله یا سیلینه بیلمز. تقویم سئچیلمه‌ینده یئنی حادیثه‌لر بورا گلیر.</string>
+    <string name="offline_calendar_builtin_info_cd">داخیلی تقویم حاققیندا</string>
+    <string name="offline_calendar_rename_cancel_cd">آد دَییشمه‌نی لغو ائت</string>
+    <string name="offline_calendar_rename_save_cd">آدی ساخلا</string>
+    <string name="offline_calendar_delete_cd">%1$s سیل</string>
+    <plurals name="offline_calendar_delete_confirm">
+        <item quantity="one">\"%2$s\" و اونون %1$d حادیثه‌سی همیشه‌لیک سیلینسین؟ گئری قایتاریلا بیلمز.</item>
+        <item quantity="other">\"%2$s\" و اونون %1$d حادیثه‌سی همیشه‌لیک سیلینسین؟ گئری قایتاریلا بیلمز.</item>
+    </plurals>
+    <string name="offline_calendar_delete_empty">\"%1$s\" همیشه‌لیک سیلینسین؟ اوندا حادیثه یوخدور.</string>
+    <plurals name="offline_calendar_delete_also">
+        <item quantity="one">%1$d حادیثه‌نی ده سیل</item>
+        <item quantity="other">%1$d حادیثه‌نی ده سیل</item>
+    </plurals>
+    <string name="offline_calendar_deleted">%1$s سیلیندی</string>
+    <string name="offline_calendar_duplicate_name">\"%1$s\" آدلی آفلاین تقویم آرتیق وار</string>
+    <string name="offline_calendar_similar_name">\"%1$s\"-ه چوخ اوخشاییر. باشقا آد سئچین.</string>
+    <string name="calendar_backup_title">اوتوماتیک تقویم یِدکله‌مه‌سی</string>
+    <string name="calendar_backup_row_off">سؤنولو</string>
+    <string name="calendar_backup_row_on">%1$s · %2$s</string>
+    <string name="calendar_backup_row_problem">یِدک قوولوغونا چاتماق اولمور</string>
+    <string name="calendar_backup_intro">هر آفلاین تقویمی سئچدیگینیز قوولوقدا ICS فایلی کیمی ساخلاییر.</string>
+    <string name="calendar_backup_choose_folder">قوولوق سئچ</string>
+    <string name="calendar_backup_choose_folder_hint">بیر قوولوق سئچین یا یارادین، مثلاً Documents ایچینده. Android یادداشین اَن اوستونه یا Download قوولوغونون اؤزونه ایجازه وئرمیر.</string>
+    <string name="calendar_backup_folder">قوولوق</string>
+    <string name="calendar_backup_change">دَییشدیر</string>
+    <string name="calendar_backup_frequency">تئزلیک</string>
+    <string name="calendar_backup_frequency_info">یِدکلر گئج ایشله‌یه بیلر: تلفن بوش قالاندا یا KashCal بیر مدت آچیلمایاندا Android آرخا پلان ایشلرینی ساخلاییر.</string>
+    <string name="calendar_backup_copies">ساخلاناجاق نوسخه‌لر</string>
+    <string name="calendar_backup_copies_explained">هر یِدکله‌مه اؤنجه‌کی فایلی تاریخلی نوسخه کیمی ساخلاییر. سایی بو رقمدن چوخ اولاندا، اَن کؤهنه‌لری سیلینیر. اَن یئنی فایل همیشه تقویمین آدینی داشیییر.</string>
+    <string name="calendar_backup_copies_fewer">داها آز نوسخه ساخلا</string>
+    <string name="calendar_backup_copies_more">داها چوخ نوسخه ساخلا</string>
+    <plurals name="calendar_backup_copies_state">
+        <item quantity="one">%d نوسخه</item>
+        <item quantity="other">%d نوسخه</item>
+    </plurals>
+    <plurals name="calendar_backup_deletes">
+        <item quantity="one">%d کؤهنه نوسخه سیلینیر. بو گئری قایتاریلا بیلمز.</item>
+        <item quantity="other">%d کؤهنه نوسخه سیلینیر. بو گئری قایتاریلا بیلمز.</item>
+    </plurals>
+    <string name="calendar_backup_deletes_unknown">بو ساییدان آرتیق اولان کؤهنه نوسخه‌لر سیلینیر. بو گئری قایتاریلا بیلمز.</string>
+    <string name="calendar_backup_calendars">آفلاین تقویم‌لر</string>
+    <string name="calendar_backup_calendar_nothing_saved">%1$s · حادیثه یوخدور، هئچ نه ساخلانمادی</string>
+    <string name="calendar_backup_calendar_save_failed">%1$s · ساخلانا بیلمدی. سونراکی یِدکله‌مه‌ده یئنی‌دن جهد ائدیله‌جک.</string>
+    <string name="calendar_backup_status">سون یِدکله‌مه %1$s</string>
+    <plurals name="calendar_backup_status_failed">
+        <item quantity="one">سون یِدکله‌مه %1$s · %2$d تقویم اوغورسوز اولدو</item>
+        <item quantity="other">سون یِدکله‌مه %1$s · %2$d تقویم اوغورسوز اولدو</item>
+    </plurals>
+    <string name="calendar_backup_now">ایندی یِدکله</string>
+    <string name="calendar_backup_running">یِدکله‌نیر…</string>
+    <string name="calendar_backup_footer_overwrites">KashCal هر یِدکله‌مه‌ده بو فایل‌لاری یئنی‌دن یازیر، اونا گؤره باشقا تطبیق‌لرده ائدیلن دَییشیکلیکلر قالمیر. بیر تقویمی گئری قایتارماق اوچون «فایلدان حادیثه‌لری ایمپورت ائت»-ی ایستفاده ائدین.</string>
+    <string name="calendar_backup_off_files_stay">وار اولان فایل‌لار %1$s-دا قالیر.</string>
+    <string name="calendar_backup_folder_unreachable">%1$s-ا چاتماق اولمور. یئری دَییشدیریلمیش، سیلینمیش یا آیریلمیش اولا بیلر.</string>
+    <string name="calendar_backup_error_unsupported">%1$s-دا فایل ساخلاماق اولمور. باشقا قوولوق سئچین.</string>
+    <string name="calendar_backup_choose_again">یئنی‌دن سئچ</string>
+    <string name="calendar_backup_pick_refused">KashCal او قوولوغو ایستفاده ائده بیلمز. باشقاسینی سئچین.</string>
+    <string name="calendar_backup_pick_cannot_create">KashCal او قوولوقدا فایل یارادا بیلمز. باشقاسینی سئچین.</string>
+    <string name="calendar_backup_failed_title">تقویم یِدکله‌مه‌سی اوغورسوز اولدو</string>
+    <string name="calendar_backup_folder_unnamed">یِدک قوولوغو</string>
+    <string name="calendar_backup_alert_unreachable">%1$s-ا چاتماق اولمور. یئنی‌دن سئچمک اوچون وورون.</string>
+    <string name="calendar_backup_alert_unsupported">%1$s-دا فایل ساخلاماق اولمور. باشقا قوولوق سئچمک اوچون وورون.</string>
+    <string name="calendar_backup_alert_file_retry">%1$s ساخلانا بیلمدی. KashCal سونراکی یِدکله‌مه‌ده یئنی‌دن جهد ائده‌جک.</string>
+    <string name="calendar_backup_every_hour">هر ساعات</string>
+    <string name="calendar_backup_every_day">هر گون</string>
+    <plurals name="calendar_backup_every_hours">
+        <item quantity="one">هر %d ساعات</item>
+        <item quantity="other">هر %d ساعات</item>
+    </plurals>
+    <plurals name="calendar_backup_every_days">
+        <item quantity="one">هر %d گون</item>
+        <item quantity="other">هر %d گون</item>
+    </plurals>
+    <string name="calendar_backup_every_day_hours">هر گون %1$s</string>
+    <string name="calendar_backup_every_days_hours">هر %1$s %2$s</string>
+    <string name="calendar_backup_interval_too_short">اَن آزی ۱ ساعات سئچین.</string>
+    <string name="calendar_backup_interval_too_long">۳۰ گون یا داها آز سئچین.</string>
+    <plurals name="calendar_backup_alert_files_retry">
+        <item quantity="one">%d تقویم ساخلانا بیلمدی. KashCal سونراکی یِدکله‌مه‌ده یئنی‌دن جهد ائده‌جک.</item>
+        <item quantity="other">%d تقویم ساخلانا بیلمدی. KashCal سونراکی یِدکله‌مه‌ده یئنی‌دن جهد ائده‌جک.</item>
+    </plurals>
+    <string name="calendar_backup_notifications_app_off">KashCal اوچون بیلدیریشلر سؤنولودور، اونا گؤره یِدکله‌مه اوغورسوز اولسا خبر وئره بیلمز.</string>
+    <string name="calendar_backup_notifications_channel_off">یِدکله‌مه بیلدیریشلری سؤنولودور، اونا گؤره KashCal یِدکله‌مه اوغورسوز اولسا خبر وئره بیلمز.</string>
+    <string name="calendar_backup_open_settings">تنظیماتلاری آچ</string>
+    <string name="calendar_backup_not_now">ایندی یوخ</string>
+    <plurals name="calendar_backup_row_calendars_failed">
+        <item quantity="one">%d تقویم اوغورسوز اولدو</item>
+        <item quantity="other">%d تقویم اوغورسوز اولدو</item>
+    </plurals>
+    <string name="settings_quick_event_add">آکیللی حادیثه آرتیرما</string>
+    <string name="settings_quick_event_add_info">طبیعی یازاراق حادیثه‌لر یارادین. \"Sam ایله جمعه ۱-ده ناهار\" باشلیغی، تاریخی و واختی سیزین اوچون دولدورور.</string>
+    <string name="settings_suggest_titles">حادیثه باشلیقلارینی پیشنهاد ائت</string>
+    <string name="settings_suggest_titles_info">یئنی حادیثه‌یه آد وئررکن، اؤنجه ایستفاده ائتدیگینیز باشلیقلاری پیشنهاد ائدیر، بئله‌لیکله تکرار حادیثه‌لر بیر وورماق‌دیر. نه قدر تئز-تئز و نه قدر یاخیندا ایستفاده ائتدیگینیزه گؤره سیرالانیر.</string>
+    <string name="settings_week_numbers">هفته نومره‌لرینی گؤستر</string>
+    <string name="settings_multiday_in_allday_strip">بوتون گون زولاغیندا چوخ‌گونلو حادیثه‌لر</string>
+    <string name="settings_multiday_in_allday_strip_info">بیر گوندان چوخ چکن واختلی حادیثه‌لری هفته گؤرونوشونون اوستونده‌کی بوتون گون زولاغیندا گؤستر، واختلی شبکه‌ده اولماسین‌دان. هر گون واختلی شبکه‌ده ساخلانمالاری اوچون سؤندورون.</string>
+    <string name="settings_show_declined">ردد ائدیلمیش حادیثه‌لری گؤستر</string>
+    <string name="settings_widget_event_limit">ویجت حادیثه محدودیتی</string>
+    <string name="settings_widget_event_limit_hint">ویجت‌لرده گونده ان چوخ گؤستریله‌ن حادیثه‌لر</string>
+    <string name="settings_detailed_widget_rows">تفصیللی ویجت سیرالاری</string>
+    <string name="settings_detailed_widget_rows_info">ییغجام تک سیرا، یا سون واختی ایله تفصیللی ایکی سیرا.</string>
+    <string name="settings_sync_lookback">همزمانلاشدیرما گئری باخیشی</string>
+    <string name="settings_sync_lookback_hint">حادیثه‌لرین نه قدر گئرییه همزمانلاشدیریلماسی</string>
+    <string name="settings_change_notifications">دَییشیکلیک بیلدیریشلری</string>
+    <string name="settings_change_notifications_info">آرخا پلان همزمانلاشدیرما حادیثه‌لرینیزده دَییشیکلیک تاپدیغیندا بیلدیریش گؤندریر. iCloud و CalDAV تقویم‌لری اوچون ایشله‌ییر.</string>
+    <string name="settings_calendar_notifications">تقویم بیلدیریشلری</string>
+    <string name="settings_calendar_notifications_all">بوتون تقویم‌لر</string>
+    <plurals name="settings_calendar_notifications_muted_count">
+        <item quantity="one">%d سؤنولو</item>
+        <item quantity="other">%d سؤنولو</item>
+    </plurals>
+    <string name="calendar_notifications_intro">هانسی تقویم‌لرین سیزه بیلدیریش وئره بیله‌جگینی سئچین.</string>
+    <string name="calendar_notifications_info">سؤنولو تقویم‌لر هله‌ده گؤرونور و همزمانلاشیر، آنجاق سیزه بیلدیریش وئرمیر.</string>
+    <string name="cd_calendar_notifications_info">سؤنولو تقویم‌لر حاقدا</string>
+    <string name="cd_state_expanded">آچیق</string>
+    <string name="cd_state_collapsed">باغلی</string>
+    <string name="calendar_notifications_device_info">بوتون جیهاز تقویم‌لرینی سس‌سیز ائتمک اوچون سؤندورون، سونرا آرتیردیغینیزلار دا داخیل.</string>
+    <string name="cd_calendar_notifications_device_info">جیهاز تقویم بیلدیریشلری حاقدا</string>
+    <string name="cd_device_calendar_notifications">جیهاز تقویم بیلدیریشلری</string>
+    <string name="calendar_notifications_hidden">گیزلی</string>
+    <string name="calendar_notifications_app_off">سیستم تنظیماتلاریندا KashCal اوچون بیلدیریشلر سؤنولودور، بو سبب‌دن هئچ بیر تقویم سیزه بیلدیریش وئره بیلمز.</string>
+    <string name="calendar_notifications_reminders_off">سیستم تنظیماتلاریندا حادیثه خاطیرلاتمالاری سؤنولودور، بو سبب‌دن هئچ بیر خاطیرلاتما گؤرونه بیلمز.</string>
+    <string name="cd_notifications_off">بیلدیریشلر سؤنولو</string>
+    <string name="settings_not_set">قورولماییب</string>
+    <string name="settings_on">آچیق</string>
+    <string name="settings_off">باغلی</string>
+    <string name="settings_tap_to_enable">فعال ائتمک اوچون وور</string>
+    <string name="settings_device_calendars_enabled">%1$d فعال</string>
+    <string name="settings_per_day">گونده %1$d</string>
+
+    <!-- ==================== Sign-In / Account ==================== -->
+    <string name="signin_icloud_help_question">تطبیقه خاص پارول نهدیر؟</string>
+    <string name="caldav_trust_insecure_label">گوونسیز باغلانتی‌یه اعتماد ائت</string>
+    <string name="action_add_another">باشقا بیرینی آرتیر</string>
+    <string name="account_connected_found_calendars">%2$s اوچون %1$d تقویم تاپیلدی.</string>
+    <string name="account_connected_syncing_hint">همزمانلاشدیرما داوام ائدیر. حادیثه‌لر تئزلیکله گؤرونه‌جک.</string>
+    <string name="settings_time_format_currently_24h">حاضیردا: ۲۴-ساعت (%1$s)</string>
+    <string name="settings_time_format_currently_12h">حاضیردا: ۱۲-ساعت (%1$s)</string>
+    <string name="settings_time_format_example">نومونه: %1$s</string>
+    <string name="settings_system_default_with_value">سیستم پیش‌فرضی (%1$s)</string>
+    <string name="alert_none">یوخ</string>
+    <string name="cd_collapse">ییغ</string>
+    <string name="cd_expand">آچ</string>
+    <string name="cd_hide_calendar">تقویمی گیزلت</string>
+    <string name="cd_show_calendar">تقویمی گؤستر</string>
+    <string name="cd_pick_month_year">آی و ایل سئچ</string>
+    <string name="cd_previous_month">اؤنجه‌کی آی</string>
+    <string name="cd_next_month">سونراکی آی</string>
+    <string name="cd_previous_day">اؤنجه‌کی گون</string>
+    <string name="cd_next_day">سونراکی گون</string>
+    <string name="cd_month_year_picker">آی و ایل سئچیجی</string>
+    <string name="cd_remove_alert">خاطیرلاتمانی سیل</string>
+    <string name="cd_warning">خبَردارلیق</string>
+    <string name="cd_refresh_calendars">تقویم‌لری یئنیله</string>
+
+    <!-- ==================== i18n: Pickers / Forms ==================== -->
+    <string name="label_on_days">بو گونلرده</string>
+    <string name="label_pattern">نقشه</string>
+    <string name="label_ends">بیتیر</string>
+    <string name="sheet_hint_change_end">سونو دَییشمک اوچون بیر گونه وورون</string>
+    <string name="label_timezone">ساعات قورشاغی</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s، %2$s، %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s، %2$s</string>
+    <string name="timezone_search_hint">شهر، اؤلکه یا قورشاق آختار</string>
+    <string name="timezone_section_this_event">بو حادیثه</string>
+    <string name="timezone_section_device">جیهاز ساعات قورشاغی</string>
+    <string name="timezone_section_recent">سون</string>
+    <string name="timezone_section_all">بوتون ساعات قورشاقلاری</string>
+    <string name="timezone_offsets_on">%1$s تاریخینده فرق‌لر</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">تقویمدن: %1$s</string>
+    <string name="timezone_shown_in_device_time">جیهاز واختی ایله گؤستریلیر</string>
+    <string name="timezone_loading">ساعات قورشاقلاری یوکلنیر…</string>
+    <string name="timezone_no_match">اویغون ساعات قورشاغی یوخدور</string>
+    <string name="timezone_no_match_hint">بیر شهر، اؤلکه یا +5:30 کیمی فرق یوخلایین</string>
+    <string name="cd_timezone_join">%1$s، %2$s</string>
+    <string name="label_alerts">خبردارلیقلار</string>
+    <string name="label_add_alert">خبردارلیق آرتیر</string>
+    <string name="label_recurrence_never">هئچ واخت</string>
+    <string name="label_tomorrow">صاباح</string>
+    <string name="label_yesterday">دونن</string>
+    <string name="label_device_calendars">جیهاز تقویم‌لری</string>
+    <string name="label_default_calendar_hint">یئنی حادیثه‌لر بو تقویمده یارادیلاجاق</string>
+    <string name="label_reminders_truncated">%1$d گؤستریلمیر (جمعی %2$d، اَن چوخ %3$d دَییشدیریله بیلر)</string>
+    <string name="label_found_events">تاپیلدی: %1$d حادیثه</string>
+    <string name="settings_search_placeholder">تنظیماتلاری آختار…</string>
+    <string name="settings_search_no_results">\"%1$s\" اوچون تنظیمات تاپیلمادی</string>
+    <string name="cd_search_settings">تنظیماتلاری آختار</string>
+    <string name="status_sync_paused">همزمانلاشدیرما دایاندیریلیب</string>
+    <string name="status_not_synced">همزمانلاشدیریلمامیش</string>
+    <string name="status_sync_error">همزمانلاشدیرما خطاسی</string>
+    <string name="status_minutes_ago">%1$d دق اؤنجه</string>
+    <string name="status_hours_ago">%1$d س اؤنجه</string>
+
+    <!-- ==================== i18n: Device Calendars Sheet ==================== -->
+    <string name="device_calendars_intro">بو جیهازداکی Google، Outlook و همزمانلاشدیرما تطبیق‌لرینین تقویم‌لرینی گؤستر.</string>
+    <string name="device_calendars_show_switch">جیهاز تقویم‌لرینی گؤستر</string>
+    <string name="device_calendars_access_off">KashCal اوچون تقویم گیریشی سؤنولودور.</string>
+    <string name="device_calendars_pick_hint">گؤستریله‌جک تقویم‌لری سئچین.</string>
+    <string name="device_calendars_empty">تقویم تاپیلمادی.</string>
+    <string name="device_calendars_local">یئرلی</string>
+    <string name="device_calendars_read_only_calendar">یالنیز اوخوما (تقویم یالنیز اوخونا بیله‌ن‌دیر)</string>
+    <string name="settings_sync_frequency">همزمانلاشدیرما تئزلیگی</string>
+    <string name="settings_sync_frequency_hint">آرخا پلاندا نه قدر تئز-تئز همزمانلاشدیریلماسی</string>
+
+    <!-- ==================== i18n: Drawer ==================== -->
+    <string name="drawer_calendars">تقویم‌لر</string>
+    <string name="drawer_contacts">کونٹاکتلار</string>
+    <string name="drawer_device_calendars">جیهاز تقویم‌لری</string>
+    <string name="drawer_account_offline">آفلاین</string>
+    <string name="calendar_local">یئرلی</string>
+    <string name="drawer_share_feedback">کؤمک و سندلر</string>
+    <string name="event_title_fallback">حادیثه</string>
+
+    <!-- ==================== i18n: App Info / About ==================== -->
+    <string name="status_privacy_tagline">سیزین اوچون، وئری‌لرینیز اوچون دئییل.</string>
+    <string name="action_keep_it_that_way">بئله قالسین</string>
+
+    <!-- ==================== i18n: Sync History ==================== -->
+    <string name="status_already_synced">آرتیق همزمانلاشدیریلیب</string>
+    <string name="status_warnings">خبَردارلیقلار</string>
+    <string name="sync_history_events_failed">حادیثه‌لر اوغورسوز اولدو</string>
+    <string name="sync_history_abandoned_max_retries">ترک ائدیلدی (ان چوخ جهد)</string>
+    <string name="sync_history_events_skipped">حادیثه‌لر آتلاندی</string>
+    <string name="sync_history_duration">مۆدت</string>
+    <string name="sync_history_already_synced_count">%1$d آرتیق همزمانلاشدیریلیب</string>
+
+    <!-- ==================== i18n: Day Events Sheet ==================== -->
+    <string name="day_events_no_events">حادیثه یوخدور</string>
+
+    <!-- ==================== i18n: Error / Offline ==================== -->
+    <string name="status_youre_offline">آفلاینسینیز</string>
+
+    <!-- ==================== i18n: Sign Out ==================== -->
+    <string name="dialog_sign_out_title">%1$s-دان چیخیش ائدسین؟</string>
+    <string name="dialog_sign_out_message">%1$s کیمی داخیل اولموسونوز. چیخیش ائتمک همزمانلاشدیریلمیش تقویم‌لری بو جیهازدان سیله‌جک.</string>
+
+    <!-- ==================== Plural Resources ==================== -->
+    <plurals name="accounts_count">
+        <item quantity="one">%1$d حساب</item>
+        <item quantity="other">%1$d حساب</item>
+    </plurals>
+    <plurals name="accounts_calendar_count">
+        <item quantity="one">%1$s · ۱ تقویم</item>
+        <item quantity="other">%1$s · %2$d تقویم</item>
+    </plurals>
+    <plurals name="subscriptions_count">
+        <item quantity="one">%1$d فید</item>
+        <item quantity="other">%1$d فید</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">بو %1$d فید و ترجیحلرینیزینو ایمپورت ائده‌جک.</item>
+        <item quantity="other">بو %1$d فید و ترجیحلرینیزینو ایمپورت ائده‌جک.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">%1$d فید و ترجیحلرینیز ایمپورت ائدیلدی.</item>
+        <item quantity="other">%1$d فید و ترجیحلرینیز ایمپورت ائدیلدی.</item>
+    </plurals>
+    <plurals name="account_detail_failure">
+        <item quantity="one">همزمانلاشدیرما اوغورسوز اولدو (%1$d جهد)</item>
+        <item quantity="other">همزمانلاشدیرما اوغورسوز اولدو (%1$d جهد)</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count">
+        <item quantity="one">%1$d تقویم</item>
+        <item quantity="other">%1$d تقویم</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count_new">
+        <item quantity="one">%1$d تقویم (%2$d یئنی)</item>
+        <item quantity="other">%1$d تقویم (%2$d یئنی)</item>
+    </plurals>
+    <plurals name="widget_event_count_plural">
+        <item quantity="one">%1$d حادیثه</item>
+        <item quantity="other">%1$d حادیثه</item>
+    </plurals>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">%1$d گون داها</item>
+        <item quantity="other">%1$d گون داها</item>
+    </plurals>
+    <string name="upcoming_widget_open_calendar">تقویمی آچ</string>
+    <plurals name="birthday_count">
+        <item quantity="one">%1$d آد گونو</item>
+        <item quantity="other">%1$d آد گونو</item>
+    </plurals>
+    <plurals name="anniversary_count">
+        <item quantity="one">%1$d ایل‌دؤنومو</item>
+        <item quantity="other">%1$d ایل‌دؤنومو</item>
+    </plurals>
+    <plurals name="more_items">
+        <item quantity="one">+ %1$d داها</item>
+        <item quantity="other">+ %1$d داها</item>
+    </plurals>
+    <plurals name="import_events_title">
+        <item quantity="one">حادیثه آرتیر</item>
+        <item quantity="other">%1$d حادیثه ایمپورت ائت</item>
+    </plurals>
+    <plurals name="import_events_button">
+        <item quantity="one">آرتیر</item>
+        <item quantity="other">ایمپورت ائت</item>
+    </plurals>
+    <string name="importing_events">ایمپورت ائدیلیر…</string>
+    <plurals name="ics_remaining_events">
+        <item quantity="one">…و %1$d داها</item>
+        <item quantity="other">…و %1$d داها</item>
+    </plurals>
+    <plurals name="imported_events">
+        <item quantity="one">%1$d حادیثه ایمپورت ائدیلدی</item>
+        <item quantity="other">%1$d حادیثه ایمپورت ائدیلدی</item>
+    </plurals>
+    <string name="ics_import_preview_loading">بو تقویم یوخ‌لانیر…</string>
+    <string name="ics_import_preview_failed">بو حادیثه‌لر اوچون بو تقویم یوخ‌لانا بیلمدی. هله‌ده ایمپورت ائده بیلرسینیز.</string>
+    <string name="ics_import_will_cancel">بو %1$s-ی لغو ائدیر، تشکیلاتچی: %2$s</string>
+    <string name="ics_import_will_cancel_no_organizer">بو %1$s-ی لغو ائدیر</string>
+    <string name="ics_import_will_update">بو %1$s-ی یئنیله‌ییر</string>
+    <plurals name="ics_import_preview_up_to_date">
+        <item quantity="one">%1$d حادیثه آرتیق گۆنجل‌دیر</item>
+        <item quantity="other">%1$d حادیثه آرتیق گۆنجل‌دیر</item>
+    </plurals>
+    <plurals name="ics_import_preview_skipped">
+        <item quantity="one">%1$d آتلاندی: %2$s</item>
+        <item quantity="other">%1$d آتلاندی: %2$s</item>
+    </plurals>
+    <string name="ics_import_reason_reply">بو بیر دعوته جواب‌دیر، تقویمینیزه هئچ نه آرتیرمیر</string>
+    <string name="ics_import_reason_unsupported">بو نوع دعوت مساژی دستکلنمیر</string>
+    <string name="ics_import_reason_organizer_mismatch">گؤروشون تشکیلاتچی‌سین‌دان باشقا بیرین‌دن گلیر</string>
+    <string name="ics_import_reason_cancel_no_match">لغو ائدیلمیش گؤروش بو تقویمده یوخدور</string>
+    <string name="ics_import_reason_cancel_not_for_you">لغو دیگر قوناق‌لار اوچون‌دور</string>
+    <string name="ics_import_reason_deletion_pending">حادیثه سیلینیر</string>
+    <string name="ics_import_reason_cancelled_in_file">فایلدا آرتیق لغو ائدیلیب</string>
+    <string name="ics_import_reason_this_and_future">بو و سونراکی دفعه‌لره دَییشیکلیکلر دستکلنمیر</string>
+    <string name="ics_import_reason_own_cancel">سیز بو گؤروشو تشکیلاتچی‌سیز، اونا گؤره حادیثه‌دن لغو ائدین</string>
+    <string name="ics_import_reason_on_another_calendar">بو حسابین باشقا بیر تقویمین‌ده آرتیق وار</string>
+    <string name="ics_import_reason_calendar_keeps_copy">بو تقویم حادیثه‌نین اؤز نوسخه‌سینی ساخلاییر</string>
+    <string name="ics_import_reason_own_update">بو گؤروشون تشکیلاتچیسی سیزسینیز، اونا گؤره اونو حادیثه‌دن دَییشدیرین</string>
+    <string name="ics_import_reason_change_waiting">حادیثه‌نین همزمانلاشماغی گؤزله‌ین دَییشیکلیگی وار؛ همزمانلاشاندان سونرا یئنی‌دن ایمپورت ائدین</string>
+    <string name="ics_import_notice_unverified">دعوت فایلینین گؤندره‌نی تصدیق ائدیله بیلمز. تشکیلاتچی‌دان گلدیگینی یوخ‌لایین.</string>
+    <string name="ics_import_notice_answer_notifies">بو دعوته جواب وئرمک تشکیلاتچینی بیلدیره بیلر.</string>
+    <string name="ics_import_notice_guests_again">سیز تشکیلاتچی‌سینیز، اونا گؤره قوناق‌لار بو دعوتی یئنی‌دن آلا بیلر.</string>
+    <string name="cd_dismiss_notice">بیلدیریشی ردد ائت</string>
+    <plurals name="ics_import_summary_created">
+        <item quantity="one">%1$d آرتیریلدی</item>
+        <item quantity="other">%1$d آرتیریلدی</item>
+    </plurals>
+    <plurals name="ics_import_summary_updated">
+        <item quantity="one">%1$d یئنیله‌ندی</item>
+        <item quantity="other">%1$d یئنیله‌ندی</item>
+    </plurals>
+    <plurals name="ics_import_summary_cancelled">
+        <item quantity="one">%1$d لغو ائدیلدی</item>
+        <item quantity="other">%1$d لغو ائدیلدی</item>
+    </plurals>
+    <plurals name="ics_import_summary_up_to_date">
+        <item quantity="one">%1$d آرتیق گۆنجل</item>
+        <item quantity="other">%1$d آرتیق گۆنجل</item>
+    </plurals>
+    <plurals name="ics_import_summary_skipped">
+        <item quantity="one">%1$d آتلاندی</item>
+        <item quantity="other">%1$d آتلاندی</item>
+    </plurals>
+    <plurals name="ics_import_summary_failed">
+        <item quantity="one">%1$d اوغورسوز اولدو</item>
+        <item quantity="other">%1$d اوغورسوز اولدو</item>
+    </plurals>
+    <string name="ics_import_summary_separator">", "</string>
+    <string name="ics_import_summary_nothing">ایمپورت ائدیله‌جک بیر شئی یوخدور</string>
+    <plurals name="event_count">
+        <item quantity="one">%1$d حادیثه</item>
+        <item quantity="other">%1$d حادیثه</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d تقویم</item>
+        <item quantity="other">%1$d تقویم</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d حساب</item>
+        <item quantity="other">%1$d حساب</item>
+    </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d تقویم</item>
+        <item quantity="other">%1$d تقویم</item>
+    </plurals>
+    <plurals name="time_minutes">
+        <item quantity="one">%1$d دقیقه</item>
+        <item quantity="other">%1$d دقیقه</item>
+    </plurals>
+    <plurals name="time_minutes_short">
+        <item quantity="one">%1$d دق</item>
+        <item quantity="other">%1$d دق</item>
+    </plurals>
+    <plurals name="time_hours">
+        <item quantity="one">%1$d ساعت</item>
+        <item quantity="other">%1$d ساعت</item>
+    </plurals>
+    <plurals name="time_days">
+        <item quantity="one">%1$d گون</item>
+        <item quantity="other">%1$d گون</item>
+    </plurals>
+    <plurals name="time_weeks">
+        <item quantity="one">%1$d هفته</item>
+        <item quantity="other">%1$d هفته</item>
+    </plurals>
+    <plurals name="time_months">
+        <item quantity="one">%1$d آی</item>
+        <item quantity="other">%1$d آی</item>
+    </plurals>
+    <plurals name="time_years">
+        <item quantity="one">%1$d ایل</item>
+        <item quantity="other">%1$d ایل</item>
+    </plurals>
+    <plurals name="reminder_minutes_before">
+        <item quantity="one">%1$d دقیقه اؤنجه</item>
+        <item quantity="other">%1$d دقیقه اؤنجه</item>
+    </plurals>
+    <plurals name="reminder_hours_before">
+        <item quantity="one">%1$d ساعت اؤنجه</item>
+        <item quantity="other">%1$d ساعت اؤنجه</item>
+    </plurals>
+    <plurals name="reminder_days_before">
+        <item quantity="one">%1$d گون اؤنجه</item>
+        <item quantity="other">%1$d گون اؤنجه</item>
+    </plurals>
+    <plurals name="reminder_weeks_before">
+        <item quantity="one">%1$d هفته اؤنجه</item>
+        <item quantity="other">%1$d هفته اؤنجه</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen ==================== -->
+    <string name="dialog_edit_recurring_title">دَییشیکلیکلری ساخلا</string>
+    <string name="dialog_delete_recurring_title">سیل</string>
+    <string name="dialog_move_recurring_title">کؤچور</string>
+    <string name="snackbar_event_rescheduled">حادیثه یئنی‌دن واختلان‌دیریلدی</string>
+    <string name="snackbar_reschedule_failed">حادیثه یئنی‌دن واختلاندیریلا بیلمدی</string>
+    <string name="snackbar_move_failed">\"%1$s\" کؤچوروله بیلمدی</string>
+    <string name="snackbar_move_changed_elsewhere">\"%1$s\" باشقا یئرده دَییشدی، اونا گؤره کؤچورولمه‌دی</string>
+    <string name="event_untitled">باشلیقسیز حادیثه</string>
+    <string name="recurring_this_event">بو حادیثه</string>
+    <string name="recurring_all_events">بوتون حادیثه‌لر</string>
+    <string name="recurring_scope_move_not_expressible">تکرار قایداسی بو دَییشیکلیگه اویغونلاشا بیلمز</string>
+    <string name="event_form_move_not_expressible">تکرار قایداسی بو دَییشیکلیگه اویغونلاشا بیلمز. هئچ نه ساخلانمادی.</string>
+
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <string name="attendee_sheet_title">ایشتیراکچیلار</string>
+    <string name="attendee_search_hint">آختار</string>
+    <string name="attendee_search_no_matches">اویغون‌لوق یوخدور</string>
+    <string name="attendee_picker_title">ایشتیراکچیلار آرتیر</string>
+    <string name="attendee_pick_add_people">ایشتیراکچیلار آرتیر</string>
+    <string name="attendee_pick_from_contacts">آد یا ایمیل</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d داها</item>
+        <item quantity="other">+%1$d داها</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">کونٹاکتلارینیزدان آدام‌لار پیشنهاد ائت</string>
+    <string name="attendee_invalid_email">تام بیر ایمیل آدرسی داخیل ائدین</string>
+    <string name="attendee_add_typed">\"%1$s\" آرتیر</string>
+    <string name="attendee_scheduling_unavailable">بو حسابدا آدام‌لاری دعوت ائتمک الده یوخدور</string>
+    <string name="device_attendee_local_no_delivery">بو تقویم دعوت گؤندره بیلمز. قوناق‌لار ساخلانیر آنجاق بیلدیریش وئریلمز.</string>
+    <string name="action_save_and_notify">ساخلا و بیلدیر</string>
+    <string name="attendee_section_going">گئدیر</string>
+    <string name="attendee_section_maybe">بلکی</string>
+    <string name="attendee_section_pending">گؤزله‌نیلیر</string>
+    <string name="attendee_section_declined">ردد ائتدی</string>
+    <string name="attendee_section_delegated">وکیل ائتدی</string>
+    <string name="invitees_host_tag">صاحیب</string>
+    <string name="invitees_summary_you_alone">سیز</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">سیز · %d دعوت ائدیلدی</item>
+        <item quantity="other">سیز · %d دعوت ائدیلدی</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d دعوت ائدیلدی</item>
+        <item quantity="other">%d دعوت ائدیلدی</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s صاحیبلیگینده</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · سیز</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · سیز + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · سیز + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">سیز + %d</item>
+        <item quantity="other">سیز + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d داها</item>
+        <item quantity="other">%1$s · %2$d داها</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">RSVP-نی دَییشدیر</string>
+    <string name="rsvp_question_going">گئدیرسینیز؟</string>
+    <string name="rsvp_action_yes">بلی</string>
+    <string name="rsvp_action_maybe">بلکی</string>
+    <string name="rsvp_action_no">یوخ</string>
+    <string name="rsvp_state_going">گئدیرسینیز</string>
+    <string name="rsvp_state_maybe">بلکی</string>
+    <string name="rsvp_state_not_going">گئتمیرسینیز</string>
+    <string name="rsvp_action_change">دَییشدیر</string>
+    <string name="empty_pick_a_day">بیر گون سئچ. توت.</string>
+    <string name="cd_empty_pick_a_day">بیر گون سئچ</string>
+    <string name="empty_no_events_day_1">آچیق بیر گون. کائنات ایصرار ائدیر دینجلنسین.</string>
+    <string name="empty_no_events_day_2">پلان یوخدور. پلان دا بودور.</string>
+    <string name="empty_no_events_day_3">بیر هدیه: بوش بیر گون.</string>
+    <string name="empty_no_events_day_4">تقویم دورومو: شان‌لی شکیلده بوش.</string>
+    <string name="empty_no_events_day_5">هئچ نه پلانلانماییب. صاکین‌لیگین دادینی چیخار.</string>
+    <string name="filter_date">تاریخ</string>
+    <string name="search_tab_upcoming">گله‌ن</string>
+    <string name="search_tab_past">کئچمیش</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s، %2$d حادیثه</item>
+        <item quantity="other">%1$s، %2$d حادیثه</item>
+    </plurals>
+    <string name="search_date_this_week">بو هفته</string>
+    <string name="search_date_this_month">بو آی</string>
+    <string name="search_date_pick">تاریخ سئچ…</string>
+    <string name="search_next">سونراکی: %1$s</string>
+    <string name="search_last">سون: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">مکان:</string>
+    <string name="search_reason_notes">قئیدلر:</string>
+    <string name="search_reason_guest">قوناق:</string>
+    <string name="search_keep_typing">آختارماق اوچون یازماغا داوام ائدین</string>
+    <string name="search_no_matches">«%1$s» ایله اویغون حادیثه یوخدور</string>
+    <string name="search_no_events_tagged">«%1$s» اِتیکتلی حادیثه یوخدور</string>
+    <string name="search_lookback_line">همزمانلاشدیرما گئری باخیشی: %1$s</string>
+    <string name="search_sync_settings">همزمانلاشدیرما تنظیماتی</string>
+    <string name="cd_search_sync_settings">همزمانلاشدیرما گئری باخیشی تنظیمینی آچ</string>
+    <plurals name="search_show_past">
+        <item quantity="one">%d کئچمیش حادیثه‌نی گؤستر</item>
+        <item quantity="other">%d کئچمیش حادیثه‌نی گؤستر</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">گیزلی تقویمده داها %d</item>
+        <item quantity="other">گیزلی تقویم‌لرده داها %d</item>
+    </plurals>
+    <string name="search_show">گؤستر</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">گیزلی تقویمده %d اویغونلوغو گؤستر</item>
+        <item quantity="other">گیزلی تقویم‌لرده %d اویغونلوغو گؤستر</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">گیزلی تقویمده %d گؤستر</item>
+        <item quantity="other">گیزلی تقویم‌لرده %d گؤستر</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">%d گیزلی تقویم داخیل</item>
+        <item quantity="other">%d گیزلی تقویم داخیل</item>
+    </plurals>
+    <string name="search_leave_out">چیخارت</string>
+    <string name="cd_search_leave_out">گیزلی تقویم‌لری چیخارت</string>
+    <string name="search_hidden_calendar">%1$s · گیزلی</string>
+    <string name="cd_search_date_this_week">بو هفته‌نین اویغونلوقلارینی گؤستر</string>
+    <string name="cd_search_date_this_month">بو آیین اویغونلوقلارینی گؤستر</string>
+    <string name="cd_search_date_pick">آختارماق اوچون تاریخ سئچ</string>
+    <string name="search_announce">%1$s، %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d گله‌ن</item>
+        <item quantity="other">%d گله‌ن</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d کئچمیش</item>
+        <item quantity="other">%d کئچمیش</item>
+    </plurals>
+    <string name="search_no_past_events">کئچمیش حادیثه یوخدور</string>
+    <string name="search_no_events_in_dates">بو تاریخلرده حادیثه یوخدور</string>
+    <string name="label_select_date">بیر تاریخ سئچ</string>
+    <string name="hint_tap_date_range">تک گون اوچون عینی تاریخی، آرالیق اوچون باشقا تاریخی وورون</string>
+    <string name="cd_clear">تمیزله</string>
+    <string name="cd_offline">آفلاین</string>
+    <string name="cd_event_state_cancelled">لغو ائدیلیب</string>
+    <string name="cd_event_state_declined">ردد ائدیلیب</string>
+    <string name="cd_event_state_past">کئچمیش حادیثه</string>
+    <string name="cd_loading_events">حادیثه‌لر یوکلنیر</string>
+    <string name="cd_collapse_week_bar">هفته زولاغینی گیزلت</string>
+    <string name="cd_expand_week_bar">هفته زولاغینی گؤستر</string>
+    <string name="cd_expand_all_day_rows">داها چوخ بوتون گون حادیثه‌لری گؤستر</string>
+    <string name="cd_collapse_all_day_rows">داها آز بوتون گون حادیثه‌لری گؤستر</string>
+    <string name="cd_event_untitled">آدسیز حادیثه</string>
+    <string name="cd_open_drawer">چکمه‌نی آچ</string>
+    <string name="cd_close_drawer">چکمه‌نی باغلا</string>
+    <string name="cd_calendar_view">تقویم گؤرونوشو</string>
+    <string name="cd_active_view">فعال گؤرونوش</string>
+    <string name="view_agenda">گۆندَلی</string>
+    <string name="view_month_full">آی (تام)</string>
+    <string name="view_planner">پلانلاییجی</string>
+    <string name="planner_free_day">بوش گون</string>
+    <string name="cd_planner_show_day_events">بو گونون حادیثه‌لرینی گؤستر</string>
+    <string name="planner_different_this_week">بو هفته فرقلی</string>
+    <string name="planner_usual_week">عادت‌دکی هفته.</string>
+    <string name="planner_moved_was">%1$s ایدی</string>
+    <string name="planner_day_range">%1$s–%2$s</string>
+    <string name="planner_time_range">%1$s–%2$s</string>
+    <string name="view_day">گون</string>
+    <string name="view_three_days">۳ گون</string>
+    <string name="view_year">ایل</string>
+    <string name="view_insights">ایچگؤرۆلر</string>
+    <string name="label_go_to_month">آیا گئت</string>
+    <string name="action_more_options">داها چوخ سئچنک</string>
+    <string name="quick_add_save_failed">حادیثه ساخلانا بیلمدی</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
+    <string name="label_duration_days">گون</string>
+    <string name="label_duration_hrs">ساعت</string>
+    <string name="label_duration_min">دقیقه</string>
+
+    <!-- ==================== RecurrencePicker ==================== -->
+    <string name="recurrence_on_day">گون %1$d-ده</string>
+    <string name="recurrence_on_last_day">آیین سون گونونده</string>
+    <string name="recurrence_on_nth_weekday">%1$s %2$s-ده</string>
+    <string name="recurrence_which">هانسی</string>
+    <string name="recurrence_weekday">هفته گونو</string>
+    <string name="ordinal_1st">۱-جی</string>
+    <string name="ordinal_2nd">۲-جی</string>
+    <string name="ordinal_3rd">۳-جو</string>
+    <string name="ordinal_4th">۴-جو</string>
+    <string name="ordinal_nth">%1$d-جی</string>
+
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
+    <string name="rrule_does_not_repeat">تکرارلانمیر</string>
+    <string name="rrule_freq_daily">گونلوک</string>
+    <string name="rrule_freq_weekly">هفته‌لیک</string>
+    <string name="rrule_freq_monthly">آیلیق</string>
+    <string name="rrule_freq_yearly">ایللیک</string>
+    <string name="rrule_repeats">تکرارلانیر</string>
+    <string name="rrule_every_n_days">هر %1$d گونده</string>
+    <string name="rrule_every_n_weeks">هر %1$d هفته‌ده</string>
+    <string name="rrule_every_n_months">هر %1$d آی‌دا</string>
+    <string name="rrule_every_n_years">هر %1$d ایلده</string>
+    <string name="rrule_freq_on_days">%1$s %2$s-ده</string>
+    <string name="rrule_freq_on_ordinal_day">%1$s %2$s %3$s-ده</string>
+    <string name="rrule_freq_on_last_day">%1$s سون گونده</string>
+    <string name="rrule_freq_on_day_n">%1$s گون %2$d-ده</string>
+    <string name="rrule_ordinal_last">سون</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">، %1$d دفعه</item>
+        <item quantity="other">، %1$d دفعه</item>
+    </plurals>
+    <string name="rrule_until_suffix">، %1$s-ا قدر</string>
+    <string name="rrule_freq_never">هئچ واخت</string>
+    <string name="rrule_freq_custom">خاص</string>
+    <string name="label_repeat_every">هر تکرار</string>
+    <string name="rrule_unit_day">گون</string>
+    <string name="rrule_unit_week">هفته</string>
+    <string name="rrule_unit_month">آی</string>
+    <string name="rrule_unit_year">ایل</string>
+    <string name="cd_decrease_interval">آرالیغی آزالت</string>
+    <string name="cd_increase_interval">آرالیغی آرتیر</string>
+    <string name="rrule_starting">%1$s، %2$s-دان باشلایاراق%3$s</string>
+    <string name="rrule_since">%1$s · %2$s-دان بری</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_circular_scrolling">دایروی سوروشدورما فعال‌دیر</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <string name="reminder_none">خاطیرلاتما یوخدور</string>
+    <string name="reminder_at_time_of_event">حادیثه واختین‌دا</string>
+    <string name="reminder_time_before">%1$s اؤنجه</string>
+    <string name="reminder_day_of_event_12h">حادیثه گونو ۹-دا</string>
+    <string name="reminder_day_of_event_24h">حادیثه گونو ۰۹:۰۰</string>
+    <string name="reminder_day_of_event">حادیثه گونو</string>
+    <string name="reminder_before_at_12h">%1$s اؤنجه ۹-دا</string>
+    <string name="reminder_before_at_24h">%1$s اؤنجه ۰۹:۰۰-دا</string>
+    <string name="reminder_short_off">باغلی</string>
+    <string name="reminder_short_at_event">حادیثه‌ده</string>
+    <string name="reminder_short_9am_12h">۹</string>
+    <string name="reminder_short_9am_24h">۰۹:۰۰</string>
+    <string name="reminder_short_minutes">%1$d دق</string>
+    <string name="reminder_short_hours">%1$d س</string>
+    <string name="reminder_short_days">%1$d گ</string>
+    <string name="reminder_short_weeks">%1$d ه</string>
+    <string name="reminder_med_minutes">%1$d دق</string>
+    <string name="reminder_med_hours">%1$d س</string>
+    <string name="reminder_med_weeks">%1$d ه</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d گون</item>
+        <item quantity="other">%1$d گون</item>
+    </plurals>
+    <string name="reminder_med_day_of">حادیثه گونو</string>
+    <string name="all_day_alert_9am_hint">بوتون گون خاطیرلاتمالاری ۹-دا (۰۹:۰۰) ایشه دۆشر.</string>
+    <string name="reminder_summary_none">یوخ</string>
+    <string name="duration_compact">%1$d س %2$d دق</string>
+    <string name="duration_compact_short">%1$dس%2$dدق</string>
+    <string name="sync_manual_only">یالنیز ال ایله</string>
+    <string name="sync_lookback_all">بوتون حادیثه‌لر</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <string name="action_snooze">تأخیره سال</string>
+    <string name="notification_starting_now">ایندی باشلاییر</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d گون‌دا</item>
+        <item quantity="other">%1$d گون‌دا</item>
+    </plurals>
+    <string name="notification_tomorrow_time">صاباح، %1$s</string>
+    <string name="notification_date_time">%1$s، %2$s</string>
+    <string name="sync_notification_complete">همزمانلاشدیرما تاماملاندی</string>
+    <string name="sync_notification_partial">همزمانلاشدیرما قیسمن تاماملاندی</string>
+    <string name="sync_notification_auth_failed">همزمانلاشدیرما تصدیقی اوغورسوز اولدو</string>
+    <string name="sync_notification_auth_reauth">لطفاً حسابینیزین یئنی‌دن تصدیق ائدین</string>
+    <string name="sync_notification_failed">همزمانلاشدیرما اوغورسوز اولدو</string>
+    <string name="sync_notification_parse_title">بعضی حادیثه‌لر همزمانلاشدیریلا بیلمدی</string>
+    <string name="sync_notification_parse_content">%2$s-دا %1$s همزمانلاشدیریلا بیلمدی. تنظیماتلاردا زورلا همزمانلاشدیرما جهد ائدین.</string>
+    <string name="sync_notification_conflict_title">همزمانلاشدیرما تضادی حل ائدیلدی</string>
+    <string name="sync_notification_conflict_single">\"%1$s\"-ا یئرلی دَییشیکلیکلر همزمانلاشدیرما تضادی سببی‌ایله ایتیریلدی. سرور نوسخه‌سی ایستفاده ائدیله‌جک.</string>
+    <string name="sync_notification_conflict_multi">%1$s-ا یئرلی دَییشیکلیکلر همزمانلاشدیرما تضادلاری سببی‌ایله ایتیریلدی. سرور نوسخه‌لری ایستفاده ائدیله‌جک.</string>
+    <string name="sync_notification_expired_title">همزمانلاشدیرما دَییشیکلیکلری‌نین واختی گئدیب</string>
+    <string name="sync_notification_expired_content">%1$s ۳۰ گوندان سونرا همزمانلاشدیریلا بیلمدی. سرور نوسخه‌سی ایستفاده ائدیله‌جک. یئنی‌دن جهد اوچون زورلا همزمانلاشدیرین.</string>
+    <string name="sync_notification_expired_content_calendar">%2$s-دا %1$s ۳۰ گوندان سونرا همزمانلاشدیریلا بیلمدی. سرور نوسخه‌سی ایستفاده ائدیله‌جک. یئنی‌دن جهد اوچون زورلا همزمانلاشدیرین.</string>
+    <string name="sync_notification_expired_content_calendars">%2$s عرضینده %1$s ۳۰ گوندان سونرا همزمانلاشدیریلا بیلمدی. سرور نوسخه‌سی ایستفاده ائدیله‌جک. یئنی‌دن جهد اوچون زورلا همزمانلاشدیرین.</string>
+    <plurals name="sync_notification_calendars">
+        <item quantity="one">%1$d تقویم همزمانلاشدیریلدی</item>
+        <item quantity="other">%1$d تقویم همزمانلاشدیریلدی</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="one">، %1$d دَییشیکلیک</item>
+        <item quantity="other">، %1$d دَییشیکلیک</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="one">، %1$d خطا</item>
+        <item quantity="other">، %1$d خطا</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <string name="contact_birthday_with_age">%1$s-ین %2$s آد گونو</string>
+    <string name="contact_birthday">%1$s-ین آد گونو</string>
+    <string name="contact_anniversary_with_age">%1$s-ین %2$s ایل‌دؤنومو</string>
+    <string name="contact_anniversary">%1$s-ین ایل‌دؤنومو</string>
+    <string name="ordinal_suffix_st">%1$d-جی</string>
+    <string name="ordinal_suffix_nd">%1$d-جی</string>
+    <string name="ordinal_suffix_rd">%1$d-جو</string>
+    <string name="ordinal_suffix_th">%1$d-جو</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <string name="sync_banner_syncing">تقویم‌لر همزمانلاشدیریلیر…</string>
+    <string name="sync_banner_preparing">همزمانلاشدیرمایا حاضیرلانیر…</string>
+    <string name="sync_banner_complete_errors">همزمانلاشدیرما خطالارلا تاماملاندی</string>
+    <string name="sync_banner_failed">همزمانلاشدیرما اوغورسوز اولدو: %1$s</string>
+    <string name="error_unknown_error">بیلینمه‌ین خطا</string>
+    <string name="sync_snackbar_new_event">یئنی حادیثه: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="one">%1$d یئنی حادیثه</item>
+        <item quantity="other">%1$d یئنی حادیثه</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="one">%1$d حادیثه یئنیله‌ندی</item>
+        <item quantity="other">%1$d حادیثه یئنیله‌ندی</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="one">%1$d حادیثه سیلیندی</item>
+        <item quantity="other">%1$d حادیثه سیلیندی</item>
+    </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d دفعه لغو ائدیلدی</item>
+        <item quantity="other">%1$d دفعه لغو ائدیلدی</item>
+    </plurals>
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="one">%1$d تقویم یئنیله‌مه‌سی</item>
+        <item quantity="other">%1$d تقویم یئنیله‌مه‌سی</item>
+    </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">سون دَییشیکلیکلر</string>
+    <string name="recent_changes_empty">سون دَییشیکلیک یوخدور</string>
+    <string name="recent_changes_clear_all">هامیسینی تمیزله</string>
+    <string name="recent_changes_cleared">سون دَییشیکلیکلر تمیزلندی</string>
+    <string name="recent_changes_dismiss">ردد ائت</string>
+    <string name="recent_changes_moved_from">%1$s-دان کؤچورولدو</string>
+    <string name="recent_changes_time_changed">واخت دَییشدی</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">مکان دَییشدی</string>
+    <string name="recent_changes_title_changed">باشلیق دَییشدی</string>
+    <string name="recent_changes_repeat_changed">تکرار دَییشدی</string>
+    <string name="recent_changes_cancelled">لغو ائدیلدی</string>
+    <string name="cd_recent_change_new">یئنی حادیثه</string>
+    <string name="cd_recent_change_updated">یئنیله‌ندی</string>
+    <string name="cd_recent_change_removed">سیلیندی</string>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <string name="day_x_of_y">%2$d-دان %1$d-جی گون</string>
+    <string name="day_starts">%1$d-دان ۱-جی گون · %2$s-دا باشلاییر</string>
+    <string name="day_ends">%2$d-دان %1$d-جی گون · %3$s-دا بیتیر</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · بوتون گون</string>
+    <string name="event_date_all_day">%1$s · بوتون گون</string>
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (بوتون گون)</string>
+    <string name="event_date_all_day_parens">%1$s (بوتون گون)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <string name="action_save_event">حادیثه‌نی ساخلا</string>
+    <string name="badge_beta">بتا</string>
+    <string name="badge_sync_off">همزمانلاشدیرما سؤنولو</string>
+    <string name="badge_new">یئنی</string>
+    <string name="color_red">قیرمیزی</string>
+    <string name="color_orange">نارینجی</string>
+    <string name="color_yellow">ساری</string>
+    <string name="color_green">یاشیل</string>
+    <string name="color_cyan">فیروزه‌ای</string>
+    <string name="color_blue">ماوی</string>
+    <string name="color_purple">بنفش</string>
+    <string name="cd_meeting_link">گؤروش لینکی: %1$s</string>
+    <string name="cd_phone_number">تلفون نومره‌سی</string>
+    <string name="cd_email_link">ایمیل: %1$s</string>
+    <string name="cd_web_link">لینک: %1$s</string>
+    <string name="cd_text_with_links">%1$d لینکلی متن: %2$s</string>
+    <string name="cd_text_with_link">۱ لینکلی متن: %1$s</string>
+    <string name="day_x_of_y_all_day">%2$d-دان %1$d-جی گون (بوتون گون)</string>
+    <string name="sync_history_stats">%1$d همزمانلاشدیرما   ↑%2$d گؤندریلدی   ↓%3$d چکیلدی</string>
+    <string name="sync_history_stats_issues">%1$d همزمانلاشدیرما   ↑%2$d گؤندریلدی   ↓%3$d چکیلدی   ⚠ %4$d problem</string>
+    <string name="sync_history_failed">اوغورسوز اولدو</string>
+    <string name="ics_sync_every_hour">هر ساعت</string>
+    <string name="ics_sync_every_n_hours">هر %1$d ساعتدا</string>
+    <string name="ics_sync_daily">گونلوک</string>
+    <string name="ics_sync_weekly">هفته‌لیک</string>
+    <string name="default_calendar_name">تقویم</string>
+    <string name="ics_url_required">URL لازیمدیر</string>
+    <string name="ics_url_invalid_scheme">URL http://، https:// یا webcal:// ایله باشلامالیدیر</string>
+    <string name="ics_fetch_error_http">سرور بیر خطا قایتاردی (%1$d). لطفاً URL-ی یوخ‌لایین.</string>
+    <string name="ics_fetch_error_empty">تقویم فیدی بوشدور.</string>
+    <string name="ics_fetch_error_not_calendar">او URL تقویم فیدینه بنزمیر.</string>
+    <string name="ics_feed_error_empty_response">سرور دوزگون فید گؤندرمه‌دی.</string>
+    <string name="ics_feed_error_access_denied">بو فیدین سرورو گیریشی رد ائتدی.</string>
+    <string name="ics_feed_error_too_large">بو تقویم فیدی یوکلمک اوچون چوخ بؤیوکدور.</string>
+    <string name="ics_feed_error_unreadable">بو فیدین حادیثه‌لری گؤستریله بیلمدی.</string>
+    <string name="ics_feed_error_event_not_saved">«%1$s» ساخلانمادی.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d حادیثه ساخلانمادی.</item>
+        <item quantity="other">%1$d حادیثه ساخلانمادی.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d حادیثه ساخلانمادی، «%2$s» داخیل.</item>
+        <item quantity="other">%1$d حادیثه ساخلانمادی، «%2$s» داخیل.</item>
+    </plurals>
+    <string name="insights_title">ایچگؤرۆلر</string>
+    <string name="insights_period_this_week">هفته</string>
+    <string name="insights_period_last_week">کئچن هفته</string>
+    <string name="insights_period_this_month">آی</string>
+    <string name="insights_empty_state">بو هفته حادیثه پلانلانماییب</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d بوتون گون حادیثه</item>
+        <item quantity="other">%d بوتون گون حادیثه</item>
+    </plurals>
+    <string name="insight_busiest_day_future">%1$s ان ایشلی گونونوزدور (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s ان ایشلی گونونوز ایدی (%2$s)</string>
+    <string name="insight_lightest_day_future">%1$s ان یونگول گونونوزدور (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s ان یونگول گونونوز ایدی (%2$s)</string>
+    <string name="insight_longest_free_future">ان اوزون بوش بلوک: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">ان اوزون بوش بلوک %1$s %2$s–%3$s ایدی (%4$s)</string>
+    <string name="insight_weekend_load_clear_future">هفته‌سونونوز بوشدور</string>
+    <string name="insight_weekend_load_clear_past">هفته‌سونونوز بوش ایدی</string>
+    <string name="insight_weekend_load_light_future">هفته‌سونونده %1$s پلانلانیب</string>
+    <string name="insight_weekend_load_light_past">هفته‌سونونده %1$s پلانلانمیشدی</string>
+    <string name="insight_weekend_load_busy_future">هفته‌سونونده %1$s پلانلانیب</string>
+    <string name="insight_weekend_load_busy_past">هفته‌سونونده %1$s پلانلانمیشدی</string>
+    <string name="insight_back_to_back_future">%1$d آرخا-آرخا گؤروش</string>
+    <string name="insight_back_to_back_past">%1$d آرخا-آرخا گؤروشونوز وار ایدی</string>
+    <string name="insight_calendar_dominant_future">%1$s پلانلانمیش واختینیزین %2$d%%-دیر</string>
+    <string name="insight_calendar_dominant_past">%1$s پلانلانمیش واختینیزین %2$d%% ایدی</string>
+    <string name="insight_early_bounds_future">پلانینیز %1$d گون ۸-دن اؤنجه باشلاییر</string>
+    <string name="insight_early_bounds_past">پلانینیز %1$d گون ۸-دن اؤنجه باشلاییردی</string>
+    <string name="insight_late_bounds_future">%1$d گون ۷-دن سونرا حادیثه‌لر</string>
+    <string name="insight_late_bounds_past">%1$d گون ۷-دن سونرا حادیثه‌لر وار ایدی</string>
+    <string name="insight_meeting_free_days_future">%1$d گؤروشسوز گونونوز وار</string>
+    <string name="insight_meeting_free_days_past">%1$d گؤروشسوز گونونوز وار ایدی</string>
+    <string name="insight_tomorrow_preview">صاباح: %1$s پلانلانیب، %2$s-دا باشلاییر</string>
+    <string name="insight_tomorrow_preview_no_start">صاباح: %1$s پلانلانیب</string>
+    <string name="insight_heaviest_upcoming">%1$s ان آغیر گله‌ن گونونوزدور (%2$s)</string>
+    <string name="insight_next_free_block">سونراکی بوش بلوک: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insights_cd_daily_chart">گونلوک پایلانما: ان ایشلی گون %1$s</string>
+
+    <!-- ==================== Event Form Redesign ==================== -->
+    <string name="label_availability">الده اولما</string>
+    <string name="label_busy">مشغول</string>
+    <string name="label_free">بوش</string>
+    <string name="label_event_color">حادیثه رنگی</string>
+    <string name="label_calendar_default">تقویم پیش‌فرضی</string>
+    <string name="label_custom">خاص</string>
+    <string name="cd_checkmark">سئچیلمیش</string>
+
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
+    <string name="color_saddlebrown">قیرمیزی قهوه‌یی</string>
+    <string name="color_tomato">پومیدور</string>
+    <string name="color_darkorange">توند نارینجی</string>
+    <string name="color_gold">قیزیل</string>
+    <string name="color_yellowgreen">ساری-یاشیل</string>
+    <string name="color_limegreen">لیمو-یاشیل</string>
+    <string name="color_lightseagreen">آچیق دنیز یاشیلی</string>
+    <string name="color_dodgerblue">دوجر ماوی‌سی</string>
+    <string name="color_royalblue">کرال ماوی‌سی</string>
+    <string name="color_mediumorchid">اورتا اورکیده</string>
+    <string name="color_hotpink">ایستی پمبی</string>
+    <string name="color_dimgray">توتقون بوْز</string>
+
+    <!-- ==================== Color Wheel Picker ==================== -->
+    <string name="hue_red">قیرمیزی</string>
+    <string name="hue_orange">نارینجی</string>
+    <string name="hue_yellow">ساری</string>
+    <string name="hue_green">یاشیل</string>
+    <string name="hue_teal">فیروزه‌ای</string>
+    <string name="hue_blue">ماوی</string>
+    <string name="hue_purple">بنفش</string>
+    <string name="hue_pink">پمبی</string>
+    <string name="hue_brown">قهوه‌یی</string>
+    <string name="hue_neutral">نئوترال</string>
+    <string name="label_more_colors">داها چوخ رنگ</string>
+    <string name="label_back_to_grid">گئری</string>
+
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
+    <string name="label_attendees">ایشتیراکچیلار</string>
+    <string name="attendee_you_marker">سیز</string>
+    <string name="attendee_card_going">گئدیر</string>
+    <string name="attendee_card_pending">گؤزله‌نیلیر</string>
+    <string name="attendee_card_declined">ردد ائتدی</string>
+    <string name="attendee_card_tentative">بلکی</string>
+    <string name="attendee_card_hosting">صاحیبلیگینده</string>
+    <string name="attendee_action_copy">ایمیلی کؤچور</string>
+    <string name="attendee_action_email">ایمیل گؤندر</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
+    <string name="attendee_email_copied">ایمیل کؤچورولدو</string>
+    <string name="attendee_no_email_app">ایمیل تطبیقی قورولماییب</string>
+    <string name="attendee_show_all">بوتون ایشتیراکچیلاری گؤستر</string>
+    <string name="attendee_status_accepted">قبول ائتدی</string>
+    <string name="attendee_status_declined">ردد ائتدی</string>
+    <string name="attendee_status_tentative">بلکی</string>
+    <string name="attendee_status_delegated">وکیل ائتدی</string>
+    <string name="attendee_status_pending">گؤزله‌نیلیر</string>
+    <string name="inbox_empty_caught_up">هامیسی تامامدیر</string>
+    <string name="inbox_organizer_suffix">(تشکیلاتچی)</string>
+    <string name="menu_invites">دعوتلر</string>
+    <string name="jump_to_date">تاریخه گئت</string>
+    <string name="menu_about">حاقدا</string>
+    <string name="menu_more">داها منیو</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">داها منیو، %d دعوت گؤزله‌نیلیر</item>
+        <item quantity="other">داها منیو، %d دعوت گؤزله‌نیلیر</item>
+    </plurals>
+    <string name="menu_privacy_security">محریملیق و گوونلیک</string>
+    <string name="cd_edit_initials">باش حرفلرینیزین دَییشدیرین</string>
+    <string name="hub_initials_hint">باش حرفلرینیزی قورماق اوچون وورون</string>
+    <string name="hub_initials_field_label">باش حرفلر</string>
+    <string name="hub_initials_save">ساخلا</string>
+    <string name="hub_initials_cancel">لغو ائت</string>
+    <string name="hub_section_make_it_yours">اؤزونیزه ائت</string>
+    <string name="hub_section_own_your_calendar">تقویمینیزه sahib olun</string>
+    <string name="hub_privacy_data_ownership">وئری‌لرینیز نئجه سیزین قالیر</string>
+    <string name="hub_accounts_and_settings">حساب‌لار و تنظیماتلار</string>
+
+    <!-- ==================== Share Availability ==================== -->
+    <string name="share_availability_rail_label">الده اولماغی پایلاش</string>
+    <string name="share_availability_sheet_title">الده اولماغی پایلاش</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">گله‌ن %1$d گون</item>
+        <item quantity="other">گله‌ن %1$d گون</item>
+    </plurals>
+    <string name="share_availability_hours_label">ایش واختلاری: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">بوتون گون حادیثه‌لر مشغول کیمی</string>
+    <string name="share_availability_share_button">پایلاش</string>
+    <plurals name="share_availability_header">
+        <item quantity="one">گله‌ن %1$d گون عرضینده بوش (%2$s – %3$s):</item>
+        <item quantity="other">گله‌ن %1$d گون عرضینده بوش (%2$s – %3$s):</item>
+    </plurals>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">، </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">سئچیلمیش آرالیق‌دا ان آز بیر ساعتیک بوش بلوک یوخدور.</string>
+    <string name="share_from_kashcal_footer">KashCal-دان پایلاشیلدی</string>
+    <string name="share_availability_chooser_title">الده اولماغی پایلاش</string>
+    <string name="share_availability_share_failed">پایلاشماق اوچون تطبیق الده یوخدور</string>
+    <string name="share_availability_window_section">پنجره</string>
+    <string name="share_availability_hours_section">ایش واختلاری</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d گون</item>
+        <item quantity="other">%1$d گون</item>
+    </plurals>
+    <string name="share_availability_days_through">%1$s-ا قدر</string>
+    <string name="share_availability_window_duration">%1$s ساعتلیق پنجره</string>
+    <string name="share_as_card_action">کارت کیمی پایلاش</string>
+    <string name="share_as_card_chip_standard">استاندارت</string>
+    <string name="share_as_card_chip_celebration">جشن</string>
+    <string name="share_as_card_send">گؤندر</string>
+    <string name="share_as_card_attribution">KashCal ایله حاضیرلانیب</string>
+    <string name="share_as_card_all_day">بوتون گون</string>
+    <string name="share_as_card_chooser_title">حادیثه‌نی پایلاش</string>
+    <string name="share_as_card_share_failed">کارت پایلاشیلا بیلمدی</string>
+    <string name="print_your_week">هفته‌نیزی چاپ ائدین</string>
+    <string name="print_options_title">چاپ سئچیملرینی سئچین</string>
+    <string name="print_pages_header">صفحه‌لر</string>
+    <string name="print_page_week">هفته تقویمی</string>
+    <string name="print_page_week_detail">هفته جدول کیمی</string>
+    <string name="print_page_details">تفصیلات</string>
+    <string name="print_page_details_detail">هر حادیثه تام شکیلده</string>
+    <string name="print_action">چاپ ائت</string>
+    <string name="cd_print_previous_week">اؤنجه‌کی هفته</string>
+    <string name="cd_print_next_week">سونراکی هفته</string>
+    <plurals name="print_summary_pages">
+        <item quantity="one">%d صفحه</item>
+        <item quantity="other">%d صفحه</item>
+    </plurals>
+    <plurals name="print_summary_calendars">
+        <item quantity="one">%2$d تقویمدن %1$d</item>
+        <item quantity="other">%2$d تقویمدن %1$d</item>
+    </plurals>
+    <string name="print_summary">%1$s · %2$s</string>
+    <string name="print_job_name">%1$s – %2$s هفته‌سی</string>
+    <string name="print_failed">چاپ ائدیله بیلمدی. یئنی‌دن جهد ائدین.</string>
+    <string name="print_doc_week">هفته</string>
+    <string name="print_doc_printed">چاپ تاریخی %1$s</string>
+    <string name="print_doc_page_of">صفحه %1$s، جمعی %2$s</string>
+    <string name="print_doc_numbers_note">رقم‌لر هر حادیثه‌نی تام سیرالایان تفصیلاتلا اویغوندور.</string>
+    <string name="print_doc_times_in">واختلار %1$s ایله گؤستریلیر</string>
+
+</resources>
