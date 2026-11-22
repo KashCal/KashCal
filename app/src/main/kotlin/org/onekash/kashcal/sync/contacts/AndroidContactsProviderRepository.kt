@@ -697,7 +697,7 @@ class AndroidContactsProviderRepository @Inject constructor(
         localId: Long,
         href: String,
         newEtag: String,
-        uploadedVersion: Long?,
+        uploadedVersion: Long,
     ): Result<Unit> =
         // By _ID, never a SOURCE_ID lookup: a net-new row's SOURCE_ID is still blank, so an
         // href lookup would find nothing. A 0L (unset) _ID passes null to
@@ -709,35 +709,21 @@ class AndroidContactsProviderRepository @Inject constructor(
         accountName: String,
         rawContactId: Long?,
         newEtag: String,
-        uploadedVersion: Long?,
+        uploadedVersion: Long,
         newHref: String?,
     ): Result<Unit> {
-        fun update(id: Long) =
-            ContentProviderOperation.newUpdate(rawContactByIdUri(accountName, id))
-                // A create's or redirect's new server href, so the next pull matches this row
-                // and skips it instead of inserting a duplicate.
-                .apply { if (newHref != null) withValue(RawContacts.SOURCE_ID, newHref) }
-                .withValue(RawContacts.SYNC2, newEtag)
-
         return applyScopedIdWrite(label, rawContactId) { id ->
-            if (uploadedVersion == null) {
-                listOf(update(id).build())
-            } else {
-                // Check VERSION before metadata writes that might increment it. No yield points
-                // may split this transaction; ContactsProviderRepositoryTest enforces the order.
-                listOf(
-                    update(id)
-                        .withSelection("${RawContacts.VERSION} = ?", arrayOf(uploadedVersion.toString()))
-                        // Clear DIRTY in the same sync-adapter write. Sync-adapter mode stops the
-                        // provider setting DIRTY again on this write, which would spin the push
-                        // forever; clearing it takes the row out of the next scan.
-                        .withValue(RawContacts.DIRTY, 0)
-                        .build(),
-                    update(id)
-                        .withSelection("${RawContacts.DIRTY} = ?", arrayOf("1"))
-                        .build(),
-                )
-            }
+            val uri = rawContactByIdUri(accountName, id)
+            listOf(
+                ContentProviderOperation.newUpdate(uri)
+                    .apply { if (newHref != null) withValue(RawContacts.SOURCE_ID, newHref) }
+                    .withValue(RawContacts.SYNC2, newEtag)
+                    .build(),
+                ContentProviderOperation.newUpdate(uri)
+                    .withSelection("${RawContacts.VERSION} = ?", arrayOf(uploadedVersion.toString()))
+                    .withValue(RawContacts.DIRTY, 0)
+                    .build(),
+            )
         }
     }
 

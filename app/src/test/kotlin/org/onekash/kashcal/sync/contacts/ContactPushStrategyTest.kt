@@ -8,6 +8,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -79,6 +80,12 @@ class ContactPushStrategyTest {
 
     private fun parse(body: String) = VCardParser().parse(body).single()
 
+    /** The resource an earlier run's create left at the deterministic `<uid>.vcf` name. */
+    private fun adoptedResource() = CardDavContactData(
+        href = "/ab/default/uid1.vcf", url = "$BOOK_HOST/ab/default/uid1.vcf",
+        etag = "srv-existing", vcardBody = serverVcard("uid1", "Jane Doe"),
+    )
+
     @Test
     fun `a re-edit during an update stays pending and next uploads against the acknowledged etag`() = runTest {
         val body = serverVcard("c1", "Jane Doe", "NOTE:original\r\n")
@@ -142,6 +149,24 @@ class ContactPushStrategyTest {
         assertEquals("created", provider.etagFor(ACCOUNT, pending.href))
     }
 
+    @Test
+    fun `every upload acknowledges the version the push read`() = runTest {
+        val body = serverVcard("c1", "Jane Doe")
+        provider.pendingChanges = LocalContactChanges(
+            listOf(
+                LocalContactEdit(href = HREF, uid = "c1", storedEtag = "v1", contact = parse(body).copy(displayName = "Jane Q"), rawContactVersion = 41L),
+                LocalContactEdit(href = "", uid = "n1", storedEtag = null, contact = parse(serverVcard("n1", "New One")).copy(rawVCard = ""), rawContactVersion = 42L, localId = 200L),
+            ),
+            emptyList(),
+        )
+        val client = clientServing(CardDavContactData(HREF, "$BOOK_HOST$HREF", "v1", body))
+        client.putContactResult = ContactUploadResult.Success(etag = "v2")
+
+        strategy.push(ACCOUNT, listOf(writableBook()), client)
+
+        assertEquals(listOf(41L, 42L), provider.uploadedVersions)
+    }
+
     // ---------- create (net-new device contact: no href/etag) ----------
 
     @Test
@@ -174,73 +199,247 @@ class ContactPushStrategyTest {
     }
 
     @Test
-    fun `a net-new precondition failure whose existing resource matches by UID is adopted and kept pending`() = runTest {
-        // The create 412s because an earlier run created this contact and its write-back
-        // failed (SOURCE_ID never stamped). Adopt it: GET the resource, confirm it is ours by
-        // UID, and stamp the created href and server etag onto the originating row by _ID, so
-        // a later pull doesn't mirror it as a duplicate. The adopted body may predate the
-        // device's fields, so the row stays pending for an If-Match upload.
+    fun `a net-new precondition failure whose existing resource matches by UID and fields is marked synced`() = runTest {
+        // The create 412s because an earlier run created this contact and its reply or
+        // write-back was lost (SOURCE_ID never stamped). The GET proves the resource ours by
+        // UID and its synced fields equal the device's, so there is nothing to reconcile: stamp
+        // the created href and server etag by _ID and clear the pending edit.
         val device = parse(serverVcard("uid1", "Jane Doe")).copy(rawVCard = "", uid = "uid1")
         provider.pendingChanges = LocalContactChanges(
             edited = listOf(LocalContactEdit(href = "", uid = "uid1", storedEtag = null, contact = device, localId = 100L, rawContactVersion = 7L)),
             deleted = emptyList(),
         )
         val client = FakeCardDavClient()
-        // The resource already exists at the deterministic <uid>.vcf name with the same UID
-        // as the edit: this contact from a prior run.
-        client.books += FakeAddressBook(
-            book = writableBook(),
-            contacts = mutableListOf(
-                CardDavContactData(
-                    href = "/ab/default/uid1.vcf", url = "$BOOK_HOST/ab/default/uid1.vcf",
-                    etag = "srv-existing", vcardBody = serverVcard("uid1", "Jane Doe"),
-                ),
-            ),
-        )
+        client.books += FakeAddressBook(book = writableBook(), contacts = mutableListOf(adoptedResource()))
         client.putContactResult = ContactUploadResult.PreconditionFailed
 
-        val clean = strategy.push(ACCOUNT, listOf(writableBook()), client).clean
+        val outcome = strategy.push(ACCOUNT, listOf(writableBook()), client)
 
-        assertTrue("adopting the existing resource is a clean outcome", clean)
+        assertEquals(ContactPushOutcome.CLEAN, outcome)
         assertEquals(1, client.putContactCalls.size)
         assertEquals(
-            "the created href + the existing server etag are stamped onto the originating row by _ID",
             listOf(FakeContactsProviderRepository.MarkNewUploaded(ACCOUNT, 100L, "/ab/default/uid1.vcf", "srv-existing")),
             provider.markNewUploadedCalls,
         )
-        val pending = provider.pendingChanges.edited.single()
-        assertEquals("the adopted href is stamped", "/ab/default/uid1.vcf", pending.href)
-        assertEquals("the adopted etag is the next If-Match", "srv-existing", pending.storedEtag)
+        assertTrue("an identical copy needs no replace", provider.replaceCalls.isEmpty())
+        assertTrue("nothing is left pending", provider.pendingChanges.edited.isEmpty())
+
+        val next = clientServing(adoptedResource())
+        strategy.push(ACCOUNT, listOf(writableBook()), next)
+        assertTrue("the next push sends nothing", next.putContactCalls.isEmpty())
     }
 
     @Test
-    fun `an adopted create whose server body predates a device edit uploads the edit next run`() = runTest {
-        // An earlier run's create reached the server but its reply was lost, and the user
-        // edited the contact before this run. The adopt proves the resource is ours, not that
-        // it holds the edit.
+    fun `a same-copy adopt keeps a re-edit made during the push pending against the stamped etag`() = runTest {
+        val device = parse(serverVcard("uid1", "Jane Doe")).copy(rawVCard = "", uid = "uid1")
+        val first = LocalContactEdit(href = "", uid = "uid1", storedEtag = null, contact = device, localId = 100L, rawContactVersion = 7L)
+        provider.pendingChanges = LocalContactChanges(listOf(first), emptyList())
+        val server = FakeCardDavClient().apply {
+            books += FakeAddressBook(book = writableBook(), contacts = mutableListOf(adoptedResource()))
+            putContactResult = ContactUploadResult.PreconditionFailed
+        }
+        val client = object : CardDavClient by server {
+            override suspend fun putContact(resourceUrl: String, vcardBody: String, precondition: ContactPrecondition): ContactUploadResult {
+                provider.pendingChanges = LocalContactChanges(
+                    listOf(first.copy(contact = device.copy(notes = listOf("second")), rawContactVersion = 8L)), emptyList(),
+                )
+                return server.putContact(resourceUrl, vcardBody, precondition)
+            }
+        }
+
+        assertEquals(ContactPushOutcome.CLEAN, strategy.push(ACCOUNT, listOf(writableBook()), client))
+        val pending = provider.pendingChanges.edited.single()
+        assertEquals(listOf("second"), pending.contact.notes)
+        assertEquals("/ab/default/uid1.vcf", pending.href)
+        assertEquals("srv-existing", pending.storedEtag)
+
+        val next = clientServing(adoptedResource())
+        next.putContactResult = ContactUploadResult.Success(etag = "srv-2")
+        strategy.push(ACCOUNT, listOf(writableBook()), next)
+        assertEquals(ContactPrecondition.IfMatch("srv-existing"), next.putContactCalls.single().third)
+        assertTrue(next.putContactCalls.single().second.contains("NOTE:second"))
+    }
+
+    @Test
+    fun `a same-copy adopt of a resource with no etag ends without a PUT loop`() = runTest {
+        val device = parse(serverVcard("uid1", "Jane Doe")).copy(rawVCard = "", uid = "uid1")
+        provider.pendingChanges = LocalContactChanges(
+            listOf(LocalContactEdit(href = "", uid = "uid1", storedEtag = null, contact = device, localId = 100L, rawContactVersion = 7L)),
+            emptyList(),
+        )
+        val noEtag = adoptedResource().copy(etag = null)
+        val client = FakeCardDavClient().apply {
+            books += FakeAddressBook(book = writableBook(), contacts = mutableListOf(noEtag))
+            putContactResult = ContactUploadResult.PreconditionFailed
+        }
+
+        assertEquals(ContactPushOutcome.CLEAN, strategy.push(ACCOUNT, listOf(writableBook()), client))
+        assertTrue(provider.pendingChanges.edited.isEmpty())
+        assertNull("a blank etag reads as no validator", provider.existingEtagsByHref(ACCOUNT)["/ab/default/uid1.vcf"])
+        repeat(2) {
+            val next = clientServing(noEtag)
+            strategy.push(ACCOUNT, listOf(writableBook()), next)
+            assertTrue("run ${it + 1} sends no PUT", next.putContactCalls.isEmpty())
+        }
+    }
+
+    @Test
+    fun `a differing-copy adopt of a resource with no etag ends without a PUT loop`() = runTest {
+        val device = parse(serverVcard("uid1", "Jane Doe")).copy(rawVCard = "", uid = "uid1", notes = listOf("edited"))
+        provider.pendingChanges = LocalContactChanges(
+            listOf(LocalContactEdit(href = "", uid = "uid1", storedEtag = null, contact = device, rawContactVersion = 7L, localId = 100L)),
+            emptyList(),
+        )
+        val noEtag = adoptedResource().copy(etag = null)
+        val client = FakeCardDavClient().apply {
+            books += FakeAddressBook(book = writableBook(), contacts = mutableListOf(noEtag))
+            putContactResult = ContactUploadResult.PreconditionFailed
+        }
+
+        assertEquals(ContactPushOutcome.CLEAN, strategy.push(ACCOUNT, listOf(writableBook()), client))
+        assertNull("the replace carries no etag", provider.replaceCalls.single().single().etag)
+        assertTrue(provider.pendingChanges.edited.isEmpty())
+        repeat(2) {
+            val next = clientServing(noEtag)
+            strategy.push(ACCOUNT, listOf(writableBook()), next)
+            assertTrue("run ${it + 1} sends no PUT", next.putContactCalls.isEmpty())
+        }
+    }
+
+    @Test
+    fun `a server copy that only adds KIND counts as the same contact`() = runTest {
+        // The device never stores KIND from its Data rows, so a server that adds one must not
+        // turn every adopt into a conflict.
+        val device = parse(serverVcard("uid1", "Jane Doe")).copy(rawVCard = "", uid = "uid1")
+        provider.pendingChanges = LocalContactChanges(
+            listOf(LocalContactEdit(href = "", uid = "uid1", storedEtag = null, contact = device, localId = 100L, rawContactVersion = 7L)),
+            emptyList(),
+        )
+        val withKind = adoptedResource().copy(vcardBody = serverVcard("uid1", "Jane Doe", "X-ADDRESSBOOKSERVER-KIND:individual\r\n"))
+        val client = FakeCardDavClient().apply {
+            books += FakeAddressBook(book = writableBook(), contacts = mutableListOf(withKind))
+            putContactResult = ContactUploadResult.PreconditionFailed
+        }
+
+        assertEquals(ContactPushOutcome.CLEAN, strategy.push(ACCOUNT, listOf(writableBook()), client))
+        assertTrue(provider.replaceCalls.isEmpty())
+        assertTrue(provider.pendingChanges.edited.isEmpty())
+    }
+
+    @Test
+    fun `an adopted create whose server copy differs takes the server copy in the same push`() = runTest {
+        // An earlier run's create reached the server but its reply was lost, and the copies now
+        // differ (the user edited the contact on the phone, or another client edited it on the
+        // server). The device can't tell which side changed, so it is a conflict and the server
+        // wins (RFC 6352 section 9.2 leaves the resolution to the client): the href is stamped
+        // with a blank etag, then the server copy is written onto the row with its etag. No
+        // If-Match PUT is sent with an etag the device never reconciled.
         val device = parse(serverVcard("uid1", "Jane Doe")).copy(rawVCard = "", uid = "uid1", notes = listOf("edited"))
         provider.pendingChanges = LocalContactChanges(
             edited = listOf(LocalContactEdit(href = "", uid = "uid1", storedEtag = null, contact = device, localId = 100L, rawContactVersion = 7L)),
             deleted = emptyList(),
         )
-        val adopted = CardDavContactData(
-            href = "/ab/default/uid1.vcf", url = "$BOOK_HOST/ab/default/uid1.vcf",
-            etag = "srv-existing", vcardBody = serverVcard("uid1", "Jane Doe"),
-        )
         val client = FakeCardDavClient()
-        client.books += FakeAddressBook(book = writableBook(), contacts = mutableListOf(adopted))
+        client.books += FakeAddressBook(book = writableBook(), contacts = mutableListOf(adoptedResource()))
         client.putContactResult = ContactUploadResult.PreconditionFailed
 
-        assertTrue(strategy.push(ACCOUNT, listOf(writableBook()), client).clean)
+        assertEquals(ContactPushOutcome.CLEAN, strategy.push(ACCOUNT, listOf(writableBook()), client))
 
-        val next = clientServing(adopted)
+        assertEquals(
+            "the href is stamped first, with no validator",
+            listOf(FakeContactsProviderRepository.MarkNewUploaded(ACCOUNT, 100L, "/ab/default/uid1.vcf", "")),
+            provider.markNewUploadedCalls,
+        )
+        val replaced = provider.replaceCalls.single().single()
+        assertEquals("/ab/default/uid1.vcf", replaced.href)
+        assertEquals("srv-existing", replaced.etag)
+        assertTrue("the server copy has no NOTE", replaced.mapped.contact.notes.isEmpty())
+        assertFalse(replaced.isReadOnly)
+        assertTrue(provider.pendingChanges.edited.isEmpty())
+        assertEquals("srv-existing", provider.existingEtagsByHref(ACCOUNT)["/ab/default/uid1.vcf"])
+
+        val next = clientServing(adoptedResource())
+        strategy.push(ACCOUNT, listOf(writableBook()), next)
+        assertTrue("the next push sends nothing", next.putContactCalls.isEmpty())
+    }
+
+    @Test
+    fun `a differing-copy adopt overwrites a re-edit made during the push and re-uploads the server copy`() = runTest {
+        val device = parse(serverVcard("uid1", "Jane Doe")).copy(rawVCard = "", uid = "uid1", notes = listOf("edited"))
+        val first = LocalContactEdit(href = "", uid = "uid1", storedEtag = null, contact = device, localId = 100L, rawContactVersion = 7L)
+        provider.pendingChanges = LocalContactChanges(listOf(first), emptyList())
+        val server = FakeCardDavClient().apply {
+            books += FakeAddressBook(book = writableBook(), contacts = mutableListOf(adoptedResource()))
+            putContactResult = ContactUploadResult.PreconditionFailed
+        }
+        val client = object : CardDavClient by server {
+            override suspend fun putContact(resourceUrl: String, vcardBody: String, precondition: ContactPrecondition): ContactUploadResult {
+                provider.pendingChanges = LocalContactChanges(
+                    listOf(first.copy(contact = device.copy(notes = listOf("during")), rawContactVersion = 8L)), emptyList(),
+                )
+                return server.putContact(resourceUrl, vcardBody, precondition)
+            }
+        }
+
+        assertEquals(ContactPushOutcome.CLEAN, strategy.push(ACCOUNT, listOf(writableBook()), client))
+        assertTrue("the replace carries the server copy", provider.replaceCalls.single().single().mapped.contact.notes.isEmpty())
+        val pending = provider.pendingChanges.edited.single()
+        assertTrue("the replace overwrote the edit made during the push", pending.contact.notes.isEmpty())
+        assertEquals("srv-existing", pending.storedEtag)
+
+        val next = clientServing(adoptedResource())
         next.putContactResult = ContactUploadResult.Success(etag = "srv-2")
         strategy.push(ACCOUNT, listOf(writableBook()), next)
+        assertEquals(ContactPrecondition.IfMatch("srv-existing"), next.putContactCalls.single().third)
+        assertFalse(next.putContactCalls.single().second.contains("NOTE:"))
+    }
 
-        val (_, body, precondition) = next.putContactCalls.single()
-        assertEquals(ContactPrecondition.IfMatch("srv-existing"), precondition)
-        assertTrue(body.contains("NOTE:edited"))
-        assertTrue(provider.pendingChanges.edited.isEmpty())
+    @Test
+    fun `a differing-copy adopt whose stamp fails replaces nothing and holds the pull`() = runTest {
+        val device = parse(serverVcard("uid1", "Jane Doe")).copy(rawVCard = "", uid = "uid1", notes = listOf("edited"))
+        provider.pendingChanges = LocalContactChanges(
+            listOf(LocalContactEdit(href = "", uid = "uid1", storedEtag = null, contact = device, localId = 100L, rawContactVersion = 7L)),
+            emptyList(),
+        )
+        val client = FakeCardDavClient().apply {
+            books += FakeAddressBook(book = writableBook(), contacts = mutableListOf(adoptedResource()))
+            putContactResult = ContactUploadResult.PreconditionFailed
+        }
+        provider.markNewUploadedResult = Result.failure(ContactWriteException(ContactWriteFailure.PROVIDER_ERROR))
+
+        assertEquals(ContactPushOutcome.PULL_UNSAFE, strategy.push(ACCOUNT, listOf(writableBook()), client))
+        assertTrue(provider.replaceCalls.isEmpty())
+    }
+
+    @Test
+    fun `a differing-copy adopt whose replace fails leaves no validator so a later edit can't overwrite`() = runTest {
+        val device = parse(serverVcard("uid1", "Jane Doe")).copy(rawVCard = "", uid = "uid1", notes = listOf("edited"))
+        provider.pendingChanges = LocalContactChanges(
+            listOf(LocalContactEdit(href = "", uid = "uid1", storedEtag = null, contact = device, localId = 100L, rawContactVersion = 7L)),
+            emptyList(),
+        )
+        val client = FakeCardDavClient().apply {
+            books += FakeAddressBook(book = writableBook(), contacts = mutableListOf(adoptedResource()))
+            putContactResult = ContactUploadResult.PreconditionFailed
+        }
+        provider.replaceResult = Result.failure(ContactWriteException(ContactWriteFailure.PROVIDER_ERROR))
+
+        assertEquals(
+            "the row is matched by href, so the pull is safe; not clean, so the token is held",
+            ContactPushOutcome.DEFERRED,
+            strategy.push(ACCOUNT, listOf(writableBook()), client),
+        )
+        assertNull(provider.existingEtagsByHref(ACCOUNT)["/ab/default/uid1.vcf"])
+
+        // A later phone edit reads back with no etag (blank SYNC2), so it can only create.
+        provider.pendingChanges = LocalContactChanges(
+            listOf(LocalContactEdit(href = "/ab/default/uid1.vcf", uid = "uid1", storedEtag = null, contact = device.copy(notes = listOf("later")), localId = 100L, rawContactVersion = 9L)),
+            emptyList(),
+        )
+        val next = clientServing(adoptedResource())
+        next.putContactResult = ContactUploadResult.PreconditionFailed
+        assertTrue(strategy.push(ACCOUNT, listOf(writableBook()), next).clean)
+        assertEquals(listOf(ContactPrecondition.IfAbsent), next.putContactCalls.map { it.third })
     }
 
     @Test
@@ -450,7 +649,7 @@ class ContactPushStrategyTest {
         // The row already carries its persisted synthesized UID (a prior run stamped SYNC1)
         // and a resource under that <uid>.vcf name exists. The create 412s; adopt it by
         // matching the server body's UID to the persisted UID, never blank against blank, so
-        // a foreign contact can't be hijacked.
+        // a foreign contact can't be hijacked. The fields match, so it is marked synced.
         val device = parse(serverVcard(SYNTH_UID, "Jane Doe")).copy(rawVCard = "", uid = SYNTH_UID)
         provider.pendingChanges = LocalContactChanges(
             edited = listOf(LocalContactEdit(href = "", uid = SYNTH_UID, storedEtag = null, contact = device, localId = 100L, rawContactVersion = 7L)),
@@ -477,9 +676,7 @@ class ContactPushStrategyTest {
             listOf(FakeContactsProviderRepository.MarkNewUploaded(ACCOUNT, 100L, "/ab/default/$SYNTH_UID.vcf", "srv-existing")),
             provider.markNewUploadedCalls,
         )
-        val pending = provider.pendingChanges.edited.single()
-        assertEquals("the persisted-UID href is stamped", "/ab/default/$SYNTH_UID.vcf", pending.href)
-        assertEquals("the adopted etag is the next If-Match", "srv-existing", pending.storedEtag)
+        assertTrue("an identical copy leaves nothing pending", provider.pendingChanges.edited.isEmpty())
     }
 
     @Test

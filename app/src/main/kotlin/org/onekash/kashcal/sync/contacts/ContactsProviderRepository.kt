@@ -1,6 +1,8 @@
 package org.onekash.kashcal.sync.contacts
 
 import org.onekash.kashcal.data.contacts.MappedContact
+import org.onekash.kashcal.data.contacts.VCardContactMapper
+import org.onekash.kashcal.sync.carddav.ReadContact
 import org.onekash.vcard.model.Contact
 
 /**
@@ -30,6 +32,17 @@ data class MappedContactWrite(
 )
 
 /**
+ * Returns the device write that mirrors this server contact; [isReadOnly] is its address book's.
+ * The pull and the 412 adopt both build their writes here, so the two can't drift apart.
+ */
+fun ReadContact.toWrite(isReadOnly: Boolean): MappedContactWrite = MappedContactWrite(
+    href = href,
+    etag = etag,
+    mapped = VCardContactMapper.toEntity(contact),
+    isReadOnly = isReadOnly,
+)
+
+/**
  * A contact edited on the device (the provider set `DIRTY`), waiting to be pushed.
  *
  * It carries the SYNC-column locators ([href], [uid], [storedEtag]) and the device fields in
@@ -44,19 +57,19 @@ data class MappedContactWrite(
  *   [org.onekash.kashcal.data.contacts.DeviceContactRowMapper]. `rawVCard` and `version` are
  *   defaults (Data rows don't store them); the push supplies the real base (the server body
  *   for a patch, blank for a fresh write) at the book's version.
+ * @property rawContactVersion the `RawContacts.VERSION` read before [contact]'s Data rows, so
+ *   a later edit cannot be acknowledged as part of this upload.
  * @property localId the RawContact `_ID`. A device-created contact has a blank [href], so its
  *   create is written back by `_ID`. Defaults to `0L`; no real `_ID` is 0, so a write-back
  *   keyed on `0L` is a no-op instead of stamping the wrong row.
- * @property rawContactVersion the `RawContacts.VERSION` read before [contact]'s Data rows, so
- *   a later edit cannot be acknowledged as part of this upload.
  */
 data class LocalContactEdit(
     val href: String,
     val uid: String,
     val storedEtag: String?,
     val contact: Contact,
-    val localId: Long = 0L,
     val rawContactVersion: Long,
+    val localId: Long = 0L,
 )
 
 /**
@@ -260,10 +273,10 @@ interface ContactsProviderRepository {
 
     /**
      * Records that the contact at [href] under [accountName] was pushed: sets `SYNC2` to
-     * [newEtag] and clears `DIRTY` only if `VERSION` still equals [uploadedVersion], in a
-     * sync-adapter write so the provider doesn't mark the row dirty again and loop the push. A
-     * newer edit keeps `DIRTY` and receives the acknowledged etag for its next conditional PUT.
-     * `ContactsProviderRepositoryTest` covers both outcomes.
+     * [newEtag] and clears `DIRTY` only if `VERSION` still equals [uploadedVersion], as a sync
+     * adapter (an app update would skip rows marked `RAW_CONTACT_IS_READ_ONLY`). A newer edit
+     * keeps `DIRTY` and receives the acknowledged etag for its next conditional PUT.
+     * `ContactUploadAcknowledgementSqlTest` proves both outcomes against the platform's rules.
      *
      * An [href] that no longer resolves (deleted between scan and push) is a no-op success. A
      * short `applyBatch` result is a [Result.failure]. On failure the contact stays `DIRTY`.
@@ -302,9 +315,9 @@ interface ContactsProviderRepository {
     /**
      * Records that the net-new device contact [localId] under [accountName] was created on
      * the server: sets `SOURCE_ID` to [href] and `SYNC2` to [newEtag]. Like
-     * [markContactUploaded], clears `DIRTY` only when `VERSION` equals [uploadedVersion]. A
-     * null [uploadedVersion] keeps `DIRTY`: an adopted resource proves the name is ours, not
-     * that it holds the device's current fields, so the next push uploads them with `If-Match`.
+     * [markContactUploaded], clears `DIRTY` only when `VERSION` equals [uploadedVersion]. A blank
+     * [newEtag] stores no validator: the pull treats the row as unproven and replaces it
+     * whenever it lists [href].
      *
      * [markContactUploaded] for a contact with no prior server resource: its `SOURCE_ID` was
      * blank, so it is addressed by [localId]. Stamping the href lets the next pull match the
@@ -319,7 +332,7 @@ interface ContactsProviderRepository {
         localId: Long,
         href: String,
         newEtag: String,
-        uploadedVersion: Long?,
+        uploadedVersion: Long,
     ): Result<Unit>
 
     /**

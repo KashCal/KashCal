@@ -110,12 +110,15 @@ class ContactsProviderRepositoryTest {
         return op.resolveValueBackReferences(backRefs, backRefs.size)!!
     }
 
-    private fun selectionOf(op: ContentProviderOperation): String {
+    private fun selectionOrNull(op: ContentProviderOperation): String? {
         val provider = mockk<ContentProvider>()
-        val extras = slot<Bundle>()
-        every { provider.update(any(), any(), capture(extras)) } returns 1
+        var selection: String? = null
+        every { provider.update(any(), any(), any<Bundle>()) } answers {
+            selection = thirdArg<Bundle?>()?.getString(ContentResolver.QUERY_ARG_SQL_SELECTION)
+            1
+        }
         op.apply(provider, emptyArray(), 0)
-        return extras.captured.getString(ContentResolver.QUERY_ARG_SQL_SELECTION).orEmpty()
+        return selection
     }
 
     /** The RawContact insert is the one carrying SOURCE_ID; Data rows never do. */
@@ -1162,10 +1165,12 @@ class ContactsProviderRepositoryTest {
         assertTrue(changes.edited.isEmpty() && changes.deleted.isEmpty())
     }
 
-    // ---------- markContactUploaded (SYNC2 + DIRTY=0 via sync-adapter) ----------
+    // ---------- markContactUploaded (SYNC2 stamp, DIRTY=0 on the read VERSION) ----------
 
     @Test
-    fun `markContactUploaded preserves a re-edit and stores the acknowledged etag and redirect`() = runBlocking {
+    fun `markContactUploaded stamps unconditionally and clears DIRTY only on the read VERSION, in one batch`() = runBlocking {
+        // The outcomes (a re-edit keeps DIRTY with the new etag) are proven in SQL by
+        // ContactUploadAcknowledgementSqlTest; this pins the batch shape the provider receives.
         val cr = resolverFor(rawContactId = 88L)
         val batches = mutableListOf<ArrayList<ContentProviderOperation>>()
         every { cr.applyBatch(eq(ContactsContract.AUTHORITY), capture(batches)) } returns
@@ -1175,26 +1180,26 @@ class ContactsProviderRepositoryTest {
 
         assertTrue(result.isSuccess)
         assertEquals("both writes belong to the same transaction", 1, batches.size)
-        val ops = batches.single()
-        assertEquals(2, ops.size)
-        assertEquals("${RawContacts.VERSION} = ?", selectionOf(ops.first()))
-        assertArrayEquals(arrayOf("7"), ops.first().resolveSelectionArgsBackReferences(emptyArray(), 0))
-        assertEquals(0, valuesOf(ops.first()).getAsInteger(RawContacts.DIRTY))
-        val fallback = ops.last()
-        assertEquals("${RawContacts.DIRTY} = ?", selectionOf(fallback))
-        assertArrayEquals(arrayOf("1"), fallback.resolveSelectionArgsBackReferences(emptyArray(), 0))
-        assertEquals("\"e2\"", valuesOf(fallback).getAsString(RawContacts.SYNC2))
-        assertEquals("/moved/x.vcf", valuesOf(fallback).getAsString(RawContacts.SOURCE_ID))
-        assertFalse("the newer edit stays dirty", valuesOf(fallback).containsKey(RawContacts.DIRTY))
-        assertEquals(88L, ContentUris.parseId(fallback.uri))
-        assertEquals(ACCOUNT_NAME, fallback.uri.getQueryParameter(RawContacts.ACCOUNT_NAME))
-        assertEquals(ACCOUNT_TYPE, fallback.uri.getQueryParameter(RawContacts.ACCOUNT_TYPE))
-        assertEquals("true", fallback.uri.getQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER))
-        assertTrue(ops.all { it.uri == fallback.uri && !it.isYieldAllowed })
+        val ops = batches.single().also { assertEquals(2, it.size) }
+        val guard = ops.single { selectionOrNull(it) != null }
+        val stamp = ops.single { it !== guard }
+        assertTrue("both mark the row in place", ops.all { it.isUpdate })
+        assertEquals("\"e2\"", valuesOf(stamp).getAsString(RawContacts.SYNC2))
+        assertEquals("/moved/x.vcf", valuesOf(stamp).getAsString(RawContacts.SOURCE_ID))
+        assertFalse(valuesOf(stamp).containsKey(RawContacts.DIRTY))
+        assertEquals("${RawContacts.VERSION} = ?", selectionOrNull(guard))
+        assertArrayEquals(arrayOf("7"), guard.resolveSelectionArgsBackReferences(emptyArray(), 0))
+        assertEquals(setOf(RawContacts.DIRTY), valuesOf(guard).keySet())
+        assertEquals(0, valuesOf(guard).getAsInteger(RawContacts.DIRTY))
+        assertEquals(88L, ContentUris.parseId(stamp.uri))
+        assertEquals(ACCOUNT_NAME, stamp.uri.getQueryParameter(RawContacts.ACCOUNT_NAME))
+        assertEquals(ACCOUNT_TYPE, stamp.uri.getQueryParameter(RawContacts.ACCOUNT_TYPE))
+        assertEquals("true", stamp.uri.getQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER))
+        assertTrue(listOf(stamp, guard).all { it.uri == stamp.uri && !it.isYieldAllowed })
     }
 
     @Test
-    fun `markNewContactUploaded preserves a re-edit and stamps the created resource`() = runBlocking {
+    fun `markNewContactUploaded stamps the created resource by _ID with the same VERSION guard`() = runBlocking {
         val cr = mockk<ContentResolver>()
         val batches = mutableListOf<ArrayList<ContentProviderOperation>>()
         every { cr.applyBatch(eq(ContactsContract.AUTHORITY), capture(batches)) } returns
@@ -1203,41 +1208,19 @@ class ContactsProviderRepositoryTest {
         val result = repo(cr).markNewContactUploaded(ACCOUNT_NAME, 77L, "/new.vcf", "\"created\"", uploadedVersion = 7L)
 
         assertTrue(result.isSuccess)
-        assertEquals("both writes belong to the same transaction", 1, batches.size)
-        val ops = batches.single()
-        assertEquals(2, ops.size)
-        assertEquals("${RawContacts.VERSION} = ?", selectionOf(ops.first()))
-        assertArrayEquals(arrayOf("7"), ops.first().resolveSelectionArgsBackReferences(emptyArray(), 0))
-        assertEquals(0, valuesOf(ops.first()).getAsInteger(RawContacts.DIRTY))
-        val fallback = ops.last()
-        assertEquals("${RawContacts.DIRTY} = ?", selectionOf(fallback))
-        assertArrayEquals(arrayOf("1"), fallback.resolveSelectionArgsBackReferences(emptyArray(), 0))
-        assertEquals("/new.vcf", valuesOf(fallback).getAsString(RawContacts.SOURCE_ID))
-        assertEquals("\"created\"", valuesOf(fallback).getAsString(RawContacts.SYNC2))
-        assertFalse("the second edit still needs an upload", valuesOf(fallback).containsKey(RawContacts.DIRTY))
-        assertEquals(77L, ContentUris.parseId(fallback.uri))
-        assertEquals(ACCOUNT_NAME, fallback.uri.getQueryParameter(RawContacts.ACCOUNT_NAME))
-        assertEquals(ACCOUNT_TYPE, fallback.uri.getQueryParameter(RawContacts.ACCOUNT_TYPE))
-        assertEquals("true", fallback.uri.getQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER))
-        assertTrue(ops.all { it.uri == fallback.uri && !it.isYieldAllowed })
-    }
-
-    @Test
-    fun `markNewContactUploaded without an uploaded version stamps the resource and keeps DIRTY`() = runBlocking {
-        val cr = mockk<ContentResolver>()
-        val batch = slot<ArrayList<ContentProviderOperation>>()
-        every { cr.applyBatch(eq(ContactsContract.AUTHORITY), capture(batch)) } returns arrayOf(ContentProviderResult(1))
-
-        val result = repo(cr).markNewContactUploaded(ACCOUNT_NAME, 77L, "/adopted.vcf", "\"srv\"", uploadedVersion = null)
-
-        assertTrue(result.isSuccess)
-        val op = batch.captured.single()
-        val v = valuesOf(op)
-        assertEquals("/adopted.vcf", v.getAsString(RawContacts.SOURCE_ID))
-        assertEquals("\"srv\"", v.getAsString(RawContacts.SYNC2))
-        assertFalse("the adopted row stays pending", v.containsKey(RawContacts.DIRTY))
-        assertEquals(77L, ContentUris.parseId(op.uri))
-        assertEquals("true", op.uri.getQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER))
+        val ops = batches.single().also { assertEquals(2, it.size) }
+        val guard = ops.single { selectionOrNull(it) != null }
+        val stamp = ops.single { it !== guard }
+        assertTrue(ops.all { it.isUpdate })
+        assertEquals("/new.vcf", valuesOf(stamp).getAsString(RawContacts.SOURCE_ID))
+        assertEquals("\"created\"", valuesOf(stamp).getAsString(RawContacts.SYNC2))
+        assertEquals("${RawContacts.VERSION} = ?", selectionOrNull(guard))
+        assertEquals(0, valuesOf(guard).getAsInteger(RawContacts.DIRTY))
+        assertEquals("by _ID: a net-new row has no SOURCE_ID to look up", 77L, ContentUris.parseId(stamp.uri))
+        assertEquals(ACCOUNT_NAME, stamp.uri.getQueryParameter(RawContacts.ACCOUNT_NAME))
+        assertEquals(ACCOUNT_TYPE, stamp.uri.getQueryParameter(RawContacts.ACCOUNT_TYPE))
+        assertEquals("true", stamp.uri.getQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER))
+        assertTrue(listOf(stamp, guard).all { it.uri == stamp.uri && !it.isYieldAllowed })
     }
 
     @Test
@@ -1258,43 +1241,6 @@ class ContactsProviderRepositoryTest {
             every { cr.applyBatch(any(), any()) } returns arrayOf(reported, reported)
             assertTrue(repository.markNewContactUploaded(ACCOUNT_NAME, 88L, "/x.vcf", "\"e2\"", uploadedVersion = 7L).isSuccess)
         }
-    }
-
-    @Test
-    fun `markContactUploaded clears DIRTY and stores the new etag via a sync-adapter, account-scoped write`() = runBlocking {
-        val cr = resolverFor(rawContactId = 88L)
-        val batch = slot<ArrayList<ContentProviderOperation>>()
-        every { cr.applyBatch(eq(ContactsContract.AUTHORITY), capture(batch)) } returns arrayOf(ContentProviderResult(1), ContentProviderResult(0))
-
-        val result = repo(cr).markContactUploaded(ACCOUNT_NAME, "/x.vcf", "\"new-etag\"", uploadedVersion = 7L)
-        assertTrue(result.isSuccess)
-
-        val op = batch.captured.first()
-        assertEquals("${RawContacts.VERSION} = ?", selectionOf(op))
-        assertArrayEquals(arrayOf("7"), op.resolveSelectionArgsBackReferences(emptyArray(), 0))
-        assertTrue("marks the row in place, an update not an insert", op.isUpdate)
-        val v = valuesOf(op)
-        assertEquals("SYNC2 = the server's post-PUT etag", "\"new-etag\"", v.getAsString(RawContacts.SYNC2))
-        assertEquals("DIRTY cleared so the adapter's own write is not re-detected", 0, v.getAsInteger(RawContacts.DIRTY))
-        // Targets the resolved RawContact _ID through a sync-adapter, account-scoped URI;
-        // sync-adapter mode stops the provider re-flagging DIRTY on our write.
-        assertEquals(88L, ContentUris.parseId(op.uri))
-        assertEquals("true", op.uri.getQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER))
-        assertEquals(ACCOUNT_NAME, op.uri.getQueryParameter(RawContacts.ACCOUNT_NAME))
-        assertEquals(ACCOUNT_TYPE, op.uri.getQueryParameter(RawContacts.ACCOUNT_TYPE))
-    }
-
-    @Test
-    fun `markContactUploaded moves the contact to the href the server redirected it to`() = runBlocking {
-        val cr = resolverFor(rawContactId = 88L)
-        val batch = slot<ArrayList<ContentProviderOperation>>()
-        every { cr.applyBatch(eq(ContactsContract.AUTHORITY), capture(batch)) } returns arrayOf(ContentProviderResult(1), ContentProviderResult(0))
-
-        repo(cr).markContactUploaded(ACCOUNT_NAME, "/x.vcf", "\"e2\"", newHref = "/moved/x.vcf", uploadedVersion = 7L)
-
-        val v = valuesOf(batch.captured.first())
-        assertEquals("/moved/x.vcf", v.getAsString(RawContacts.SOURCE_ID))
-        assertEquals("\"e2\"", v.getAsString(RawContacts.SYNC2))
     }
 
     @Test
@@ -1362,34 +1308,6 @@ class ContactsProviderRepositoryTest {
     }
 
     // ---------- markNewContactUploaded (net-new create: stamp SOURCE_ID by _ID) ----------
-
-    @Test
-    fun `markNewContactUploaded stamps SOURCE_ID and etag and clears DIRTY on the given _ID via a sync-adapter write`() = runBlocking {
-        // A net-new device contact has a blank SOURCE_ID, so the write-back is keyed by the
-        // provider _ID with no SOURCE_ID lookup (this mock stubs no query).
-        val cr = mockk<ContentResolver>()
-        val batch = slot<ArrayList<ContentProviderOperation>>()
-        every { cr.applyBatch(eq(ContactsContract.AUTHORITY), capture(batch)) } returns arrayOf(ContentProviderResult(1), ContentProviderResult(0))
-
-        val result = repo(cr).markNewContactUploaded(
-            ACCOUNT_NAME, localId = 77L, href = "/ab/default/uid1.vcf", newEtag = "\"srv-1\"",
-            uploadedVersion = 7L,
-        )
-        assertTrue(result.isSuccess)
-
-        val op = batch.captured.first()
-        assertTrue("stamps the originating row in place, an update not an insert", op.isUpdate)
-        val v = valuesOf(op)
-        assertEquals("SOURCE_ID = the created server href", "/ab/default/uid1.vcf", v.getAsString(RawContacts.SOURCE_ID))
-        assertEquals("SYNC2 = the server's post-create etag", "\"srv-1\"", v.getAsString(RawContacts.SYNC2))
-        assertEquals("DIRTY cleared so the adapter's own write is not re-detected", 0, v.getAsInteger(RawContacts.DIRTY))
-        // Targets the originating RawContact by its provider _ID (the href was blank) through
-        // a sync-adapter, account-scoped URI: the only way to reach a row with no SOURCE_ID.
-        assertEquals(77L, ContentUris.parseId(op.uri))
-        assertEquals("true", op.uri.getQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER))
-        assertEquals(ACCOUNT_NAME, op.uri.getQueryParameter(RawContacts.ACCOUNT_NAME))
-        assertEquals(ACCOUNT_TYPE, op.uri.getQueryParameter(RawContacts.ACCOUNT_TYPE))
-    }
 
     @Test
     fun `markNewContactUploaded resolves nothing and is a no-op success when the local id is unset`() = runBlocking {
