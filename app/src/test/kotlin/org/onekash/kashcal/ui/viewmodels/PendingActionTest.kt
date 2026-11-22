@@ -134,6 +134,20 @@ class PendingActionTest {
         assertEquals(action1, action2)
     }
 
+    // ==================== OpenTagSearch Tests ====================
+
+    @Test
+    fun `OpenTagSearch carries the tag name and compares by it`() {
+        assertEquals(PendingAction.OpenTagSearch("Work"), PendingAction.OpenTagSearch("Work"))
+        assertEquals("Work", PendingAction.OpenTagSearch("Work").name)
+        assertTrue(PendingAction.OpenTagSearch("Work") != PendingAction.OpenTagSearch("Home"))
+    }
+
+    @Test
+    fun `OpenTagSearch logs without the tag name`() {
+        assertEquals("OpenTagSearch", PendingAction.OpenTagSearch("Private tag").toString())
+    }
+
     // ==================== OpenSearch Tests ====================
 
     @Test
@@ -201,6 +215,7 @@ class PendingActionTest {
             is PendingAction.ShowEventQuickView -> "quick_view"
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
+            is PendingAction.OpenTagSearch -> "tag_search"
             is PendingAction.GoToToday -> "today"
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
@@ -209,6 +224,7 @@ class PendingActionTest {
             is PendingAction.OpenDeviceEventById -> "device_by_id"
             is PendingAction.QuickAddFromText -> "quick_add_from_text"
             is PendingAction.OpenChangeNotification -> "change_notification"
+            is PendingAction.OpenQuickAdd -> "open_quick_add"
         }
 
         assertEquals("quick_view", result)
@@ -222,6 +238,7 @@ class PendingActionTest {
             is PendingAction.ShowEventQuickView -> "quick_view"
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
+            is PendingAction.OpenTagSearch -> "tag_search"
             is PendingAction.GoToToday -> "today"
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
@@ -230,6 +247,7 @@ class PendingActionTest {
             is PendingAction.OpenDeviceEventById -> "device_by_id"
             is PendingAction.QuickAddFromText -> "quick_add_from_text"
             is PendingAction.OpenChangeNotification -> "change_notification"
+            is PendingAction.OpenQuickAdd -> "open_quick_add"
         }
 
         assertEquals("create", result)
@@ -243,6 +261,7 @@ class PendingActionTest {
             is PendingAction.ShowEventQuickView -> "quick_view"
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
+            is PendingAction.OpenTagSearch -> "tag_search"
             is PendingAction.GoToToday -> "today"
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
@@ -251,9 +270,33 @@ class PendingActionTest {
             is PendingAction.OpenDeviceEventById -> "device_by_id"
             is PendingAction.QuickAddFromText -> "quick_add_from_text"
             is PendingAction.OpenChangeNotification -> "change_notification"
+            is PendingAction.OpenQuickAdd -> "open_quick_add"
         }
 
         assertEquals("search", result)
+    }
+
+    @Test
+    fun `when expression matches OpenQuickAdd`() {
+        val action: PendingAction = PendingAction.OpenQuickAdd
+
+        val result = when (action) {
+            is PendingAction.ShowEventQuickView -> "quick_view"
+            is PendingAction.CreateEvent -> "create"
+            is PendingAction.OpenSearch -> "search"
+            is PendingAction.OpenTagSearch -> "tag_search"
+            is PendingAction.GoToToday -> "today"
+            is PendingAction.GoToDate -> "go_to_date"
+            is PendingAction.ImportIcsFile -> "import"
+            is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
+            is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
+            is PendingAction.OpenDeviceEventById -> "device_by_id"
+            is PendingAction.QuickAddFromText -> "quick_add_from_text"
+            is PendingAction.OpenChangeNotification -> "change_notification"
+            is PendingAction.OpenQuickAdd -> "open_quick_add"
+        }
+
+        assertEquals("open_quick_add", result)
     }
 
     @Test
@@ -264,6 +307,7 @@ class PendingActionTest {
             is PendingAction.ShowEventQuickView -> "quick_view"
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
+            is PendingAction.OpenTagSearch -> "tag_search"
             is PendingAction.GoToToday -> "today"
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
@@ -272,6 +316,7 @@ class PendingActionTest {
             is PendingAction.OpenDeviceEventById -> "device_by_id"
             is PendingAction.QuickAddFromText -> "quick_add_from_text"
             is PendingAction.OpenChangeNotification -> "change_notification"
+            is PendingAction.OpenQuickAdd -> "open_quick_add"
         }
 
         assertEquals("today", result)
@@ -285,6 +330,7 @@ class PendingActionTest {
             is PendingAction.ShowEventQuickView -> "quick_view"
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
+            is PendingAction.OpenTagSearch -> "tag_search"
             is PendingAction.GoToToday -> "today"
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
@@ -293,6 +339,7 @@ class PendingActionTest {
             is PendingAction.OpenDeviceEventById -> "device_by_id"
             is PendingAction.QuickAddFromText -> "quick_add_from_text"
             is PendingAction.OpenChangeNotification -> "change_notification"
+            is PendingAction.OpenQuickAdd -> "open_quick_add"
         }
 
         assertEquals("go_to_date", result)
@@ -313,6 +360,7 @@ class PendingActionTest {
             is PendingAction.ShowEventQuickView -> "quick_view"
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
+            is PendingAction.OpenTagSearch -> "tag_search"
             is PendingAction.GoToToday -> "today"
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
@@ -321,6 +369,7 @@ class PendingActionTest {
             is PendingAction.OpenDeviceEventById -> "device_by_id"
             is PendingAction.QuickAddFromText -> "quick_add_from_text"
             is PendingAction.OpenChangeNotification -> "change_notification"
+            is PendingAction.OpenQuickAdd -> "open_quick_add"
         }
 
         assertEquals("import", result)
@@ -341,6 +390,7 @@ class PendingActionTest {
             is PendingAction.ShowEventQuickView -> "quick_view"
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
+            is PendingAction.OpenTagSearch -> "tag_search"
             is PendingAction.GoToToday -> "today"
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
@@ -349,6 +399,7 @@ class PendingActionTest {
             is PendingAction.OpenDeviceEventById -> "device_by_id"
             is PendingAction.QuickAddFromText -> "quick_add_from_text"
             is PendingAction.OpenChangeNotification -> "change_notification"
+            is PendingAction.OpenQuickAdd -> "open_quick_add"
         }
 
         assertEquals("calendar_intent", result)
@@ -406,6 +457,7 @@ class PendingActionTest {
             is PendingAction.ShowEventQuickView -> "quick_view"
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
+            is PendingAction.OpenTagSearch -> "tag_search"
             is PendingAction.GoToToday -> "today"
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
@@ -414,6 +466,7 @@ class PendingActionTest {
             is PendingAction.OpenDeviceEventById -> "device_by_id"
             is PendingAction.QuickAddFromText -> "quick_add_from_text"
             is PendingAction.OpenChangeNotification -> "change_notification"
+            is PendingAction.OpenQuickAdd -> "open_quick_add"
         }
 
         assertEquals("quick_add_from_text", result)
@@ -427,6 +480,7 @@ class PendingActionTest {
             is PendingAction.ShowEventQuickView -> "quick_view"
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
+            is PendingAction.OpenTagSearch -> "tag_search"
             is PendingAction.GoToToday -> "today"
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
@@ -435,6 +489,7 @@ class PendingActionTest {
             is PendingAction.OpenDeviceEventById -> "device_by_id"
             is PendingAction.QuickAddFromText -> "quick_add_from_text"
             is PendingAction.OpenChangeNotification -> "change_notification"
+            is PendingAction.OpenQuickAdd -> "open_quick_add"
         }
 
         assertEquals("device_by_id", result)
@@ -448,6 +503,7 @@ class PendingActionTest {
             is PendingAction.ShowEventQuickView -> "quick_view"
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
+            is PendingAction.OpenTagSearch -> "tag_search"
             is PendingAction.GoToToday -> "today"
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
@@ -456,6 +512,7 @@ class PendingActionTest {
             is PendingAction.OpenDeviceEventById -> "device_by_id"
             is PendingAction.QuickAddFromText -> "quick_add_from_text"
             is PendingAction.OpenChangeNotification -> "change_notification"
+            is PendingAction.OpenQuickAdd -> "open_quick_add"
         }
 
         assertEquals("change_notification", result)

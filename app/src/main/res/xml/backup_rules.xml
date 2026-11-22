@@ -32,6 +32,12 @@
         device that has never published any, leaving the picker on placeholders.
     -->
     <exclude domain="sharedpref" path="widget_previews.xml" />
+    <!--
+        EXCLUDE: automatic calendar backup settings and status
+        Reason: the chosen folder's access grant belongs to this device. Restored, the setting
+        would point at a folder the new install can't open, so backup starts off instead.
+    -->
+    <exclude domain="sharedpref" path="calendar_backup.xml" />
 
     <!-- Note: cache/ is automatically excluded by Android backup system -->
 </full-backup-content>

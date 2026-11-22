@@ -11,7 +11,7 @@ import java.util.TimeZone
 /**
  * Tests [ContactEventUtils]:
  * - parseContactDate: RFC 6350 no-year, ISO, slash and US forms, invalid dates, leap years,
- *   the 1900-2100 year range
+ *   and a year outside 1900-2100 kept as month and day without a year
  * - formatOrdinal: suffixes including teens, 21st-23rd and 111th-113th
  * - calculateYearsSince
  * - formatBirthdayTitle and formatAnniversaryTitle: with and without a year, and the plain
@@ -112,9 +112,49 @@ class ContactEventUtilsTest {
     }
 
     @Test
-    fun `parseContactDate - year out of range returns null`() {
-        assertNull(ContactEventUtils.parseContactDate("1899-06-15"))
-        assertNull(ContactEventUtils.parseContactDate("2101-06-15"))
+    fun `parseContactDate - year out of range keeps month and day without a year`() {
+        assertEquals(ContactEventDate(6, 15, null), ContactEventUtils.parseContactDate("1899-06-15"))
+        assertEquals(ContactEventDate(6, 15, null), ContactEventUtils.parseContactDate("2101-06-15"))
+    }
+
+    // Some sources store a birthday without a year under a placeholder year such as 1604 (#395).
+    @Test
+    fun `parseContactDate - placeholder year 1604 keeps month and day without a year`() {
+        assertEquals(ContactEventDate(12, 27, null), ContactEventUtils.parseContactDate("1604-12-27"))
+    }
+
+    @Test
+    fun `parseContactDate - placeholder year 0000 keeps month and day without a year`() {
+        assertEquals(ContactEventDate(6, 15, null), ContactEventUtils.parseContactDate("0000-06-15"))
+    }
+
+    @Test
+    fun `parseContactDate - Feb 29 in a leap placeholder year is kept without a year`() {
+        assertEquals(ContactEventDate(2, 29, null), ContactEventUtils.parseContactDate("1604-02-29"))
+    }
+
+    @Test
+    fun `parseContactDate - US format with out-of-range year keeps month and day without a year`() {
+        assertEquals(ContactEventDate(12, 27, null), ContactEventUtils.parseContactDate("12/27/1604"))
+    }
+
+    @Test
+    fun `parseContactDate - years at the range boundaries are kept`() {
+        assertEquals(ContactEventDate(1, 1, 1900), ContactEventUtils.parseContactDate("1900-01-01"))
+        assertEquals(ContactEventDate(12, 31, 2100), ContactEventUtils.parseContactDate("2100-12-31"))
+    }
+
+    @Test
+    fun `parseContactDate - out-of-range year with an impossible date returns null`() {
+        // 1899 is not a leap year, so Feb 29 is no date at all, placeholder or not.
+        assertNull(ContactEventUtils.parseContactDate("1899-02-29"))
+        assertNull(ContactEventUtils.parseContactDate("1604-13-01"))
+        assertNull(ContactEventUtils.parseContactDate("1604-04-31"))
+    }
+
+    @Test
+    fun `parseContactDate - Feb 29 in a non-leap in-range year returns null`() {
+        assertNull(ContactEventUtils.parseContactDate("2023-02-29"))
     }
 
     // ---------------------------------------------------------------
@@ -459,6 +499,13 @@ class ContactEventUtilsTest {
         assertEquals("-PT24H", ContactEventUtils.minutesToIsoDuration(1440))
         assertEquals("-PT26H", ContactEventUtils.minutesToIsoDuration(1560))
         assertEquals("-PT168H", ContactEventUtils.minutesToIsoDuration(10080))
+    }
+
+    @Test
+    fun `minutesToIsoDuration - a custom days, hours and minutes value stays hour-form`() {
+        // What the event form stores for the custom wheel's 5 days 1 hour 10 minutes; the form
+        // parses this text back into minutes when the event is opened again.
+        assertEquals("-PT121H10M", ContactEventUtils.minutesToIsoDuration(7270))
     }
 
     @Test

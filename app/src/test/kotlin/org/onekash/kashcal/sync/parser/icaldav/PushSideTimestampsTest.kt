@@ -15,7 +15,7 @@ import org.robolectric.annotation.Config
 /**
  * Tests that outbound ICS (CalDAV PUT) carries:
  * - CREATED from Event.createdAt on the fresh path
- * - CREATED kept verbatim from the server's rawIcal on the patch path
+ * - CREATED kept verbatim from the server's stored ICS on the patch path
  * - LAST-MODIFIED from Event.updatedAt on both paths
  *
  * DTSTAMP (written by ICalGenerator) and SEQUENCE are out of scope.
@@ -46,7 +46,6 @@ class PushSideTimestampsTest {
         timezone: String? = "UTC",
         createdAt: Long = createdMs2020,
         updatedAt: Long = lastModMs2024,
-        rawIcal: String? = null,
         originalEventId: Long? = null,
         originalInstanceTime: Long? = null,
         sequence: Int = 0
@@ -62,7 +61,6 @@ class PushSideTimestampsTest {
         transp = "OPAQUE",
         classification = "PUBLIC",
         sequence = sequence,
-        rawIcal = rawIcal,
         originalEventId = originalEventId,
         originalInstanceTime = originalInstanceTime,
         dtstamp = 0L,
@@ -180,7 +178,7 @@ class PushSideTimestampsTest {
 
     @Test
     fun `patch path preserves server CREATED from rawIcal even when Event createdAt differs`() {
-        // rawIcal carries the server's CREATED:20200115T120000Z; Event.createdAt holds 2030,
+        // The stored ICS carries the server's CREATED:20200115T120000Z; Event.createdAt holds 2030,
         // as a mis-seeded row would. The patcher must keep the server's value.
         val raw = buildRawIcal(
             uid = "a05-patch-created@kashcal.test",
@@ -190,7 +188,6 @@ class PushSideTimestampsTest {
             uid = "a05-patch-created@kashcal.test",
             createdAt = alienCreatedMs2030,
             updatedAt = lastModMs2024,
-            rawIcal = raw
         )
 
         val ics = IcsPatcher.patch(raw, event)
@@ -204,8 +201,8 @@ class PushSideTimestampsTest {
 
     @Test
     fun `patch path overrides LAST-MODIFIED with Event updatedAt`() {
-        // rawIcal has a stale 2020 LAST-MODIFIED and Event.updatedAt is 2024. The patcher must
-        // emit 2024; the stale value would misstate when the event was last revised
+        // The stored ICS has a stale 2020 LAST-MODIFIED and Event.updatedAt is 2024. The patcher
+        // must emit 2024; the stale value would misstate when the event was last revised
         // (RFC 5545 §3.8.7.3).
         val raw = buildRawIcal(
             uid = "a05-patch-lastmod@kashcal.test",
@@ -214,7 +211,6 @@ class PushSideTimestampsTest {
         val event = createEvent(
             uid = "a05-patch-lastmod@kashcal.test",
             updatedAt = lastModMs2024,
-            rawIcal = raw
         )
 
         val ics = IcsPatcher.patch(raw, event)
@@ -237,7 +233,6 @@ class PushSideTimestampsTest {
         val event = createEvent(
             uid = "a05-patch-nocreated@kashcal.test",
             createdAt = createdMs2020,
-            rawIcal = raw
         )
 
         val ics = IcsPatcher.patch(raw, event)
@@ -265,7 +260,6 @@ class PushSideTimestampsTest {
             uid = masterUid,
             createdAt = createdMs2020,
             updatedAt = lastModMs2024,
-            rawIcal = masterRaw
         )
         val exception = createEvent(
             uid = masterUid,
@@ -273,10 +267,9 @@ class PushSideTimestampsTest {
             updatedAt = lastModMs2024,
             originalEventId = 1L,
             originalInstanceTime = master.startTs,
-            rawIcal = null
         )
 
-        val bundleIcs = IcsPatcher.serializeWithExceptions(master, listOf(exception))
+        val bundleIcs = IcsPatcher.serializeWithExceptions(master, masterRaw, listOf(exception))
         val parsed = parser.parseAllEvents(bundleIcs).getOrNull()
         assertNotNull("Bundle must parse", parsed)
         assertEquals("Bundle must contain master + 1 exception", 2, parsed!!.size)
@@ -337,7 +330,6 @@ class PushSideTimestampsTest {
             uid = "a05-roundtrip@kashcal.test",
             createdAt = alienCreatedMs2030,  // divergent; must not appear in the output
             updatedAt = lastModMs2024,
-            rawIcal = raw
         )
         val patchIcs = IcsPatcher.patch(raw, patchEvent)
         val patchParsed = parser.parseAllEvents(patchIcs).getOrNull()!!.first()

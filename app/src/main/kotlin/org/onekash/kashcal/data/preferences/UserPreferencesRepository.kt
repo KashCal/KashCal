@@ -171,23 +171,6 @@ class UserPreferencesRepository @Inject constructor(
         dataStore.setAppLockEnabled(enabled)
     }
 
-    // ========== Onboarding ==========
-
-    val onboardingCompleted: Flow<Boolean>
-        get() = dataStore.onboardingCompleted
-
-    suspend fun setOnboardingCompleted(completed: Boolean) {
-        dataStore.setOnboardingCompleted(completed)
-    }
-
-    /** Whether the onboarding sheet was dismissed. */
-    val onboardingDismissed: Flow<Boolean>
-        get() = dataStore.onboardingDismissed
-
-    suspend fun setOnboardingDismissed(dismissed: Boolean) {
-        dataStore.setOnboardingDismissed(dismissed)
-    }
-
     // ========== Permission Tracking ==========
 
     /** Returns how many times the user denied notification permission. */
@@ -201,6 +184,11 @@ class UserPreferencesRepository @Inject constructor(
     /** Resets the denial count; call once the permission is granted. */
     suspend fun resetNotificationPermissionDeniedCount() {
         dataStore.resetNotificationPermissionDeniedCount()
+    }
+
+    /** Records that the app asked for notification permission and got an answer. */
+    suspend fun setNotificationAskDone() {
+        dataStore.setNotificationAskDone()
     }
 
     // ========== Validation Helpers ==========

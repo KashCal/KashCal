@@ -12,7 +12,9 @@ import org.w3c.dom.Element
 /**
  * Picks a calendar that live tests may write to without other people seeing the test events,
  * for the multi-server tests that create and edit events on real accounts
- * (MultiServerUnchangedSeriesReportTest, MultiServerRecentChangesTest).
+ * (MultiServerUnchangedSeriesReportTest, MultiServerRecentChangesTest,
+ * MultiServerIcsInvitationImportTest). [findWritable] skips that check, for accounts that hold
+ * only test data.
  */
 internal class UnsharedCalendarPicker(
     private val config: CalDavServerConfig,
@@ -21,6 +23,12 @@ internal class UnsharedCalendarPicker(
 ) {
     /** Returns the first writable VEVENT calendar [isConfirmedUnshared] accepts, or null. */
     suspend fun find(): String? = candidates()?.firstOrNull { isConfirmedUnshared(it) }
+
+    /**
+     * Returns the first writable VEVENT calendar without the sharing check, for tests whose
+     * accounts hold only test data; null when the server lists none.
+     */
+    suspend fun findWritable(): String? = candidates()?.firstOrNull()
 
     /** Returns every writable VEVENT calendar [isConfirmedUnshared] accepts, in server order. */
     suspend fun findAll(): List<String> = candidates().orEmpty().filter { isConfirmedUnshared(it) }

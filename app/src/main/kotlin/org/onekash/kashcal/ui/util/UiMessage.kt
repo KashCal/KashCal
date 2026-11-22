@@ -1,14 +1,15 @@
 package org.onekash.kashcal.ui.util
 
 import android.content.Context
+import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.platform.LocalContext
 
 /**
- * Holds a user-facing message as a string resource or literal text, turned into text by
- * [asString] in composition or [resolve] outside it.
+ * Holds a user-facing message as a string resource, a quantity string or literal text, turned
+ * into text by [asString] in composition or [resolve] outside it.
  *
  * Use [Literal] for server-provided text that is not an app resource.
  */
@@ -16,6 +17,13 @@ import androidx.compose.ui.platform.LocalContext
 sealed class UiMessage {
     data class ResId(
         @StringRes val id: Int,
+        val args: List<Any> = emptyList(),
+    ) : UiMessage()
+
+    /** A quantity string: [count] picks the plural form, [args] fill its placeholders. */
+    data class Plural(
+        @PluralsRes val id: Int,
+        val count: Int,
         val args: List<Any> = emptyList(),
     ) : UiMessage()
 
@@ -30,6 +38,7 @@ fun UiMessage.resolve(context: Context): String = when (this) {
     is UiMessage.ResId ->
         if (args.isEmpty()) context.getString(id)
         else context.getString(id, *args.toTypedArray())
+    is UiMessage.Plural -> context.resources.getQuantityString(id, count, *args.toTypedArray())
     is UiMessage.Literal -> text
 }
 

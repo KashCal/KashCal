@@ -1,0 +1,4 @@
+• New date and time sheet (#330, #88)
+• Offline calendars with automatic backup (#257, #99)
+• Print your week; export any calendar as .ics
+• New first launch, smarter Quick Add, About page

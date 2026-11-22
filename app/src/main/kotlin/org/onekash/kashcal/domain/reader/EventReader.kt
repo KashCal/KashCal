@@ -8,10 +8,16 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import android.util.Log
+import org.onekash.kashcal.data.db.EventIcsSource
+import org.onekash.kashcal.data.db.EventIcsStore
+import org.onekash.kashcal.data.db.IcsPartsCorrupt
 import org.onekash.kashcal.data.db.KashCalDatabase
-import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
+import org.onekash.kashcal.data.db.dao.EventSearchSql
 import org.onekash.kashcal.data.db.dao.EventWithOccurrenceAndColor
 import org.onekash.kashcal.data.db.dao.OccurrencesDao
+import org.onekash.kashcal.data.db.dao.ScheduledRemindersDao
 import org.onekash.kashcal.data.db.dao.RecentChangeWithCalendar
 import org.onekash.kashcal.data.db.dao.TitleSuggestion
 import org.onekash.kashcal.data.db.entity.Attendee
@@ -20,6 +26,10 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.domain.changes.RecentChangeItem
 import org.onekash.kashcal.domain.changes.RecentChangesRecorder
+import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.domain.model.LocalCalendarSummary
+import org.onekash.kashcal.domain.search.RoomSearchMatch
+import org.onekash.kashcal.domain.search.SearchQuery
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -32,7 +42,8 @@ import javax.inject.Singleton
  */
 @Singleton
 class EventReader @Inject constructor(
-    private val database: KashCalDatabase
+    private val database: KashCalDatabase,
+    private val icsSource: EventIcsSource = EventIcsStore(database),
 ) {
     private val eventsDao by lazy { database.eventsDao() }
     private val occurrencesDao by lazy { database.occurrencesDao() }
@@ -44,9 +55,17 @@ class EventReader @Inject constructor(
 
     private val recentChangesDao by lazy { database.recentChangesDao() }
 
+    private val scheduledRemindersDao by lazy { database.scheduledRemindersDao() }
+
     companion object {
         /** Cap on tag suggestions so the autocomplete popup stays scannable. */
         const val MAX_CATEGORY_SUGGESTIONS = 20
+
+        /** Ids per occurrence lookup, under SQLite's bound-variable limit. */
+        private const val OCCURRENCE_ID_BATCH = 500
+
+        /** Quiet time after a Room change before search reads its rows again. */
+        private const val SEARCH_DEBOUNCE_MS = 50L
     }
 
     // ========== Event Lookups ==========
@@ -138,11 +157,44 @@ class EventReader @Inject constructor(
     // ========== Attendee Lookups ==========
 
     /**
+     * Returns [event]'s stored ICS ([EventIcsSource.read]), or null when it has none or its
+     * stored pieces can't be read, which is logged; for callers that fall back to the row's
+     * fields.
+     */
+    suspend fun getStoredIcsOrNull(event: Event): String? = try {
+        icsSource.read(event)
+    } catch (e: IcsPartsCorrupt) {
+        Log.w("EventReader", "Stored ICS of event ${event.id} unreadable: ${e.message}")
+        null
+    }
+
+    /**
+     * Returns the stored ICS an export of [event] and its [exceptions] patches, by row id:
+     * [event]'s as [EventIcsSource.read] gives it (its own, else its series'), and each
+     * exception's own. Rows without one are absent.
+     */
+    suspend fun getIcsForExport(event: Event, exceptions: List<Event>): Map<Long, String> = buildMap {
+        icsSource.read(event)?.let { put(event.id, it) }
+        for (exception in exceptions) icsSource.readOwn(exception.id)?.let { put(exception.id, it) }
+    }
+
+    /**
      * Observes one event's attendee rows; empty when none are stored. [AttendeeBackfill] fills
-     * the rows from [Event.rawIcal] for an event the pull skipped on an unchanged etag.
+     * the rows from the stored ICS for an event the pull skipped on an unchanged etag.
      */
     fun getAttendeesForEvent(eventId: Long): Flow<List<Attendee>> =
         attendeesDao.getForEvent(eventId).distinctUntilChanged()
+
+    /**
+     * Reads the attendees of [eventIds] once, keyed by event ID; an event without rows has no
+     * entry. Queries in chunks of 500, as [getExceptionsForMasters] does.
+     */
+    suspend fun getAttendeesForEventsOnce(eventIds: List<Long>): Map<Long, List<Attendee>> {
+        if (eventIds.isEmpty()) return emptyMap()
+        return eventIds.chunked(500)
+            .flatMap { chunk -> attendeesDao.getForEventsOnce(chunk) }
+            .groupBy { it.eventId }
+    }
 
     /**
      * Observes the attendees of [eventIds] in one Flow, keyed by event ID, so a list of cards
@@ -169,10 +221,10 @@ class EventReader @Inject constructor(
             eventsDao.getMasterEventsWithFutureOccurrenceFlow(now),
             accountsDao.getAll(),
             calendarsDao.getAll()
-        ) { eventsWithNext, accounts, calendars ->
-            Triple(eventsWithNext, accounts, calendars)
-        }.flatMapLatest { (eventsWithNext, accounts, calendars) ->
-            val eventIds = eventsWithNext.map { it.event.id }
+        ) { invitationRows, accounts, calendars ->
+            Triple(invitationRows, accounts, calendars)
+        }.flatMapLatest { (invitationRows, accounts, calendars) ->
+            val eventIds = invitationRows.map { it.id }
             val attendeesFlow: Flow<List<Attendee>> = if (eventIds.isEmpty()) {
                 flowOf(emptyList())
             } else {
@@ -180,7 +232,7 @@ class EventReader @Inject constructor(
             }
             attendeesFlow.map { needsActionRows ->
                 buildPendingInvitations(
-                    eventsWithNext = eventsWithNext,
+                    invitationRows = invitationRows,
                     needsActionAttendees = needsActionRows,
                     accountsById = accounts.associateBy { it.id },
                     calendarsById = calendars.associateBy { it.id }
@@ -254,6 +306,34 @@ class EventReader @Inject constructor(
         return calendarsDao.getById(calendarId)
     }
 
+    /**
+     * Emits every offline calendar, the built-in included, with its event count, and emits again
+     * when a calendar or a count changes. Sorted by [localizeName] ignoring case, the order
+     * [org.onekash.kashcal.ui.model.CalendarGroup] gives the drawer and pickers.
+     *
+     * @param localizeName maps a calendar to its user-facing name, for example
+     *   `localizedDisplayName`, which shows the built-in's translated label
+     */
+    fun getLocalCalendarSummaries(
+        localizeName: (Calendar) -> String = { it.displayName }
+    ): Flow<List<LocalCalendarSummary>> =
+        calendarsDao.getWithEventCountsByProvider(AccountProvider.LOCAL)
+            .map { rows ->
+                rows.map { LocalCalendarSummary(it.calendar, it.eventCount) }
+                    .sortedBy { localizeName(it.calendar).lowercase() }
+            }
+            .distinctUntilChanged()
+
+    /**
+     * Emits each calendar's event count keyed by calendar id, every calendar listed (0 when it
+     * has none), and emits again when a count changes; counted as
+     * [org.onekash.kashcal.data.db.dao.EventsDao.countUserEventsInCalendar] counts.
+     */
+    fun getCalendarEventCounts(): Flow<Map<Long, Int>> =
+        calendarsDao.getAllEventCounts()
+            .map { rows -> rows.associate { it.calendarId to it.eventCount } }
+            .distinctUntilChanged()
+
     /** Emits the calendars of accounts whose provider is [provider], e.g. "icloud", "local". */
     fun getCalendarsByProvider(provider: String): Flow<List<Calendar>> {
         return calendarsDao.getCalendarsByProvider(provider)
@@ -293,22 +373,6 @@ class EventReader @Inject constructor(
         return occurrencesDao.getInRangeOnce(startTs, endTs)
     }
 
-    /**
-     * Returns the IDs of recurring masters whose latest occurrence starts before [targetTs], for
-     * on-demand expansion when the user navigates far into the future.
-     */
-    suspend fun getRecurringEventsNeedingExtension(targetTs: Long): List<Long> {
-        return occurrencesDao.getRecurringEventsNeedingExtension(targetTs)
-    }
-
-    /**
-     * Returns the IDs of recurring masters whose earliest occurrence starts after [targetTs] and
-     * after their DTSTART, for on-demand expansion when the user navigates far into the past.
-     */
-    suspend fun getRecurringEventsNeedingPastExtension(targetTs: Long): List<Long> {
-        return occurrencesDao.getRecurringEventsNeedingPastExtension(targetTs)
-    }
-
     /** Returns the IDs of recurring masters, not PENDING_DELETE, with no occurrence rows. */
     suspend fun getRecurringEventsWithNoOccurrences(): List<Long> {
         return occurrencesDao.getRecurringEventsWithNoOccurrences()
@@ -322,11 +386,15 @@ class EventReader @Inject constructor(
         return occurrencesDao.getForCalendarInRange(calendarId, startTs, endTs)
     }
 
-    /** Observes the non-cancelled occurrences spanning [day] (YYYYMMDD). */
+    /**
+     * Observes the non-cancelled occurrences whose stored codes ([Occurrence.startDay]) span
+     * [day].
+     */
     fun getOccurrencesForDay(day: Int): Flow<List<Occurrence>> {
         return occurrencesDao.getForDay(day)
     }
 
+    /** Returns the non-cancelled occurrences whose stored codes span [day] at once. */
     suspend fun getOccurrencesForDayOnce(day: Int): List<Occurrence> {
         return occurrencesDao.getForDayOnce(day)
     }
@@ -354,8 +422,8 @@ class EventReader @Inject constructor(
     }
 
     /**
-     * Observes the occurrences on [day] (YYYYMMDD, e.g. 20241225) in visible calendars, each
-     * with its event and calendar.
+     * Observes the occurrences whose stored codes ([Occurrence.startDay]) span [day] (YYYYMMDD,
+     * e.g. 20241225) in visible calendars, each with its event and calendar.
      *
      * The query joins events, so Room re-emits when an event's title or location changes, not
      * only its occurrences. `debounce(50)` batches the burst of updates during a sync.
@@ -384,8 +452,7 @@ class EventReader @Inject constructor(
 
     /**
      * Pairs an occurrence with an event and its calendar. The range and day readers load the
-     * exception for a changed occurrence; [searchEventsWithOccurrences] pairs each occurrence
-     * with the matched event.
+     * exception for a changed occurrence.
      */
     data class OccurrenceWithEvent(
         val occurrence: Occurrence,
@@ -500,8 +567,8 @@ class EventReader @Inject constructor(
     // ========== Day/Week/Month View Helpers ==========
 
     /**
-     * Returns the non-cancelled occurrences spanning [dayCode] with their events and calendars,
-     * by start time, in three queries.
+     * Returns the non-cancelled occurrences whose stored codes ([Occurrence.startDay]) span
+     * [dayCode] with their events and calendars, by start time, in three queries.
      */
     suspend fun getEventsForDay(dayCode: Int): List<OccurrenceWithEvent> {
         val occurrences = occurrencesDao.getForDayOnce(dayCode)
@@ -521,15 +588,19 @@ class EventReader @Inject constructor(
         }.sortedBy { it.occurrence.startTs }
     }
 
-    /** Returns true if a non-cancelled occurrence spans [dayCode]. */
+    /**
+     * Returns true if a non-cancelled occurrence's stored codes ([Occurrence.startDay]) span
+     * [dayCode].
+     */
     suspend fun hasEventsOnDay(dayCode: Int): Boolean {
         val occurrences = occurrencesDao.getForDayOnce(dayCode)
         return occurrences.isNotEmpty()
     }
 
     /**
-     * Returns the start day (YYYYMMDD) of each non-cancelled occurrence overlapping [month] of
-     * [year] (1-based), in the device's default zone.
+     * Returns the stored start day ([Occurrence.startDay]) of each non-cancelled occurrence
+     * overlapping [month]
+     * of [year] (1-based); the month's bounds are in the device's default zone.
      */
     suspend fun getDaysWithEventsInMonth(year: Int, month: Int): Set<Int> {
         val calendar = java.util.Calendar.getInstance()
@@ -547,115 +618,36 @@ class EventReader @Inject constructor(
     // ========== Search ==========
 
     /**
-     * Searches events with FTS4, returning up to 1000 by start time, without PENDING_DELETE
-     * rows or synthetic masters.
-     *
-     * Every search method here turns each whitespace-separated word of [query] into a prefix
-     * term (`meet` matches "meeting"), and an event must match every word.
+     * Emits the Room events matching [query] by [EventSearchSql]'s rule, each with its next,
+     * last and in-[range] occurrence rows ([EventSearchSql.nextAndLast]), again whenever events,
+     * occurrences or attendees change, 50 ms after the last change. [now] and [todayDayCode]
+     * decide which rows have ended.
      */
-    suspend fun searchEvents(query: String): List<Event> {
-        if (query.isBlank()) return emptyList()
-        val ftsQuery = query.trim().split("\\s+".toRegex())
-            .joinToString(" ") { "$it*" }
-        return eventsDao.search(ftsQuery)
-    }
-
-    /**
-     * Searches with [searchEvents]' terms, keeping events with a non-cancelled occurrence that
-     * hasn't ended. The occurrences table decides this, since `Event.endTs` is only the first
-     * occurrence's end.
-     */
-    suspend fun searchEventsExcludingPast(query: String): List<Event> {
-        if (query.isBlank()) return emptyList()
-        val ftsQuery = query.trim().split("\\s+".toRegex())
-            .joinToString(" ") { "$it*" }
-        return eventsDao.searchFuture(ftsQuery, System.currentTimeMillis())
-    }
-
-    /**
-     * Searches with [searchEvents]' terms, keeping events with a non-cancelled occurrence
-     * overlapping [rangeStart]..[rangeEnd] (inclusive).
-     */
-    suspend fun searchEventsInRange(query: String, rangeStart: Long, rangeEnd: Long): List<Event> {
-        if (query.isBlank()) return emptyList()
-        val ftsQuery = query.trim().split("\\s+".toRegex())
-            .joinToString(" ") { "$it*" }
-        return eventsDao.searchInRange(ftsQuery, rangeStart, rangeEnd)
-    }
-
-    // ========== Search with Next Occurrence ==========
-
-    /**
-     * Searches masters and one-off events, past ones included, for the "All" filter.
-     * `nextOccurrenceTs` is the event's own start; results are ordered by distance from now.
-     */
-    suspend fun searchEventsWithNextOccurrence(query: String): List<EventWithNextOccurrence> {
-        if (query.isBlank()) return emptyList()
-        val ftsQuery = query.trim().split("\\s+".toRegex())
-            .joinToString(" ") { "$it*" }
-        return eventsDao.searchWithOccurrence(ftsQuery, System.currentTimeMillis())
-    }
-
-    /**
-     * Searches events with a non-cancelled occurrence not yet ended, for the default search.
-     * `nextOccurrenceTs` is the earliest such occurrence's start, and results are ordered by it.
-     */
-    suspend fun searchEventsExcludingPastWithNextOccurrence(query: String): List<EventWithNextOccurrence> {
-        if (query.isBlank()) return emptyList()
-        val ftsQuery = query.trim().split("\\s+".toRegex())
-            .joinToString(" ") { "$it*" }
-        return eventsDao.searchFutureWithOccurrence(ftsQuery, System.currentTimeMillis())
-    }
-
-    /**
-     * Searches events with a non-cancelled occurrence overlapping [rangeStart]..[rangeEnd]
-     * (inclusive), for the Week, Month and custom-date filters. `nextOccurrenceTs` is the
-     * earliest such occurrence's start.
-     */
-    suspend fun searchEventsInRangeWithNextOccurrence(
-        query: String,
-        rangeStart: Long,
-        rangeEnd: Long
-    ): List<EventWithNextOccurrence> {
-        if (query.isBlank()) return emptyList()
-        val ftsQuery = query.trim().split("\\s+".toRegex())
-            .joinToString(" ") { "$it*" }
-        return eventsDao.searchInRangeWithOccurrence(ftsQuery, rangeStart, rangeEnd)
-    }
-
-    /**
-     * Searches like [searchEvents] and returns up to 5 non-cancelled occurrences per event, by
-     * start time, in three queries. With [futureOnly], only occurrences starting at or after now.
-     */
-    suspend fun searchEventsWithOccurrences(
-        query: String,
-        futureOnly: Boolean = true
-    ): List<OccurrenceWithEvent> {
-        val events = searchEvents(query)
-        if (events.isEmpty()) return emptyList()
-
-        val now = if (futureOnly) System.currentTimeMillis() else 0L
-
-        val eventIds = events.map { it.id }
-        val allOccurrences = occurrencesDao.getForEvents(eventIds)
-            .filter { it.startTs >= now && !it.isCancelled }
-
-        val occurrencesByEvent = allOccurrences.groupBy { it.eventId }
-        val limitedOccurrences = occurrencesByEvent.flatMap { (_, occs) -> occs.take(5) }
-
-        if (limitedOccurrences.isEmpty()) return emptyList()
-
-        val eventsMap = events.associateBy { it.id }
-
-        val calendarIds = limitedOccurrences.map { it.calendarId }.distinct()
-        val calendarsMap = calendarsDao.getByIds(calendarIds).associateBy { it.id }
-
-        return limitedOccurrences.mapNotNull { occ ->
-            val event = eventsMap[occ.eventId] ?: return@mapNotNull null
-            val calendar = calendarsMap[occ.calendarId]
-            OccurrenceWithEvent(occ, event, calendar)
-        }.sortedBy { it.occurrence.startTs }
-    }
+    @OptIn(kotlinx.coroutines.FlowPreview::class)
+    fun observeSearchMatches(
+        query: SearchQuery,
+        now: Long,
+        todayDayCode: Int,
+        range: LongRange? = null,
+    ): Flow<List<RoomSearchMatch>> =
+        eventsDao.observeSearchMatches(EventSearchSql.nextAndLast(query, now, todayDayCode, range))
+            // A sync writes in bursts; read the occurrence rows once the burst settles.
+            .debounce(SEARCH_DEBOUNCE_MS)
+            .mapNotNull { rows ->
+            val ids = rows.flatMap { listOfNotNull(it.nextOccurrenceId, it.lastOccurrenceId, it.rangeOccurrenceId) }.distinct()
+            val byId = ids.chunked(OCCURRENCE_ID_BATCH).flatMap { occurrencesDao.getByIds(it) }.associateBy { it.id }
+            // A row rewritten between the two reads: Room emits again once the rewrite commits.
+            if (byId.size < ids.size) return@mapNotNull null
+            rows.map { row ->
+                RoomSearchMatch(
+                    event = row.event,
+                    next = row.nextOccurrenceId?.let(byId::get),
+                    last = row.lastOccurrenceId?.let(byId::get),
+                    inRange = row.rangeOccurrenceId?.let(byId::get),
+                    hasOccurrences = row.hasOccurrences,
+                )
+            }
+        }
 
     // ========== Sync-Related Queries ==========
 
@@ -678,7 +670,18 @@ class EventReader @Inject constructor(
         return database.pendingOperationsDao().getPendingCount()
     }
 
+    /** Returns whether any of [eventIds] has a PENDING or IN_PROGRESS operation. */
+    suspend fun hasChangeWaiting(eventIds: List<Long>): Boolean =
+        eventIds.isNotEmpty() && database.pendingOperationsDao().hasActiveOperationForAny(eventIds)
+
     // ========== Statistics ==========
+
+    /**
+     * Returns how many occurrences have a reminder armed to trigger in [fromTime]..[toTime],
+     * muted calendars left out ([ScheduledRemindersDao.countOccurrencesWithPendingReminders]).
+     */
+    suspend fun countOccurrencesWithPendingReminders(fromTime: Long, toTime: Long): Int =
+        scheduledRemindersDao.countOccurrencesWithPendingReminders(fromTime, toTime)
 
     suspend fun getTotalEventCount(): Int {
         return eventsDao.getTotalCount()
@@ -712,19 +715,23 @@ class EventReader @Inject constructor(
     }
 
     /**
-     * Returns [eventId]'s non-cancelled occurrences starting between now and [windowDays] days
-     * ahead, for scheduling reminder alarms. Callers pass the reminder scheduler's occurrence
-     * look-ahead, and the scheduler arms only the reminders due soon.
+     * Returns [eventId]'s non-cancelled occurrences starting between [startedWithinMs] ago and
+     * [windowDays] days ahead, for scheduling reminder alarms. Callers pass the reminder
+     * scheduler's occurrence look-ahead and started look-back, and the scheduler arms only the
+     * reminders whose own time is due soon.
      */
     suspend fun getOccurrencesForEventInScheduleWindow(
         eventId: Long,
-        windowDays: Int
+        windowDays: Int,
+        startedWithinMs: Long
     ): List<Occurrence> {
         val now = System.currentTimeMillis()
         val windowEnd = now + (windowDays.toLong() * 24 * 60 * 60 * 1000)
 
         return occurrencesDao.getForEvent(eventId)
-            .filter { !it.isCancelled && it.startTs >= now && it.startTs <= windowEnd }
+            .filter {
+                !it.isCancelled && it.startTs >= now - startedWithinMs && it.startTs <= windowEnd
+            }
     }
 
     /**

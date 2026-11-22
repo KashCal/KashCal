@@ -307,13 +307,14 @@ object EmojiMatcher {
     }
 
     /**
-     * Returns [title] with its emoji and a space prepended ("☕ Coffee with Sarah"), or [title]
-     * unchanged when [showEmoji] (the user preference) is off or [getEmoji] finds none.
+     * Returns [title] with its emoji and [separator] prepended ("☕ Coffee with Sarah"), or [title]
+     * unchanged when [showEmoji] (the user preference) is off or [getEmoji] finds none. A
+     * non-breaking [separator] keeps the emoji on the line of the title's first word.
      */
-    fun formatWithEmoji(title: String, showEmoji: Boolean): String {
+    fun formatWithEmoji(title: String, showEmoji: Boolean, separator: String = " "): String {
         if (!showEmoji) return title
         val emoji = getEmoji(title) ?: return title
-        return "$emoji $title"
+        return "$emoji$separator$title"
     }
 
     /**

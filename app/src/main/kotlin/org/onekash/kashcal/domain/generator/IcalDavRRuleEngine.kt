@@ -1,5 +1,6 @@
 package org.onekash.kashcal.domain.generator
 
+import org.onekash.icaldav.model.Frequency
 import org.onekash.icaldav.recurrence.RRuleExpander
 import org.onekash.kashcal.domain.generator.icaldav.IcalDavRRuleAdapter
 import java.time.Instant
@@ -17,9 +18,11 @@ import java.time.Instant
  *   (g) DATE-format RDATE/EXDATE inherit DTSTART's hour, minute and second on timed events.
  *
  * Here:
- *   (e) At most MAX_ITERATIONS (10,000) timestamps are returned. ical4j's `maxIncrementCount`
- *       caps matching attempts, a different measure; without this cap an unbounded
- *       SECONDLY or MINUTELY rule can OOM.
+ *   (e) One call reads at most MAX_ITERATIONS (10,000) RRULE dates, counted from the range
+ *       start, and returns at most that many timestamps; a caller wanting more asks again
+ *       from just past the last one. An open-ended SECONDLY or MINUTELY rule also gets a COUNT
+ *       of MAX_ITERATIONS, so it ends 10,000 instances after DTSTART (see the code for why).
+ *       ical4j's `maxIncrementCount` caps empty periods, a different measure.
  *   (f)/(h) Every timestamp is aligned to a whole second, so sub-second DTSTART precision is
  *       dropped on recurring expansion.
  *
@@ -60,10 +63,13 @@ object IcalDavRRuleEngine {
             // the oracle. The adapter leaves event.rrule null on a parse failure, and
             // RRuleExpander.expand would then return DTSTART alone.
             val rule = event.rrule ?: return emptyList()
-            // Quirk (e): give a rule with neither COUNT nor UNTIL a COUNT of MAX_ITERATIONS
-            // before ical4j sees it, so the expander doesn't materialize millions of
-            // entries (OOM). Bounded rules pass through unchanged.
-            val capped = if (rule.count == null && rule.until == null) {
+            // Without a COUNT, ical4j jumps from DTSTART to the range by doubling an Int step
+            // count. For a SECONDLY rule started 34 years before the range (MINUTELY: about
+            // 2000 years) the step overflows and the jump never ends, so an open-ended rule of
+            // those two gets a COUNT, which turns the jump off; one with an UNTIL still jumps.
+            // Coarser rules can't reach the overflow in any date ical4j handles.
+            val subDaily = rule.freq == Frequency.SECONDLY || rule.freq == Frequency.MINUTELY
+            val capped = if (subDaily && rule.count == null && rule.until == null) {
                 event.copy(rrule = rule.copy(count = MAX_ITERATIONS))
             } else {
                 event
@@ -72,10 +78,11 @@ object IcalDavRRuleEngine {
                 masterEvent = capped,
                 rangeStart = Instant.ofEpochMilli(rangeStartMs),
                 rangeEnd = Instant.ofEpochMilli(rangeEndMs),
+                limit = MAX_ITERATIONS,
             )
-            // RRuleExpander doesn't strictly bound by range, so filter to the range, then
-            // align to seconds (quirks f/h). The final take(MAX_ITERATIONS) caps a bounded
-            // but huge rule (e.g. COUNT=50000), which the cap above leaves alone.
+            // RRuleExpander keeps a date at the range end and moves an all-day range to its UTC
+            // day start, so filter to the range, then align to seconds (quirks f/h). RDATEs come
+            // on top of the RRULE's limited dates, hence the final take.
             IcalDavRRuleAdapter.extractTimestamps(occurrences)
                 .filter { it in rangeStartMs until rangeEndMs }
                 .map { (it / MILLISECONDS_PER_SECOND) * MILLISECONDS_PER_SECOND }

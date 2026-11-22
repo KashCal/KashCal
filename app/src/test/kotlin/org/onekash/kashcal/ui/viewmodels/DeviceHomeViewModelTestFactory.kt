@@ -8,6 +8,8 @@ import io.mockk.mockk
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.onekash.kashcal.R
 import org.onekash.kashcal.data.preferences.KashCalDataStore
@@ -21,6 +23,7 @@ import org.onekash.kashcal.network.NetworkMonitor
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.sync.scheduler.SyncStatus
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.util.ZoneSource
 
 /**
  * A [HomeViewModel] for device-calendar tests, wired to the device reader and
@@ -45,8 +48,6 @@ class DeviceHomeViewModelTestFactory(
     val eventCoordinator: EventCoordinator = eventCoordinator ?: mockk {
         every { getAllCalendars() } returns MutableStateFlow(emptyList())
         every { getAllAccounts() } returns MutableStateFlow(emptyList())
-        coEvery { extendOccurrencesIfNeeded(any(), any()) } returns 0
-        coEvery { extendPastOccurrencesIfNeeded(any(), any()) } returns 0
         coEvery { repairMissingOccurrences() } returns 0
         coJustRun { recordTagUsage(any()) }
     }
@@ -87,6 +88,12 @@ class DeviceHomeViewModelTestFactory(
     val context: Context = mockk(relaxed = true) {
         every { getString(R.string.snackbar_event_rescheduled) } returns RESCHEDULED_MESSAGE
         every { getString(R.string.snackbar_reschedule_failed) } returns RESCHEDULE_FAILED_MESSAGE
+        every { getString(R.string.snackbar_move_failed, *anyVararg()) } answers { "$MOVE_FAILED_MESSAGE:${(args[1] as Array<*>).single()}" }
+        every { getString(R.string.snackbar_move_changed_elsewhere, *anyVararg()) } answers {
+            "$CHANGED_ELSEWHERE_MESSAGE:${(args[1] as Array<*>).single()}"
+        }
+        every { getString(R.string.action_retry) } returns RETRY_LABEL
+        every { getString(R.string.event_untitled) } returns UNTITLED
     }
 
     val dataStore: KashCalDataStore = TestDataStoreFactory.createStrictForHomeViewModel()
@@ -95,6 +102,10 @@ class DeviceHomeViewModelTestFactory(
         deviceEventReader: DeviceEventReader,
         deviceEventWriter: DeviceEventWriter,
         ioDispatcher: CoroutineDispatcher,
+        // A drag's save runs here; the default isn't tied to the ViewModel, so it outlives
+        // onCleared the way the app scope does.
+        applicationScope: CoroutineScope = CoroutineScope(SupervisorJob()),
+        zoneSource: ZoneSource = ZoneSource(),
     ): HomeViewModel = HomeViewModel(
         eventCoordinator = eventCoordinator,
         eventReader = eventReader,
@@ -110,10 +121,64 @@ class DeviceHomeViewModelTestFactory(
         contactEmailReader = mockk(),
         context = context,
         ioDispatcher = ioDispatcher,
+        applicationScope = applicationScope,
+        zoneSource = zoneSource,
     )
 
     companion object {
         const val RESCHEDULED_MESSAGE = "res:snackbar_event_rescheduled"
         const val RESCHEDULE_FAILED_MESSAGE = "res:snackbar_reschedule_failed"
+        const val MOVE_FAILED_MESSAGE = "res:snackbar_move_failed"
+        const val CHANGED_ELSEWHERE_MESSAGE = "res:snackbar_move_changed_elsewhere"
+        const val RETRY_LABEL = "res:action_retry"
+        const val UNTITLED = "res:event_untitled"
     }
+}
+
+/**
+ * Ends a staged drag's Undo window the way the snackbar timing out does, so the move's save
+ * starts on the next advance of the test scheduler; a write on Room's executor or the real
+ * provider still needs [dragSaveSettled] polled. A no-op when no drag is waiting, so a
+ * drop-time failure message stays for the test to read.
+ */
+internal fun HomeViewModel.endDragUndoWindow() {
+    pendingMoveState.value?.takeIf { it.state == PendingMove.State.PENDING }?.let { clearSnackbar(it.snackbarId) }
+}
+
+/** Whether no drag is waiting or being written: none is pending, or the last one is written. */
+internal val HomeViewModel.dragSaveSettled: Boolean
+    get() = pendingMoveState.value.let { it == null || it.state == PendingMove.State.SAVED }
+
+/**
+ * Stores the provider row [instance] was read from, as an active row, so a drag's save finds
+ * the event as the grid showed it; see [checkDeviceMove]. Returns [instance].
+ */
+internal fun org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository.seedRowFor(
+    instance: org.onekash.kashcal.data.calendar_provider.DeviceCalendarInstance,
+): org.onekash.kashcal.data.calendar_provider.DeviceCalendarInstance {
+    deviceEvents[instance.eventId] = org.onekash.kashcal.data.calendar_provider.DeviceEvent(
+        id = instance.eventId,
+        calendarId = instance.calendarId,
+        title = instance.title,
+        description = instance.description,
+        location = instance.location,
+        startTs = instance.eventStartTs,
+        endTs = if (instance.hasRrule) null else instance.endTs,
+        duration = if (instance.hasRrule) "PT${(instance.endTs - instance.startTs) / 60_000}M" else null,
+        isAllDay = instance.isAllDay,
+        rrule = instance.rrule,
+        rdate = null,
+        exdate = null,
+        exrule = null,
+        timezone = instance.timezone ?: java.util.TimeZone.getDefault().id,
+        originalId = instance.originalId,
+        originalInstanceTime = instance.originalInstanceTime,
+        status = instance.status,
+        availability = instance.availability,
+        accessLevel = 0,
+        calendarColor = instance.calendarColor,
+        eventColor = instance.eventColor,
+    )
+    activeEventIds += instance.eventId
+    return instance
 }

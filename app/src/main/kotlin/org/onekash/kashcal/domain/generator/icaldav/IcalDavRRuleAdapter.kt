@@ -21,8 +21,8 @@ import java.util.TimeZone
  *   (a) All-day events resolve to UTC ([resolveZone]).
  *   (b) When the raw RRULE contains both COUNT and UNTIL, UNTIL is stripped before parsing,
  *       so COUNT wins on this malformed but common input ([sanitizeRRule]).
- *   (g) DATE-format RDATE/EXDATE inherit DTSTART's hour, minute and second on timed events
- *       so `toDayCode()` returns the expected local day.
+ *   (g) DATE-format RDATE/EXDATE inherit DTSTART's hour, minute and second on timed events,
+ *       so they name the instant of that day's occurrence, which `RRuleExpander` matches.
  */
 object IcalDavRRuleAdapter {
 
@@ -166,7 +166,7 @@ object IcalDavRRuleAdapter {
      * except that a YYYYMMDD with an out-of-range month or day throws.
      *
      * YYYYMMDD entries on timed events inherit DTSTART's local time (quirk g); on all-day
-     * events they are UTC midnight.
+     * events they are UTC midnight. A local YYYYMMDD'T'HHMMSS is read in [zone].
      */
     internal fun parseCsvDates(
         csv: String?,
@@ -198,9 +198,11 @@ object IcalDavRRuleAdapter {
             val ms = value.toLongOrNull() ?: return null
             return ICalDateTime.fromTimestamp(ms, zone, isAllDay)
         }
-        // DateTime format: YYYYMMDD'T'HHMMSS or YYYYMMDD'T'HHMMSS'Z'.
+        // DateTime format: YYYYMMDD'T'HHMMSS'Z' is that instant; YYYYMMDD'T'HHMMSS is that wall
+        // time in the series zone (the device zone when it has none), so it names the same
+        // instant an occurrence at that time has.
         if (value.contains("T")) {
-            return runCatching { ICalDateTime.parse(value) }.getOrNull()
+            return runCatching { ICalDateTime.parse(value, zone?.id) }.getOrNull()
         }
         // DATE format: YYYYMMDD.
         if (value.length == 8 && value.all { it.isDigit() }) {

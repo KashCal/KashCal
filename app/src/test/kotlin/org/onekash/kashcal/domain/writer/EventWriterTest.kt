@@ -1,7 +1,6 @@
 package org.onekash.kashcal.domain.writer
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -16,6 +15,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.KashCalDatabase
+import org.onekash.kashcal.data.db.PendingOperationTriggers
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Calendar
@@ -25,6 +25,7 @@ import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -60,7 +61,8 @@ class EventWriterTest {
     @Before
     fun setup() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
+            .addCallback(PendingOperationTriggers.callback())
             .allowMainThreadQueries()
             .build()
 
@@ -1425,9 +1427,11 @@ class EventWriterTest {
         // well inside it.
         val splitFrom = occurrences[5].startTs
 
+        // The new series starts on the split occurrence, as the form and the drag send it.
+        val splitEnd = occurrences[5].endTs
         eventWriter.splitSeries(
             master.id, splitFrom,
-            createBaseEvent().copy(rrule = "FREQ=DAILY", isAllDay = true),
+            createBaseEvent().copy(rrule = "FREQ=DAILY", isAllDay = true, startTs = splitFrom, endTs = splitEnd),
             isLocal = true
         )
 
@@ -2054,7 +2058,7 @@ class EventWriterTest {
     fun `splitSeries with pastCount equal total falls back to ALL_EVENTS`() = runTest {
         // splitTimeMs after the last occurrence, so pastCount == total. Without the
         // degenerate-split check, RruleUtils.splitRruleAtTime would give the new series
-        // COUNT=0, which ical4j 4.3.0 expands as if the rule had no COUNT.
+        // COUNT=0, which ical4j expands as if the rule had no COUNT.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
             isLocal = true

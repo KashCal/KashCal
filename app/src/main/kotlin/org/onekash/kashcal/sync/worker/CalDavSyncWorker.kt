@@ -55,9 +55,9 @@ import java.util.concurrent.TimeUnit
  * them in Recent changes ([RecentChangesRecorder]) and prunes old sync logs. Results go to
  * WorkManager output data. The recorded entries go to [SyncScheduler.setSyncChanges] for the
  * in-app snackbar, unless [ChangeNotifier] announced them after a background run.
- * The worker adds its own sync-history entries ([SyncSessionStore]) only for a throw, an account
- * it couldn't set up, or no account to sync. A periodic run (always the all-accounts scope) never
- * returns failure, which would stop the periodic spec for good; the catch in [doWork] says why.
+ * The worker adds its own sync-history entries ([SyncSessionStore]) only for a throw or an
+ * account it couldn't set up. A periodic run (always the all-accounts scope) never returns
+ * failure, which would stop the periodic spec for good; the catch in [doWork] says why.
  */
 @HiltWorker
 class CalDavSyncWorker @AssistedInject constructor(
@@ -568,10 +568,11 @@ class CalDavSyncWorker @AssistedInject constructor(
     /**
      * Syncs every enabled network account and merges their results.
      *
-     * Local-only and non-CalDAV accounts are skipped. An account missing its credential
-     * provider, credentials or quirks is recorded in sync history and skipped. An account whose
-     * sync throws or fails adds an error, so the merged result is [SyncResult.PartialSuccess]
-     * when any account failed.
+     * Local-only and non-CalDAV accounts are skipped. With no enabled network account it returns
+     * an empty success and records nothing in sync history, since nothing was synced. An account
+     * missing its credential provider, credentials or quirks is recorded in sync history and
+     * skipped. An account whose sync throws or fails adds an error, so the merged result is
+     * [SyncResult.PartialSuccess] when any account failed.
      */
     private suspend fun syncAll(forceFullSync: Boolean, trigger: SyncTrigger): SyncResult {
         val accounts = accountRepository.getEnabledAccounts()
@@ -579,14 +580,6 @@ class CalDavSyncWorker @AssistedInject constructor(
 
         if (accounts.isEmpty()) {
             Log.d(TAG, "No enabled accounts to sync")
-            val sessionBuilder = SyncSessionBuilder(
-                calendarId = -1L,
-                calendarName = "No accounts",
-                syncType = SyncType.FULL,
-                triggerSource = trigger
-            )
-            sessionBuilder.setError(ErrorType.AUTH, "no_accounts", "No enabled accounts found")
-            syncSessionStore.add(sessionBuilder.build())
             return SyncResult.Success(
                 calendarsSynced = 0,
                 durationMs = 0
@@ -599,14 +592,6 @@ class CalDavSyncWorker @AssistedInject constructor(
 
         if (networkAccounts.isEmpty()) {
             Log.d(TAG, "No network accounts to sync")
-            val sessionBuilder = SyncSessionBuilder(
-                calendarId = -1L,
-                calendarName = "No network accounts",
-                syncType = SyncType.FULL,
-                triggerSource = trigger
-            )
-            sessionBuilder.setError(ErrorType.AUTH, "no_network_accounts", "No network accounts found (${accounts.size} local only)")
-            syncSessionStore.add(sessionBuilder.build())
             return SyncResult.Success(calendarsSynced = 0, durationMs = 0)
         }
 
@@ -852,8 +837,9 @@ class CalDavSyncWorker @AssistedInject constructor(
      *
      * - NEW: schedules every occurrence in the schedule window. A new event with no reminders and
      *   no alarms gets the user's default reminder unless it is off, except on initial sync.
-     * - MODIFIED: cancels the existing reminders and reschedules. AlarmManager triggers are
-     *   absolute times, so they must be recalculated when event times change.
+     * - MODIFIED: keeps the reminders the edit left valid, drops the rest
+     *   ([ReminderScheduler.reconcileRemindersForEvent]), then schedules the missing ones.
+     *   AlarmManager triggers are absolute times, so a changed time must not keep its old alarm.
      * - DELETED: skipped; reminders are cleaned up with the event.
      *
      * A failure for one event is logged and skipped; it never fails the sync.
@@ -881,10 +867,10 @@ class CalDavSyncWorker @AssistedInject constructor(
                     continue
                 }
 
-                // Cancel before the empty-reminders check, so an edit that removed every
-                // reminder still clears the old alarms.
+                // Reconcile before the empty-reminders check, so an edit that removed every
+                // reminder still drops its rows and alarms; a snooze stays.
                 if (change.type == ChangeType.MODIFIED) {
-                    reminderScheduler.cancelRemindersForEvent(event.id)
+                    reminderScheduler.reconcileRemindersForEvent(event)
                 }
 
                 if (change.type == ChangeType.NEW && !change.isFromInitialSync) {
@@ -927,7 +913,9 @@ class CalDavSyncWorker @AssistedInject constructor(
                     listOfNotNull(eventReader.getOccurrenceByExceptionEventId(event.id))
                 } else {
                     eventReader.getOccurrencesForEventInScheduleWindow(
-                        event.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS
+                        event.id,
+                        ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS,
+                        ReminderScheduler.STARTED_LOOKBACK_MS
                     )
                 }
 

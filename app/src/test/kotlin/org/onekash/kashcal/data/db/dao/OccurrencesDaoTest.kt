@@ -1,7 +1,6 @@
 package org.onekash.kashcal.data.db.dao
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import app.cash.turbine.test
 import kotlinx.coroutines.test.runTest
@@ -21,6 +20,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import kotlin.time.Duration.Companion.seconds
@@ -53,7 +53,7 @@ class OccurrencesDaoTest {
     @Before
     fun setup() = runTest {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
         occurrencesDao = database.occurrencesDao()
@@ -358,7 +358,7 @@ class OccurrencesDaoTest {
     }
 
     @Test
-    fun `getMaxStartTs returns latest occurrence time`() = runTest {
+    fun `getLatestRuleStartTs returns latest occurrence time`() = runTest {
         val latestTs = parseDate("2025-01-29 10:00")
         occurrencesDao.insertAll(listOf(
             createOccurrence(startTs = parseDate("2025-01-15 10:00"), startDay = 20250115),
@@ -366,7 +366,7 @@ class OccurrencesDaoTest {
             createOccurrence(startTs = parseDate("2025-01-22 10:00"), startDay = 20250122)
         ))
 
-        val maxTs = occurrencesDao.getMaxStartTs(eventId)
+        val maxTs = occurrencesDao.getLatestRuleStartTs(eventId)
 
         assertEquals(latestTs, maxTs)
     }

@@ -10,26 +10,29 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.dao.BaseDaoTest
+import org.onekash.kashcal.data.db.dao.EventSearchSql
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.domain.search.SearchQuery
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.util.UUID
 
 /**
  * Pins the Room behavior the app relies on, so a Room upgrade that changes it fails here.
- * Written against Room 2.6.1 before the move to 2.8.x. Covers:
- * 1. FTS4 full-text search
+ * Covers:
+ * 1. Event search (LIKE on title, location, description and guests)
  * 2. TypeConverters (SyncStatus, List<String>, Map<String, String>)
  * 3. Flow queries and emissions
  * 4. `runInTransaction` rollback and commit
  * 5. Edge cases and null handling
  * 6. RFC 5545/7986 fields (categories, color, url, priority, geo)
- * 7. Database build and TypeConverter validation (Room 2.7.1 fix for b/409804755)
+ * 7. Database build and column type converter validation
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -89,48 +92,65 @@ class RoomUpgradeGoldenTest : BaseDaoTest() {
         geoLon = geoLon
     )
 
-    // ==================== FTS4 Golden Tests ====================
+    // ==================== Search Golden Tests ====================
+
+    private suspend fun search(text: String) = eventsDao.searchMatches(
+        System.currentTimeMillis().let { now ->
+            EventSearchSql.nextAndLast(SearchQuery.of(text), now, Occurrence.toDayFormat(now, false))
+        }
+    ).map { it.event }
 
     @Test
-    fun `golden - FTS4 search finds event by title`() = runTest {
+    fun `golden - search finds event by title`() = runTest {
         eventsDao.insert(createEvent(title = "Important Meeting"))
 
-        val results = eventsDao.search("Important*")
+        val results = search("Important")
 
         assertEquals(1, results.size)
         assertEquals("Important Meeting", results[0].title)
     }
 
     @Test
-    fun `golden - FTS4 search is case insensitive`() = runTest {
+    fun `golden - search is case insensitive`() = runTest {
         eventsDao.insert(createEvent(title = "MEETING"))
         eventsDao.insert(createEvent(title = "meeting"))
         eventsDao.insert(createEvent(title = "Meeting"))
 
-        val results = eventsDao.search("meeting*")
+        val results = search("meeting")
 
         assertEquals(3, results.size)
     }
 
     @Test
-    fun `golden - FTS4 prefix search works`() = runTest {
+    fun `golden - search matches the start of a word`() = runTest {
         eventsDao.insert(createEvent(title = "Meeting with Alice"))
         eventsDao.insert(createEvent(title = "Meet and greet"))
         eventsDao.insert(createEvent(title = "Meditation session"))
 
-        val results = eventsDao.search("Meet*")
+        val results = search("Meet")
 
-        // "Meet*" matches "Meeting" and "Meet", not "Meditation".
+        // "Meet" matches "Meeting" and "Meet", not "Meditation".
         assertEquals(2, results.size)
     }
 
     @Test
-    fun `golden - FTS4 multi-word search`() = runTest {
+    fun `golden - search matches the middle of a word`() = runTest {
+        eventsDao.insert(createEvent(title = "Meeting"))
+        eventsDao.insert(createEvent(title = "Lunch"))
+
+        val results = search("eet")
+
+        assertEquals(1, results.size)
+        assertEquals("Meeting", results[0].title)
+    }
+
+    @Test
+    fun `golden - multi-word search`() = runTest {
         eventsDao.insert(createEvent(title = "Team Meeting"))
         eventsDao.insert(createEvent(title = "Team Lunch"))
         eventsDao.insert(createEvent(title = "Meeting Alone"))
 
-        val results = eventsDao.search("Team* Meeting*")
+        val results = search("Team Meeting")
 
         assertEquals(1, results.size)
         assertEquals("Team Meeting", results[0].title)
@@ -460,12 +480,12 @@ class RoomUpgradeGoldenTest : BaseDaoTest() {
     }
 
     @Test
-    fun `golden - FTS search with occurrences`() = runTest {
+    fun `golden - search with occurrences in a range`() = runTest {
         val jan6 = 1736121600000L  // Jan 6, 2025 00:00 UTC
         val jan7 = 1736208000000L  // Jan 7, 2025 00:00 UTC
 
         val eventId = eventsDao.insert(createEvent(title = "Golden Meeting", startTs = jan6))
-        occurrencesDao.insert(Occurrence(
+        val occurrenceId = occurrencesDao.insert(Occurrence(
             eventId = eventId,
             calendarId = testCalendarId,
             startTs = jan6,
@@ -474,22 +494,30 @@ class RoomUpgradeGoldenTest : BaseDaoTest() {
             endDay = Occurrence.toDayFormat(jan6, false)
         ))
 
-        val results = eventsDao.searchInRange("Golden*", jan6 - 86400000, jan7)
+        val results = eventsDao.searchMatches(
+            EventSearchSql.nextAndLast(
+                SearchQuery.of("Golden"),
+                jan7,
+                Occurrence.toDayFormat(jan7, false),
+                range = (jan6 - 86400000)..jan7
+            )
+        )
 
         assertEquals(1, results.size)
-        assertEquals("Golden Meeting", results[0].title)
+        assertEquals("Golden Meeting", results[0].event.title)
+        assertEquals(occurrenceId, results[0].rangeOccurrenceId)
     }
 
     // ==================== Database Build + TypeConverter Validation ====================
-    // Room 2.7.1 fixed an IndexOutOfBoundsException during TypeConverter validation
-    // (b/409804755). The app uses plain @TypeConverters, not @ProvidedTypeConverter, but these
-    // tests check the database builds and the events-table converters work through Room.
+    // The database builds, which runs Room's converter validation, and the events-table
+    // converters work through Room. The app uses plain @ColumnTypeConverters, not
+    // @ProvidedColumnTypeConverter.
 
     @Test
     fun `golden - database builds without IndexOutOfBoundsException`() {
         // BaseDaoTest.setup() builds the database, so reaching here means Room's
         // TypeConverter validation passed; this makes that implicit coverage explicit.
-        assertTrue("Database should be open", database.isOpen)
+        assertEquals("Database should open and answer", listOf(1L), TestDatabases.query(database, "SELECT 1") { it.getLong(0) })
         assertNotNull("AccountsDao should be accessible", database.accountsDao())
         assertNotNull("CalendarsDao should be accessible", database.calendarsDao())
         assertNotNull("EventsDao should be accessible", database.eventsDao())

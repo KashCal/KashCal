@@ -7,14 +7,23 @@ import androidx.compose.ui.text.style.TextDecoration
 import org.onekash.kashcal.R
 
 /**
+ * Alpha for de-emphasized content: past, declined and cancelled events, and past
+ * date numbers. The one dim level, so every view fades alike.
+ *
+ * 0.65 keeps dimmed onSurface text at WCAG AA (4.5:1) on the M3 default surfaces
+ * in both themes: 5.2:1 light, 6.6:1 dark. 0.5 fell to 3.3:1 and 4.4:1 (#426).
+ */
+const val DEEMPHASIZED_ALPHA = 0.65f
+
+/**
  * Returns an event card's alpha for its de-emphasized state (past, declined or
  * cancelled).
  *
- * Any flag gives 0.5f and the flags don't compound: multiplying several 0.5fs
+ * Any flag gives [DEEMPHASIZED_ALPHA] and the flags don't compound: multiplying them
  * would dim a past, declined and cancelled event well below legibility.
  */
 fun declinedCardAlpha(isPast: Boolean, isDeclined: Boolean, isCancelled: Boolean = false): Float =
-    if (isPast || isDeclined || isCancelled) 0.5f else 1.0f
+    if (isPast || isDeclined || isCancelled) DEEMPHASIZED_ALPHA else 1.0f
 
 /**
  * Returns LineThrough for the title of an event the user declined or one that is

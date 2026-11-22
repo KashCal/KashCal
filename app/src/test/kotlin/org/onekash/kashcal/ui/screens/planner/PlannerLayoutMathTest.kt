@@ -2,8 +2,8 @@ package org.onekash.kashcal.ui.screens.planner
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.onekash.kashcal.domain.planner.PinchZoomAccumulator
 import org.onekash.kashcal.domain.planner.clampPlannerZoom
+import org.onekash.kashcal.ui.shared.PinchZoomAccumulator
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -38,7 +38,7 @@ class PlannerLayoutMathTest {
 
     @Test
     fun `tiny pinch steps after the slop still add up`() {
-        val acc = PinchZoomAccumulator(seed = 1.0f)
+        val acc = PinchZoomAccumulator(seed = 1.0f, clamp = ::clampPlannerZoom)
         var zoom = 1.0f
         repeat(125) { zoom = acc.apply(1.0008f) }
         assertEquals(1.105f, zoom, 0.002f)
@@ -78,12 +78,21 @@ class PlannerLayoutMathTest {
 
     @Test
     fun `the pinch accumulator multiplies within one gesture and clamps`() {
-        val acc = PinchZoomAccumulator(seed = 1.0f)
+        val acc = PinchZoomAccumulator(seed = 1.0f, clamp = ::clampPlannerZoom)
         acc.apply(1.1f)
         acc.apply(1.1f)
         assertEquals(1.21f, acc.apply(1.0f), 0.0001f)
-        assertEquals(1.6f, PinchZoomAccumulator(seed = 1.5f).apply(2f))
-        assertEquals(0.85f, PinchZoomAccumulator(seed = 1.0f).apply(0.1f))
+        assertEquals(1.6f, PinchZoomAccumulator(seed = 1.5f, clamp = ::clampPlannerZoom).apply(2f))
+        assertEquals(0.85f, PinchZoomAccumulator(seed = 1.0f, clamp = ::clampPlannerZoom).apply(0.1f))
+    }
+
+    @Test
+    fun `the pinch accumulator keeps to the range its clamp gives`() {
+        val clamp = { z: Float -> z.coerceIn(0.5f, 2f) }
+        assertEquals(2f, PinchZoomAccumulator(seed = 1.0f, clamp = clamp).apply(3f))
+        assertEquals(0.5f, PinchZoomAccumulator(seed = 1.0f, clamp = clamp).apply(0.1f))
+        // The seed is clamped too.
+        assertEquals(2f, PinchZoomAccumulator(seed = 9f, clamp = clamp).apply(1f))
     }
 
     @Test

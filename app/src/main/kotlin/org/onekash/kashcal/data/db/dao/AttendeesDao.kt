@@ -1,10 +1,10 @@
 package org.onekash.kashcal.data.db.dao
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Transaction
+import androidx.room3.Dao
+import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
+import androidx.room3.Query
+import androidx.room3.Transaction
 import kotlinx.coroutines.flow.Flow
 import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.util.AddressNormalizer
@@ -84,6 +84,10 @@ interface AttendeesDao {
      */
     @Query("SELECT * FROM attendees WHERE event_id IN (:eventIds) ORDER BY event_id ASC, sort_order ASC")
     fun getForEvents(eventIds: List<Long>): Flow<List<Attendee>>
+
+    /** One-shot variant of [getForEvents], for ICS export. */
+    @Query("SELECT * FROM attendees WHERE event_id IN (:eventIds) ORDER BY event_id ASC, sort_order ASC")
+    suspend fun getForEventsOnce(eventIds: List<Long>): List<Attendee>
 
     /**
      * Reads the DECLINED attendee rows of [eventIds]. The SQL filter keeps the result small even

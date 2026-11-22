@@ -52,7 +52,7 @@ import org.onekash.kashcal.ui.util.asString
  * 1. Header: provider icon, display name and email; tapping it calls [onRename]
  * 2. Sync: status, calendar sync toggle, contact sync toggle for CardDAV providers, Sync Now
  * 3. Calendars: count, Discover Calendars
- * 4. Account: change password, sign out
+ * 4. Account: change password, or sign in again when [AccountDetailUiModel.needsSignIn]; sign out
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,6 +71,7 @@ fun AccountDetailSheet(
     onGrantContactsPermission: () -> Unit,
     onDiscoverCalendars: () -> Unit,
     onChangePassword: () -> Unit,
+    onSignInAgain: () -> Unit,
     onSignOut: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -301,11 +302,20 @@ fun AccountDetailSheet(
             // ==================== Account ====================
             SectionHeader(stringResource(R.string.account_detail_section_account))
             SettingsCard {
-                SettingsRow(
-                    label = stringResource(R.string.account_detail_change_password),
-                    onClick = onChangePassword,
-                    showDivider = true
-                )
+                if (account.needsSignIn) {
+                    SettingsRow(
+                        label = stringResource(R.string.account_detail_sign_in_again),
+                        subtitle = stringResource(R.string.account_detail_sign_in_again_subtitle),
+                        onClick = onSignInAgain,
+                        showDivider = true
+                    )
+                } else {
+                    SettingsRow(
+                        label = stringResource(R.string.account_detail_change_password),
+                        onClick = onChangePassword,
+                        showDivider = true
+                    )
+                }
 
                 OutlinedButton(
                     onClick = onSignOut,

@@ -59,10 +59,11 @@ class QuickAddViewModel @Inject constructor(
     private var seededFallbackLocation: String? = null
     private var seededText: String? = null
 
-    // Read synchronously in onInputChanged and seedInput; the parser uses it as a weekly
-    // rule's WKST.
+    // Read synchronously in onInputChanged and seedInput, where the parser uses it for week
+    // bounds ("sunday next week") and a weekly rule's WKST. Nothing collects this flow, so it
+    // must start eagerly; a WhileSubscribed one would stay at the placeholder.
     private val firstDayOfWeek: StateFlow<Int> = dataStore.firstDayOfWeek
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), KashCalDataStore.FIRST_DAY_SYSTEM)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, KashCalDataStore.FIRST_DAY_SYSTEM)
 
     fun setReferenceTime(reference: LocalDateTime) {
         referenceTime = reference

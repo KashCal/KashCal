@@ -14,6 +14,14 @@ class TagTokenizerTest {
     // ==================== extract() ====================
 
     @Test
+    fun `extractRanges returns the stripped spans and the same names as extract`() {
+        val input = "Lunch #work and #Urgent #work #${"x".repeat(65)}"
+        val ranged = TagTokenizer.extractRanges(input)
+        assertEquals(TagTokenizer.extract(input).tags, ranged.tags)
+        assertEquals(listOf("#work", "#Urgent", "#work"), ranged.ranges.map { input.substring(it) })
+    }
+
+    @Test
     fun `extracts a single tag and cleans the remaining text`() {
         val (text, tags) = TagTokenizer.extract("#work Lunch")
         assertEquals(listOf("work"), tags)
@@ -155,4 +163,11 @@ class TagTokenizerTest {
     fun `trailing hash prefix returns the last in-progress fragment`() {
         assertEquals("b", TagTokenizer.trailingHashPrefix("#a #b"))
     }
+
+    @Test
+    fun `a tag in a script with vowel signs is read whole`() {
+        assertEquals(listOf("काम", "วันหยุด", "திட்டம்"), TagTokenizer.extract("#काम #วันหยุด #திட்டம்").tags)
+        assertEquals("", TagTokenizer.extract("#काम #วันหยุด #திட்டம்").text)
+    }
 }
+

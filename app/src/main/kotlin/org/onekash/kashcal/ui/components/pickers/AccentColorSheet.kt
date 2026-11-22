@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -26,9 +27,9 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.ui.shared.EventColorPalette
 
 /**
- * Picks the app theme's accent color, with the grid and 92-color wheel of [EventColorSheet].
- * Every selection is a concrete color: where the event sheet's first cell means "calendar
- * default" (null), this one commits the brand-teal default seed.
+ * Picks the app theme's accent color, with the grid and 92-color wheel of
+ * [EventColorPalettePanel]. Every selection is a concrete color: where the event palette's first
+ * cell means "calendar default" (null), this one commits the brand-teal default seed.
  *
  * It offers the same [EventColorPalette] as events. Any of its colors is a valid accent,
  * because the generated scheme keeps WCAG AA for any seed.
@@ -61,8 +62,9 @@ fun AccentColorSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        dragHandle = {},
-        sheetGesturesEnabled = false
+        // Swipes and shows its handle as [ColorPaletteSheet] does.
+        dragHandle = if (showWheel) null else { { BottomSheetDefaults.DragHandle() } },
+        sheetGesturesEnabled = !showWheel
     ) {
         Crossfade(
             targetState = showWheel,

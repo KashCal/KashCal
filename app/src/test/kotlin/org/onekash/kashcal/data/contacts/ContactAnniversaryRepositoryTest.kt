@@ -11,6 +11,7 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.mockk.slot
 import io.mockk.unmockkAll
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -388,10 +389,10 @@ class ContactAnniversaryRepositoryTest {
     /**
      * Setting the anniversary reminder to None makes a sync set the existing event's `reminders` to
      * null. Its AlarmManager alarms must still be cancelled: the empty-reminders return in
-     * reminder scheduling must not skip the cancel.
+     * reminder scheduling must not skip the reconcile.
      */
     @Test
-    fun `syncEvents cancels reminders when an existing event's reminders become null`() = runTest {
+    fun `syncEvents reconciles reminders when an existing event's reminders become null`() = runTest {
         val lookupKey = "abc123"
         val month = 6
         val day = 15
@@ -437,6 +438,91 @@ class ContactAnniversaryRepositoryTest {
         assertTrue(result is ContactEventSyncResult.Success)
         assertEquals(1, (result as ContactEventSyncResult.Success).updated)
 
-        coVerify { reminderScheduler.cancelRemindersForEvent(100L) }
+        coVerify { reminderScheduler.reconcileRemindersForEvent(match { it.id == 100L }) }
+    }
+
+    /**
+     * Some sources store a date without a year under a placeholder year such as 1604 (#395): the
+     * sync adds the event on its month and day with no year, so no age or count is shown.
+     */
+    @Test
+    fun `syncEvents adds an anniversary stored with a placeholder year, without a year`() = runTest {
+        coEvery {
+            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactEventType.ANNIVERSARY.accountEmail)
+        } returns testAccount
+        coEvery { calendarsDao.getByAccountIdOnce(10L) } returns listOf(testCalendar)
+        coEvery { calendarsDao.getById(20L) } returns testCalendar
+        coEvery { dataStore.getAnniversaryReminder() } returns KashCalDataStore.REMINDER_OFF
+        coEvery { eventsDao.getAllMasterEventsForCalendar(20L) } returns emptyList()
+        val inserted = slot<Event>()
+        coEvery { eventsDao.insert(capture(inserted)) } returns 100L
+
+        val mockCursor = mockk<Cursor>(relaxed = true)
+        every { mockCursor.getColumnIndex(ContactsContract.Data.LOOKUP_KEY) } returns 0
+        every { mockCursor.getColumnIndex(ContactsContract.Data.DISPLAY_NAME) } returns 1
+        every { mockCursor.getColumnIndex(ContactsContract.CommonDataKinds.Event.START_DATE) } returns 2
+        every { mockCursor.moveToNext() } returnsMany listOf(true, false)
+        every { mockCursor.getString(0) } returns "lookup-jane"
+        every { mockCursor.getString(1) } returns "Jane Doe"
+        every { mockCursor.getString(2) } returns "1604-09-22"
+        every { contentResolver.query(any(), any(), any(), any(), any()) } returns mockCursor
+
+        val result = repository.syncEvents()
+
+        assertTrue("sync failed: $result", result is ContactEventSyncResult.Success)
+        assertEquals(1, (result as ContactEventSyncResult.Success).added)
+        val event = inserted.captured
+        assertEquals(ContactEventType.ANNIVERSARY.getCaldavUrl("lookup-jane", 9, 22), event.caldavUrl)
+        assertNull(event.description)
+        assertEquals(ContactEventUtils.getStartTimestamp(9, 22, null), event.startTs)
+        assertEquals(ContactEventUtils.YEARLY_RRULE, event.rrule)
+        assertTrue(event.isAllDay)
+        assertNull(event.reminders)
+    }
+
+    /**
+     * A phone holding the 1604 form keeps it until the contact is next pulled, then holds the
+     * year-less form: both name the same anniversary, so the second sync keeps the event as it is.
+     */
+    @Test
+    fun `syncEvents keeps the anniversary when its 1604 date becomes the year-less form`() = runTest {
+        coEvery {
+            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactEventType.ANNIVERSARY.accountEmail)
+        } returns testAccount
+        coEvery { calendarsDao.getByAccountIdOnce(10L) } returns listOf(testCalendar)
+        coEvery { calendarsDao.getById(20L) } returns testCalendar
+        coEvery { dataStore.getAnniversaryReminder() } returns KashCalDataStore.REMINDER_OFF
+        val inserted = slot<Event>()
+        coEvery { eventsDao.insert(capture(inserted)) } returns 100L
+        coEvery { eventsDao.getAllMasterEventsForCalendar(20L) } answers {
+            if (inserted.isCaptured) listOf(inserted.captured.copy(id = 100L)) else emptyList()
+        }
+
+        fun cursorWith(startDate: String): Cursor = mockk<Cursor>(relaxed = true).also { c ->
+            every { c.getColumnIndex(ContactsContract.Data.LOOKUP_KEY) } returns 0
+            every { c.getColumnIndex(ContactsContract.Data.DISPLAY_NAME) } returns 1
+            every { c.getColumnIndex(ContactsContract.CommonDataKinds.Event.START_DATE) } returns 2
+            every { c.moveToNext() } returnsMany listOf(true, false)
+            every { c.getString(0) } returns "lookup-jane"
+            every { c.getString(1) } returns "Jane Doe"
+            every { c.getString(2) } returns startDate
+        }
+        every { contentResolver.query(any(), any(), any(), any(), any()) } returnsMany
+            listOf(cursorWith("1604-09-22"), cursorWith("--09-22"))
+
+        val first = repository.syncEvents()
+        assertTrue("first sync failed: $first", first is ContactEventSyncResult.Success)
+        assertEquals(1, (first as ContactEventSyncResult.Success).added)
+        assertNull(inserted.captured.description)
+        assertEquals(ContactEventType.ANNIVERSARY.getCaldavUrl("lookup-jane", 9, 22), inserted.captured.caldavUrl)
+
+        val second = repository.syncEvents()
+        assertTrue("second sync failed: $second", second is ContactEventSyncResult.Success)
+        second as ContactEventSyncResult.Success
+        assertEquals(0, second.added)
+        assertEquals(0, second.updated)
+        assertEquals(0, second.deleted)
+        coVerify(exactly = 0) { eventsDao.deleteById(any()) }
+        coVerify(exactly = 1) { eventsDao.insert(any()) }
     }
 }

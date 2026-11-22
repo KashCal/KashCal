@@ -1,18 +1,26 @@
 package org.onekash.kashcal.data.db.migration
 
 import android.util.Log
-import androidx.room.testing.MigrationTestHelper
-import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
+import androidx.room3.testing.MigrationTestHelper
+import androidx.room3.migration.Migration
+import androidx.sqlite.SQLiteConnection
+import androidx.sqlite.driver.AndroidSQLiteDriver
+import androidx.sqlite.execSQL
 import androidx.test.platform.app.InstrumentationRegistry
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.KashCalDatabase
+import org.onekash.kashcal.data.db.PendingOperationTriggers
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -35,13 +43,30 @@ class MigrationHashValidationTest {
 
     private val schemasPath = "${System.getProperty("user.dir")}/schemas"
 
+    private val dbFile = InstrumentationRegistry.getInstrumentation().targetContext.getDatabasePath(TEST_DB)
+        .also { file -> file.parentFile?.mkdirs(); listOf("", "-journal", "-wal", "-shm").forEach { java.io.File(file.path + it).delete() } }
+
     @get:Rule
     val helper: MigrationTestHelper = MigrationTestHelper(
         InstrumentationRegistry.getInstrumentation(),
-        KashCalDatabase::class.java,
-        emptyList(),
-        FrameworkSQLiteOpenHelperFactory()
+        dbFile,
+        AndroidSQLiteDriver(),
+        KashCalDatabase::class,
     )
+
+    /**
+     * Runs [migrations] to [version] through Room's validator, then checks no table outside the
+     * export is left ([ExportedSchemaTables]), which the helper doesn't check.
+     */
+    private suspend fun migrateAndValidate(version: Int, vararg migrations: Migration): SQLiteConnection =
+        helper.runMigrationsAndValidate(version, migrations.toList()).also { connection ->
+            try {
+                ExportedSchemaTables.assertExactly(connection, version)
+            } catch (e: Throwable) {
+                connection.close()
+                throw e
+            }
+        }
 
     @Before
     fun setup() {
@@ -65,18 +90,13 @@ class MigrationHashValidationTest {
      * example), which would crash the app's first launch after the upgrade.
      */
     @Test
-    fun `MIGRATION_16_17 produces a schema whose identityHash matches Room's v17 export`() {
+    fun `MIGRATION_16_17 produces a schema whose identityHash matches Room's v17 export`(): Unit = runBlocking {
         // MigrationTestHelper builds the v16 database from the CREATE statements in 16.json
-        helper.createDatabase(TEST_DB, 16).close()
+        helper.createDatabase(16).close()
 
-        // Reopen at v17 and run the migration through Room's validator. validateDroppedTables =
-        // true also fails on a table the v17 schema doesn't have.
-        helper.runMigrationsAndValidate(
-            TEST_DB,
-            17,
-            true,
-            Migrations.MIGRATION_16_17
-        ).close()
+        // Reopen at v17 and run the migration through Room's validator; [migrateAndValidate] also
+        // fails on a table the v17 schema doesn't have.
+        migrateAndValidate(17, Migrations.MIGRATION_16_17).close()
     }
 
     /**
@@ -85,15 +105,10 @@ class MigrationHashValidationTest {
      * name, affinity and nullability.
      */
     @Test
-    fun `MIGRATION_18_19 produces a schema whose identityHash matches Room's v19 export`() {
-        helper.createDatabase(TEST_DB, 18).close()
+    fun `MIGRATION_18_19 produces a schema whose identityHash matches Room's v19 export`(): Unit = runBlocking {
+        helper.createDatabase(18).close()
 
-        helper.runMigrationsAndValidate(
-            TEST_DB,
-            19,
-            true,
-            Migrations.MIGRATION_18_19
-        ).close()
+        migrateAndValidate(19, Migrations.MIGRATION_18_19).close()
     }
 
     /**
@@ -102,15 +117,10 @@ class MigrationHashValidationTest {
      * affinity and nullability.
      */
     @Test
-    fun `MIGRATION_19_20 produces a schema whose identityHash matches Room's v20 export`() {
-        helper.createDatabase(TEST_DB, 19).close()
+    fun `MIGRATION_19_20 produces a schema whose identityHash matches Room's v20 export`(): Unit = runBlocking {
+        helper.createDatabase(19).close()
 
-        helper.runMigrationsAndValidate(
-            TEST_DB,
-            20,
-            true,
-            Migrations.MIGRATION_19_20
-        ).close()
+        migrateAndValidate(20, Migrations.MIGRATION_19_20).close()
     }
 
     /**
@@ -119,15 +129,10 @@ class MigrationHashValidationTest {
      * foreign keys.
      */
     @Test
-    fun `MIGRATION_20_21 produces a schema whose identityHash matches Room's v21 export`() {
-        helper.createDatabase(TEST_DB, 20).close()
+    fun `MIGRATION_20_21 produces a schema whose identityHash matches Room's v21 export`(): Unit = runBlocking {
+        helper.createDatabase(20).close()
 
-        helper.runMigrationsAndValidate(
-            TEST_DB,
-            21,
-            true,
-            Migrations.MIGRATION_20_21
-        ).close()
+        migrateAndValidate(21, Migrations.MIGRATION_20_21).close()
     }
 
     /**
@@ -137,15 +142,10 @@ class MigrationHashValidationTest {
      * which has no collation, so it doesn't see the `COLLATE NOCASE` on the primary key.
      */
     @Test
-    fun `MIGRATION_21_22 produces a schema whose identityHash matches Room's v22 export`() {
-        helper.createDatabase(TEST_DB, 21).close()
+    fun `MIGRATION_21_22 produces a schema whose identityHash matches Room's v22 export`(): Unit = runBlocking {
+        helper.createDatabase(21).close()
 
-        helper.runMigrationsAndValidate(
-            TEST_DB,
-            22,
-            true,
-            Migrations.MIGRATION_21_22
-        ).close()
+        migrateAndValidate(22, Migrations.MIGRATION_21_22).close()
     }
 
     /**
@@ -154,15 +154,10 @@ class MigrationHashValidationTest {
      * must match in column names, affinities, nullability, foreign keys and indexes.
      */
     @Test
-    fun `MIGRATION_22_23 produces a schema whose identityHash matches Room's v23 export`() {
-        helper.createDatabase(TEST_DB, 22).close()
+    fun `MIGRATION_22_23 produces a schema whose identityHash matches Room's v23 export`(): Unit = runBlocking {
+        helper.createDatabase(22).close()
 
-        helper.runMigrationsAndValidate(
-            TEST_DB,
-            23,
-            true,
-            Migrations.MIGRATION_22_23
-        ).close()
+        migrateAndValidate(23, Migrations.MIGRATION_22_23).close()
     }
 
     /**
@@ -171,15 +166,10 @@ class MigrationHashValidationTest {
      * affinity, nullability and default.
      */
     @Test
-    fun `MIGRATION_23_24 produces a schema whose identityHash matches Room's v24 export`() {
-        helper.createDatabase(TEST_DB, 23).close()
+    fun `MIGRATION_23_24 produces a schema whose identityHash matches Room's v24 export`(): Unit = runBlocking {
+        helper.createDatabase(23).close()
 
-        helper.runMigrationsAndValidate(
-            TEST_DB,
-            24,
-            true,
-            Migrations.MIGRATION_23_24
-        ).close()
+        migrateAndValidate(24, Migrations.MIGRATION_23_24).close()
     }
 
     /**
@@ -187,15 +177,10 @@ class MigrationHashValidationTest {
      * table with its foreign keys and indexes, and `calendars.initial_pull_done`.
      */
     @Test
-    fun `MIGRATION_24_25 produces a schema whose identityHash matches Room's v25 export`() {
-        helper.createDatabase(TEST_DB, 24).close()
+    fun `MIGRATION_24_25 produces a schema whose identityHash matches Room's v25 export`(): Unit = runBlocking {
+        helper.createDatabase(24).close()
 
-        helper.runMigrationsAndValidate(
-            TEST_DB,
-            25,
-            true,
-            Migrations.MIGRATION_24_25
-        ).close()
+        migrateAndValidate(25, Migrations.MIGRATION_24_25).close()
     }
 
     /**
@@ -203,29 +188,98 @@ class MigrationHashValidationTest {
      * on `events`.
      */
     @Test
-    fun `MIGRATION_25_26 produces a schema whose identityHash matches Room's v26 export`() {
-        helper.createDatabase(TEST_DB, 25).close()
+    fun `MIGRATION_25_26 produces a schema whose identityHash matches Room's v26 export`(): Unit = runBlocking {
+        helper.createDatabase(25).close()
 
-        helper.runMigrationsAndValidate(
-            TEST_DB,
-            26,
-            true,
-            Migrations.MIGRATION_25_26
-        ).close()
+        migrateAndValidate(26, Migrations.MIGRATION_25_26).close()
     }
 
     /**
-     * Runs the whole chain from a v1 database and validates the result against `26.json`. This
+     * Checks `MIGRATION_26_27` on a fresh v26 database against `27.json`: the schema is unchanged
+     * (the migration adds a trigger, which Room's validation ignores) and the identity hash
+     * matches.
+     */
+    @Test
+    fun `MIGRATION_26_27 produces a schema whose identityHash matches Room's v27 export`(): Unit = runBlocking {
+        helper.createDatabase(26).close()
+
+        migrateAndValidate(27, Migrations.MIGRATION_26_27).close()
+    }
+
+    /**
+     * Checks `MIGRATION_27_28` on a fresh v27 database against `28.json`: the search index is gone
+     * ([ExportedSchemaTables] and the `sqlite_master` count below) and the identity hash matches.
+     */
+    @Test
+    fun `MIGRATION_27_28 produces a schema whose identityHash matches Room's v28 export`(): Unit = runBlocking {
+        helper.createDatabase(27).close()
+
+        migrateAndValidate(28, Migrations.MIGRATION_27_28).use { connection ->
+            connection.prepare(
+                "SELECT COUNT(*) FROM sqlite_master WHERE name LIKE '%events_fts%' OR sql LIKE '%events_fts%'"
+            ).use {
+                it.step()
+                assertEquals(0L, it.getLong(0))
+            }
+        }
+    }
+
+    /** Checks `MIGRATION_28_29` on a fresh v28 database against `29.json`. */
+    @Test
+    fun `MIGRATION_28_29 produces a schema whose identityHash matches Room's v29 export`(): Unit = runBlocking {
+        helper.createDatabase(28).close()
+
+        migrateAndValidate(29, Migrations.MIGRATION_28_29).close()
+    }
+
+    /**
+     * Upgrades a seeded v26 file the way the app does: Room opens it with every migration. The
+     * orphans go, the live operations and the self-contained DELETE stay, and the trigger works.
+     */
+    @Test
+    fun `opening a seeded v26 database with Room upgrades it and keeps live operations`(): Unit = runBlocking {
+        helper.createDatabase(26).apply {
+            execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'ICLOUD', 'a@example.test', 0)")
+            execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://x/', 'C', 0)")
+            execSQL(
+                "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, timezone, dtstamp, created_at, updated_at) " +
+                    "VALUES (1, 'live', 1, 'Live', 100, 200, 'UTC', 0, 0, 0)"
+            )
+            execSQL("INSERT INTO pending_operations (id, event_id, operation, created_at, updated_at) VALUES (10, 1, 'UPDATE', 0, 0)")
+            execSQL(
+                "INSERT INTO pending_operations (id, event_id, operation, status, created_at, updated_at) " +
+                    "VALUES (11, 99, 'UPDATE', 'ABANDONED', 0, 0)"
+            )
+            execSQL(
+                "INSERT INTO pending_operations (id, event_id, operation, target_url, source_calendar_id, created_at, updated_at) " +
+                    "VALUES (12, 98, 'DELETE', 'https://x/old.ics', 1, 0, 0)"
+            )
+            close()
+        }
+
+        val room = TestDatabases.file(androidx.test.core.app.ApplicationProvider.getApplicationContext(), TEST_DB).addMigrations(*Migrations.ALL_MIGRATIONS).allowMainThreadQueries().build()
+        try {
+            runBlocking {
+                assertEquals(listOf(10L, 12L), room.pendingOperationsDao().getAll().map { it.id }.sorted())
+                room.eventsDao().deleteById(1)
+                assertEquals(listOf(12L), room.pendingOperationsDao().getAll().map { it.id })
+            }
+            assertTrue(TestDatabases.triggerExists(room, PendingOperationTriggers.EVENT_DELETE_TRIGGER))
+        } finally {
+            room.close()
+        }
+    }
+
+    /**
+     * Runs the whole chain from a v1 database and validates the result against `29.json`. This
      * catches drift in an early migration that only shows once later versions build on it.
      */
     @Test
-    fun `full migration chain v1 to v26 produces schema whose identityHash matches Room's export`() {
-        helper.createDatabase(TEST_DB, 1).close()
+    fun `full migration chain v1 to v29 produces schema whose identityHash matches Room's export`(): Unit = runBlocking {
+        helper.createDatabase(1).close()
 
-        helper.runMigrationsAndValidate(
-            TEST_DB,
-            26,
-            true,
+        migrateAndValidate(
+            29,
             Migrations.MIGRATION_1_2,
             Migrations.MIGRATION_2_3,
             // 3 -> 4 is an AutoMigration; the helper takes it from the database class when no
@@ -251,8 +305,24 @@ class MigrationHashValidationTest {
             Migrations.MIGRATION_22_23,
             Migrations.MIGRATION_23_24,
             Migrations.MIGRATION_24_25,
-            Migrations.MIGRATION_25_26
+            Migrations.MIGRATION_25_26,
+            Migrations.MIGRATION_26_27,
+            Migrations.MIGRATION_27_28,
+            Migrations.MIGRATION_28_29
         ).close()
+    }
+
+    @Test
+    fun `a migration that leaves a table the export lacks fails validation`(): Unit = runBlocking {
+        helper.createDatabase(27).close()
+        val leavesTable = object : Migration(27, 28) {
+            override suspend fun migrate(connection: SQLiteConnection) {
+                Migrations.MIGRATION_27_28.migrate(connection)
+                connection.execSQL("CREATE TABLE left_behind (x INTEGER)")
+            }
+        }
+        val error = runCatching { migrateAndValidate(28, leavesTable).close() }.exceptionOrNull()
+        assertTrue("expected the left-behind table to fail, got $error", error?.message.orEmpty().contains("left_behind"))
     }
 
     private companion object {

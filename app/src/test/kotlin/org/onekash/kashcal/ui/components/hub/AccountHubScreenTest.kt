@@ -63,6 +63,7 @@ class AccountHubScreenTest {
         var appLockToggled: Boolean? = null
         var appPermissions = 0
         var recentChanges = 0
+        var printWeek = 0
     }
 
     private fun render(
@@ -88,6 +89,7 @@ class AccountHubScreenTest {
                     onToggleAppLock = { callbacks.appLockToggled = it },
                     onAppPermissionsClick = { callbacks.appPermissions++ },
                     onRecentChangesClick = { callbacks.recentChanges++ },
+                    onPrintWeekClick = { callbacks.printWeek++ },
                     // Stub the VM-backed personalization slot so no Hilt graph is needed.
                     makeItYours = { Text("make-it-yours-stub") },
                 )
@@ -109,6 +111,9 @@ class AccountHubScreenTest {
         composeTestRule.onNodeWithText("Share availability").performClick()
         assertEquals(1, cb.shareAvailability)
 
+        composeTestRule.onNodeWithText("Print your week").performClick()
+        assertEquals(1, cb.printWeek)
+
         composeTestRule.onNodeWithText("Manage tags").performClick()
         assertEquals(1, cb.tags)
 
@@ -123,7 +128,20 @@ class AccountHubScreenTest {
 
         // No row's tap fired a sibling's callback.
         assertEquals(1, cb.invites)
+        assertEquals(1, cb.shareAvailability)
+        assertEquals(1, cb.printWeek)
         assertEquals(0, cb.back)
+    }
+
+    @Test
+    fun `print your week sits between share availability and manage tags`() {
+        render()
+
+        val share = composeTestRule.onNodeWithText("Share availability").getUnclippedBoundsInRoot()
+        val print = composeTestRule.onNodeWithText("Print your week").getUnclippedBoundsInRoot()
+        val tags = composeTestRule.onNodeWithText("Manage tags").getUnclippedBoundsInRoot()
+        assertTrue("below Share availability", print.top > share.top)
+        assertTrue("above Manage tags", print.top < tags.top)
     }
 
     @Test

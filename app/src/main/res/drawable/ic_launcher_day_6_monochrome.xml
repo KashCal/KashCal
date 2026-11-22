@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated themed layer for day 6: outlined calendar card with binding tabs and the day number. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="88"
+    android:viewportHeight="88">
+    <group android:translateX="44" android:translateY="44" android:scaleX="0.9" android:scaleY="0.9" android:rotation="-2">
+        <path android:strokeColor="#FFFFFF" android:strokeWidth="3.5" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M-12,-17H12A6,6 0 0 1 18,-11V15A6,6 0 0 1 12,21H-12A6,6 0 0 1 -18,15V-11A6,6 0 0 1 -12,-17Z" />
+        <path android:strokeColor="#FFFFFF" android:strokeWidth="3.5" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M-9,-23V-12" />
+        <path android:strokeColor="#FFFFFF" android:strokeWidth="3.5" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M9,-23V-12" />
+        <path android:fillColor="#FFFFFF" android:pathData="M-5.522 5.688Q-5.522 4.324 -5.324 3.004Q-5.126 1.684 -4.631 0.507Q-4.136 -0.67 -3.245 -1.583Q-2.354 -2.496 -0.979 -3.013Q0.396 -3.53 2.354 -3.53Q2.816 -3.53 3.432 -3.497Q4.048 -3.464 4.466 -3.376V-0.714Q4.048 -0.824 3.553 -0.879Q3.058 -0.934 2.574 -0.934Q1.1 -0.934 0.143 -0.582Q-0.814 -0.23 -1.364 0.43Q-1.914 1.09 -2.167 1.981Q-2.42 2.872 -2.464 3.972H-2.332Q-2.024 3.444 -1.573 3.037Q-1.122 2.63 -0.462 2.388Q0.198 2.146 1.078 2.146Q2.464 2.146 3.465 2.729Q4.466 3.312 5.016 4.423Q5.566 5.534 5.566 7.118Q5.566 8.812 4.917 10.044Q4.268 11.276 3.069 11.925Q1.87 12.574 0.22 12.574Q-0.99 12.574 -2.035 12.156Q-3.08 11.738 -3.861 10.891Q-4.642 10.044 -5.082 8.746Q-5.522 7.448 -5.522 5.688ZM0.154 9.912Q1.122 9.912 1.738 9.241Q2.354 8.57 2.354 7.162Q2.354 6.018 1.826 5.358Q1.298 4.698 0.22 4.698Q-0.506 4.698 -1.056 5.017Q-1.606 5.336 -1.914 5.842Q-2.222 6.348 -2.222 6.876Q-2.222 7.426 -2.068 7.965Q-1.914 8.504 -1.617 8.944Q-1.32 9.384 -0.88 9.648Q-0.44 9.912 0.154 9.912Z" />
+    </group>
+</vector>

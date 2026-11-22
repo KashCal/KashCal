@@ -23,7 +23,9 @@ import javax.inject.Singleton
  * `data_extraction_rules.xml`).
  *
  * When the Keystore or prefs can't be created, reads return null or empty, writes are no-ops
- * and [saveCredentials] returns false.
+ * and [saveCredentials] returns false. A store whose keysets the master key no longer decrypts
+ * is deleted and created again (`EncryptedStoreOpener`); only this file is deleted, never the
+ * master key, which the legacy files [CredentialMigration] reads share.
  */
 @Singleton
 class UnifiedCredentialManager @Inject constructor(
@@ -64,8 +66,9 @@ class UnifiedCredentialManager @Inject constructor(
 
     /** The encrypted prefs, or null if encryption is unavailable. */
     private val encryptedPrefs: SharedPreferences? by lazy {
-        try {
-            masterKey?.let { key ->
+        val key = masterKey ?: return@lazy null
+        val result = EncryptedStoreOpener.open(
+            create = {
                 EncryptedSharedPreferences.create(
                     context,
                     PREFS_NAME,
@@ -73,12 +76,17 @@ class UnifiedCredentialManager @Inject constructor(
                     EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                     EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
                 )
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to create EncryptedSharedPreferences: ${e.message}", e)
-            encryptionError = e
-            null
-        }
+            },
+            reset = {
+                Log.w(TAG, "Stored keysets no longer decrypt; deleting the unreadable credential store")
+                // Clearing first empties the copy this process caches; deleting removes the file.
+                context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit(commit = true) { clear() }
+                context.deleteSharedPreferences(PREFS_NAME)
+            },
+        )
+        result.error?.let { Log.e(TAG, "Failed to create EncryptedSharedPreferences: ${it.message}", it) }
+        encryptionError = result.error
+        result.prefs
     }
 
     override fun isEncryptionAvailable(): Boolean = encryptedPrefs != null
@@ -116,27 +124,37 @@ class UnifiedCredentialManager @Inject constructor(
         return withContext(Dispatchers.IO) {
             val prefs = encryptedPrefs ?: return@withContext null
 
-            val username = prefs.getString(keyFor(accountId, KEY_USERNAME), null)
-                ?: return@withContext null
-            val password = prefs.getString(keyFor(accountId, KEY_PASSWORD), null)
-                ?: return@withContext null
-            val serverUrl = prefs.getString(keyFor(accountId, KEY_SERVER_URL), null)
-                ?: return@withContext null
+            try {
+                val username = prefs.getString(keyFor(accountId, KEY_USERNAME), null)
+                    ?: return@withContext null
+                val password = prefs.getString(keyFor(accountId, KEY_PASSWORD), null)
+                    ?: return@withContext null
+                val serverUrl = prefs.getString(keyFor(accountId, KEY_SERVER_URL), null)
+                    ?: return@withContext null
 
-            AccountCredentials(
-                username = username,
-                password = password,
-                serverUrl = serverUrl,
-                trustInsecure = prefs.getBoolean(keyFor(accountId, KEY_TRUST_INSECURE), false),
-                principalUrl = prefs.getString(keyFor(accountId, KEY_PRINCIPAL_URL), null),
-                calendarHomeSet = prefs.getString(keyFor(accountId, KEY_CALENDAR_HOME_SET), null)
-            )
+                AccountCredentials(
+                    username = username,
+                    password = password,
+                    serverUrl = serverUrl,
+                    trustInsecure = prefs.getBoolean(keyFor(accountId, KEY_TRUST_INSECURE), false),
+                    principalUrl = prefs.getString(keyFor(accountId, KEY_PRINCIPAL_URL), null),
+                    calendarHomeSet = prefs.getString(keyFor(accountId, KEY_CALENDAR_HOME_SET), null)
+                )
+            } catch (e: SecurityException) {
+                Log.w(TAG, "Stored credentials failed to decrypt")
+                null
+            }
         }
     }
 
     override suspend fun hasCredentials(accountId: Long): Boolean {
         return withContext(Dispatchers.IO) {
-            encryptedPrefs?.contains(keyFor(accountId, KEY_PASSWORD)) == true
+            try {
+                encryptedPrefs?.contains(keyFor(accountId, KEY_PASSWORD)) == true
+            } catch (e: SecurityException) {
+                Log.w(TAG, "Credential lookup failed to encrypt its key")
+                false
+            }
         }
     }
 
@@ -168,12 +186,7 @@ class UnifiedCredentialManager @Inject constructor(
     suspend fun getAllAccountIds(): Set<Long> {
         return withContext(Dispatchers.IO) {
             val prefs = encryptedPrefs ?: return@withContext emptySet()
-            val idsString = prefs.getString(KEY_ACCOUNT_IDS, null)
-                ?: return@withContext emptySet()
-
-            idsString.split(",")
-                .mapNotNull { it.trim().toLongOrNull() }
-                .toSet()
+            readAccountIds(prefs)
         }
     }
 
@@ -199,13 +212,25 @@ class UnifiedCredentialManager @Inject constructor(
         return "account_${accountId}_$field"
     }
 
+    /**
+     * Reads the account-id index. An index that fails to decrypt reads as empty, so a save or a
+     * delete still succeeds and the next save rewrites it.
+     */
+    private fun readAccountIds(prefs: SharedPreferences): Set<Long> {
+        val idsString = try {
+            prefs.getString(KEY_ACCOUNT_IDS, null)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Account index failed to decrypt; reading it as empty")
+            null
+        } ?: return emptySet()
+        return idsString.split(",")
+            .mapNotNull { it.trim().toLongOrNull() }
+            .toSet()
+    }
+
     private fun addAccountIdToIndex(accountId: Long) {
         val prefs = encryptedPrefs ?: return
-        val currentIds = prefs.getString(KEY_ACCOUNT_IDS, null)
-            ?.split(",")
-            ?.mapNotNull { it.trim().toLongOrNull() }
-            ?.toMutableSet()
-            ?: mutableSetOf()
+        val currentIds = readAccountIds(prefs).toMutableSet()
 
         if (currentIds.add(accountId)) {
             prefs.edit {
@@ -216,11 +241,7 @@ class UnifiedCredentialManager @Inject constructor(
 
     private fun removeAccountIdFromIndex(accountId: Long) {
         val prefs = encryptedPrefs ?: return
-        val currentIds = prefs.getString(KEY_ACCOUNT_IDS, null)
-            ?.split(",")
-            ?.mapNotNull { it.trim().toLongOrNull() }
-            ?.toMutableSet()
-            ?: return
+        val currentIds = readAccountIds(prefs).toMutableSet()
 
         if (currentIds.remove(accountId)) {
             prefs.edit {

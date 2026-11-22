@@ -4,6 +4,8 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import org.onekash.kashcal.calendarbackup.CalendarBackupScheduler
+import org.onekash.kashcal.calendarbackup.WorkManagerCalendarBackupScheduler
 import org.onekash.kashcal.sync.scheduler.IcsScheduler
 import org.onekash.kashcal.sync.scheduler.WorkManagerIcsScheduler
 import javax.inject.Singleton
@@ -15,4 +17,8 @@ abstract class SchedulerModule {
     @Binds
     @Singleton
     abstract fun bindIcsScheduler(impl: WorkManagerIcsScheduler): IcsScheduler
+
+    @Binds
+    @Singleton
+    abstract fun bindCalendarBackupScheduler(impl: WorkManagerCalendarBackupScheduler): CalendarBackupScheduler
 }

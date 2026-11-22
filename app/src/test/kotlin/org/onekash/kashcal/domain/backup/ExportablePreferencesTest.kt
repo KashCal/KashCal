@@ -12,8 +12,14 @@ import org.onekash.kashcal.data.preferences.PreferencesKeys
 class ExportablePreferencesTest {
 
     @Test
-    fun `allow list contains exactly 43 keys`() {
-        assertEquals(43, ExportablePreferences.KEYS.size)
+    fun `allow list contains exactly 44 keys`() {
+        assertEquals(44, ExportablePreferences.KEYS.size)
+    }
+
+    @Test
+    fun `recent time zones are backed up`() {
+        assertTrue(ExportablePreferences.KEYS.any { it.name == PreferencesKeys.RECENT_TIME_ZONES.name })
+        assertFalse(ExportablePreferences.EXCLUDED_KEY_NAMES.contains(PreferencesKeys.RECENT_TIME_ZONES.name))
     }
 
     @Test
@@ -41,8 +47,20 @@ class ExportablePreferencesTest {
     }
 
     @Test
-    fun `exclude list contains exactly 27 key names`() {
-        assertEquals(27, ExportablePreferences.EXCLUDED_KEY_NAMES.size)
+    fun `exclude list contains exactly 30 key names`() {
+        assertEquals(30, ExportablePreferences.EXCLUDED_KEY_NAMES.size)
+    }
+
+    @Test
+    fun `MONTH_FULL_ZOOM is excluded because it is per-device zoom state`() {
+        assertTrue(
+            "MONTH_FULL_ZOOM must be in EXCLUDED_KEY_NAMES",
+            ExportablePreferences.EXCLUDED_KEY_NAMES.contains(PreferencesKeys.MONTH_FULL_ZOOM.name),
+        )
+        assertFalse(
+            "MONTH_FULL_ZOOM must not be in the allow-list",
+            ExportablePreferences.KEYS.any { it.name == PreferencesKeys.MONTH_FULL_ZOOM.name },
+        )
     }
 
     @Test
@@ -159,8 +177,8 @@ class ExportablePreferencesTest {
             PreferencesKeys.PARSER_VERSION,
             PreferencesKeys.ICLOUD_URL_MIGRATION_COMPLETED,
             PreferencesKeys.ONBOARDING_COMPLETED,
+            PreferencesKeys.NOTIFICATION_ASK_DONE,
             PreferencesKeys.SHOWN_LOCAL_CALENDAR_INTRO,
-            PreferencesKeys.ONBOARDING_DISMISSED,
         )
         mustBeExcluded.forEach { key ->
             assertTrue(

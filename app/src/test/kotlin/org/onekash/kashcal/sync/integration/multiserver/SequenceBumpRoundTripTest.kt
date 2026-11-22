@@ -1,7 +1,6 @@
 package org.onekash.kashcal.sync.integration.multiserver
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -23,6 +22,7 @@ import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.util.UUID
@@ -85,7 +85,7 @@ class SequenceBumpRoundTripTest(
     @Before
     fun setup() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
         occurrenceGenerator = OccurrenceGenerator(
@@ -227,7 +227,7 @@ class SequenceBumpRoundTripTest(
         // master+exception bundle to the same href as an UPDATE. The test creates the series
         // first and then sends that UPDATE, because some servers (Zoho) reject an initial PUT
         // that already holds a RECURRENCE-ID exception for a series they haven't seen created.
-        val masterBody = IcsPatcher.serializeWithExceptions(master, emptyList())
+        val masterBody = IcsPatcher.serializeWithExceptions(master, null, emptyList())
         val createResult = client!!.createEvent(calendarUrl!!, uid, masterBody)
         assumeTrue(
             "create failed on ${config.name}: ${(createResult as? CalDavResult.Error)?.message}",
@@ -236,7 +236,7 @@ class SequenceBumpRoundTripTest(
         val (url, masterEtag) = createResult.getOrNull()!!
         trackEvent(url, masterEtag)
 
-        val bundleBody = IcsPatcher.serializeWithExceptions(master, listOf(exception))
+        val bundleBody = IcsPatcher.serializeWithExceptions(master, null, listOf(exception))
         assertEquals(
             "serializer must emit override SEQUENCE:1 on the wire",
             1, overrideSequence(bundleBody)

@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -15,6 +15,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.icaldav.parser.ICalParser
 import org.onekash.kashcal.data.db.KashCalDatabase
+import org.onekash.kashcal.data.db.PendingOperationTriggers
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
@@ -30,6 +31,7 @@ import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.Instant
@@ -93,7 +95,8 @@ class PushStrategyStoredCopyTest {
             Credentials(username = "u", password = "p", serverUrl = base), DefaultQuirks(base)
         )
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
+            .addCallback(PendingOperationTriggers.callback())
             .allowMainThreadQueries().build()
         occurrenceGenerator = OccurrenceGenerator(
             database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault()
@@ -114,7 +117,8 @@ class PushStrategyStoredCopyTest {
             pendingOperationsDao = database.pendingOperationsDao(),
             accountRepository = accountRepository,
             attendeesDao = database.attendeesDao(),
-            pendingCancelsDao = database.pendingCancelsDao()
+            pendingCancelsDao = database.pendingCancelsDao(),
+            icsSource = EventIcsStore(database),
         )
     }
 
@@ -124,13 +128,14 @@ class PushStrategyStoredCopyTest {
         server.shutdown()
     }
 
-    /** Store [ics] the way pull does: every row carries the whole body, the URL and the etag. */
+    /** Store [ics] the way pull does: every row carries the URL and etag, the series the body. */
     private suspend fun seedPulled(ics: String = series) {
         dav.put(path, ics)
         val parsed = ICalParser().parseAllEvents(ics).getOrNull()!!
         val seriesParsed = parsed.single { it.recurrenceId == null }
         val mapped = ICalEventMapper.toEntity(seriesParsed, ics, calendarId, url, dav.etag(path))
         seriesId = database.eventsDao().insert(mapped.event)
+        EventIcsStore(database).write(seriesId, mapped.ics)
         database.attendeesDao().replaceForEvent(seriesId, mapped.attendees.map { it.copy(eventId = seriesId) })
         occurrenceGenerator.regenerateOccurrences(database.eventsDao().getById(seriesId)!!)
         for (change in parsed.filter { it.recurrenceId != null }) {
@@ -178,7 +183,7 @@ class PushStrategyStoredCopyTest {
         val (_, sent, _) = dav.puts.single()
         for (id in listOf(seriesId, movedId)) {
             val row = database.eventsDao().getById(id)!!
-            assertEquals("row $id body", sent, row.rawIcal)
+            assertEquals("row $id body", sent, EventIcsStore(database).read(row))
             assertEquals("row $id etag", dav.etag(path), row.etag)
             assertEquals(SyncStatus.SYNCED, row.syncStatus)
         }
@@ -198,7 +203,7 @@ class PushStrategyStoredCopyTest {
 
         val (putPath, sent, _) = dav.puts.single()
         val row = database.eventsDao().getById(created.id)!!
-        assertEquals(sent, row.rawIcal)
+        assertEquals(sent, EventIcsStore(database).read(row))
         assertEquals(dav.etag(putPath), row.etag)
     }
 
@@ -213,5 +218,28 @@ class PushStrategyStoredCopyTest {
         push()
 
         assertEquals("e1", database.eventsDao().getById(seriesId)!!.etag)
+    }
+
+    @Test
+    fun `a large inline attachment survives an edit and upload`() = runTest {
+        // About 1.2 MB of base64: stored twice in one row it passes Android's 2 MB cursor window.
+        val attachValue = "QUJD".repeat(300_000)
+        val big = listOf(
+            "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Other Client//EN",
+            "BEGIN:VEVENT", "UID:$uid", "DTSTAMP:20261101T100000Z",
+            "DTSTART:20261201T100000Z", "DTEND:20261201T110000Z", "SUMMARY:Contract review",
+            "ATTACH;FMTTYPE=application/pdf;ENCODING=BASE64;VALUE=BINARY:$attachValue",
+            "END:VEVENT", "END:VCALENDAR", "",
+        ).joinToString("\r\n")
+        seedPulled(big)
+
+        val stored = database.eventsDao().getById(seriesId)!!
+        eventWriter.updateEvent(stored.copy(title = "Contract review (edited)"), isLocal = false)
+        push()
+
+        val onServer = unfold(dav.body(path))
+        assertTrue("the edit reached the server", "SUMMARY:Contract review (edited)" in onServer)
+        val attachLine = onServer.lines().single { it.startsWith("ATTACH") }
+        assertEquals("the attachment goes back unchanged", attachValue, attachLine.substringAfter(':').trimEnd())
     }
 }

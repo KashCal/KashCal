@@ -8,11 +8,25 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.Month
 import java.time.YearMonth
-import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
 
 object RecurrenceRule : ParseRule {
+
+    private val DAY_HALVES = setOf("morning", "afternoon", "evening", "night")
+
+    private val ORDINAL_SUFFIX = Regex("""\d(st|nd|rd|th)$""")
+
+    private val PLURAL_WEEKDAYS: Map<String, Set<DayOfWeek>> = mapOf(
+        "mondays" to setOf(DayOfWeek.MONDAY),
+        "tuesdays" to setOf(DayOfWeek.TUESDAY),
+        "wednesdays" to setOf(DayOfWeek.WEDNESDAY),
+        "thursdays" to setOf(DayOfWeek.THURSDAY),
+        "fridays" to setOf(DayOfWeek.FRIDAY),
+        "saturdays" to setOf(DayOfWeek.SATURDAY),
+        "sundays" to setOf(DayOfWeek.SUNDAY),
+        "weekends" to setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY),
+    )
 
     private val WEEKDAYS = setOf(
         DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
@@ -65,8 +79,25 @@ object RecurrenceRule : ParseRule {
                     break
                 }
 
-                token.type == TokenType.KEYWORD && token.value == "EVERY" -> {
+                // "each" reads as "every". It stays an UNKNOWN token, so a trailing "each" in a
+                // title ("Tickets $10 each") is never dropped as an edge keyword.
+                (token.type == TokenType.KEYWORD && token.value == "EVERY") ||
+                    (token.type == TokenType.UNKNOWN && token.text == "each") -> {
                     if (parseEveryPattern(tokens, index, context)) {
+                        found = true
+                        break
+                    }
+                }
+
+                token.type == TokenType.KEYWORD && token.value == "ON" -> {
+                    if (parsePluralWeekdays(tokens, index, context)) {
+                        found = true
+                        break
+                    }
+                }
+
+                token.type == TokenType.UNKNOWN && token.text == "once" -> {
+                    if (parseOncePer(tokens, index, context)) {
                         found = true
                         break
                     }
@@ -231,19 +262,108 @@ object RecurrenceRule : ParseRule {
     }
 
     /**
+     * Parses "on" + plural weekdays joined by "and" or adjacent ("on mondays and wednesdays", "on
+     * weekends") as a weekly rule starting on the earliest upcoming one. Only the full plural
+     * names count, so "suns" or "sats" stay title words.
+     */
+    private fun parsePluralWeekdays(tokens: List<Token>, onIndex: Int, context: ParseContext): Boolean {
+        val (days, indices) = collectDays(tokens, onIndex + 1, context) { token ->
+            PLURAL_WEEKDAYS[token.text].takeIf { token.type == TokenType.UNKNOWN }
+        }
+        if (days.isEmpty()) return false
+        setWeekly(context, days, listOf(onIndex) + indices)
+        return true
+    }
+
+    /**
+     * Collects the days named from [start] on, joined by "and" or adjacent (normalizing turns
+     * commas into spaces); [dayOf] reads one token. An "and" counts only between two day words.
+     */
+    private fun collectDays(
+        tokens: List<Token>,
+        start: Int,
+        context: ParseContext,
+        dayOf: (Token) -> Set<DayOfWeek>?,
+    ): Pair<Set<DayOfWeek>, List<Int>> {
+        val days = linkedSetOf<DayOfWeek>()
+        val indices = mutableListOf<Int>()
+        var scan = start
+        while (scan < tokens.size && !context.isConsumed(scan)) {
+            val token = tokens[scan]
+            val named = dayOf(token)
+            if (named != null) {
+                days.addAll(named)
+                indices.add(scan)
+                scan++
+                continue
+            }
+            val after = scan + 1
+            if (days.isNotEmpty() && token.type == TokenType.UNKNOWN && token.text == "and" &&
+                after < tokens.size && !context.isConsumed(after) && dayOf(tokens[after]) != null
+            ) {
+                indices.add(scan)
+                scan++
+                continue
+            }
+            break
+        }
+        return days to indices
+    }
+
+    /**
+     * Sets a weekly rule on [days] starting on the earliest upcoming one (RFC 5545 leaves a
+     * DTSTART outside the BYDAY set undefined) and consumes [indices].
+     */
+    private fun setWeekly(context: ParseContext, days: Set<DayOfWeek>, indices: List<Int>) {
+        context.rrule = RruleBuilder.weekly(days = days)
+        val refDate = context.reference.toLocalDate()
+        context.weekdayDate = days.minOf { resolveBareWeekday(refDate, it) }
+        context.dateSet = true
+        context.consume(indices)
+    }
+
+    /** Parses "once a day/week/month/year" (the number normalizer makes "a" a 1). */
+    private fun parseOncePer(tokens: List<Token>, onceIndex: Int, context: ParseContext): Boolean {
+        val countIndex = onceIndex + 1
+        val unitIndex = onceIndex + 2
+        if (unitIndex >= tokens.size || context.isConsumed(countIndex) || context.isConsumed(unitIndex)) return false
+        val count = tokens[countIndex]
+        if (count.type != TokenType.NUMBER || count.value != 1) return false
+        val unit = tokens[unitIndex].takeIf { it.type == TokenType.UNIT }?.value as? ChronoUnit ?: return false
+        context.rrule = unitToRrule(unit, 1) ?: return false
+        context.consume(listOf(onceIndex, countIndex, unitIndex))
+        return true
+    }
+
+    /**
      * Parses a phrase starting with "every":
+     * - a day-half word: daily ("every morning", "every evening").
      * - "other" + UNIT or WEEKDAY: INTERVAL=2 ("every other week", "every other Friday").
      * - WEEKDAY, with more joined by "and" or adjacent: weekly with BYDAY.
      * - "weekday" or "weekdays": weekly Monday to Friday; "weekend": weekly Saturday and Sunday.
      * - UNIT: that frequency ("every day").
      * - NUMBER + UNIT [+ "on" WEEKDAY]: that interval; the weekday adds BYDAY and WKST only
      *   for weeks ("every 2 weeks on Friday").
+     * - an ordinal day and a month: yearly on that date ("every 25th december").
+     * - an ordinal day with no unit, weekday or second ordinal after it: monthly on that day
+     *   ("every 1st"), starting on the first month on or after the reference that has it.
      */
     private fun parseEveryPattern(tokens: List<Token>, everyIndex: Int, context: ParseContext): Boolean {
         val nextIndex = everyIndex + 1
         if (nextIndex >= tokens.size) return false
         val next = tokens[nextIndex]
         if (context.isConsumed(nextIndex)) return false
+
+        // "every morning", "every evening": daily. Only "every" is consumed, so TimeRule still
+        // reads the day-half word as the default time or as pm for an hour ("every evening at 6").
+        if (next.type == TokenType.TIME_KEYWORD && next.text.lowercase() in DAY_HALVES) {
+            context.rrule = RruleBuilder.daily()
+            context.consume(everyIndex)
+            return true
+        }
+
+        // "each other" is a phrase ("get to know each other friday"), not "every other".
+        if (tokens[everyIndex].text == "each" && next.text == "other") return false
 
         if (next.type == TokenType.UNKNOWN && next.text.lowercase() == "other") {
             val targetIndex = nextIndex + 1
@@ -271,45 +391,11 @@ object RecurrenceRule : ParseRule {
         }
 
         if (next.type == TokenType.WEEKDAY) {
-            val firstDay = next.value as? DayOfWeek ?: return false
-            val days = linkedSetOf(firstDay)
-            val consumed = mutableListOf(everyIndex, nextIndex)
-
-            // Collect further weekdays joined by "and" or adjacent (normalizing turns commas
-            // into spaces).
-            var scan = nextIndex + 1
-            while (scan < tokens.size) {
-                if (context.isConsumed(scan)) break
-                val tok = tokens[scan]
-                if (tok.type == TokenType.UNKNOWN && tok.text.lowercase() == "and") {
-                    // An "and" counts only if a weekday follows.
-                    val after = scan + 1
-                    if (after < tokens.size && !context.isConsumed(after) &&
-                        tokens[after].type == TokenType.WEEKDAY
-                    ) {
-                        consumed.add(scan)
-                        scan++
-                        continue
-                    }
-                    break
-                }
-                if (tok.type == TokenType.WEEKDAY) {
-                    val day = tok.value as? DayOfWeek ?: break
-                    days.add(day)
-                    consumed.add(scan)
-                    scan++
-                    continue
-                }
-                break
+            val (days, indices) = collectDays(tokens, nextIndex, context) { token ->
+                (token.value as? DayOfWeek)?.takeIf { token.type == TokenType.WEEKDAY }?.let(::setOf)
             }
-
-            context.rrule = RruleBuilder.weekly(days = days)
-            // Start on the earliest upcoming selected weekday: RFC 5545 leaves a DTSTART
-            // outside the BYDAY set undefined.
-            val refDate = context.reference.toLocalDate()
-            context.weekdayDate = days.minOf { resolveBareWeekday(refDate, it) }
-            context.dateSet = true
-            context.consume(consumed)
+            if (days.isEmpty()) return false
+            setWeekly(context, days, listOf(everyIndex) + indices)
             return true
         }
 
@@ -333,6 +419,33 @@ object RecurrenceRule : ParseRule {
             context.consume(everyIndex)
             context.consume(nextIndex)
             return true
+        }
+
+        if (next.type == TokenType.NUMBER && ORDINAL_SUFFIX.containsMatchIn(next.text)) {
+            val after = tokens.getOrNull(nextIndex + 1)
+            val day = next.value as? Int
+            // "every 25th december", "every 1st of March": yearly on that date. Only "every" is
+            // consumed; AbsoluteDateRule reads the date and starts the series on it.
+            val monthAfter = after?.type == TokenType.MONTH ||
+                (after?.type == TokenType.KEYWORD && after.value == "OF" &&
+                    tokens.getOrNull(nextIndex + 2)?.type == TokenType.MONTH)
+            if (day != null && day in 1..31 && monthAfter) {
+                context.rrule = RruleBuilder.yearly()
+                context.consume(everyIndex)
+                return true
+            }
+            // "every 1st and 15th" names two days; one BYMONTHDAY would drop the second.
+            val andOrdinal = after?.type == TokenType.UNKNOWN && after.text == "and" &&
+                tokens.getOrNull(nextIndex + 2)?.let { ORDINAL_SUFFIX.containsMatchIn(it.text) } == true
+            if (day != null && day in 1..31 && !andOrdinal &&
+                (after == null || (after.type != TokenType.UNIT && after.type != TokenType.WEEKDAY))
+            ) {
+                context.rrule = RruleBuilder.monthly(dayOfMonth = day)
+                context.weekdayDate = firstDayOfMonthOnOrAfter(context.reference.toLocalDate(), day)
+                context.dateSet = true
+                context.consume(listOf(everyIndex, nextIndex))
+                return true
+            }
         }
 
         if (next.type == TokenType.NUMBER) {
@@ -387,7 +500,6 @@ object RecurrenceRule : ParseRule {
 
     private fun parseEndCondition(tokens: List<Token>, context: ParseContext) {
         val rrule = context.rrule ?: return
-        val refDate = context.reference.toLocalDate()
 
         for ((index, token) in tokens.withIndex()) {
             if (context.isConsumed(index)) continue
@@ -396,24 +508,10 @@ object RecurrenceRule : ParseRule {
 
             when (value) {
                 "UNTIL" -> {
-                    val nextIdx = context.findNextUnconsumed(tokens, index + 1) ?: continue
-                    val nextToken = tokens[nextIdx]
-                    if (nextToken.type == TokenType.MONTH) {
-                        val month = nextToken.value as? Month ?: continue
-                        val consumed = mutableListOf(index, nextIdx)
-                        val dayIdx = context.findNextUnconsumed(tokens, nextIdx + 1)
-                        val untilDate = if (dayIdx != null && tokens[dayIdx].type == TokenType.NUMBER) {
-                            val day = tokens[dayIdx].value as? Int ?: continue
-                            consumed.add(dayIdx)
-                            resolveFutureDate(refDate, month, day)
-                        } else {
-                            resolveFutureMonthEnd(refDate, month)
-                        }
-                        val untilMs = untilDate.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()
-                        context.rrule = RruleBuilder.withUntil(rrule, untilMs)
-                        context.consume(consumed)
-                        return
-                    }
+                    val end = parseUntilEnd(tokens, index, context) ?: continue
+                    context.untilDate = end.first
+                    context.consume(end.second)
+                    return
                 }
                 "TIMES" -> {
                     if (index == 0) continue
@@ -439,8 +537,93 @@ object RecurrenceRule : ParseRule {
         }
     }
 
+    /**
+     * Reads the end date after the UNTIL at [untilIndex] and returns it with the indices to
+     * consume, or null when no end date follows. Forms: a month with an optional day and year
+     * ("until June 15", "until June 15 2027", "until June" for its last day), and "(the) end of
+     * (the|this) week|month|year|<month>", a month optionally with a year. Without a year the date
+     * is the next one on or after today. The week ends on the day before the first day of the week
+     * by [ParseContext.firstDayOfWeek].
+     */
+    private fun parseUntilEnd(
+        tokens: List<Token>,
+        untilIndex: Int,
+        context: ParseContext,
+    ): Pair<LocalDate, List<Int>>? {
+        val refDate = context.reference.toLocalDate()
+        val consumed = mutableListOf(untilIndex)
+        var cursor = context.findNextUnconsumed(tokens, untilIndex + 1) ?: return null
+        val first = tokens[cursor]
+
+        if (first.type == TokenType.MONTH) {
+            val month = first.value as? Month ?: return null
+            consumed.add(cursor)
+            val dayIdx = context.findNextUnconsumed(tokens, cursor + 1)
+            // Only 1 to 31 is a day; "until june 0", typed on the way to "june 05", is the month.
+            val day = dayIdx?.let { tokens[it] }?.takeIf { it.type == TokenType.NUMBER }
+                ?.let { it.value as? Int }?.takeIf { it in 1..31 }
+            if (day != null) consumed.add(dayIdx)
+            val year = yearAfter(tokens, consumed.max(), context)?.also { consumed.add(it.second) }?.first
+            val date = when {
+                year != null && day != null -> dayInMonth(year, month, day)
+                year != null -> YearMonth.of(year, month).atEndOfMonth()
+                day != null -> resolveFutureDate(refDate, month, day)
+                else -> resolveFutureMonthEnd(refDate, month)
+            }
+            return date to consumed
+        }
+
+        // [the] end of [the|this] <period>
+        fun isKeyword(index: Int?, vararg values: String) =
+            index != null && tokens[index].type == TokenType.KEYWORD && tokens[index].value in values
+        if (isKeyword(cursor, "THE")) {
+            consumed.add(cursor)
+            cursor = context.findNextUnconsumed(tokens, cursor + 1) ?: return null
+        }
+        if (tokens[cursor].type != TokenType.UNKNOWN || tokens[cursor].text != "end") return null
+        consumed.add(cursor)
+        cursor = context.findNextUnconsumed(tokens, cursor + 1) ?: return null
+        if (!isKeyword(cursor, "OF")) return null
+        consumed.add(cursor)
+        cursor = context.findNextUnconsumed(tokens, cursor + 1) ?: return null
+        if (isKeyword(cursor, "THE", "THIS")) {
+            consumed.add(cursor)
+            cursor = context.findNextUnconsumed(tokens, cursor + 1) ?: return null
+        }
+        val period = tokens[cursor]
+        val date = when {
+            period.type == TokenType.MONTH -> {
+                val month = period.value as? Month ?: return null
+                val year = yearAfter(tokens, cursor, context)?.also { consumed.add(it.second) }?.first
+                if (year != null) YearMonth.of(year, month).atEndOfMonth() else resolveFutureMonthEnd(refDate, month)
+            }
+            period.type == TokenType.UNIT -> when (period.value) {
+                ChronoUnit.WEEKS -> {
+                    weekStart(refDate, context.firstDayOfWeek).plusDays(6)
+                }
+                ChronoUnit.MONTHS -> YearMonth.from(refDate).atEndOfMonth()
+                ChronoUnit.YEARS -> LocalDate.of(refDate.year, 12, 31)
+                else -> return null
+            }
+            else -> return null
+        }
+        consumed.add(cursor)
+        return date to consumed
+    }
+
+    /** Returns the YEAR token right after [index] (the next unconsumed token) and its index. */
+    private fun yearAfter(tokens: List<Token>, index: Int, context: ParseContext): Pair<Int, Int>? {
+        val next = context.findNextUnconsumed(tokens, index + 1) ?: return null
+        val token = tokens[next].takeIf { it.type == TokenType.YEAR } ?: return null
+        return (token.value as? Int)?.let { it to next }
+    }
+
+    /** Returns [day] of [month] in [year], clamped to that month's length in that year. */
+    private fun dayInMonth(year: Int, month: Month, day: Int): LocalDate =
+        LocalDate.of(year, month, day.coerceIn(1, YearMonth.of(year, month).lengthOfMonth()))
+
     private fun resolveFutureDate(refDate: LocalDate, month: Month, day: Int): LocalDate {
-        val thisYear = LocalDate.of(refDate.year, month, day.coerceAtMost(month.length(refDate.isLeapYear)))
+        val thisYear = LocalDate.of(refDate.year, month, day.coerceIn(1, month.length(refDate.isLeapYear)))
         return if (thisYear.isBefore(refDate)) thisYear.plusYears(1) else thisYear
     }
 

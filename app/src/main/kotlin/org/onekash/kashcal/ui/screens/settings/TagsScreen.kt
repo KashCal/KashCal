@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.category.CategoryName
 import org.onekash.kashcal.domain.category.CategoryNameValidator
+import org.onekash.kashcal.domain.search.SearchQuery
 import org.onekash.kashcal.ui.components.SettingsTopAppBar
 import org.onekash.kashcal.ui.components.category.toMessageRes
 import org.onekash.kashcal.ui.components.pickers.ColorPaletteSheet
@@ -65,7 +66,8 @@ private enum class TagSheet { NONE, COLOR, RENAME }
 
 /**
  * Shows the tag-management screen: every tag with a colored swatch, each of which the user can
- * recolor, rename or delete. The caller owns the tag list and the three actions.
+ * recolor, rename or delete, or list its events ([onShowEvents], offered only for a name
+ * [SearchQuery.tagText] can write as search text). The caller owns the tag list and the actions.
  *
  * The open action sheet and the name of the tag it targets are both saved, so the sheet
  * survives a configuration change on the same tag.
@@ -78,6 +80,7 @@ fun TagsScreen(
     onSetColor: (name: String, color: Int) -> Unit,
     onRename: (from: String, to: String) -> Unit,
     onDelete: (name: String) -> Unit,
+    onShowEvents: ((name: String) -> Unit)? = null,
 ) {
     var activeSheet by rememberSaveable { mutableStateOf(TagSheet.NONE) }
     var targetName by rememberSaveable { mutableStateOf("") }
@@ -129,12 +132,16 @@ fun TagsScreen(
                     key = { it.name },
                     contentType = { "tag_item" }
                 ) { tag ->
+                    val searchable = remember(tag.name) { SearchQuery.tagText(tag.name) != null }
                     Column(modifier = Modifier.animateItem()) {
                         TagRow(
                             tag = tag,
                             onColor = { targetName = tag.name; activeSheet = TagSheet.COLOR },
                             onRename = { targetName = tag.name; activeSheet = TagSheet.RENAME },
                             onDelete = { onDelete(tag.name) },
+                            onShowEvents = onShowEvents
+                                ?.takeIf { searchable }
+                                ?.let { show -> { show(tag.name) } },
                         )
                         HorizontalDivider(
                             modifier = Modifier.padding(start = 32.dp),
@@ -220,6 +227,7 @@ private fun TagRow(
     onColor: () -> Unit,
     onRename: () -> Unit,
     onDelete: () -> Unit,
+    onShowEvents: (() -> Unit)?,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     val swatchDesc = stringResource(R.string.tags_swatch_content_desc, tag.name)
@@ -269,6 +277,12 @@ private fun TagRow(
                 text = { Text(stringResource(R.string.tags_action_delete)) },
                 onClick = { menuExpanded = false; onDelete() }
             )
+            if (onShowEvents != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.tags_show_events)) },
+                    onClick = { menuExpanded = false; onShowEvents() }
+                )
+            }
         }
     }
 }

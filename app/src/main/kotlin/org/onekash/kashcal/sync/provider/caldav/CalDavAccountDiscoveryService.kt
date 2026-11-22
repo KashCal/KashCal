@@ -16,7 +16,9 @@ import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.CalDavClientFactory
 import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.client.model.CalDavResult
+import org.onekash.kashcal.sync.discovery.DiscoveryErrorReason
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
+import org.onekash.kashcal.sync.discovery.credentialSaveFailed
 import org.onekash.kashcal.sync.discovery.RefusalRecordingClient
 import org.onekash.kashcal.sync.discovery.confirmUnlistedCalendars
 import org.onekash.kashcal.sync.discovery.persistCalendarUserAddresses
@@ -46,7 +48,8 @@ import javax.net.ssl.SSLHandshakeException
  *    [probeCaldavPaths].
  * 3. Discover the calendar home sets and list the calendars in each.
  * 4. Create or update the Account row in Room.
- * 5. Save the credentials to encrypted storage; if that fails, delete the account.
+ * 5. Save the credentials to encrypted storage ([credentialSaveFailed] says what a failed save
+ *    writes).
  * 6. Create or update the Calendar rows, and discover the calendar-user addresses and
  *    scheduling facts (non-fatal).
  */
@@ -224,12 +227,26 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 )
             }
 
-            // Step 4: Create or update Account in Room. The lookup includes the home set so
-            // the same username on different servers gets separate accounts.
+            // Step 4: Find an existing account. The lookup includes the home set so the same
+            // username on different servers gets separate accounts.
             val existingAccount = accountRepository.getAccountByProviderEmailAndHomeSetUrl(
                 AccountProvider.CALDAV, username, normalizedHomeUrl
             )
+            val accountCredentials = AccountCredentials(
+                username = username,
+                password = password,
+                serverUrl = normalizedUrl,
+                trustInsecure = trustInsecure,
+                principalUrl = principalUrl,
+                calendarHomeSet = calendarHomeUrl
+            )
+
+            // Step 5: Save the credentials to encrypted storage. [credentialSaveFailed] says what a
+            // failed save writes.
             val account = if (existingAccount != null) {
+                if (!accountRepository.saveCredentials(existingAccount.id, accountCredentials)) {
+                    return@withContext credentialSaveFailed(TAG)
+                }
                 Log.d(TAG, "Updating existing account: ${existingAccount.id}")
                 val updated = existingAccount.copy(
                     principalUrl = principalUrl,
@@ -249,27 +266,12 @@ class CalDavAccountDiscoveryService @Inject constructor(
                     homeSetUrl = normalizedHomeUrl,  // Sync builds DefaultQuirks from it
                     isEnabled = true
                 )
-                val accountId = accountRepository.createAccount(newAccount)
-                newAccount.copy(id = accountId)
-            }
-
-            // Step 5: Save credentials to encrypted storage. Without them the account can't
-            // sync, so a failed save deletes it.
-            val accountCredentials = AccountCredentials(
-                username = username,
-                password = password,
-                serverUrl = normalizedUrl,
-                trustInsecure = trustInsecure,
-                principalUrl = principalUrl,
-                calendarHomeSet = calendarHomeUrl
-            )
-            val credentialsSaved = accountRepository.saveCredentials(account.id, accountCredentials)
-            if (!credentialsSaved) {
-                Log.e(TAG, "Failed to save credentials - secure storage unavailable")
-                accountRepository.deleteAccount(account.id)
-                return@withContext DiscoveryResult.Error(
-                    "Could not save credentials securely. Please try again, or restart your device if the problem persists."
-                )
+                val created = newAccount.copy(id = accountRepository.createAccount(newAccount))
+                if (!accountRepository.saveCredentials(created.id, accountCredentials)) {
+                    accountRepository.deleteAccount(created.id)
+                    return@withContext credentialSaveFailed(TAG)
+                }
+                created
             }
 
             // Step 5b: Discover and persist the calendar-user-address-set (RFC 6638 §2.4.1).
@@ -703,6 +705,10 @@ class CalDavAccountDiscoveryService @Inject constructor(
      * [DiscoveryResult.CalendarsFound].
      *
      * @param displayName user-entered account name; blank falls back to the server hostname
+     * @param expectedAccountId the account a sign in again was opened from, or null for a new
+     *   sign-in. When set, only that account can match ([matchesSignInAgain]); any other result is
+     *   [DiscoveryErrorReason.ACCOUNT_MISMATCH] with nothing written, and a match keeps the
+     *   account's enabled state and name.
      * @return [DiscoveryResult.Success] with the account and created calendars, or an error
      */
     suspend fun createAccountWithSelectedCalendars(
@@ -713,7 +719,8 @@ class CalDavAccountDiscoveryService @Inject constructor(
         principalUrl: String,
         calendarHomeUrl: String,
         selectedCalendars: List<org.onekash.kashcal.sync.discovery.DiscoveredCalendar>,
-        displayName: String? = null
+        displayName: String? = null,
+        expectedAccountId: Long? = null
     ): DiscoveryResult = withContext(Dispatchers.IO) {
         Log.i(TAG, "Creating account with ${selectedCalendars.size} selected calendars")
 
@@ -722,19 +729,62 @@ class CalDavAccountDiscoveryService @Inject constructor(
         }
 
         try {
-            // Step 1: Create or update Account in Room. The lookup includes the home set so
-            // the same username on different servers gets separate accounts.
+            // Step 1: Find an existing account. The lookup includes the home set so the same
+            // username on different servers gets separate accounts.
             val normalizedHomeUrl = normalizeHomeSetUrl(calendarHomeUrl)
-            val existingAccount = accountRepository.getAccountByProviderEmailAndHomeSetUrl(
-                AccountProvider.CALDAV, username, normalizedHomeUrl
-            )
-            val account = if (existingAccount != null) {
-                Log.d(TAG, "Updating existing account: ${existingAccount.id}")
-                val updated = existingAccount.copy(
-                    principalUrl = principalUrl,
-                    homeSetUrl = normalizedHomeUrl,  // Sync builds DefaultQuirks from it
-                    isEnabled = true
+            val existingAccount = if (expectedAccountId != null) {
+                accountRepository.getAccountById(expectedAccountId)
+                    ?.takeIf { matchesSignInAgain(it, username, normalizedHomeUrl) }
+                    ?: return@withContext signInAgainMismatch()
+            } else {
+                accountRepository.getAccountByProviderEmailAndHomeSetUrl(
+                    AccountProvider.CALDAV, username, normalizedHomeUrl
                 )
+            }
+            val accountCredentials = AccountCredentials(
+                username = username,
+                password = password,
+                serverUrl = serverUrl,
+                trustInsecure = trustInsecure,
+                principalUrl = principalUrl,
+                calendarHomeSet = calendarHomeUrl
+            )
+
+            // Step 2: Save the credentials to encrypted storage. [credentialSaveFailed] says what a
+            // failed save writes.
+            val account = if (existingAccount != null) {
+                val updated = if (expectedAccountId != null) {
+                    // Another row may already hold the discovered home set (a duplicate an
+                    // earlier re-add created); the unique (provider, email, home_set_url) index
+                    // would refuse the rewrite, so the stored home set stays.
+                    val homeSetHolder = accountRepository.getAccountByProviderEmailAndHomeSetUrl(
+                        AccountProvider.CALDAV, username, normalizedHomeUrl
+                    )
+                    // Sync needs a home set, so a row without one can't keep its own here.
+                    if (homeSetHolder != null && homeSetHolder.id != existingAccount.id &&
+                        existingAccount.homeSetUrl == null
+                    ) {
+                        return@withContext signInAgainMismatch()
+                    }
+                    existingAccount.copy(
+                        principalUrl = principalUrl,
+                        homeSetUrl = if (homeSetHolder != null && homeSetHolder.id != existingAccount.id) {
+                            existingAccount.homeSetUrl
+                        } else {
+                            normalizedHomeUrl
+                        }
+                    )
+                } else {
+                    existingAccount.copy(
+                        principalUrl = principalUrl,
+                        homeSetUrl = normalizedHomeUrl,  // Sync builds DefaultQuirks from it
+                        isEnabled = true
+                    )
+                }
+                if (!accountRepository.saveCredentials(existingAccount.id, accountCredentials)) {
+                    return@withContext credentialSaveFailed(TAG)
+                }
+                Log.d(TAG, "Updating existing account: ${existingAccount.id}")
                 accountRepository.updateAccount(updated)
                 updated
             } else {
@@ -749,27 +799,12 @@ class CalDavAccountDiscoveryService @Inject constructor(
                     homeSetUrl = normalizedHomeUrl,  // Sync builds DefaultQuirks from it
                     isEnabled = true
                 )
-                val accountId = accountRepository.createAccount(newAccount)
-                newAccount.copy(id = accountId)
-            }
-
-            // Step 2: Save credentials to encrypted storage. Without them the account can't
-            // sync, so a failed save deletes it.
-            val accountCredentials = AccountCredentials(
-                username = username,
-                password = password,
-                serverUrl = serverUrl,
-                trustInsecure = trustInsecure,
-                principalUrl = principalUrl,
-                calendarHomeSet = calendarHomeUrl
-            )
-            val credentialsSaved = accountRepository.saveCredentials(account.id, accountCredentials)
-            if (!credentialsSaved) {
-                Log.e(TAG, "Failed to save credentials - secure storage unavailable")
-                accountRepository.deleteAccount(account.id)
-                return@withContext DiscoveryResult.Error(
-                    "Could not save credentials securely. Please try again, or restart your device if the problem persists."
-                )
+                val created = newAccount.copy(id = accountRepository.createAccount(newAccount))
+                if (!accountRepository.saveCredentials(created.id, accountCredentials)) {
+                    accountRepository.deleteAccount(created.id)
+                    return@withContext credentialSaveFailed(TAG)
+                }
+                created
             }
 
             // Step 2b: Discover the calendar-user-address-set (RFC 6638 §2.4.1). Failures are
@@ -859,6 +894,28 @@ class CalDavAccountDiscoveryService @Inject constructor(
 
         return url
     }
+
+    /**
+     * True when [account], the account a sign in again was opened from, is the one the entered
+     * [username] and the discovered [normalizedHomeUrl] name: a CalDAV account with that username
+     * whose stored home set normalizes to the same URL, or has none (older rows). A stored home
+     * set that doesn't parse never matches.
+     */
+    private fun matchesSignInAgain(account: Account, username: String, normalizedHomeUrl: String): Boolean {
+        if (account.provider != AccountProvider.CALDAV || account.email != username) return false
+        val stored = account.homeSetUrl ?: return true
+        return try {
+            normalizeHomeSetUrl(stored) == normalizedHomeUrl
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    /** Returns the [DiscoveryErrorReason.ACCOUNT_MISMATCH] error a sign in again reports. */
+    private fun signInAgainMismatch() = DiscoveryResult.Error(
+        "This is a different account than the one being signed in again.",
+        reason = DiscoveryErrorReason.ACCOUNT_MISMATCH
+    )
 
     /**
      * Normalizes a calendar home set URL so one server always yields one stored value, even

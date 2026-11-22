@@ -1135,8 +1135,9 @@ class IcsRecurringExceptionSyncTest {
 
     /**
      * Stores only the first of two events sharing UID and DTSTART (#227). Appending startTs gives
-     * both the same renamed UID, so the second insert trips the trigger and the master loop's
-     * catch skips it. The sync still returns Success with count.added == 1.
+     * both the same renamed UID, so the second insert trips the trigger; the per-event retry
+     * then stores the first and leaves the second out. The sync returns Success with
+     * count.added == 1 and count.failed == 1.
      */
     @Test
     fun `same-UID same-DTSTART degenerate case persists first event without crash`() = runTest {
@@ -1166,15 +1167,14 @@ class IcsRecurringExceptionSyncTest {
             content = degenerateIcs, etag = null, lastModified = null
         )
         coEvery { eventsDao.getByCalendarIdInRange(any(), any(), any()) } returns emptyList()
-        // Simulates the master-uniqueness trigger on the second insert; the master loop catches
-        // any Exception. `IcsSubscriptionRepositoryDuplicateUidIntegrationTest` runs the real
-        // trigger.
-        var insertCallCount = 0
+        // Simulates the master-uniqueness trigger on the second copy. The inline transaction
+        // stub can't roll back, so the first copy is recorded once whichever pass writes it.
+        // `IcsSubscriptionRepositoryDuplicateUidIntegrationTest` and IcsExchangeFeedTest run
+        // the real trigger.
         coEvery { eventsDao.insert(any()) } answers {
-            insertCallCount++
-            if (insertCallCount == 1) {
-                val event = firstArg<Event>()
-                insertedEvents.add(event.copy(id = 1000L))
+            val event = firstArg<Event>()
+            if (event.title == "First Copy") {
+                if (insertedEvents.none { it.title == "First Copy" }) insertedEvents.add(event.copy(id = 1000L))
                 1000L
             } else {
                 throw android.database.sqlite.SQLiteConstraintException(
@@ -1186,11 +1186,9 @@ class IcsRecurringExceptionSyncTest {
         val result = repository.refreshSubscription(1L)
 
         assertTrue("Sync must not crash on degenerate input", result is IcsSubscriptionRepository.SyncResult.Success)
-        assertEquals(
-            "Only the first event persists; second is swallowed at the catch site",
-            1,
-            (result as IcsSubscriptionRepository.SyncResult.Success).count.added
-        )
+        val count = (result as IcsSubscriptionRepository.SyncResult.Success).count
+        assertEquals("Only the first event persists", 1, count.added)
+        assertEquals("The second copy is reported as not saved", 1, count.failed)
         assertEquals(1, insertedEvents.size)
     }
 

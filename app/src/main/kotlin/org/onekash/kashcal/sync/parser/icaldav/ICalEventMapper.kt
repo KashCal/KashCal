@@ -16,14 +16,16 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 /**
- * Holds a pulled [Event] and the [Attendee] rows from the same VEVENT.
+ * Holds a pulled [Event], the [Attendee] rows from the same VEVENT, and the stored ICS the caller
+ * keeps for it ([ics], written through [org.onekash.kashcal.data.db.EventIcsSource]).
  *
  * The attendees carry `eventId = 0L` because the event isn't upserted yet; callers must
  * `attendees.map { it.copy(eventId = savedId) }` once the upsert returns its ID.
  */
 data class MappedEntity(
     val event: Event,
-    val attendees: List<Attendee>
+    val attendees: List<Attendee>,
+    val ics: String? = null,
 )
 
 /**
@@ -37,10 +39,35 @@ data class MappedEntity(
 object ICalEventMapper {
 
     /**
-     * Maps [icalEvent] to a synced Room event plus its ATTENDEE rows; see [MappedEntity] for
-     * the attendee `eventId` rule.
+     * The zone stored for a timed series whose DTSTART is a UTC time. Rows holding it, Room and
+     * device alike, are written in UTC form ([EventToICalEventMapper.writeZone]).
+     */
+    const val UTC_SERIES_ZONE = "UTC"
+
+    /** Longest unknown property value [toEntity] copies into [Event.extraProperties]. */
+    const val MAX_EXTRA_PROPERTY_VALUE_CHARS = 25_000
+
+    /**
+     * Returns the zone [Event.timezone] stores for [icalEvent]: [UTC_SERIES_ZONE] for a timed
+     * series (an RRULE) whose DTSTART is a UTC time, else DTSTART's own zone (null for a UTC or
+     * DATE start, the device zone for a floating one).
      *
-     * @param rawIcal the original ICS, kept for round trips.
+     * A UTC time is an absolute time (RFC 5545 §3.3.5 FORM #2), so a series written in UTC keeps
+     * its UTC time of day on every occurrence; with no zone it would expand in the device zone
+     * and move an hour at each clock change. One-offs and changed occurrences keep a null zone:
+     * they aren't expanded, so their zone moves nothing.
+     */
+    fun storedZoneOf(icalEvent: ICalEvent): String? {
+        val start = icalEvent.dtStart
+        return if (icalEvent.rrule != null && start.isUtc && !start.isDate) UTC_SERIES_ZONE else start.timezone?.id
+    }
+
+    /**
+     * Maps [icalEvent] to a synced Room event plus its ATTENDEE rows; see [MappedEntity] for
+     * the attendee `eventId` rule, and [Event.extraProperties] for which unknown values it keeps.
+     *
+     * @param rawIcal the stored ICS kept for round trips, returned as [MappedEntity.ics]: the
+     *   server's resource on the pull, the file's text for its UID on a file import.
      * @param masterDtStart the master's DTSTART when [icalEvent] is an exception, used to
      *   normalize a value-type-mismatched RECURRENCE-ID ([normalizeRecurrenceId]). Null for
      *   masters or when the master isn't available; the RECURRENCE-ID is then stored as is.
@@ -82,7 +109,7 @@ object ICalEventMapper {
             .map { formatTriggerDuration(it) }
             .takeIf { it.isNotEmpty() }
 
-        // Counts every alarm, not only the 5 stored: ReminderScheduler re-reads rawIcal when
+        // Counts every alarm, not only the 5 stored: ReminderScheduler re-reads the stored ICS when
         // this exceeds 3, and the event form reports the alarms beyond 5.
         val alarmCount = alarmDurations.size
 
@@ -104,7 +131,7 @@ object ICalEventMapper {
             .takeIf { it.isNotEmpty() }
             ?.joinToString(",")
 
-        val timezone = icalEvent.dtStart.timezone?.id
+        val timezone = storedZoneOf(icalEvent)
 
         // RFC 5545 §3.8.2.2 permits DTEND TZID to differ from DTSTART TZID (e.g., flights).
         val endTimezone = icalEvent.dtEnd?.timezone?.id?.takeIf { it != timezone }
@@ -147,8 +174,9 @@ object ICalEventMapper {
             originalSyncId = null,
             reminders = reminders,
             alarmCount = alarmCount,
-            extraProperties = icalEvent.rawProperties.takeIf { it.isNotEmpty() },
-            rawIcal = rawIcal,
+            extraProperties = icalEvent.rawProperties
+                .filterValues { it.length <= MAX_EXTRA_PROPERTY_VALUE_CHARS }
+                .takeIf { it.isNotEmpty() },
             // RFC 5545/7986 extended properties
             priority = icalEvent.priority,
             geoLat = parseGeoLat(icalEvent.geo),
@@ -169,12 +197,12 @@ object ICalEventMapper {
             updatedAt = now
         )
 
-        return MappedEntity(event, toAttendeeRows(icalEvent, eventId = 0L))
+        return MappedEntity(event, toAttendeeRows(icalEvent, eventId = 0L), rawIcal)
     }
 
     /**
      * Maps [icalEvent]'s attendees to Room rows for [eventId], without the full [toEntity]
-     * mapping. Used by attendee backfill from `Event.rawIcal` and by push.
+     * mapping. Used by attendee backfill from the stored ICS and by push.
      */
     fun toAttendeeRows(icalEvent: ICalEvent, eventId: Long): List<Attendee> =
         icalEvent.attendees.mapIndexed { index, a ->

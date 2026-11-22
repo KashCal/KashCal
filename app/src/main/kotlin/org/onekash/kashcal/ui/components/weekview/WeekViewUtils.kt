@@ -9,6 +9,7 @@ import org.onekash.kashcal.ui.components.weekview.WeekViewUtils.START_HOUR
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils.positionEventsForDay
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils.resolveInitialScrollPx
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils.weekPageToStartDate
+import org.onekash.kashcal.ui.util.CalendarSpan
 import org.onekash.kashcal.util.DateTimeUtils
 import java.time.Instant
 import java.time.LocalDate
@@ -43,14 +44,23 @@ object WeekViewUtils {
     val HOUR_HEIGHT = 60.dp
     val MIN_EVENT_HEIGHT = 20.dp
 
-    /**
-     * Width of the timed grid's hour-label column. The day headers and the Day view's pinned
-     * week strip start after this width so they line up with the day columns.
-     */
-    val TIME_COLUMN_WIDTH = 48.dp
     const val MIN_HOUR_HEIGHT_DP = 30f
     const val MAX_HOUR_HEIGHT_DP = 150f
     const val MAX_VISIBLE_OVERLAP = 2  // Slots shown; the rest go in the "+N more" badge
+
+    /** Returns whether the grid draws half-hour lines at [hourHeight]: from 60dp an hour up. */
+    fun showsHalfHourLines(hourHeight: Dp): Boolean = hourHeight >= HALF_HOUR_LINES_MIN_HOUR_HEIGHT
+
+    private val HALF_HOUR_LINES_MIN_HOUR_HEIGHT = 60.dp
+
+    /** Slack for comparing layout fractions, so blocks that only touch don't share width. */
+    private const val FRACTION_EPSILON = 0.001f
+
+    /** Cascade levels above the column's base; a deeper event joins a side-by-side split. */
+    const val MAX_CASCADE_DEPTH = 2
+
+    /** Share of the column each cascade level is indented by. */
+    const val CASCADE_INDENT = 0.25f
 
     // All-day strip rows shown per day, collapsed (the default) and expanded.
     const val MAX_ALLDAY_ROWS_COLLAPSED = 1
@@ -61,23 +71,21 @@ object WeekViewUtils {
     const val TOTAL_DAY_PAGES = Int.MAX_VALUE
     const val CENTER_DAY_PAGE = TOTAL_DAY_PAGES / 2
 
-    // Week pager (WEEK): one page per week, about 500 weeks each direction.
-    const val TOTAL_WEEK_PAGES = 1000
-    const val CENTER_WEEK_PAGE = TOTAL_WEEK_PAGES / 2
+    // Week pager (WEEK and the Planner): one page per week, covering the CalendarSpan.
+    const val TOTAL_WEEK_PAGES = CalendarSpan.WEEK_TOTAL_PAGES
+    const val CENTER_WEEK_PAGE = CalendarSpan.WEEK_CENTER_PAGE
 
     // ==================== Day Pager Functions ====================
 
-    /** Returns the date of day-pager [page]; [CENTER_DAY_PAGE] is today. */
-    fun pageToDate(page: Int): LocalDate {
-        val today = LocalDate.now()
+    /** Returns the date of day-pager [page]; [CENTER_DAY_PAGE] is [referenceDate], today. */
+    fun pageToDate(page: Int, referenceDate: LocalDate = LocalDate.now()): LocalDate {
         val dayOffset = page.toLong() - CENTER_DAY_PAGE.toLong()
-        return today.plusDays(dayOffset)
+        return referenceDate.plusDays(dayOffset)
     }
 
     /** Returns the day-pager page of [date]; the inverse of [pageToDate]. */
-    fun dateToPage(date: LocalDate): Int {
-        val today = LocalDate.now()
-        val dayOffset = ChronoUnit.DAYS.between(today, date)
+    fun dateToPage(date: LocalDate, referenceDate: LocalDate = LocalDate.now()): Int {
+        val dayOffset = ChronoUnit.DAYS.between(referenceDate, date)
         return (CENTER_DAY_PAGE.toLong() + dayOffset).toInt()
     }
 
@@ -483,14 +491,33 @@ object WeekViewUtils {
         }
     }
 
+    /** How overlapping events share a day column ([positionEventsForDay]). */
+    sealed interface OverlapLayout {
+        /** Every overlap cluster splits the column into equal side-by-side slots. */
+        data object SideBySide : OverlapLayout
+
+        /**
+         * A later event draws on top of the events it overlaps, indented, when each of them keeps
+         * at least [minOffset] of its height above it; otherwise it joins a side-by-side split.
+         */
+        data class Cascade(val minOffset: Dp) : OverlapLayout
+    }
+
     /**
      * An event's placement in one day column.
      *
-     * @property overlapIndex the event's slot; [groupForDisplay] hides slots past the cap.
-     * @property overlapTotal slots in the event's overlap cluster, including hidden ones.
+     * @property overlapIndex the event's slot in its side-by-side group (the overlap cluster, or
+     *   the cascade group); [groupForDisplay] hides slots past the cap.
+     * @property overlapTotal slots in that group, including hidden ones.
      * @property startMinutes start of the layout window, clipped to the column's date.
      * @property endMinutes end of the layout window, clipped to the column's date. Short events
      *   stretch it toward the rendered minimum height, up to the cap [positionEventsForDay] sets.
+     * @property cascadeDepth how many cascade levels the event sits above the column's base; 0
+     *   for the side-by-side layout.
+     * @property groupId the side-by-side group the event belongs to, unique within the column.
+     * @property groupLeftFraction where that group starts across the column.
+     * @property textHeight how much of the block, from its top, its text may use: the whole
+     *   [height], or down to the first event drawn over it in a cascade.
      */
     data class PositionedEvent(
         val displayEvent: DisplayEvent,
@@ -502,8 +529,87 @@ object WeekViewUtils {
         val overlapTotal: Int,
         val startMinutes: Int,
         val endMinutes: Int,
-        val dayIndex: Int
+        val dayIndex: Int,
+        val cascadeDepth: Int = 0,
+        val groupId: Int = 0,
+        val groupLeftFraction: Float = 0f,
+        val textHeight: Dp = height,
     )
+
+    /** A cascade level's side-by-side group, packed into slots like the side-by-side layout. */
+    private class CascadeGroup(val id: Int, val depth: Int) {
+        val slots = mutableListOf<LayoutSlot>()
+    }
+
+    private class Placement(
+        val leftFraction: Float,
+        val widthFraction: Float,
+        val slot: Int,
+        val slotsInGroup: Int,
+        val depth: Int,
+        val groupId: Int,
+        val groupLeftFraction: Float,
+    )
+
+    /**
+     * Places start-sorted [spans] with the cascade rule. An event overlapping earlier ones opens
+     * a new group one level deeper than the deepest of them, indented [CASCADE_INDENT] per level,
+     * when every one of them starts at least [minOffset] above it and the level stays within
+     * [MAX_CASCADE_DEPTH]; otherwise it joins the group of the deepest overlapped event, latest
+     * start on a tie. A group spans from its indent to the column's end and is packed and split
+     * like a side-by-side cluster: leftmost free slot, width divided by its slots up to
+     * [maxVisibleOverlap] (#256).
+     */
+    private fun cascadePlacements(
+        spans: List<EventTimeSpan>,
+        hourHeight: Dp,
+        minOffset: Dp,
+        maxVisibleOverlap: Int,
+    ): List<Placement> {
+        val groups = mutableListOf<CascadeGroup>()
+        val groupOf = IntArray(spans.size)
+        val slotOf = IntArray(spans.size)
+        for (i in spans.indices) {
+            val span = spans[i]
+            val overlapped = (0 until i).filter { spans[it].overlapsWith(span) }
+            val group = if (overlapped.isEmpty()) {
+                CascadeGroup(groups.size, depth = 0).also { groups += it }
+            } else {
+                val anchor = overlapped.maxWith(
+                    compareBy({ groups[groupOf[it]].depth }, { spans[it].startMinutes }, { it })
+                )
+                val keepsLineAbove = overlapped.all {
+                    val offsetDp = (span.startMinutes - spans[it].startMinutes).toFloat() / MINUTES_PER_HOUR * hourHeight.value
+                    offsetDp >= minOffset.value
+                }
+                val depth = groups[groupOf[anchor]].depth + 1
+                if (keepsLineAbove && depth <= MAX_CASCADE_DEPTH) {
+                    CascadeGroup(groups.size, depth).also { groups += it }
+                } else {
+                    groups[groupOf[anchor]]
+                }
+            }
+            val slot = group.slots.firstOrNull { it.canAccommodate(span) }
+                ?: LayoutSlot(group.slots.size).also { group.slots += it }
+            slot.place(span)
+            groupOf[i] = group.id
+            slotOf[i] = slot.slotIndex
+        }
+        return spans.indices.map { i ->
+            val group = groups[groupOf[i]]
+            val groupLeft = group.depth * CASCADE_INDENT
+            val width = (1f - groupLeft) / minOf(group.slots.size, maxVisibleOverlap)
+            Placement(
+                leftFraction = groupLeft + slotOf[i] * width,
+                widthFraction = width,
+                slot = slotOf[i],
+                slotsInGroup = group.slots.size,
+                depth = group.depth,
+                groupId = group.id,
+                groupLeftFraction = groupLeft,
+            )
+        }
+    }
 
     /**
      * Positions [events] in the day column for [date]:
@@ -512,10 +618,15 @@ object WeekViewUtils {
      * 3. Group transitively overlapping events into clusters.
      * 4. Split the column width evenly among a cluster's slots, up to [maxVisibleOverlap].
      *
+     * With [OverlapLayout.Cascade] steps 2 to 4 follow [cascadePlacements] instead, and a covered
+     * event's [PositionedEvent.textHeight] stops above the event on top. Either way the result
+     * stays in step 1's order, so an event drawn on top comes after the events it covers.
+     *
      * Parts of an event on other dates are clipped off. An event whose clipped window falls
      * outside [startHour]..[endHour] is dropped.
      *
      * @param dayIndex copied into each [PositionedEvent].
+     * @param zone the zone the event's minutes are read in, the device zone in the app.
      */
     fun positionEventsForDay(
         events: List<DisplayEvent>,
@@ -525,6 +636,8 @@ object WeekViewUtils {
         startHour: Int = START_HOUR,
         endHour: Int = END_HOUR,
         maxVisibleOverlap: Int = MAX_VISIBLE_OVERLAP,
+        overlapLayout: OverlapLayout = OverlapLayout.SideBySide,
+        zone: ZoneId = ZoneId.systemDefault(),
     ): List<PositionedEvent> {
         if (events.isEmpty()) return emptyList()
 
@@ -551,8 +664,8 @@ object WeekViewUtils {
 
         // Step 2: convert to time spans, clamping cross-midnight events to this date.
         val timeSpans = sorted.map { displayEvent ->
-            val start = Instant.ofEpochMilli(displayEvent.startTs).atZone(ZoneId.systemDefault())
-            val end = Instant.ofEpochMilli(displayEvent.endTs).atZone(ZoneId.systemDefault())
+            val start = Instant.ofEpochMilli(displayEvent.startTs).atZone(zone)
+            val end = Instant.ofEpochMilli(displayEvent.endTs).atZone(zone)
             val eventStartDate = start.toLocalDate()
             val eventEndDate = end.toLocalDate()
 
@@ -597,21 +710,25 @@ object WeekViewUtils {
 
         // Step 4: find clusters of transitively overlapping events.
         val clusters = findConnectedClusters(timeSpans)
+        val cascade = (overlapLayout as? OverlapLayout.Cascade)?.let {
+            cascadePlacements(timeSpans, hourHeight, it.minOffset, maxVisibleOverlap)
+        }
 
         // Step 5: build positioned events with their layout fractions.
-        return sorted.mapIndexedNotNull { i, displayEvent ->
+        val positioned = sorted.mapIndexedNotNull { i, displayEvent ->
             val span = timeSpans[i]
-            val slotIndex = slotAssignments[i]
+            val placement = cascade?.get(i)
+            val slotIndex = placement?.slot ?: slotAssignments[i]
 
-            val cluster = clusters.first { i in it }
-            val slotsInCluster = cluster.map { slotAssignments[it] }.toSet().size
+            val clusterIndex = clusters.indexOfFirst { i in it }
+            val slotsInCluster = clusters[clusterIndex].map { slotAssignments[it] }.toSet().size
 
             // Visible events split the column evenly. Slots beyond the cap collapse
             // into the overflow badge in groupForDisplay; reserving width for them
             // would leave empty space on the right (issue #256).
             val effectiveSlots = minOf(slotsInCluster, maxVisibleOverlap)
-            val widthFraction = 1f / effectiveSlots
-            val leftFraction = slotIndex * widthFraction
+            val widthFraction = placement?.widthFraction ?: (1f / effectiveSlots)
+            val leftFraction = placement?.leftFraction ?: (slotIndex * widthFraction)
 
             val gridStartMinutes = startHour * MINUTES_PER_HOUR
             val gridEndMinutes = endHour * MINUTES_PER_HOUR
@@ -636,13 +753,37 @@ object WeekViewUtils {
                 leftFraction = leftFraction,
                 widthFraction = widthFraction,
                 overlapIndex = slotIndex,
-                overlapTotal = slotsInCluster,
+                overlapTotal = placement?.slotsInGroup ?: slotsInCluster,
                 startMinutes = span.startMinutes,
                 endMinutes = span.endMinutes,
-                dayIndex = dayIndex
+                dayIndex = dayIndex,
+                cascadeDepth = placement?.depth ?: 0,
+                groupId = placement?.groupId ?: clusterIndex,
+                groupLeftFraction = placement?.groupLeftFraction ?: 0f,
             )
         }
+        return if (cascade != null) withCoveredTextHeights(positioned, maxVisibleOverlap) else positioned
     }
+
+    /**
+     * Stops each cascaded event's text at the top of the first event drawn over it: a deeper level
+     * that starts inside it and shares part of its width. Events behind the "+N" badge aren't
+     * drawn, so they don't count.
+     */
+    private fun withCoveredTextHeights(events: List<PositionedEvent>, maxVisibleOverlap: Int): List<PositionedEvent> =
+        events.map { under ->
+            val coverTop = events
+                .filter { over ->
+                    over.overlapIndex < maxVisibleOverlap &&
+                        over.cascadeDepth > under.cascadeDepth &&
+                        over.topOffset > under.topOffset &&
+                        over.topOffset < under.topOffset + under.height &&
+                        over.leftFraction < under.leftFraction + under.widthFraction - FRACTION_EPSILON &&
+                        over.leftFraction + over.widthFraction > under.leftFraction + FRACTION_EPSILON
+                }
+                .minOfOrNull { it.topOffset }
+            if (coverTop == null) under else under.copy(textHeight = coverTop - under.topOffset)
+        }
 
     /**
      * Returns clusters of transitively overlapping spans, as sets of indices into [spans]. A and C

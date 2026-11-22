@@ -40,6 +40,9 @@ class DeviceEventReader @Inject constructor(
     /** One provider event row, or null when it doesn't exist. */
     suspend fun getDeviceEvent(eventId: Long): DeviceEvent? = repository.getDeviceEvent(eventId)
 
+    /** Whether the row exists and isn't deleted; see [CalendarProviderRepository.isEventActive]. */
+    suspend fun isEventActive(eventId: Long): Boolean = repository.isEventActive(eventId)
+
     /** Every calendar the provider exposes. */
     suspend fun getDeviceCalendars(): List<DeviceCalendar> = repository.getDeviceCalendars()
 
@@ -57,6 +60,13 @@ class DeviceEventReader @Inject constructor(
             emptyList()
         }
     }
+
+    /**
+     * Returns how many occurrences of [calendarIds] have a reminder triggering in [fromMs]..[toMs];
+     * see [CalendarProviderRepository.countReminderOccurrences].
+     */
+    suspend fun countInstancesWithReminders(calendarIds: Set<Long>, fromMs: Long, toMs: Long): Int =
+        repository.countReminderOccurrences(calendarIds, fromMs, toMs)
 
     /**
      * Day code (YYYYMMDD) of an event's start, honouring all-day events so they

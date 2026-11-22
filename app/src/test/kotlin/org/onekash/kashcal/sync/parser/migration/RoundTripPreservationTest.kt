@@ -68,7 +68,7 @@ class RoundTripPreservationTest {
 
         // What the app derives on a later pull: serialize (push path), then parse and map
         // (pull path), as in a real edit-one-occurrence round trip.
-        val regenerated = IcsPatcher.serialize(stored)
+        val regenerated = IcsPatcher.serialize(stored, icloudMasterIcal)
         val reparsed = ICalEventMapper.toEntity(
             parser.parseAllEvents(regenerated).getOrNull()!![0],
             regenerated, 1L, null, null
@@ -105,7 +105,7 @@ class RoundTripPreservationTest {
 
         val event1 = parser.parseAllEvents(originalIcal).getOrNull()!![0]
         val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
-        val regeneratedIcal = IcsPatcher.serialize(entity)
+        val regeneratedIcal = IcsPatcher.serialize(entity, originalIcal)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
         assertEquals(event1.uid, event2.uid)
@@ -140,7 +140,7 @@ class RoundTripPreservationTest {
             event1.rawProperties.any { it.key.startsWith("X-APPLE") }
         )
 
-        // rawIcal is passed so the patcher can keep what the entity doesn't model.
+        // The stored ICS is passed so the patcher can keep what the entity doesn't model.
         val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
 
         assertNotNull("extraProperties should not be null", entity.extraProperties)
@@ -149,7 +149,7 @@ class RoundTripPreservationTest {
             entity.extraProperties!!.any { it.key.startsWith("X-APPLE") }
         )
 
-        val regeneratedIcal = IcsPatcher.serialize(entity)
+        val regeneratedIcal = IcsPatcher.serialize(entity, originalIcal)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
         assertTrue(
@@ -197,8 +197,8 @@ class RoundTripPreservationTest {
         // alarm.
         assertEquals("alarmCount should be 3", 3, entity.alarmCount)
 
-        // Patching rawIcal keeps the original alarms.
-        val regeneratedIcal = IcsPatcher.serialize(entity)
+        // Patching the stored ICS keeps the original alarms.
+        val regeneratedIcal = IcsPatcher.serialize(entity, originalIcal)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
         assertEquals("All 3 alarms should survive round-trip", 3, event2.alarms.size)
@@ -233,10 +233,10 @@ class RoundTripPreservationTest {
         assertEquals("abc123-alarm-uuid", event1.alarms[0].uid)
 
         val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
-        val regeneratedIcal = IcsPatcher.serialize(entity)
+        val regeneratedIcal = IcsPatcher.serialize(entity, originalIcal)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
-        // The alarm UID survives through rawIcal patching.
+        // The alarm UID survives through stored-ICS patching.
         assertNotNull("Alarm uid should survive round-trip", event2.alarms[0].uid)
     }
 
@@ -264,7 +264,7 @@ class RoundTripPreservationTest {
         assertNotNull("Should have organizer", event1.organizer)
 
         val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
-        val regeneratedIcal = IcsPatcher.serialize(entity)
+        val regeneratedIcal = IcsPatcher.serialize(entity, originalIcal)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
         // With no attendee rows passed, patching keeps the original attendees.
@@ -293,7 +293,7 @@ class RoundTripPreservationTest {
         assertEquals("Should have 3 categories", 3, event1.categories.size)
 
         val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
-        val regeneratedIcal = IcsPatcher.serialize(entity)
+        val regeneratedIcal = IcsPatcher.serialize(entity, originalIcal)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
         // Categories go through the entity's categories field.
@@ -327,7 +327,7 @@ class RoundTripPreservationTest {
         assertEquals("RRULE should be mapped", "FREQ=DAILY;COUNT=10", entity.rrule)
         assertNotNull("EXDATE should be mapped", entity.exdate)
 
-        val regeneratedIcal = IcsPatcher.serialize(entity)
+        val regeneratedIcal = IcsPatcher.serialize(entity, originalIcal)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
         assertEquals("RRULE should survive", event1.rrule?.toICalString(), event2.rrule?.toICalString())
@@ -357,7 +357,7 @@ class RoundTripPreservationTest {
         val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
         assertTrue("Entity should be all-day", entity.isAllDay)
 
-        val regeneratedIcal = IcsPatcher.serialize(entity)
+        val regeneratedIcal = IcsPatcher.serialize(entity, originalIcal)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
         assertTrue("Should still be all-day", event2.isAllDay)
@@ -387,7 +387,7 @@ class RoundTripPreservationTest {
         val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
         assertEquals("America/New_York", entity.timezone)
 
-        val regeneratedIcal = IcsPatcher.serialize(entity)
+        val regeneratedIcal = IcsPatcher.serialize(entity, originalIcal)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
         assertEquals("America/New_York", event2.dtStart.timezone?.id)
@@ -422,7 +422,7 @@ class RoundTripPreservationTest {
         val expectedEndTs = event1.dtStart.timestamp + 90 * 60 * 1000
         assertEquals(expectedEndTs, entity.endTs)
 
-        val regeneratedIcal = IcsPatcher.serialize(entity)
+        val regeneratedIcal = IcsPatcher.serialize(entity, originalIcal)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
         ParsedEventComparator.assertTimestampsEquivalent(
@@ -455,7 +455,7 @@ class RoundTripPreservationTest {
         val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
         assertEquals("CANCELLED", entity.status)
 
-        val regeneratedIcal = IcsPatcher.serialize(entity)
+        val regeneratedIcal = IcsPatcher.serialize(entity, originalIcal)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
         assertEquals(org.onekash.icaldav.model.EventStatus.CANCELLED, event2.status)
@@ -484,7 +484,7 @@ class RoundTripPreservationTest {
         val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
         assertEquals("TENTATIVE", entity.status)
 
-        val regeneratedIcal = IcsPatcher.serialize(entity)
+        val regeneratedIcal = IcsPatcher.serialize(entity, originalIcal)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
         assertEquals(org.onekash.icaldav.model.EventStatus.TENTATIVE, event2.status)
@@ -513,7 +513,7 @@ class RoundTripPreservationTest {
         val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
         assertEquals("PRIVATE", entity.classification)
 
-        val regeneratedIcal = IcsPatcher.serialize(entity)
+        val regeneratedIcal = IcsPatcher.serialize(entity, originalIcal)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
         assertEquals(org.onekash.icaldav.model.Classification.PRIVATE, event2.classification)
@@ -543,7 +543,7 @@ class RoundTripPreservationTest {
         assertEquals(5, entity.sequence)
 
         // IcsPatcher writes SEQUENCE as stored; EventWriter decides bumps (SequenceBumper).
-        val regeneratedIcal = IcsPatcher.serialize(entity)
+        val regeneratedIcal = IcsPatcher.serialize(entity, originalIcal)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
         assertEquals(5, event2.sequence)
@@ -579,7 +579,7 @@ class RoundTripPreservationTest {
         val event1 = parser.parseAllEvents(originalIcal).getOrNull()!![0]
 
         val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
-        val regeneratedIcal = IcsPatcher.serialize(entity)
+        val regeneratedIcal = IcsPatcher.serialize(entity, originalIcal)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
         assertEquals(event1.uid, event2.uid)

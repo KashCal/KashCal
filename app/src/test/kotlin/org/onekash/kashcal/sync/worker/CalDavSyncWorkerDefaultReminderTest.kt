@@ -74,7 +74,7 @@ class CalDavSyncWorkerDefaultReminderTest {
         coEvery { dataStore.defaultReminderMinutes } returns flowOf(15)
         coEvery { dataStore.defaultAllDayReminder } returns flowOf(720) // 12 hours
         coEvery { eventReader.getCalendarById(any()) } returns testCalendar
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns listOf(
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) } returns listOf(
             createTestOccurrence(eventId = 1L)
         )
     }

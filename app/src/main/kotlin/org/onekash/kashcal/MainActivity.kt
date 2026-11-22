@@ -2,12 +2,14 @@ package org.onekash.kashcal
 
 import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.os.SystemClock
 import android.view.WindowManager
+import androidx.compose.material3.SnackbarHostState
 import androidx.core.app.ActivityCompat
 import android.text.format.DateFormat
 import android.util.Log
@@ -53,6 +55,7 @@ import org.onekash.kashcal.data.ics.IcsParserService
 import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.data.preferences.UserPreferencesRepository
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
+import org.onekash.kashcal.domain.model.EventExport
 import org.onekash.kashcal.domain.mapper.toExportEvent
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.model.buildShareText
@@ -61,7 +64,7 @@ import org.onekash.kashcal.domain.model.toEventForShareCard
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderNotificationManager
 import org.onekash.kashcal.reminder.notification.ReminderNotificationManager
 import org.onekash.kashcal.sync.notification.ChangeNotifier
-import org.onekash.kashcal.ui.components.AppInfoSheet
+import org.onekash.kashcal.ui.components.AboutSheet
 import org.onekash.kashcal.ui.components.category.LocalTagColors
 import org.onekash.kashcal.ui.components.DeviceEventQuickViewSheet
 import org.onekash.kashcal.ui.components.EventFormSheet
@@ -69,12 +72,13 @@ import org.onekash.kashcal.ui.components.EventQuickViewSheet
 import org.onekash.kashcal.ui.components.IcsImportSheet
 import org.onekash.kashcal.ui.components.importSummary
 import org.onekash.kashcal.ui.components.NotificationPermissionDialog
-import org.onekash.kashcal.ui.components.OnboardingBanner
+import org.onekash.kashcal.ui.components.OnboardingSheet
 import org.onekash.kashcal.ui.components.WhatsNewBanner
 import org.onekash.kashcal.ui.components.QuickAddDialog
 import org.onekash.kashcal.ui.components.ShareAvailabilitySheet
 import org.onekash.kashcal.ui.components.RecentChangesSheet
 import org.onekash.kashcal.ui.permission.AppPermissionKind
+import org.onekash.kashcal.ui.permission.allowRequestNeedsSettingsFallback
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager.PermissionState
 import org.onekash.kashcal.ui.lock.AppLockDisableAction
@@ -83,6 +87,10 @@ import org.onekash.kashcal.ui.lock.AppLockVeil
 import org.onekash.kashcal.ui.lock.decideDisableAction
 import org.onekash.kashcal.ui.lock.decideEnrollmentAction
 import org.onekash.kashcal.ui.model.localizedDisplayName
+import org.onekash.kashcal.ui.model.offlineCalendarIds
+import org.onekash.kashcal.ui.print.PrintOptionsSheet
+import org.onekash.kashcal.ui.print.WebViewPrintLauncher
+import org.onekash.kashcal.ui.print.buildPrintCalendarSections
 import org.onekash.kashcal.ui.screens.HomeScreen
 import org.onekash.kashcal.ui.theme.ColorSource
 import org.onekash.kashcal.ui.theme.KashCalTheme
@@ -91,6 +99,8 @@ import org.onekash.kashcal.ui.viewmodels.AppLockViewModel
 import org.onekash.kashcal.ui.viewmodels.DeviceCalendarException
 import org.onekash.kashcal.ui.viewmodels.HomeViewModel
 import org.onekash.kashcal.ui.viewmodels.PendingAction
+import org.onekash.kashcal.ui.viewmodels.PrintEvent
+import org.onekash.kashcal.ui.viewmodels.PrintWeekViewModel
 import org.onekash.kashcal.ui.viewmodels.QuickAddViewModel
 import org.onekash.kashcal.ui.viewmodels.ShareAvailabilityViewModel
 import org.onekash.kashcal.util.CalendarContractAction
@@ -99,11 +109,13 @@ import org.onekash.kashcal.util.CalendarIntentParser
 import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.util.IcsExporter
 import org.onekash.kashcal.util.IcsShareIntentParser
+import org.onekash.kashcal.util.SearchIntentRouter
 import org.onekash.kashcal.util.ShareChooser
 import org.onekash.kashcal.util.ShareIntentRouter
 import org.onekash.kashcal.util.IcsFileReader
 import org.onekash.kashcal.util.buildShareAvailabilityChooserIntent
 import org.onekash.kashcal.util.location.LocationSuggestionService
+import org.onekash.kashcal.ui.util.LocalDisplayZone
 import java.time.LocalTime
 import javax.inject.Inject
 
@@ -114,6 +126,11 @@ class MainActivity : FragmentActivity() {
 
     private val homeViewModel: HomeViewModel by viewModels()
     private val appLockViewModel: AppLockViewModel by viewModels()
+    private val printViewModel: PrintWeekViewModel by viewModels()
+    // The last print job's launcher, which holds the WebView until the print system is done.
+    private var printLauncher: WebViewPrintLauncher? = null
+    // True from a print request until its launcher reports Started or Failed.
+    private var printPending = false
     private var isFirstResume = true
     // Guards against stacking two biometric sheets (auto-fire + manual Unlock).
     private var isUnlockPromptShowing = false
@@ -179,6 +196,9 @@ class MainActivity : FragmentActivity() {
                 val agendaEvents by homeViewModel.agendaEvents.collectAsStateWithLifecycle()
                 val monthEvents by homeViewModel.monthEvents.collectAsStateWithLifecycle()
                 val plannerState by homeViewModel.plannerState.collectAsStateWithLifecycle()
+                val recentTimeZones by homeViewModel.recentTimeZones.collectAsStateWithLifecycle()
+                val dayDetail by homeViewModel.dayDetail.collectAsStateWithLifecycle()
+                val displayZone by homeViewModel.displayZone.collectAsStateWithLifecycle()
                 val isOnline by homeViewModel.isOnline.collectAsStateWithLifecycle()
                 val appLockEnabled by appLockViewModel.appLockEnabled.collectAsStateWithLifecycle()
                 val defaultReminderTimed by homeViewModel.defaultReminderTimed.collectAsStateWithLifecycle()
@@ -194,16 +214,23 @@ class MainActivity : FragmentActivity() {
                 var pendingPermissionCallback by remember { mutableStateOf<((Boolean) -> Unit)?>(null) }
                 var showNotificationRationale by remember { mutableStateOf(false) }
 
-                val notificationPermissionLauncher = rememberLauncherForActivityResult(
-                    contract = ActivityResultContracts.RequestPermission()
-                ) { isGranted ->
+                // Every answer to Android's notification dialog, from any screen, counts as asked
+                // and ends the "Reminders are off" banner.
+                val recordNotificationAnswer: (Boolean) -> Unit = { granted ->
+                    homeViewModel.endRemindersOffBanner()
                     coroutineScope.launch {
-                        if (isGranted) {
+                        if (granted) {
                             notificationPermissionManager.onPermissionGranted()
                         } else {
                             notificationPermissionManager.onPermissionDenied()
                         }
                     }
+                }
+
+                val notificationPermissionLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.RequestPermission()
+                ) { isGranted ->
+                    recordNotificationAnswer(isGranted)
                     pendingPermissionCallback?.invoke(isGranted)
                     pendingPermissionCallback = null
                 }
@@ -271,6 +298,9 @@ class MainActivity : FragmentActivity() {
                 // Share-as-card sheet state
                 var showShareCardSheet by remember { mutableStateOf(false) }
                 var shareCardEvent by remember { mutableStateOf<Event?>(null) }
+                // Whether shareCardEvent was built from a device-calendar event, which has no
+                // stored copy to patch (IcsExporter.exportShareCopy).
+                var shareCardFromDevice by remember { mutableStateOf(false) }
                 // One-shot share-as-card coach mark, shared by the Room and device-event quick
                 // views: whichever shows it first dismisses it, so it appears once per install.
                 val shownShareCardTooltip by homeViewModel.shownShareCardTooltip
@@ -292,6 +322,11 @@ class MainActivity : FragmentActivity() {
                 // Drive form-side attendee state when the form opens for an existing event.
                 androidx.compose.runtime.LaunchedEffect(showEventFormSheet, editingEventId) {
                     homeViewModel.setFormEventId(if (showEventFormSheet) editingEventId else null)
+                }
+                // A refused save's error belongs to that form: every open and close starts clean,
+                // including closes that skip the sheet's own dismiss (Quick Add from the title).
+                androidx.compose.runtime.LaunchedEffect(showEventFormSheet) {
+                    homeViewModel.clearFormSaveError()
                 }
                 // Resolve the form's attendee-editing context and the contacts permission state
                 // when the sheet opens.
@@ -378,8 +413,9 @@ class MainActivity : FragmentActivity() {
 
                 // Opens the share-as-card sheet for both the Room and device-event quick views,
                 // so the two entry points can't drift.
-                val openShareCard = { event: Event ->
+                val openShareCard = { event: Event, fromDevice: Boolean ->
                     shareCardEvent = event
+                    shareCardFromDevice = fromDevice
                     showShareCardSheet = true
                 }
 
@@ -405,26 +441,28 @@ class MainActivity : FragmentActivity() {
                                     }
                                 }
                                 is PendingAction.CreateEvent -> {
-                                    if (quickAddEnabled && action.startTs == null) {
-                                        showQuickAddDialog = true
-                                    } else {
-                                        val startTs = action.startTs ?: run {
-                                            val now = java.util.Calendar.getInstance()
-                                            val nextHour = (now.get(java.util.Calendar.HOUR_OF_DAY) + 1) % 24
-                                            java.util.Calendar.getInstance().apply {
-                                                set(java.util.Calendar.HOUR_OF_DAY, nextHour)
-                                                set(java.util.Calendar.MINUTE, 0)
-                                                set(java.util.Calendar.SECOND, 0)
-                                            }.timeInMillis
-                                        }
-                                        editingEventId = null
-                                        newEventStartTs = startTs
-                                        eventOccurrenceTs = null
-                                        showEventFormSheet = true
+                                    val startTs = action.startTs ?: run {
+                                        val now = java.util.Calendar.getInstance()
+                                        val nextHour = (now.get(java.util.Calendar.HOUR_OF_DAY) + 1) % 24
+                                        java.util.Calendar.getInstance().apply {
+                                            set(java.util.Calendar.HOUR_OF_DAY, nextHour)
+                                            set(java.util.Calendar.MINUTE, 0)
+                                            set(java.util.Calendar.SECOND, 0)
+                                        }.timeInMillis
                                     }
+                                    editingEventId = null
+                                    newEventStartTs = startTs
+                                    eventOccurrenceTs = null
+                                    showEventFormSheet = true
+                                }
+                                is PendingAction.OpenQuickAdd -> {
+                                    showQuickAddDialog = true
                                 }
                                 is PendingAction.OpenSearch -> {
                                     homeViewModel.activateSearch()
+                                }
+                                is PendingAction.OpenTagSearch -> {
+                                    homeViewModel.openTagSearch(action.name)
                                 }
                                 is PendingAction.GoToToday -> {
                                     homeViewModel.goToToday()
@@ -437,7 +475,9 @@ class MainActivity : FragmentActivity() {
                                     Log.d(TAG, "Processing ICS file import: ${action.uri}")
                                     val result = icsFileReader.readIcsContent(action.uri)
                                     result.onSuccess { content ->
-                                        val file = runCatching { IcsParserService.parseForImport(content) }.getOrNull()
+                                        val file = withContext(Dispatchers.Default) {
+                                            runCatching { IcsParserService.parseForImport(content) }.getOrNull()
+                                        }
                                         when {
                                             file == null -> homeViewModel.showSnackbar(
                                                 resources.getString(R.string.error_import_invalid_format)
@@ -536,8 +576,12 @@ class MainActivity : FragmentActivity() {
 
                 // Publish per-tag custom colors to every chip below (home views, form, quick view,
                 // week blocks) so recoloring a tag repaints its chips without threading color
-                // through the occurrence stream.
-                CompositionLocalProvider(LocalTagColors provides uiState.tagColors) {
+                // through the occurrence stream. The zone lets open screens re-lay out when it
+                // changes.
+                CompositionLocalProvider(
+                    LocalTagColors provides uiState.tagColors,
+                    LocalDisplayZone provides displayZone,
+                ) {
 
                 HomeScreen(
                     uiState = uiState,
@@ -545,6 +589,7 @@ class MainActivity : FragmentActivity() {
                     agendaEvents = agendaEvents,
                     monthEvents = monthEvents,
                     plannerState = plannerState,
+                    dayDetail = dayDetail,
                     isOnline = isOnline,
                     // Navigation callbacks
                     onDateSelected = { dateMillis -> homeViewModel.selectDate(dateMillis) },
@@ -612,12 +657,23 @@ class MainActivity : FragmentActivity() {
                     onSearchClick = { homeViewModel.activateSearch() },
                     onSearchClose = { homeViewModel.deactivateSearch() },
                     onSearchQueryChange = { query -> homeViewModel.updateSearchQuery(query) },
-                    onSearchResultClick = { event, nextOccurrenceTs ->
+                    onSearchResultClick = { event, occurrenceTs ->
                         quickViewEvent = event
-                        quickViewOccurrenceTs = nextOccurrenceTs  // Next occurrence of a series.
+                        // The occurrence the result is dated at.
+                        quickViewOccurrenceTs = occurrenceTs
                         showQuickViewSheet = true
                     },
                     // Search date filter callbacks
+                    onSearchTabSelect = { tab -> homeViewModel.selectSearchTab(tab) },
+                    onSearchDateChipClick = { homeViewModel.openSearchDateMenu() },
+                    onSearchDateMenuDismiss = { homeViewModel.dismissSearchDateMenu() },
+                    onSearchIncludeHiddenChange = { include -> homeViewModel.setSearchIncludeHidden(include) },
+                    onSearchOpenSyncSettings = {
+                        launchInternalActivity(
+                            Intent(this@MainActivity, SettingsActivity::class.java)
+                                .putExtra(SettingsActivity.EXTRA_OPEN_SYNC_LOOKBACK, true)
+                        )
+                    },
                     onSearchDateFilterChange = { filter -> homeViewModel.setSearchDateFilter(filter) },
                     onSearchShowDatePicker = { homeViewModel.showSearchDatePicker() },
                     onSearchHideDatePicker = { homeViewModel.hideSearchDatePicker() },
@@ -637,14 +693,51 @@ class MainActivity : FragmentActivity() {
                     onToggleAppLock = ::onToggleAppLock,
                     // The app-permissions screen deep-links to system settings.
                     onOpenPermissionSettings = ::openPermissionSettings,
+                    onNotificationPermissionResult = recordNotificationAnswer,
+                    // The banner's Turn on ends the banner and goes straight to Android's dialog;
+                    // when Android won't ask again it opens the app's notification settings
+                    // ([allowRequestNeedsSettingsFallback]). A rotation while the dialog is up
+                    // drops this callback, so the snackbar and the fallback don't run.
+                    onRemindersOffTurnOn = {
+                        homeViewModel.endRemindersOffBanner()
+                        pendingPermissionCallback = { granted ->
+                            homeViewModel.onRemindersOffPermissionResult(granted)
+                            val rationaleAfter = ActivityCompat.shouldShowRequestPermissionRationale(
+                                this@MainActivity, Manifest.permission.POST_NOTIFICATIONS,
+                            )
+                            if (allowRequestNeedsSettingsFallback(granted, rationaleAfter)) {
+                                openPermissionSettings(AppPermissionKind.NOTIFICATIONS)
+                            }
+                        }
+                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    },
+                    onRemindersOffNotNow = homeViewModel::endRemindersOffBanner,
                     // Drawer
                     drawerState = drawerState,
                     onDrawerToggleCalendar = { calendarId -> homeViewModel.toggleCalendarVisibility(calendarId) },
                     onDrawerToggleDeviceCalendarVisibility = { calendarId -> homeViewModel.toggleDeviceCalendarVisibility(calendarId) },
                     // Share availability
                     onShareAvailabilityClick = { homeViewModel.openShareAvailabilitySheet() },
+                    // Print your week: the sheet opens on the week holding the date on screen
+                    onPrintWeekClick = { anchor ->
+                        printViewModel.open(
+                            anchor = anchor,
+                            firstDayOfWeek = uiState.firstDayOfWeek,
+                            sections = buildPrintCalendarSections(
+                                calendarGroups = uiState.calendarGroups,
+                                deviceCalendarsEnabled = uiState.deviceCalendarsEnabled,
+                                enabledDeviceCalendars = uiState.enabledDeviceCalendars,
+                                hiddenDeviceIds = uiState.hiddenDeviceCalendarIds,
+                                contactsHeader = getString(R.string.drawer_contacts),
+                                deviceHeader = getString(R.string.drawer_device_calendars),
+                                deviceLocalLabel = getString(R.string.device_calendars_local),
+                                birthdaysName = getString(R.string.birthdays_section_title),
+                                anniversariesName = getString(R.string.anniversaries_section_title),
+                            ),
+                        )
+                    },
                     // Info callbacks
-                    onInfoClick = { homeViewModel.toggleAppInfoSheet() },
+                    onInfoClick = { homeViewModel.openAboutSheet() },
                     // Avatar hub: persist edited initials
                     onInitialsChange = { homeViewModel.setUserInitials(it) },
                     // View picker callback
@@ -663,6 +756,7 @@ class MainActivity : FragmentActivity() {
                     onDayPagerPageChanged = { page -> homeViewModel.onDayPagerPageChanged(page) },
                     onWeekDatePickerRequest = { homeViewModel.showWeekViewDatePicker() },
                     onWeekDayHeaderClick = { date -> homeViewModel.onWeekViewDayHeaderClick(date) },
+                    onWeekPinchViewSwitch = { visibleDays, date -> homeViewModel.onWeekViewPinchSwitch(visibleDays, date) },
                     onWeekDatePickerDismiss = { homeViewModel.hideWeekViewDatePicker() },
                     onWeekDateSelected = { dateMs -> homeViewModel.onWeekViewDateSelected(dateMs) },
                     onWeekScrollPositionChange = { position -> homeViewModel.setWeekViewScrollPosition(position) },
@@ -675,6 +769,7 @@ class MainActivity : FragmentActivity() {
                     onPlannerPageChanged = { page -> homeViewModel.onPlannerPageChanged(page) },
                     onClearPendingPlannerPagerPosition = { homeViewModel.clearPendingPlannerPagerPosition() },
                     onPlannerZoomChange = { zoom -> homeViewModel.setPlannerZoom(zoom) },
+                    onMonthFullZoomChange = { zoom -> homeViewModel.setMonthFullZoom(zoom) },
                     onReschedule = { displayEvent, targetDate, targetStartMinutes ->
                         homeViewModel.rescheduleEvent(displayEvent, targetDate, targetStartMinutes)
                     },
@@ -728,12 +823,15 @@ class MainActivity : FragmentActivity() {
                     onResume = { homeViewModel.onAppResume() },
                     onClearScrollAgendaToTop = { homeViewModel.clearScrollAgendaToTop() },
                     // Snackbar callback
-                    onClearSnackbar = { homeViewModel.clearSnackbar() },
+                    onClearSnackbar = { id -> homeViewModel.clearSnackbar(id) },
+                    onHomeStop = { homeViewModel.onHomeStopped() },
+                    onTimeGridEventTap = { displayEvent -> homeViewModel.onTimeGridEventTap(displayEvent) },
                     // URL callback (for error actions)
                     onClearPendingUrl = { homeViewModel.clearPendingUrl() },
                     // Day detail sheet callbacks
                     onShowDayDetail = { dateMs -> homeViewModel.showDayDetail(dateMs) },
                     onDismissDayDetail = { homeViewModel.dismissDayDetail() },
+                    onStepDayDetail = { step -> homeViewModel.stepDayDetail(step) },
                     // Day pager cache callbacks
                     onLoadEventsForDayPagerRange = { centerDateMs -> homeViewModel.loadEventsForDayPagerRange(centerDateMs) },
                     shouldRefreshDayPagerCache = { currentDateMs -> homeViewModel.shouldRefreshDayPagerCache(currentDateMs) },
@@ -773,6 +871,12 @@ class MainActivity : FragmentActivity() {
                             showQuickViewSheet = false
                             quickViewEvent = null
                             quickViewOccurrenceTs = null
+                        },
+                        onTagClick = { tag ->
+                            showQuickViewSheet = false
+                            quickViewEvent = null
+                            quickViewOccurrenceTs = null
+                            homeViewModel.openTagSearch(tag)
                         },
                         onEdit = {
                             // One Edit path: the form opens on the tapped
@@ -920,27 +1024,18 @@ class MainActivity : FragmentActivity() {
                         },
                         onExportIcs = {
                             coroutineScope.launch {
-                                val eventToExport = event
-                                val exceptions = if (eventToExport.isRecurring) {
-                                    eventCoordinator.getExceptionsForMaster(eventToExport.id)
-                                } else {
-                                    emptyList()
-                                }
+                                val export = eventCoordinator.getEventForExport(event.id)
+                                    ?: EventExport(event, emptyList(), emptyMap())
 
-                                icsExporter.exportEvent(
-                                    context = this@MainActivity,
-                                    event = eventToExport,
-                                    exceptions = exceptions
-                                ).onSuccess { uri ->
-                                    val intent = Intent(Intent.ACTION_SEND).apply {
-                                        type = "text/calendar"
-                                        putExtra(Intent.EXTRA_STREAM, uri)
-                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                    }
-                                    startActivity(ShareChooser.createKashCalChooser(this@MainActivity, intent, "Export Event"))
+                                icsExporter.exportEvent(this@MainActivity, export).onSuccess { uri ->
+                                    startActivity(
+                                        ShareChooser.createFileChooser(
+                                            this@MainActivity, uri, "text/calendar", getString(R.string.export_event_chooser_title)
+                                        )
+                                    )
                                 }.onFailure { e ->
                                     Log.e(TAG, "Failed to export event", e)
-                                    homeViewModel.showSnackbar("Export failed: ${e.message}")
+                                    homeViewModel.showSnackbar(getString(R.string.export_file_failed))
                                 }
 
                                 showQuickViewSheet = false
@@ -952,7 +1047,7 @@ class MainActivity : FragmentActivity() {
                         onShareAsCard = {
                             // Keep the QuickViewSheet open; the user may back
                             // out of the share and return to it.
-                            openShareCard(event)
+                            openShareCard(event, false)
                         },
                         showShareCardTooltip = !shownShareCardTooltip,
                         onShareCardTooltipDismissed = {
@@ -1093,7 +1188,7 @@ class MainActivity : FragmentActivity() {
                         icsUriProvider = {
                             // A single-occurrence copy, so the recipient
                             // gets one standalone entry instead of the series,
-                            // without the sender's rawIcal, organizer or X-*
+                            // without the sender's stored ICS, organizer or X-*
                             // properties ([singleOccurrenceForShare]). File
                             // I/O runs on Dispatchers.IO so the Send tap
                             // doesn't jank. A failure here is non-fatal: the
@@ -1104,7 +1199,7 @@ class MainActivity : FragmentActivity() {
                                     occurrenceStartTs = viewerStartTs,
                                     occurrenceEndTs = viewerEndTs,
                                 )
-                                icsExporter.exportEvent(this@MainActivity, occurrenceEvent)
+                                icsExporter.exportShareCopy(this@MainActivity, occurrenceEvent, shareCardFromDevice)
                                     .getOrNull()
                             }
                         },
@@ -1167,6 +1262,11 @@ class MainActivity : FragmentActivity() {
                         onDismiss = {
                             showDeviceQuickViewSheet = false
                             deviceQuickViewEvent = null
+                        },
+                        onTagClick = { tag ->
+                            showDeviceQuickViewSheet = false
+                            deviceQuickViewEvent = null
+                            homeViewModel.openTagSearch(tag)
                         },
                         onEdit = {
                             // One Edit path, as in the Room quick view: the
@@ -1278,14 +1378,14 @@ class MainActivity : FragmentActivity() {
                         onExportIcs = {
                             // Mirrors the Room handler: reads the master and its exceptions from
                             // Events, cancelled ones included, maps each to an unsaved Room Event
-                            // and exports through the same icsExporter.exportEvent.
+                            // and exports through icsExporter.exportDeviceEvent.
                             val event = deviceDisplayEvent
                             val masterEventId = event.instance.originalId ?: event.instance.eventId
                             coroutineScope.launch {
                                 val export = deviceEventReader.getEventWithExceptionsForExport(masterEventId)
                                 if (export == null) {
                                     Log.w(TAG, "Device event $masterEventId not found for export")
-                                    homeViewModel.showSnackbar("Event not found")
+                                    homeViewModel.showSnackbar(getString(R.string.error_device_event_not_found))
                                     showDeviceQuickViewSheet = false
                                     deviceQuickViewEvent = null
                                     return@launch
@@ -1296,20 +1396,19 @@ class MainActivity : FragmentActivity() {
                                     ex.toExportEvent(remindersById[ex.id].orEmpty())
                                 }
 
-                                icsExporter.exportEvent(
+                                icsExporter.exportDeviceEvent(
                                     context = this@MainActivity,
                                     event = masterSynthetic,
                                     exceptions = exceptionsSynthetic
                                 ).onSuccess { uri ->
-                                    val intent = Intent(Intent.ACTION_SEND).apply {
-                                        type = "text/calendar"
-                                        putExtra(Intent.EXTRA_STREAM, uri)
-                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                    }
-                                    startActivity(ShareChooser.createKashCalChooser(this@MainActivity, intent, "Export Event"))
+                                    startActivity(
+                                        ShareChooser.createFileChooser(
+                                            this@MainActivity, uri, "text/calendar", getString(R.string.export_event_chooser_title)
+                                        )
+                                    )
                                 }.onFailure { e ->
                                     Log.e(TAG, "Failed to export device event", e)
-                                    homeViewModel.showSnackbar("Export failed: ${e.message}")
+                                    homeViewModel.showSnackbar(getString(R.string.export_file_failed))
                                 }
 
                                 showDeviceQuickViewSheet = false
@@ -1320,7 +1419,7 @@ class MainActivity : FragmentActivity() {
                             // An unsaved Room Event built from the device
                             // instance with no attendee or organizer data,
                             // per [toEventForShareCard].
-                            openShareCard(deviceDisplayEvent.toEventForShareCard())
+                            openShareCard(deviceDisplayEvent.toEventForShareCard(), true)
                         },
                         showShareCardTooltip = !shownShareCardTooltip,
                         onShareCardTooltipDismissed = {
@@ -1530,6 +1629,7 @@ class MainActivity : FragmentActivity() {
                         },
                         attendeeAccount = formAttendeeContext.account,
                         isSchedulable = formAttendeeContext.isSchedulable,
+                        onCreateOfflineCalendar = homeViewModel::createOfflineCalendar,
                         onCalendarSelected = { calId ->
                             // Recompute the attendee context on a calendar switch so
                             // the schedulable gate and "You" detection follow the new
@@ -1551,14 +1651,18 @@ class MainActivity : FragmentActivity() {
                         contactsDeclined = contactsDeclined,
                         onDeclineContacts = { homeViewModel.declineContactSuggestions() },
                         tagsAboveNotes = uiState.tagsAboveNotes,
-                        onSetTagsAboveNotes = { above -> homeViewModel.setTagsAboveNotes(above) }
+                        onSetTagsAboveNotes = { above -> homeViewModel.setTagsAboveNotes(above) },
+                        recentTimeZones = recentTimeZones,
+                        onTimeZonePicked = homeViewModel::recordRecentTimeZone,
+                        formSaveError = uiState.formSaveError,
                     )
                 }
 
-                // App Info Sheet
-                if (uiState.showAppInfoSheet) {
-                    AppInfoSheet(
-                        onDismiss = { homeViewModel.toggleAppInfoSheet() }
+                // About, from the account hub; the Settings version footer opens AppInfoSheet.
+                if (uiState.showAboutSheet) {
+                    AboutSheet(
+                        versionName = BuildConfig.VERSION_NAME,
+                        onDismiss = { homeViewModel.closeAboutSheet() },
                     )
                 }
 
@@ -1591,22 +1695,61 @@ class MainActivity : FragmentActivity() {
                     )
                 }
 
-                if (uiState.showOnboardingSheet) {
-                    OnboardingBanner(
-                        onConnect = {
-                            homeViewModel.dismissOnboardingSheet()
-                            // Open Settings on the iCloud sign-in sheet.
-                            launchInternalActivity(Intent(this@MainActivity, SettingsActivity::class.java).apply {
-                                putExtra(SettingsActivity.EXTRA_OPEN_ICLOUD_SIGNIN, true)
-                            })
-                        },
-                        onDismiss = {
-                            homeViewModel.dismissOnboardingSheet()
+                // Print your week sheet. Events are collected for the Activity's life: a print
+                // that fails after the sheet closed still reaches the home screen.
+                val printState by printViewModel.uiState.collectAsStateWithLifecycle()
+                val printSnackbarHostState = remember { SnackbarHostState() }
+                LaunchedEffect(Unit) {
+                    printViewModel.events.collect { event ->
+                        when (event) {
+                            is PrintEvent.Request -> startPrint(event)
+                            is PrintEvent.SheetError -> coroutineScope.launch {
+                                printSnackbarHostState.showSnackbar(event.message)
+                            }
+                            is PrintEvent.HomeError -> homeViewModel.showSnackbar(event.message)
                         }
+                    }
+                }
+                if (printState.isOpen) {
+                    PrintOptionsSheet(
+                        state = printState,
+                        snackbarHostState = printSnackbarHostState,
+                        onPreviousWeek = { printViewModel.previousWeek() },
+                        onNextWeek = { printViewModel.nextWeek() },
+                        onToggleGrid = { printViewModel.toggleGrid() },
+                        onToggleDetails = { printViewModel.toggleDetails() },
+                        onToggleCalendar = { printViewModel.toggleCalendar(it) },
+                        onPrint = { printViewModel.print() },
+                        onDismiss = {
+                            cancelPendingPrint()
+                            printViewModel.dismiss()
+                            // The host outlives the sheet, so a snackbar left showing would
+                            // come back on the next open.
+                            printSnackbarHostState.currentSnackbarData?.dismiss()
+                        },
+                    )
+                }
+
+                if (uiState.showOnboardingSheet) {
+                    // Each row opens its Settings screen; closing it returns here.
+                    val openSettingsRoute: (String) -> Unit = { extra ->
+                        homeViewModel.completeOnboarding()
+                        launchInternalActivity(
+                            Intent(this@MainActivity, SettingsActivity::class.java).putExtra(extra, true)
+                        )
+                    }
+                    OnboardingSheet(
+                        onICloud = { openSettingsRoute(SettingsActivity.EXTRA_OPEN_ICLOUD_SIGNIN) },
+                        onCalDav = { openSettingsRoute(SettingsActivity.EXTRA_OPEN_CALDAV_SIGNIN) },
+                        onDeviceCalendars = {
+                            openSettingsRoute(SettingsActivity.EXTRA_OPEN_DEVICE_CALENDARS)
+                        },
+                        onUseOffline = homeViewModel::completeOnboarding,
+                        onDismiss = homeViewModel::completeOnboarding,
                     )
                 } else if (uiState.whatsNewReleases.isNotEmpty()) {
                     // What's New shows only once onboarding is gone, so first-launch users
-                    // see the iCloud prompt first.
+                    // see the calendars sheet first.
                     val is24Hour = android.text.format.DateFormat.is24HourFormat(this@MainActivity)
                     val whatsNewTimePattern = remember(uiState.timeFormat, is24Hour) {
                         DateTimeUtils.getTimePattern(uiState.timeFormat, is24Hour)
@@ -1658,6 +1801,9 @@ class MainActivity : FragmentActivity() {
                         defaultCalendarId = defaultRoomCalendarId,
                         deviceCalendarGroups = uiState.deviceCalendarGroups,
                         defaultDeviceCalendarId = defaultDeviceCalendarId,
+                        offlineCalendarIds = remember(uiState.calendarGroups) {
+                            uiState.calendarGroups.offlineCalendarIds()
+                        },
                         loadPreview = { calendarId, isDeviceCalendar ->
                             if (isDeviceCalendar) {
                                 homeViewModel.previewIcsImportOnDevice(file, calendarId)
@@ -1921,6 +2067,42 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+    /**
+     * Hands [request] to a new launcher, with this Activity for the print system. Ignored while a
+     * request is still loading; the ViewModel already blocks a second Print until it hears back.
+     */
+    private fun startPrint(request: PrintEvent.Request) {
+        if (printPending) return
+        printLauncher?.cancel()
+        printPending = true
+        printLauncher = WebViewPrintLauncher(this).also { launcher ->
+            launcher.print(request.html, request.jobName) { result ->
+                printPending = false
+                when (result) {
+                    WebViewPrintLauncher.Result.Started -> printViewModel.onPrintStarted()
+                    WebViewPrintLauncher.Result.Failed -> printViewModel.onPrintFailed()
+                }
+            }
+        }
+    }
+
+    /** Drops a print that hasn't reached the print system yet, so Print works again. */
+    private fun cancelPendingPrint() {
+        if (!printPending) return
+        printLauncher?.cancel()
+        printLauncher = null
+        printPending = false
+        printViewModel.onPrintCancelled()
+    }
+
+    override fun onDestroy() {
+        // The ViewModel outlives a recreated Activity, so it hears that this print is gone.
+        cancelPendingPrint()
+        printLauncher?.cancel()
+        printLauncher = null
+        super.onDestroy()
+    }
+
     override fun onStart() {
         super.onStart()
         // onStart runs before onResume resets returningFromInternalActivity, so the flag still
@@ -1959,6 +2141,21 @@ class MainActivity : FragmentActivity() {
         }
         isFirstResume = false
         returningFromInternalActivity = false
+        reportNotificationPermission()
+    }
+
+    /**
+     * Reports the notification permission state to the view model on every resume, including the
+     * first, for the "Reminders are off" banner. Below Android 13 there is no permission to ask
+     * for, so it reports granted.
+     */
+    private fun reportNotificationPermission() {
+        val granted = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+        val rationaleDue = !granted &&
+            ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.POST_NOTIFICATIONS)
+        homeViewModel.onNotificationPermissionChecked(granted, rationaleDue)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -1974,7 +2171,8 @@ class MainActivity : FragmentActivity() {
      * shares, calendar insert and edit intents, CalendarContract URIs, and ICS files opened by URI.
      * The first branch that matches returns, even when it sets no action (a reminder tap missing
      * its extras, a CalendarContract URI that only opens the app). A webcal:// link opens Settings
-     * instead.
+     * instead. A create-event action goes through [HomeViewModel.requestCreateEvent], which may
+     * set its action only after reading the Quick Add setting.
      *
      * The action is state in the ViewModel, as Android recommends for UI events: the UI clears
      * it after consuming it, and it survives configuration changes.
@@ -2053,11 +2251,7 @@ class MainActivity : FragmentActivity() {
                     // The week widget may pass a start time.
                     val startTs = intent.getLongExtra(org.onekash.kashcal.widget.EXTRA_CREATE_EVENT_START_TS, 0L)
                     Log.d(TAG, "Widget: creating new event (startTs=$startTs)")
-                    if (startTs > 0) {
-                        homeViewModel.setPendingAction(PendingAction.CreateEvent(startTs = startTs))
-                    } else {
-                        homeViewModel.setPendingAction(PendingAction.CreateEvent())
-                    }
+                    homeViewModel.requestCreateEvent(startTs.takeIf { it > 0 })
                     return
                 }
                 org.onekash.kashcal.widget.ACTION_GO_TO_DATE -> {
@@ -2074,8 +2268,12 @@ class MainActivity : FragmentActivity() {
                     return
                 }
                 org.onekash.kashcal.widget.ACTION_OPEN_SEARCH -> {
-                    Log.d(TAG, "Shortcut: opening search")
-                    homeViewModel.setPendingAction(PendingAction.OpenSearch)
+                    val routed = SearchIntentRouter.route(intent) ?: PendingAction.OpenSearch
+                    Log.d(TAG, "Opening search: ${routed::class.simpleName}")
+                    // A tag search is consumed so a recreation keeps the search it opened; the
+                    // shortcut's extras are kept.
+                    if (routed is PendingAction.OpenTagSearch) SearchIntentRouter.consume(intent)
+                    homeViewModel.setPendingAction(routed)
                     return
                 }
             }

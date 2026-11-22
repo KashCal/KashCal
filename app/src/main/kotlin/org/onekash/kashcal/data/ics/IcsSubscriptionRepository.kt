@@ -211,7 +211,9 @@ class IcsSubscriptionRepository @Inject constructor(
 
         try {
             // Cached validators with zero stored events means an earlier parse or store
-            // failed (#219). Drop the validators so the server returns the body again.
+            // failed (#219), or the feed is empty or all its events are cancelled. Drop the
+            // validators so the server returns the body again; such a feed is downloaded in full
+            // on every refresh.
             val hasCachedConditionals = subscription.etag != null || subscription.lastModified != null
             val isStuckWithStaleConditionals = hasCachedConditionals && !eventsDao.anyByCalendarIdAndCaldavUrlPrefix(
                 calendarId = subscription.calendarId,
@@ -228,28 +230,30 @@ class IcsSubscriptionRepository @Inject constructor(
 
             when (fetchResult) {
                 is FetchResult.NotModified -> {
-                    // Unchanged: record the sync time, keep the stored validators.
-                    icsSubscriptionsDao.updateSyncSuccess(
-                        id = subscriptionId,
-                        timestamp = System.currentTimeMillis(),
-                        etag = subscription.etag,
-                        lastModified = subscription.lastModified
-                    )
+                    // Unchanged: record the sync time and leave the validators as stored now.
+                    // Writing back the ones this request sent would undo a clear made while it
+                    // ran (UtcSeriesZoneRepair), and the feed would never be read again.
+                    icsSubscriptionsDao.updateSyncTimeOnly(subscriptionId, System.currentTimeMillis())
                     return@withContext SyncResult.NotModified
                 }
 
                 is FetchResult.Success -> {
-                    val events = IcsParserService.parseIcsContent(
+                    val feed = IcsParserService.parseFeed(
                         content = fetchResult.content,
                         calendarId = subscription.calendarId,
                         subscriptionId = subscriptionId
                     )
+                    val events = feed.events
 
-                    // Zero events from a feed with VEVENT lines is a parse failure (#219), or a
-                    // feed whose events are all CANCELLED. Caching the ETag would make every
-                    // later refresh a 304 that never re-parses, so report an error instead.
-                    if (events.isEmpty() && fetchResult.content.contains("BEGIN:VEVENT")) {
-                        val message = "Parsed 0 events from non-empty feed"
+                    // No event left from a feed with VEVENT lines is a parse failure (#219) unless
+                    // the parser read every VEVENT and all were CANCELLED. Caching the ETag would
+                    // make every later refresh a 304 that never re-parses, so report an error
+                    // instead. An all-cancelled feed goes on with no events, and the write's
+                    // orphan sweep removes the stored ones.
+                    val veventCount = Regex("""^BEGIN:VEVENT\s*$""", setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE))
+                        .findAll(fetchResult.content).count()
+                    if (events.isEmpty() && veventCount > 0 && feed.parsedCount < veventCount) {
+                        val message = IcsFeedErrors.NO_EVENTS_PARSED
                         Log.w(TAG, "$message: ${subscription.name}")
                         icsSubscriptionsDao.updateSyncError(subscriptionId, message)
                         return@withContext SyncResult.Error(message)
@@ -258,21 +262,36 @@ class IcsSubscriptionRepository @Inject constructor(
                     // Calendar color for reminder notifications.
                     val calendar = calendarsDao.getById(subscription.calendarId)
 
-                    val syncCount = syncEventsToDatabase(
+                    val write = syncEventsToDatabase(
                         events = events,
                         calendarId = subscription.calendarId,
                         subscriptionId = subscriptionId,
                         calendarColor = calendar?.color ?: subscription.color
                     )
+                    val syncCount = write.count
 
-                    icsSubscriptionsDao.updateSyncSuccess(
-                        id = subscriptionId,
-                        timestamp = System.currentTimeMillis(),
-                        etag = fetchResult.etag,
-                        lastModified = fetchResult.lastModified
-                    )
+                    if (write.missing.isEmpty()) {
+                        icsSubscriptionsDao.updateSyncSuccess(
+                            id = subscriptionId,
+                            timestamp = System.currentTimeMillis(),
+                            etag = fetchResult.etag,
+                            lastModified = fetchResult.lastModified
+                        )
+                    } else {
+                        // The validators are kept when anything was stored, so the next
+                        // unchanged refresh (304) clears the message. With nothing stored a 304
+                        // would clear it while every event is still missing, so they're dropped.
+                        val keepValidators = write.written.isNotEmpty()
+                        icsSubscriptionsDao.updateSyncWithMissingEvents(
+                            id = subscriptionId,
+                            timestamp = System.currentTimeMillis(),
+                            etag = fetchResult.etag.takeIf { keepValidators },
+                            lastModified = fetchResult.lastModified.takeIf { keepValidators },
+                            error = IcsFeedErrors.notSaved(write.missing.size, write.missing.map { it.title })
+                        )
+                    }
 
-                    Log.i(TAG, "Synced ${syncCount.added} new, ${syncCount.updated} updated, ${syncCount.deleted} deleted events for ${subscription.name}")
+                    Log.i(TAG, "Synced ${syncCount.added} new, ${syncCount.updated} updated, ${syncCount.deleted} deleted, ${syncCount.failed} not saved for ${subscription.name}")
                     return@withContext SyncResult.Success(syncCount)
                 }
 
@@ -288,7 +307,7 @@ class IcsSubscriptionRepository @Inject constructor(
             throw e
         } catch (e: Exception) {
             Log.e(TAG, "Error refreshing subscription: ${subscription.name}", e)
-            val errorMessage = e.message ?: "Unknown sync error"
+            val errorMessage = e.message ?: IcsFeedErrors.UNKNOWN
             icsSubscriptionsDao.updateSyncError(subscriptionId, errorMessage)
             return@withContext SyncResult.Error(errorMessage)
         }
@@ -353,162 +372,218 @@ class IcsSubscriptionRepository @Inject constructor(
     }
 
     /**
-     * Writes a feed's parsed events to its calendar in one transaction and returns the counts.
+     * Writes a feed's parsed events to its calendar and returns the counts and the feed events
+     * left without a row.
      *
      * Exceptions share their master's UID and differ by RECURRENCE-ID (RFC 5545), so rows are
-     * matched by importId, which includes the RECURRENCE-ID. In order:
-     * - Rename duplicate-UID masters ([disambiguateDuplicateUidMasters]).
-     * - In the transaction, build a synthetic master for each UID with exceptions but no master
-     *   ([synthesizeMastersForOrphanUids]).
-     * - Delete stored rows whose importId is in neither the feed nor the synthetic masters.
-     * - Write the synthetic masters, then the real masters (PASS 1), then the exceptions linked to
-     *   their master (PASS 2). Each master first sweeps legacy standalone rows for its UID
-     *   ([sweepLegacyOrphanStandalones]).
+     * matched by importId, which includes the RECURRENCE-ID. Before writing, repeated changed
+     * occurrences collapse to one ([collapseRepeatedOccurrences]) and duplicate-UID masters are
+     * renamed ([disambiguateDuplicateUidMasters]). [writeFeed] then runs in one transaction. A
+     * statement that fails inside a transaction rolls all of it back even when caught (#441), so
+     * if that attempt throws, [writeFeed] runs again with each step in its own transaction and
+     * a failing step skipped (the per-event retry). Reminders are scheduled after the rows they
+     * belong to are committed.
      */
     private suspend fun syncEventsToDatabase(
         events: List<Event>,
         calendarId: Long,
         subscriptionId: Long,
         calendarColor: Int
-    ): SyncCount {
+    ): FeedWrite {
+        val feedEvents = disambiguateDuplicateUidMasters(collapseRepeatedOccurrences(events), subscriptionId)
+
+        val write = try {
+            database.runInTransaction {
+                writeFeed(feedEvents, calendarId, subscriptionId, isolated = false)
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "Feed write rolled back (${e.message}); writing each event on its own")
+            writeFeed(feedEvents, calendarId, subscriptionId, isolated = true)
+        }
+
+        for (saved in write.written) {
+            scheduleRemindersForEvent(saved.event, calendarColor, isModified = !saved.isNew)
+        }
+        return write
+    }
+
+    /** What [writeFeed] stored: counts, the rows written and the feed events with no row. */
+    private class FeedWrite(
+        val count: SyncCount,
+        val written: List<Saved>,
+        val missing: List<Event>,
+    )
+
+    /** One committed row; [swept] holds the importIds of legacy rows deleted before it. */
+    private class Saved(val event: Event, val isNew: Boolean, val swept: List<String?> = emptyList())
+
+    /**
+     * Writes [feedEvents] in order: delete stored rows whose importId is in neither the feed nor
+     * the synthetic masters ([synthesizeMastersForOrphanUids]), then the synthetic masters, the
+     * real masters (PASS 1) and the exceptions linked to their master (PASS 2). Each master
+     * first sweeps legacy standalone rows for its UID ([sweepLegacyOrphanStandalones]).
+     *
+     * Not [isolated]: runs inside the caller's transaction, and any failure propagates. Isolated
+     * (the per-event retry): each step commits in its own transaction; a step that throws is
+     * logged and skipped, and its feed events (and the exceptions of a master that failed) are
+     * returned as missing.
+     */
+    private suspend fun writeFeed(
+        feedEvents: List<Event>,
+        calendarId: Long,
+        subscriptionId: Long,
+        isolated: Boolean,
+    ): FeedWrite {
         var added = 0
         var updated = 0
         var deleted = 0
+        val written = mutableListOf<Saved>()
+        val missing = mutableListOf<Event>()
 
-        val disambiguatedEvents = disambiguateDuplicateUidMasters(events, subscriptionId)
-
-        database.runInTransaction {
-            val sourcePrefix = IcsSubscription.eventSourcePrefix(subscriptionId)
-            val existingEvents = eventsDao.getByCalendarIdAndCaldavUrlPrefix(
-                calendarId = calendarId,
-                urlPrefix = sourcePrefix
-            )
-
-            // Mutable so the sweeps can remove what they delete; otherwise PASS 2 would update
-            // a deleted row id (a silent no-op) and never write the new exception.
-            val existingByImportId = existingEvents
-                .associateBy { extractImportIdFromSource(it.caldavUrl) }
-                .toMutableMap()
-
-            // Must run before `newImportIds` is computed, so synthetic importIds are in it and
-            // the orphan sweep below doesn't delete them.
-            val syntheticMasters = synthesizeMastersForOrphanUids(
-                feedEvents = disambiguatedEvents,
-                existingByImportId = existingByImportId,
-                subscriptionId = subscriptionId
-            )
-
-            val newImportIds = (
-                disambiguatedEvents.map { it.importId } +
-                    syntheticMasters.map { it.importId }
-                ).toSet()
-
-            // Delete rows gone from the feed, cancelling their reminders first.
-            val orphanedImportIds = existingByImportId.keys - newImportIds
-            for (importId in orphanedImportIds) {
-                val existingEvent = existingByImportId[importId] ?: continue
-                reminderScheduler.cancelRemindersForEvent(existingEvent.id)
-                eventsDao.deleteById(existingEvent.id)
-                existingByImportId.remove(importId)
-                deleted++
-            }
-
-            // Master row id by UID, for PASS 2 to link exceptions.
-            val masterIdByUid = mutableMapOf<String, Long>()
-
-            // Synthetic masters first, so their row ids are in masterIdByUid before PASS 2.
-            for (synthetic in syntheticMasters) {
-                deleted += sweepLegacyOrphanStandalones(synthetic.uid, existingByImportId)
-                val existingEvent = existingByImportId[synthetic.importId]
-                val (eventId, isNew) = upsertEvent(synthetic, existingEvent)
-                masterIdByUid[synthetic.uid] = eventId
-                if (isNew) added++ else updated++
-                // No regenerateOccurrences or scheduleRemindersForEvent: a synthetic master
-                // has no occurrences and no reminders.
-            }
-
-            val realMasters = disambiguatedEvents.filter { it.originalInstanceTime == null }
-            val exceptions = disambiguatedEvents.filter { it.originalInstanceTime != null }
-
-            // PASS 1: real masters.
-            for (event in realMasters) {
-                try {
-                    // Before the insert, or it trips trigger_master_event_unique_insert (see
-                    // [sweepLegacyOrphanStandalones]).
-                    deleted += sweepLegacyOrphanStandalones(event.uid, existingByImportId)
-
-                    val existingEvent = existingByImportId[event.importId]
-                    val (eventId, isNew) = upsertEvent(event, existingEvent)
-                    masterIdByUid[event.uid] = eventId
-
-                    val savedEvent = event.copy(id = eventId)
-                    occurrenceGenerator.regenerateOccurrences(savedEvent)
-                    scheduleRemindersForEvent(savedEvent, calendarColor, isModified = !isNew)
-
-                    if (isNew) added++ else updated++
-                } catch (e: Exception) {
-                    // For example the master-uniqueness trigger on two masters with the same
-                    // UID and DTSTART, which disambiguation renames alike (#227). The rest of
-                    // the sync goes on.
-                    Log.w(
-                        TAG,
-                        "Master insert aborted: uid=${event.uid.maskUid()} startTs=${event.startTs} cause=${e.message}"
-                    )
-                }
-            }
-
-            // Also map UIDs to stored masters not written above: recurring masters
-            // (rrule != null) and synthetic ones. A synthetic master from a prior sync is
-            // normally mapped already, by the synthetic loop or, once its real master is in the
-            // feed, by PASS 1; putIfAbsent keeps that id.
-            for (existingEvent in existingEvents) {
-                if (existingEvent.originalEventId == null &&
-                    (existingEvent.rrule != null ||
-                        existingEvent.extraProperties?.get(SYNTHETIC_MASTER_EXTRA_KEY) == "true")
-                ) {
-                    masterIdByUid.putIfAbsent(existingEvent.uid, existingEvent.id)
-                }
-            }
-
-            // PASS 2: exceptions, linked to their master. After synthesis a UID lacks a master
-            // only when, for example, its master insert failed in PASS 1; the exception is
-            // then logged and skipped.
-            for (event in exceptions) {
-                try {
-                    val masterId = masterIdByUid[event.uid]
-                    if (masterId == null) {
-                        Log.w(
-                            TAG,
-                            "Exception with no master after synthesis: uid=${event.uid.maskUid()} — skipping"
-                        )
-                        continue
-                    }
-
-                    val linkedEvent = event.copy(originalEventId = masterId)
-                    val existingEvent = existingByImportId[event.importId]
-                    val (eventId, isNew) = upsertEvent(linkedEvent, existingEvent)
-
-                    val savedEvent = linkedEvent.copy(id = eventId)
-
-                    val originalTime = savedEvent.originalInstanceTime
-                    if (originalTime != null) {
-                        occurrenceGenerator.linkException(masterId, originalTime, savedEvent)
-                    }
-
-                    scheduleRemindersForEvent(savedEvent, calendarColor, isModified = !isNew)
-                    if (isNew) added++ else updated++
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to process exception event ${event.uid}: ${e.message}")
-                }
+        // Null means the step failed and was skipped (isolated only). [what] names the step in
+        // the log, built only on failure.
+        suspend fun <T> step(what: () -> String, block: suspend () -> T): T? {
+            if (!isolated) return block()
+            return try {
+                database.runInTransaction { block() }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "Not saved: ${what()}: ${e.message}")
+                null
             }
         }
 
-        return SyncCount(added, updated, deleted)
+        val sourcePrefix = IcsSubscription.eventSourcePrefix(subscriptionId)
+        val existingEvents = eventsDao.getByCalendarIdAndCaldavUrlPrefix(
+            calendarId = calendarId,
+            urlPrefix = sourcePrefix
+        )
+
+        // Mutable so the sweeps can remove what they delete, once their step has committed;
+        // otherwise PASS 2 would update a deleted row id (a silent no-op) and never write the
+        // new exception.
+        val existingByImportId = existingEvents
+            .associateBy { extractImportIdFromSource(it.caldavUrl) }
+            .toMutableMap()
+
+        // Must run before `newImportIds` is computed, so synthetic importIds are in it and
+        // the orphan sweep below doesn't delete them.
+        val syntheticMasters = synthesizeMastersForOrphanUids(
+            feedEvents = feedEvents,
+            existingByImportId = existingByImportId,
+            subscriptionId = subscriptionId
+        )
+
+        val newImportIds = (
+            feedEvents.map { it.importId } +
+                syntheticMasters.map { it.importId }
+            ).toSet()
+
+        // Delete rows gone from the feed, cancelling their reminders first.
+        val orphanedImportIds = existingByImportId.keys - newImportIds
+        if (orphanedImportIds.isNotEmpty()) {
+            step({ "rows gone from the feed" }) {
+                for (importId in orphanedImportIds) {
+                    val existingEvent = existingByImportId[importId] ?: continue
+                    reminderScheduler.cancelRemindersForEvent(existingEvent.id)
+                    eventsDao.deleteById(existingEvent.id)
+                }
+            }?.let {
+                orphanedImportIds.forEach { existingByImportId.remove(it) }
+                deleted += orphanedImportIds.size
+            }
+        }
+
+        fun committed(saved: Saved) {
+            saved.swept.forEach { existingByImportId.remove(it) }
+            deleted += saved.swept.size
+            if (saved.isNew) added++ else updated++
+        }
+
+        // Master row id by UID, for PASS 2 to link exceptions.
+        val masterIdByUid = mutableMapOf<String, Long>()
+
+        // Synthetic masters first, so their row ids are in masterIdByUid before PASS 2. No
+        // regenerateOccurrences or reminders: a synthetic master has neither.
+        for (synthetic in syntheticMasters) {
+            val saved = step({ "synthetic master ${synthetic.uid.maskUid()}" }) {
+                val swept = sweepLegacyOrphanStandalones(synthetic.uid, existingByImportId)
+                val (eventId, isNew) = upsertEvent(synthetic, existingByImportId[synthetic.importId])
+                Saved(synthetic.copy(id = eventId), isNew, swept)
+            } ?: continue
+            committed(saved)
+            masterIdByUid[synthetic.uid] = saved.event.id
+        }
+
+        val realMasters = feedEvents.filter { it.originalInstanceTime == null }
+        val exceptions = feedEvents.filter { it.originalInstanceTime != null }
+
+        // PASS 1: real masters.
+        for (event in realMasters) {
+            val saved = step({ "master ${event.uid.maskUid()} startTs=${event.startTs}" }) {
+                // Before the insert, or it trips trigger_master_event_unique_insert (see
+                // [sweepLegacyOrphanStandalones]).
+                val swept = sweepLegacyOrphanStandalones(event.uid, existingByImportId)
+                val (eventId, isNew) = upsertEvent(event, existingByImportId[event.importId])
+                val savedEvent = event.copy(id = eventId)
+                occurrenceGenerator.regenerateOccurrences(savedEvent)
+                Saved(savedEvent, isNew, swept)
+            }
+            if (saved == null) {
+                missing += event
+                continue
+            }
+            committed(saved)
+            masterIdByUid[event.uid] = saved.event.id
+            written += saved
+        }
+
+        // Also map UIDs to stored masters not written above: recurring masters
+        // (rrule != null) and synthetic ones. A synthetic master from a prior sync is
+        // normally mapped already, by the synthetic loop or, once its real master is in the
+        // feed, by PASS 1; putIfAbsent keeps that id.
+        for (existingEvent in existingEvents) {
+            if (existingEvent.originalEventId == null &&
+                (existingEvent.rrule != null ||
+                    existingEvent.extraProperties?.get(SYNTHETIC_MASTER_EXTRA_KEY) == "true")
+            ) {
+                masterIdByUid.putIfAbsent(existingEvent.uid, existingEvent.id)
+            }
+        }
+
+        // PASS 2: exceptions, linked to their master. After synthesis a UID lacks a master
+        // only when its master's write failed; the exception is then missing too.
+        for (event in exceptions) {
+            val masterId = masterIdByUid[event.uid]
+            if (masterId == null) {
+                Log.w(TAG, "Exception with no master after synthesis: uid=${event.uid.maskUid()}, skipping")
+                missing += event
+                continue
+            }
+            val linkedEvent = event.copy(originalEventId = masterId)
+            val saved = step({ "exception ${event.uid.maskUid()}" }) {
+                val (eventId, isNew) = upsertEvent(linkedEvent, existingByImportId[event.importId])
+                val savedEvent = linkedEvent.copy(id = eventId)
+                savedEvent.originalInstanceTime?.let { occurrenceGenerator.linkException(masterId, it, savedEvent) }
+                Saved(savedEvent, isNew)
+            }
+            if (saved == null) {
+                missing += event
+                continue
+            }
+            committed(saved)
+            written += saved
+        }
+
+        return FeedWrite(SyncCount(added, updated, deleted, failed = missing.size), written, missing)
     }
 
     /**
-     * Deletes legacy standalone rows for [uid] and removes them from [existingByImportId];
-     * returns how many.
+     * Deletes legacy standalone rows for [uid] and returns their importIds, for the caller to
+     * drop from [existingByImportId] once the step that ran this has committed.
      *
      * Builds up to v23.7.45 stored an exception with no master as a standalone event (no
      * original_event_id) with importId `{uid}:RECID:{datetime}`. Such a row must go before a
@@ -517,8 +592,8 @@ class IcsSubscriptionRepository @Inject constructor(
      */
     private suspend fun sweepLegacyOrphanStandalones(
         uid: String,
-        existingByImportId: MutableMap<String?, Event>
-    ): Int {
+        existingByImportId: Map<String?, Event>
+    ): List<String?> {
         val staleOrphanKeys = existingByImportId
             .filter { (key, value) ->
                 key != null &&
@@ -528,15 +603,12 @@ class IcsSubscriptionRepository @Inject constructor(
             }
             .keys
             .toList()
-        var swept = 0
         for (staleKey in staleOrphanKeys) {
             val staleRow = existingByImportId[staleKey] ?: continue
             reminderScheduler.cancelRemindersForEvent(staleRow.id)
             eventsDao.deleteById(staleRow.id)
-            existingByImportId.remove(staleKey)
-            swept++
         }
-        return swept
+        return staleOrphanKeys
     }
 
     /**
@@ -615,13 +687,38 @@ class IcsSubscriptionRepository @Inject constructor(
     }
 
     /**
+     * Keeps one of the changed occurrences that name the same instance (UID and original instance
+     * time): the higher SEQUENCE, then the later DTSTAMP from the feed, then the first in feed
+     * order. Masters and everything else pass through in feed order.
+     *
+     * RFC 5545 §3.8.4.4 fixes a recurrence instance by UID, SEQUENCE and RECURRENCE-ID, and RFC
+     * 5546 §5.3 breaks a SEQUENCE tie with DTSTAMP. A published Microsoft 365 feed listed one
+     * moved occurrence twice (#441); the second copy hit the unique (calendar_id, uid,
+     * original_instance_time) index. The key is that instant, not the importId, because one
+     * instance can be written with a TZID or in UTC. The DTSTAMP compared is [Event.itipDtstamp]:
+     * the mapper fills [Event.dtstamp] with the current time when the feed has none.
+     */
+    internal fun collapseRepeatedOccurrences(events: List<Event>): List<Event> {
+        // By position: byte-identical copies are equal Events.
+        val kept = events.withIndex()
+            .filter { it.value.originalInstanceTime != null }
+            .groupBy { it.value.uid to it.value.originalInstanceTime }
+            .values
+            .mapTo(HashSet()) { copies ->
+                copies.maxWith(compareBy({ it.value.sequence }, { it.value.itipDtstamp ?: Long.MIN_VALUE })).index
+            }
+        return events.filterIndexed { index, event -> event.originalInstanceTime == null || index in kept }
+    }
+
+    /**
      * Renames masters that share a UID to `{uid}#dup={startTs}`, with a matching importId and
      * caldavUrl; returns [events] unchanged when no UID repeats.
      *
      * Google's private ICS export sometimes emits two non-exception VEVENTs with one UID (#227),
      * against RFC 5545 §3.8.4.7. `trigger_master_event_unique_insert` (MIGRATION_6_7, against
-     * duplicate CalDAV-sync masters, #36) would abort the second master's insert, which the sync
-     * catches, so only one of the two events would show. `startTs` belongs to the event, so the
+     * duplicate CalDAV-sync masters, #36) would abort the second master's insert. Two masters with
+     * one UID and one start still get the same name; the second is then left out by
+     * [syncEventsToDatabase]'s per-event retry. `startTs` belongs to the event, so the
      * name is the same on every sync. The original UID goes in [ORIGINAL_UID_EXTRA_KEY].
      */
     internal fun disambiguateDuplicateUidMasters(
@@ -670,8 +767,9 @@ class IcsSubscriptionRepository @Inject constructor(
      *
      * An exception gets its one linked occurrence. Failures are logged and don't fail the sync.
      *
-     * @param isModified cancels the event's existing reminders first, so a time change doesn't
-     *   leave the old alarms.
+     * @param isModified reconciles the event's existing reminders first
+     *   ([ReminderScheduler.reconcileRemindersForEvent]), so a time change doesn't leave the old
+     *   alarms and an unchanged reminder keeps its row.
      */
     private suspend fun scheduleRemindersForEvent(
         event: Event,
@@ -682,14 +780,16 @@ class IcsSubscriptionRepository @Inject constructor(
 
         try {
             if (isModified) {
-                reminderScheduler.cancelRemindersForEvent(event.id)
+                reminderScheduler.reconcileRemindersForEvent(event)
             }
 
             val occurrences = if (event.originalEventId != null) {
                 listOfNotNull(eventReader.getOccurrenceByExceptionEventId(event.id))
             } else {
                 eventReader.getOccurrencesForEventInScheduleWindow(
-                    event.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS
+                    event.id,
+                    ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS,
+                    ReminderScheduler.STARTED_LOOKBACK_MS
                 )
             }
 
@@ -750,10 +850,12 @@ class IcsSubscriptionRepository @Inject constructor(
         data class Error(val message: String) : SyncResult()
     }
 
+    /** [failed] counts feed events left without a row ([IcsFeedErrors.notSaved]). */
     data class SyncCount(
         val added: Int,
         val updated: Int,
-        val deleted: Int
+        val deleted: Int,
+        val failed: Int = 0
     )
 
     private sealed class FetchResult {

@@ -1,21 +1,49 @@
 package org.onekash.kashcal.data.db.dao
 
-import androidx.room.ColumnInfo
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Embedded
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Update
-import androidx.room.Upsert
+import androidx.room3.ColumnInfo
+import androidx.room3.Dao
+import androidx.room3.Delete
+import androidx.room3.Embedded
+import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
+import androidx.room3.Query
+import androidx.room3.RawQuery
+import androidx.room3.RoomRawQuery
+import androidx.room3.Update
+import androidx.room3.Upsert
 import kotlinx.coroutines.flow.Flow
+import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
 
-/** Pairs an event with the occurrence start its query picked as next_occurrence_ts. */
-data class EventWithNextOccurrence(
+/**
+ * Holds one row of [EventsDao.observeSearchMatches]: a matching event and the ids of the
+ * occurrence rows [EventSearchSql.nextAndLast] picked for it.
+ */
+data class SearchMatchRow(
     @Embedded val event: Event,
+    @ColumnInfo(name = "next_occurrence_id") val nextOccurrenceId: Long?,
+    @ColumnInfo(name = "last_occurrence_id") val lastOccurrenceId: Long?,
+    @ColumnInfo(name = "range_occurrence_id") val rangeOccurrenceId: Long?,
+    @ColumnInfo(name = "has_occurrences") val hasOccurrences: Boolean,
+)
+
+/**
+ * Holds one [EventsDao.getMasterEventsWithFutureOccurrenceFlow] row: the event columns the inbox
+ * reads and the start of its next occurrence.
+ */
+data class PendingInvitationRow(
+    val id: Long,
+    @ColumnInfo(name = "calendar_id") val calendarId: Long,
+    val title: String,
+    val location: String?,
+    @ColumnInfo(name = "is_all_day") val isAllDay: Boolean,
+    @ColumnInfo(name = "start_ts") val startTs: Long,
+    @ColumnInfo(name = "end_ts") val endTs: Long,
+    @ColumnInfo(name = "organizer_email") val organizerEmail: String?,
+    @ColumnInfo(name = "organizer_name") val organizerName: String?,
+    @ColumnInfo(name = "original_event_id") val originalEventId: Long?,
     @ColumnInfo(name = "next_occurrence_ts") val nextOccurrenceTs: Long?
 )
 
@@ -368,26 +396,6 @@ interface EventsDao {
     suspend fun markSynced(id: Long, etag: String?, now: Long)
 
     /**
-     * Marks the event SYNCED after a write and stores [rawIcal], the body the write sent, with
-     * the [etag] the server returned for it, in one statement. The pair is the row's copy of the
-     * server resource: a later reply patches it, and a 412 merge diffs the rows against it. An
-     * etag stored without its body would let a later reply re-send text from before this write
-     * without meeting a 412.
-     */
-    @Query("""
-        UPDATE events
-        SET sync_status = 'SYNCED',
-            etag = :etag,
-            raw_ical = :rawIcal,
-            last_sync_error = NULL,
-            sync_retry_count = 0,
-            server_modified_at = :now,
-            updated_at = :now
-        WHERE id = :id
-    """)
-    suspend fun markSyncedWithCopy(id: Long, etag: String?, rawIcal: String, now: Long)
-
-    /**
      * Sets only the etag, leaving sync status alone, so a still-pending event carries the new
      * etag into its next If-Match: for example a recovered missing etag or the etag after a
      * MOVE.
@@ -396,17 +404,17 @@ interface EventsDao {
     suspend fun updateEtag(id: Long, etag: String?)
 
     /**
-     * Stores the server's copy of a resource on every row pulled from it: the series
-     * [seriesId] and its changed occurrences at [oldUrl], moved to [newUrl] (the same URL
-     * unless the server redirected the write). Writes URL, etag and raw_ical in one statement,
-     * without touching sync status. A pull-made placeholder series has no URL and is never
-     * matched.
+     * Stores the etag of a resource on every row pulled from it: the series [seriesId] and its
+     * changed occurrences at [oldUrl], moved to [newUrl] (the same URL unless the server
+     * redirected the write), without touching sync status. A pull-made placeholder series has no
+     * URL and is never matched. The caller stores the body that goes with the etag
+     * ([org.onekash.kashcal.data.db.EventIcsSource.writeResource]) in the same transaction.
      */
     @Query("""
-        UPDATE events SET caldav_url = :newUrl, etag = :etag, raw_ical = :rawIcal
+        UPDATE events SET caldav_url = :newUrl, etag = :etag
         WHERE (id = :seriesId OR original_event_id = :seriesId) AND caldav_url = :oldUrl
     """)
-    suspend fun updateResourceCopy(seriesId: Long, oldUrl: String, newUrl: String, etag: String, rawIcal: String)
+    suspend fun updateResourceEtag(seriesId: Long, oldUrl: String, newUrl: String, etag: String)
 
     /**
      * Moves every row of a resource (series [seriesId] and its changed occurrences at
@@ -439,24 +447,6 @@ interface EventsDao {
         WHERE id = :id
     """)
     suspend fun markCreatedOnServer(id: Long, caldavUrl: String, etag: String?, now: Long)
-
-    /**
-     * [markCreatedOnServer] that also stores [rawIcal], the body the write sent, in the same
-     * statement (see [markSyncedWithCopy] for why the body and etag move together).
-     */
-    @Query("""
-        UPDATE events
-        SET sync_status = 'SYNCED',
-            caldav_url = :caldavUrl,
-            etag = :etag,
-            raw_ical = :rawIcal,
-            last_sync_error = NULL,
-            sync_retry_count = 0,
-            server_modified_at = :now,
-            updated_at = :now
-        WHERE id = :id
-    """)
-    suspend fun markCreatedOnServerWithCopy(id: Long, caldavUrl: String, etag: String?, rawIcal: String, now: Long)
 
     /** Records the error and increments the retry count. */
     @Query("""
@@ -566,6 +556,27 @@ interface EventsDao {
     @Query("UPDATE events SET etag = NULL")
     suspend fun clearAllEtags()
 
+    /**
+     * Returns the series rows [org.onekash.kashcal.domain.initializer.UtcSeriesZoneRepair] reads:
+     * timed, with no zone, not waiting to be deleted. The repair skips a row without a stored ICS.
+     */
+    @Query("""
+        SELECT * FROM events
+        WHERE original_event_id IS NULL
+        AND rrule IS NOT NULL AND rrule != ''
+        AND is_all_day = 0
+        AND timezone IS NULL
+        AND sync_status != 'PENDING_DELETE'
+    """)
+    suspend fun getUtcSeriesRepairCandidates(): List<Event>
+
+    /**
+     * Sets [timezone] on row [id] only while it has no zone, touching no other column. Returns the
+     * rows changed: 0 when a write gave the row a zone since it was read.
+     */
+    @Query("UPDATE events SET timezone = :timezone WHERE id = :id AND timezone IS NULL")
+    suspend fun setTimezoneIfUnset(id: Long, timezone: String): Int
+
     // ========== Recurrence Updates ==========
 
     /** Sets EXDATE, marks the event PENDING_UPDATE and increments its SEQUENCE. */
@@ -599,6 +610,19 @@ interface EventsDao {
 
     @Query("SELECT COUNT(*) FROM events WHERE calendar_id = :calendarId")
     suspend fun getCountByCalendar(calendarId: Long): Int
+
+    /**
+     * Counts a calendar's events as a user sees them: one-offs and series masters, not
+     * exceptions (a repeating series counts once) and not PENDING_DELETE rows. The same rows as
+     * [getAllMasterEventsForCalendar].
+     */
+    @Query("""
+        SELECT COUNT(*) FROM events
+        WHERE calendar_id = :calendarId
+        AND sync_status != 'PENDING_DELETE'
+        AND original_event_id IS NULL
+    """)
+    suspend fun countUserEventsInCalendar(calendarId: Long): Int
 
     /**
      * Returns a calendar's masters and one-off events by start time, without exceptions or
@@ -671,147 +695,35 @@ interface EventsDao {
         limit: Int
     ): List<TitleSuggestion>
 
-    /**
-     * Searches title, location and description with FTS4; returns at most 1000 events by start
-     * time, without PENDING_DELETE rows or synthetic masters.
-     *
-     * [query] is FTS4 MATCH syntax: `meeting`, prefix `meet*`, all words `team meeting`, phrase
-     * `"team meeting"`, `meeting OR standup`. The caller adds the `*` for prefix matching.
-     */
-    @Query("""
-        SELECT events.* FROM events
-        JOIN events_fts ON events.id = events_fts.rowid
-        WHERE events_fts MATCH :query
-        AND events.sync_status != 'PENDING_DELETE'
-        AND (events.extra_properties IS NULL
-             OR events.extra_properties NOT LIKE '%X-KASHCAL-SYNTHETIC-MASTER%')
-        ORDER BY events.start_ts ASC
-        LIMIT 1000
-    """)
-    suspend fun search(query: String): List<Event>
+    /** Runs a search built by [EventSearchSql.nextAndLast] once. */
+    @RawQuery
+    suspend fun searchMatches(query: RoomRawQuery): List<SearchMatchRow>
 
     /**
-     * Matches [query] as [search] does and returns at most 1000 events, not PENDING_DELETE,
-     * with a non-cancelled occurrence not ended at [now]: an event in progress counts, a series
-     * whose last occurrence ended doesn't. The occurrences table decides this, since a master's
-     * end_ts is its first occurrence's. Synthetic masters aren't filtered out here.
+     * Emits the rows of a search built by [EventSearchSql.nextAndLast], again whenever events,
+     * occurrences or attendees change.
      */
-    @Query("""
-        SELECT DISTINCT events.* FROM events
-        JOIN events_fts ON events.id = events_fts.rowid
-        JOIN occurrences ON events.id = occurrences.event_id
-        WHERE events_fts MATCH :query
-        AND events.sync_status != 'PENDING_DELETE'
-        AND occurrences.end_ts >= :now
-        AND occurrences.is_cancelled = 0
-        ORDER BY events.start_ts ASC
-        LIMIT 1000
-    """)
-    suspend fun searchFuture(query: String, now: Long): List<Event>
-
-    /**
-     * Matches [query] as [search] does and returns at most 1000 events, not PENDING_DELETE,
-     * with a non-cancelled occurrence overlapping [rangeStart]..[rangeEnd], inclusive.
-     * Synthetic masters aren't filtered out here.
-     */
-    @Query("""
-        SELECT DISTINCT events.* FROM events
-        JOIN events_fts ON events.id = events_fts.rowid
-        JOIN occurrences ON events.id = occurrences.event_id
-        WHERE events_fts MATCH :query
-        AND events.sync_status != 'PENDING_DELETE'
-        AND occurrences.start_ts <= :rangeEnd
-        AND occurrences.end_ts >= :rangeStart
-        AND occurrences.is_cancelled = 0
-        ORDER BY events.start_ts ASC
-        LIMIT 1000
-    """)
-    suspend fun searchInRange(query: String, rangeStart: Long, rangeEnd: Long): List<Event>
-
-    // ========== FTS Search with Next Occurrence ==========
-
-    /**
-     * Searches for the "All" filter, past events included, with the event's own start_ts as
-     * next_occurrence_ts. Ordered by distance from [now].
-     *
-     * Exceptions are left out so a series with changed occurrences isn't listed once per
-     * change (#149); synthetic masters are left out too.
-     */
-    @Query("""
-        SELECT events.*, events.start_ts as next_occurrence_ts
-        FROM events
-        JOIN events_fts ON events.id = events_fts.rowid
-        WHERE events_fts MATCH :query
-        AND events.sync_status != 'PENDING_DELETE'
-        AND events.original_event_id IS NULL
-        AND (events.extra_properties IS NULL
-             OR events.extra_properties NOT LIKE '%X-KASHCAL-SYNTHETIC-MASTER%')
-        ORDER BY ABS(events.start_ts - :now) ASC
-        LIMIT 1000
-    """)
-    suspend fun searchWithOccurrence(query: String, now: Long): List<EventWithNextOccurrence>
-
-    /**
-     * Searches for the default filter: events with a non-cancelled occurrence not ended at
-     * [now], each with its earliest such occurrence's start, soonest first.
-     */
-    @Query("""
-        SELECT DISTINCT events.*,
-               (SELECT MIN(o.start_ts) FROM occurrences o
-                WHERE o.event_id = events.id
-                AND o.end_ts >= :now
-                AND o.is_cancelled = 0) as next_occurrence_ts
-        FROM events
-        JOIN events_fts ON events.id = events_fts.rowid
-        JOIN occurrences ON events.id = occurrences.event_id
-        WHERE events_fts MATCH :query
-        AND events.sync_status != 'PENDING_DELETE'
-        AND occurrences.end_ts >= :now
-        AND occurrences.is_cancelled = 0
-        GROUP BY events.id
-        ORDER BY next_occurrence_ts ASC
-        LIMIT 1000
-    """)
-    suspend fun searchFutureWithOccurrence(query: String, now: Long): List<EventWithNextOccurrence>
-
-    /**
-     * Searches for a date filter (week, month, custom date): events with a non-cancelled
-     * occurrence overlapping the inclusive range, each with its earliest such occurrence's
-     * start, soonest first.
-     */
-    @Query("""
-        SELECT DISTINCT events.*,
-               (SELECT MIN(o.start_ts) FROM occurrences o
-                WHERE o.event_id = events.id
-                AND o.end_ts >= :rangeStart
-                AND o.start_ts <= :rangeEnd
-                AND o.is_cancelled = 0) as next_occurrence_ts
-        FROM events
-        JOIN events_fts ON events.id = events_fts.rowid
-        JOIN occurrences ON events.id = occurrences.event_id
-        WHERE events_fts MATCH :query
-        AND events.sync_status != 'PENDING_DELETE'
-        AND occurrences.start_ts <= :rangeEnd
-        AND occurrences.end_ts >= :rangeStart
-        AND occurrences.is_cancelled = 0
-        GROUP BY events.id
-        ORDER BY next_occurrence_ts ASC
-        LIMIT 1000
-    """)
-    suspend fun searchInRangeWithOccurrence(
-        query: String,
-        rangeStart: Long,
-        rangeEnd: Long
-    ): List<EventWithNextOccurrence>
+    @RawQuery(observedEntities = [Event::class, Occurrence::class, Attendee::class])
+    fun observeSearchMatches(query: RoomRawQuery): Flow<List<SearchMatchRow>>
 
     /**
      * Emits masters and one-off events, not PENDING_DELETE, with a non-cancelled occurrence
      * not ended at [now], each with that earliest occurrence's start, soonest first. The
      * pending-invitations inbox narrows these in Kotlin; an exception's own NEEDS-ACTION
      * attendees aren't read.
+     *
+     * Selects only the columns the inbox reads. It runs at launch over every future event, and
+     * Android can't read back a row over its 2 MB cursor window, so selecting description
+     * or extra_properties would let one large event crash the app on every start
+     * (`PendingInvitationsOversizedRowTest`).
      */
     @Query("""
-        SELECT DISTINCT events.*,
+        SELECT DISTINCT events.id AS id, events.calendar_id AS calendar_id,
+               events.title AS title, events.location AS location,
+               events.is_all_day AS is_all_day, events.start_ts AS start_ts,
+               events.end_ts AS end_ts, events.organizer_email AS organizer_email,
+               events.organizer_name AS organizer_name,
+               events.original_event_id AS original_event_id,
                (SELECT MIN(o.start_ts) FROM occurrences o
                 WHERE o.event_id = events.id
                 AND o.end_ts >= :now
@@ -825,7 +737,7 @@ interface EventsDao {
         GROUP BY events.id
         ORDER BY next_occurrence_ts ASC
     """)
-    fun getMasterEventsWithFutureOccurrenceFlow(now: Long): kotlinx.coroutines.flow.Flow<List<EventWithNextOccurrence>>
+    fun getMasterEventsWithFutureOccurrenceFlow(now: Long): kotlinx.coroutines.flow.Flow<List<PendingInvitationRow>>
 
     // ========== Reminder Queries ==========
 

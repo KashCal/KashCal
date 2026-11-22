@@ -32,14 +32,21 @@ class RRuleExpander {
      * period end), and for an all-day series both are moved to the start of their UTC day. An
      * RDATE counts when it is at or after [rangeStart] and before [rangeEnd].
      *
-     * EXDATE and RDATE match occurrences by calendar day, so an EXDATE removes every
-     * occurrence on its day and an RDATE on a day already produced, by the RRULE or an earlier
-     * RDATE, is dropped.
+     * EXDATE and RDATE follow RFC 5545 §3.8.5.1-2, which builds the set from start DATE-TIME
+     * values: on a timed series a DATE-TIME EXDATE removes the occurrence at its instant, and an
+     * RDATE is dropped only when an occurrence already starts at its instant. Instants compare
+     * at whole seconds. A DATE value names a day: an EXDATE removes the occurrences on that day
+     * and an RDATE is dropped on a day already produced. On an all-day series every value is
+     * read as its day.
      *
      * @param masterEvent the event with an RRULE, RDATEs or both; one with neither is returned
      *   alone, whatever the range
      * @param overrides exceptions, each carrying a RECURRENCE-ID, that replace the occurrence
      *   they anchor to
+     * @param limit the most RRULE dates to read, counted from [rangeStart] and including those
+     *   an EXDATE removes; null reads them all. When the limit is reached the result ends at the
+     *   last date read: RDATEs after it are left out too, so a caller asking again from that
+     *   date gets them then. A caller that reads one range only doesn't see them.
      * @return each occurrence as a copy of the master with its own start and end and no
      *   recurrence properties, or the matching override itself
      */
@@ -47,7 +54,8 @@ class RRuleExpander {
         masterEvent: ICalEvent,
         rangeStart: Instant,
         rangeEnd: Instant,
-        overrides: List<ICalEvent> = emptyList()
+        overrides: List<ICalEvent> = emptyList(),
+        limit: Int? = null,
     ): List<ICalEvent> {
         val rrule = masterEvent.rrule
 
@@ -68,7 +76,10 @@ class RRuleExpander {
 
         val eventDuration = calculateDuration(masterEvent)
 
-        val excludedDayCodes = masterEvent.exdates.map { it.toDayCode() }.toSet()
+        val byDay = { value: ICalDateTime -> masterEvent.isAllDay || value.isDate }
+        val excludedDayCodes = masterEvent.exdates.filter(byDay).map { it.toDayCode() }.toSet()
+        val excludedSeconds = masterEvent.exdates.filterNot(byDay).map { secondOf(it.timestamp) }.toSet()
+        fun isExcluded(dayCode: String, second: Long) = dayCode in excludedDayCodes || second in excludedSeconds
 
         // Index overrides by the instant of their RECURRENCE-ID, normalized to the master's
         // value type. RECURRENCE-ID identifies the original occurrence's start (RFC 5545
@@ -83,8 +94,10 @@ class RRuleExpander {
         // most one occurrence.
         val overrideUsed = BooleanArray(overrides.size)
 
-        // Days already produced; an RDATE on one of them is dropped as a duplicate.
+        // Days and instants already produced; an RDATE matching one, by day or by instant as
+        // byDay reads it, is dropped as a duplicate.
         val generatedDayCodes = mutableSetOf<String>()
+        val generatedSeconds = mutableSetOf<Long>()
 
         // Returns and consumes the first unused override whose RECURRENCE-ID instant is within
         // OVERRIDE_MATCH_TOLERANCE_MS of occurrenceInstantMs.
@@ -100,6 +113,9 @@ class RRuleExpander {
             }
             return null
         }
+
+        // The instant of the last RRULE date read when [limit] cut the expansion.
+        var cutMs: Long? = null
 
         // ========== RRULE Expansion ==========
         if (rrule != null) {
@@ -129,8 +145,12 @@ class RRuleExpander {
                 periodEnd.toLocalDateTime()
             }
 
-            // ical4j 4.x: getDates accepts LocalDateTime, returns List<LocalDateTime>
-            val dates: List<LocalDateTime> = recur.getDates(seed, rangeStartLdt, rangeEndLdt)
+            // ical4j reads the range period by period, stops at maxCount dates (-1: none) and
+            // sorts what it read.
+            val dates: List<LocalDateTime> = recur.getDates(seed, rangeStartLdt, rangeEndLdt, limit ?: -1)
+            if (limit != null && dates.size >= limit) {
+                cutMs = dates.last().atZone(eventZone).toInstant().toEpochMilli()
+            }
 
             for (date in dates) {
                 val occurrenceZdt = date.atZone(eventZone)
@@ -140,11 +160,14 @@ class RRuleExpander {
                     occurrenceZdt.dayOfMonth
                 )
 
-                if (occurrenceDayCode in excludedDayCodes) continue
+                val occurrenceMs = occurrenceZdt.toInstant().toEpochMilli()
+                val occurrenceSecond = secondOf(occurrenceMs)
+                if (isExcluded(occurrenceDayCode, occurrenceSecond)) continue
 
                 generatedDayCodes.add(occurrenceDayCode)
+                generatedSeconds.add(occurrenceSecond)
 
-                val override = matchOverride(occurrenceZdt.toInstant().toEpochMilli())
+                val override = matchOverride(occurrenceMs)
                 if (override != null) {
                     occurrences.add(override)
                     continue
@@ -174,18 +197,23 @@ class RRuleExpander {
         }
 
         // ========== RDATE Expansion ==========
-        // RDATEs in range, not on an EXDATE day, and not on a day already produced.
+        // RDATEs in range, not excluded and not already produced.
         for (rdate in masterEvent.rdates) {
             if (rdate.timestamp < rangeStart.toEpochMilli() ||
                 rdate.timestamp >= rangeEnd.toEpochMilli()) continue
+            if (cutMs != null && rdate.timestamp > cutMs) continue
 
             val rdateDayCode = rdate.toDayCode()
 
-            if (rdateDayCode in excludedDayCodes) continue
+            val rdateSecond = secondOf(rdate.timestamp)
 
-            if (rdateDayCode in generatedDayCodes) continue
+            if (isExcluded(rdateDayCode, rdateSecond)) continue
+
+            val duplicate = if (byDay(rdate)) rdateDayCode in generatedDayCodes else rdateSecond in generatedSeconds
+            if (duplicate) continue
 
             generatedDayCodes.add(rdateDayCode)
+            generatedSeconds.add(rdateSecond)
 
             val override = matchOverride(rdate.timestamp)
             if (override != null) {
@@ -306,6 +334,9 @@ class RRuleExpander {
     }
 
     companion object {
+        /** Returns the whole second of [epochMs], the precision EXDATE and RDATE match at. */
+        private fun secondOf(epochMs: Long): Long = Math.floorDiv(epochMs, 1000L)
+
         /**
          * Tolerance, inclusive, for matching an occurrence's instant to a RECURRENCE-ID's.
          * It absorbs sub-second rounding and the odd off-by-a-minute a peer client emits. It

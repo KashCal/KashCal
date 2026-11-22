@@ -30,6 +30,8 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.planner.PlannerTestEvents
 import org.onekash.kashcal.domain.planner.PlannerTestEvents.at
+import org.onekash.kashcal.ui.util.DayPagerUtils
+import org.onekash.kashcal.ui.viewmodels.DayDetailState
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.LocalDate
@@ -92,14 +94,17 @@ class DayEventsSheetSizeTest {
             if (lateMs != null) LaunchedEffect(Unit) { delay(lateMs); shown = events }
             MaterialTheme {
                 DayEventsSheet(
-                    dateMs = dateMs,
-                    events = shown.toImmutableList(),
+                    day = DayDetailState(
+                        DayPagerUtils.localDateToDayCode(day), dateMs, shown.toImmutableList(),
+                        canGoBack = true, canGoForward = true,
+                    ),
                     showEventEmojis = false,
                     timePattern = "h:mm a",
                     onEventClick = { event, occurrence -> calls.opened += event to occurrence },
                     onDeviceEventClick = { calls.device += it },
                     onCreateEvent = { calls.created += it },
                     onDismiss = {},
+                    onStepDay = {},
                 )
             }
         }

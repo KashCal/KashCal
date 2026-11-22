@@ -1,6 +1,11 @@
 package org.onekash.kashcal.ui.screens
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.runtime.MutableState
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsOff
+import org.onekash.kashcal.ui.screens.settings.CalDavAccountUiModel
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.SemanticsMatcher
@@ -15,9 +20,12 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.longClick
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -39,11 +47,12 @@ import java.util.Locale
  *
  * - Structure: the sentence-case section headers, the sync rows, the relabelled rows with no
  *   beta badge, and the split timed and all-day alert rows.
- * - Callback wiring: [render] records sixteen callbacks in [Rec] (six `(Int)`, the `(Long)` sync
- *   frequency, five `(Boolean)` toggles and four navigation rows). Each test drives the row the
- *   user touches, asserts its callback fired with a distinct sentinel value, and asserts its
- *   siblings stayed silent. The sibling check is what catches a swap: callbacks of one type
- *   swapped with each other still compile and pass a test that only checks the target fired.
+ * - Callback wiring: [render] records nineteen callbacks in [Rec] (six `(Int)`, the `(Long)` sync
+ *   frequency, five `(Boolean)` toggles, four navigation rows and three troubleshooting actions).
+ *   Each test drives the row the user touches, asserts its callback fired with a distinct
+ *   sentinel value, and asserts its siblings stayed silent. The sibling check is what catches a
+ *   swap: callbacks of one type swapped with each other still compile and pass a test that only
+ *   checks the target fired.
  * - Info tooltips: tapping a toggle's info icon shows its explanation without firing the toggle.
  *
  * Runs under Robolectric; run the class in isolation because of the repo's multi-class
@@ -107,6 +116,14 @@ class AccountSettingsScreenComposeTest {
         var navSubscriptions = 0
         var navBirthdays = 0
         var navDeviceCalendars = 0
+        var navOfflineCalendars = 0
+
+        // () -> Unit troubleshooting cluster (counts)
+        var syncHistory = 0
+        var forceFullSync = 0
+        var exportDebugReport = 0
+        var exportCalendars = 0
+        var calendarBackup = 0
     }
 
     /**
@@ -114,12 +131,20 @@ class AccountSettingsScreenComposeTest {
      * defaults. Seed values are chosen so each row's picker offers a sentinel option distinct from
      * the seed (see the per-row tests).
      */
-    private fun render(rec: Rec = Rec()) {
+    private fun render(
+        rec: Rec = Rec(),
+        searchQuery: String = "",
+        offlineCalendarCount: Int = 1,
+        backupSubtitle: String? = null,
+        backupProblem: Boolean = false,
+        calDavAccounts: MutableState<List<CalDavAccountUiModel>> = mutableStateOf(emptyList()),
+    ) {
         composeTestRule.setContent {
             KashCalTheme {
                 AccountSettingsScreen(
                     uiState = AccountSettingsUiState(
                         iCloudState = ICloudConnectionState.NotConnected(),
+                        calDavAccounts = calDavAccounts.value,
                     ),
                     calendars = listOf(localCalendar),
                     // Each sentinel differs from its seed, so a fired callback can't be a
@@ -155,6 +180,18 @@ class AccountSettingsScreenComposeTest {
                     onNavigateToSubscriptions = { rec.navSubscriptions++ },
                     onNavigateToBirthdaysAnniversaries = { rec.navBirthdays++ },
                     onNavigateToDeviceCalendars = { rec.navDeviceCalendars++ },
+                    onNavigateToOfflineCalendars = { rec.navOfflineCalendars++ },
+                    offlineCalendarCount = offlineCalendarCount,
+                    // Troubleshooting cluster
+                    onShowSyncLogs = { rec.syncHistory++ },
+                    onForceFullSync = { rec.forceFullSync++ },
+                    onExportDebugReport = { rec.exportDebugReport++ },
+                    onOpenExportCalendars = { rec.exportCalendars++ },
+                    onOpenCalendarBackup = { rec.calendarBackup++ },
+                    calendarBackupSubtitle = backupSubtitle,
+                    calendarBackupProblem = backupProblem,
+                    isSearchActive = searchQuery.isNotEmpty(),
+                    searchQuery = searchQuery,
                     versionName = "1.0.0",
                 )
             }
@@ -231,10 +268,27 @@ class AccountSettingsScreenComposeTest {
             "subscriptions" to rec.navSubscriptions,
             "birthdays" to rec.navBirthdays,
             "deviceCalendars" to rec.navDeviceCalendars,
+            "offlineCalendars" to rec.navOfflineCalendars,
         )
         assertEquals("$fired nav should fire exactly once", 1, all[fired])
         all.filterKeys { it != fired }.forEach { (name, count) ->
             assertEquals("sibling nav '$name' must stay silent when '$fired' is used", 0, count)
+        }
+    }
+
+    /** Asserts the named troubleshooting callback fired [expected] times and its siblings none. */
+    private fun assertOnlyTroubleshooting(rec: Rec, fired: String, expected: Int = 1) {
+        val all = linkedMapOf(
+            "syncHistory" to rec.syncHistory,
+            "forceFullSync" to rec.forceFullSync,
+            "exportDebugReport" to rec.exportDebugReport,
+        )
+        assertEquals("$fired should fire $expected time(s)", expected, all[fired])
+        all.filterKeys { it != fired }.forEach { (name, count) ->
+            assertEquals("sibling '$name' must stay silent when '$fired' is used", 0, count)
+        }
+        listOf(rec.navAccounts, rec.navSubscriptions, rec.navBirthdays, rec.navDeviceCalendars, rec.navOfflineCalendars).forEach {
+            assertEquals("navigation rows must stay silent when '$fired' is used", 0, it)
         }
     }
 
@@ -249,6 +303,7 @@ class AccountSettingsScreenComposeTest {
             "Event preferences",
             "Sync",
             "Backup & restore",
+            "Troubleshooting",
         ).forEach { header ->
             composeTestRule.onNodeWithText(header).assertExists()
         }
@@ -472,6 +527,317 @@ class AccountSettingsScreenComposeTest {
         assertOnlyNav(rec, fired = "deviceCalendars")
     }
 
+    // ==================== Offline calendars ====================
+
+    @Test
+    fun `the Offline calendars row sits right after Device calendars`() {
+        render()
+        val device = top("Device calendars")
+        val offline = top("Offline calendars")
+        val notifications = top("Calendar notifications")
+        assertTrue("after Device calendars", offline > device)
+        assertTrue("before Calendar notifications", offline < notifications)
+    }
+
+    @Test
+    fun `with only the built-in calendar the row shows the hint`() {
+        render(offlineCalendarCount = 1)
+        composeTestRule.onNodeWithText("Calendars that stay on this device").assertExists()
+    }
+
+    @Test
+    fun `once a calendar is added the row shows how many there are`() {
+        render(offlineCalendarCount = 3)
+        composeTestRule.onNodeWithText("3 calendars").assertExists()
+        composeTestRule.onNodeWithText("Calendars that stay on this device").assertDoesNotExist()
+    }
+
+    @Test
+    fun `offline calendars row fires only its navigation callback`() {
+        val rec = Rec()
+        render(rec)
+        composeTestRule.onNodeWithText("Offline calendars").performClick()
+        assertOnlyNav(rec, fired = "offlineCalendars")
+    }
+
+    @Test
+    fun `a settings search finds the Offline calendars row and a tap opens it`() {
+        val rec = Rec()
+        render(rec, searchQuery = "offline")
+        composeTestRule.onNodeWithText("Offline calendars", substring = true).performClick()
+        assertOnlyNav(rec, fired = "offlineCalendars")
+    }
+
+    // ==================== Backup & restore ====================
+
+    @Test
+    fun `Export calendars replaces the local-only row and opens the export sheet`() {
+        val rec = Rec()
+        render(rec)
+        composeTestRule.onNodeWithText("Save a calendar as an ICS file").assertExists()
+        composeTestRule.onNodeWithText("Export Local calendar").assertDoesNotExist()
+
+        composeTestRule.onNodeWithText("Export calendars").performClick()
+
+        assertEquals(1, rec.exportCalendars)
+    }
+
+    private fun assertSearchFindsExportCalendars(query: String) {
+        val rec = Rec()
+        render(rec, searchQuery = query)
+        composeTestRule.onNodeWithText("Export calendars", substring = true).performClick()
+        assertEquals("query '$query'", 1, rec.exportCalendars)
+    }
+
+    @Test
+    fun `a settings search for export finds Export calendars`() = assertSearchFindsExportCalendars("export")
+
+    @Test
+    fun `a settings search for ics finds Export calendars`() = assertSearchFindsExportCalendars("ics")
+
+    @Test
+    fun `a settings search for calendar finds Export calendars`() = assertSearchFindsExportCalendars("calendar")
+
+    // ==================== Automatic calendar backup ====================
+
+    @Test
+    fun `automatic calendar backup sits between Export calendars and Back up settings`() {
+        render()
+        val export = top("Export calendars")
+        val backup = top("Automatic calendar backup")
+        val settings = top("Back up settings")
+        assertTrue("after Export calendars", backup > export)
+        assertTrue("before Back up settings", backup < settings)
+    }
+
+    @Test
+    fun `automatic calendar backup reads Off until it is set up`() {
+        render()
+        composeTestRule.onNodeWithText("Off").assertExists()
+    }
+
+    @Test
+    fun `automatic calendar backup shows its state and opens on tap`() {
+        val rec = Rec()
+        render(rec, backupSubtitle = "Every 12 hours · KashCal backups")
+        composeTestRule.onNodeWithText("Every 12 hours · KashCal backups").assertExists()
+        composeTestRule.onNodeWithText("Automatic calendar backup").performClick()
+        assertEquals(1, rec.calendarBackup)
+    }
+
+    private fun assertSearchFindsCalendarBackup(query: String) {
+        val rec = Rec()
+        render(rec, searchQuery = query)
+        composeTestRule.onNodeWithText("Automatic calendar backup", substring = true).performClick()
+        assertEquals("query '$query'", 1, rec.calendarBackup)
+    }
+
+    @Test
+    fun `a settings search for backup finds automatic calendar backup`() = assertSearchFindsCalendarBackup("backup")
+
+    @Test
+    fun `a settings search for automatic finds automatic calendar backup`() = assertSearchFindsCalendarBackup("automatic")
+
+    // ==================== Troubleshooting ====================
+
+    private fun top(text: String): Float =
+        composeTestRule.onNodeWithText(text).fetchSemanticsNode().boundsInRoot.top
+
+    @Test
+    fun `troubleshooting section follows backup and restore and holds three rows in order`() {
+        render()
+        val tops = listOf(
+            "Backup & restore", "Troubleshooting", "Sync history", "Force full sync", "Export debug report", "KashCal v1.0.0",
+        ).map { top(it) }
+        assertEquals(tops.sorted(), tops)
+        composeTestRule.onNodeWithText("Crash, sync and setup details to send with a bug report").assertExists()
+    }
+
+    @Test
+    fun `sync history row fires only its callback`() {
+        val rec = Rec()
+        render(rec)
+        composeTestRule.onNodeWithText("Sync history").performClick()
+        assertOnlyTroubleshooting(rec, fired = "syncHistory")
+    }
+
+    private fun syncAccount(id: Long, calendars: Int, enabled: Boolean = true) = CalDavAccountUiModel(
+        id = id,
+        email = "user$id@example.test",
+        displayName = "Account $id",
+        calendarCount = calendars,
+        isEnabled = enabled,
+    )
+
+    private val twoAccounts = listOf(syncAccount(1, 4), syncAccount(2, 2))
+
+    private val confirmText =
+        "Re-download 6 calendars from 2 accounts. Changes not yet synced are kept."
+
+    @Test
+    fun `force full sync is greyed out with no sync account and a tap fires nothing`() {
+        val rec = Rec()
+        render(rec, calDavAccounts = mutableStateOf(listOf(syncAccount(1, 3, enabled = false))))
+        composeTestRule.onNodeWithText("No sync account set up").assertExists()
+        composeTestRule.onNodeWithText("Re-download all calendar data").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Force full sync").assertIsNotEnabled()
+            .performClick()
+
+        composeTestRule.onNodeWithText(confirmText).assertDoesNotExist()
+        assertOnlyTroubleshooting(rec, fired = "forceFullSync", expected = 0)
+    }
+
+    @Test
+    fun `force full sync opens an inline confirm with the counts and Start waits for the tick`() {
+        val rec = Rec()
+        render(rec, calDavAccounts = mutableStateOf(twoAccounts))
+        composeTestRule.onNodeWithText("Re-download all calendar data").assertExists()
+        composeTestRule.onNodeWithText("Force full sync").performClick()
+
+        assertTrue("no dialog", ShadowDialog.getShownDialogs().none { it.isShowing })
+        composeTestRule.onNodeWithText(confirmText).assertExists()
+        composeTestRule.onNodeWithText("Force full sync").assertDoesNotExist()
+        composeTestRule.onNode(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Checkbox))
+            .assertIsOff()
+        composeTestRule.onNodeWithText("Start").assertIsNotEnabled().performClick()
+        assertEquals(0, rec.forceFullSync)
+
+        composeTestRule.onNodeWithText(confirmText).performClick()
+        composeTestRule.onNodeWithText("Start").assertIsEnabled().performClick()
+
+        assertOnlyTroubleshooting(rec, fired = "forceFullSync")
+        composeTestRule.onNodeWithText(confirmText).assertDoesNotExist()
+        composeTestRule.onNodeWithText("Force full sync").assertExists()
+    }
+
+    @Test
+    fun `force full sync cancel restores the row, fires nothing, and the box starts unticked again`() {
+        val rec = Rec()
+        render(rec, calDavAccounts = mutableStateOf(twoAccounts))
+        composeTestRule.onNodeWithText("Force full sync").performClick()
+        composeTestRule.onNodeWithText(confirmText).performClick()
+        composeTestRule.onNodeWithText("Cancel").performClick()
+
+        assertOnlyTroubleshooting(rec, fired = "forceFullSync", expected = 0)
+        composeTestRule.onNodeWithText(confirmText).assertDoesNotExist()
+
+        composeTestRule.onNodeWithText("Force full sync").performClick()
+        composeTestRule.onNode(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Checkbox))
+            .assertIsOff()
+        composeTestRule.onNodeWithText("Start").assertIsNotEnabled()
+    }
+
+    @Test
+    fun `force full sync stays available for a sync account with no calendars`() {
+        val rec = Rec()
+        render(rec, calDavAccounts = mutableStateOf(listOf(syncAccount(1, 0))))
+        composeTestRule.onNodeWithText("Force full sync").performClick()
+        composeTestRule
+            .onNodeWithText("Re-download 0 calendars from 1 account. Changes not yet synced are kept.")
+            .assertExists()
+    }
+
+    @Test
+    fun `the confirm closes to the greyed row when the last sync account goes away`() {
+        val rec = Rec()
+        val accounts = mutableStateOf(listOf(syncAccount(1, 4)))
+        render(rec, calDavAccounts = accounts)
+        composeTestRule.onNodeWithText("Force full sync").performClick()
+        composeTestRule.onNodeWithText(
+            "Re-download 4 calendars from 1 account. Changes not yet synced are kept."
+        ).performClick()
+
+        accounts.value = listOf(syncAccount(1, 4, enabled = false))
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Start").assertDoesNotExist()
+        composeTestRule.onNodeWithText("No sync account set up").assertExists()
+
+        // The confirm stays closed when the account comes back; only a tap opens it.
+        accounts.value = listOf(syncAccount(1, 4))
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Start").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Force full sync").assertIsEnabled()
+        assertEquals(0, rec.forceFullSync)
+    }
+
+    @Test
+    fun `settings search finds force full sync by its greyed subtitle`() {
+        render(searchQuery = "sync account")
+        composeTestRule.onNodeWithText("Force full sync").assertExists()
+    }
+
+    @Test
+    fun `export debug report opens the sheet and Share report fires once`() {
+        val rec = Rec()
+        render(rec)
+        composeTestRule.onNodeWithText("Export debug report").performClick()
+        // Texts that appear only in the sheet, not on the settings screen behind it.
+        listOf(
+            "Debug report",
+            "Why the app closed recently",
+            "Crashes, freezes, low memory",
+            "KashCal's own messages, including crash details",
+            "Recent syncs, up to 48 hours back",
+            "Edits not yet sent to your server",
+            "App and Android version, permissions, battery settings, account types",
+            "Email addresses, web addresses and tokens are masked. Event titles, calendar names and contact names are not. Send it by email, not in a public post.",
+        ).forEach { text -> composeTestRule.onNodeWithText(text).assertExists() }
+        assertEquals(0, rec.exportDebugReport)
+
+        composeTestRule.onNodeWithText("Share report").performClick()
+        composeTestRule.waitForIdle()
+
+        assertOnlyTroubleshooting(rec, fired = "exportDebugReport")
+        composeTestRule.onNodeWithText("Share report").assertDoesNotExist()
+    }
+
+    @Test
+    fun `report sheet cancel closes without exporting`() {
+        val rec = Rec()
+        render(rec)
+        composeTestRule.onNodeWithText("Export debug report").performClick()
+        composeTestRule.onNodeWithText("Cancel").performClick()
+        composeTestRule.waitForIdle()
+
+        assertOnlyTroubleshooting(rec, fired = "exportDebugReport", expected = 0)
+        composeTestRule.onNodeWithText("Share report").assertDoesNotExist()
+    }
+
+    @Test
+    fun `settings search finds the sync history row`() {
+        render(searchQuery = "sync history")
+        composeTestRule.onNodeWithText("Sync history", substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun `settings search finds the force full sync row`() {
+        render(searchQuery = "force full")
+        composeTestRule.onNodeWithText("Force full sync", substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun `settings search finds the export debug report row`() {
+        render(searchQuery = "debug report")
+        composeTestRule.onNodeWithText("Export debug report", substring = true).assertIsDisplayed()
+    }
+
+    // With no long-press handler, a long press on the footer acts as a tap.
+    @Test
+    fun `long press on the version footer acts as a tap`() {
+        render()
+        composeTestRule.onNodeWithText("KashCal v1.0.0").performTouchInput { longClick() }
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Built with Love").assertExists()
+    }
+
+    @Test
+    fun `tap on the version footer opens app info`() {
+        render()
+        composeTestRule.onNodeWithText("KashCal v1.0.0").performClick()
+        composeTestRule.onNodeWithText("Built with Love").assertExists()
+    }
+
     // ==================== Calendar notifications ====================
 
     private val work = Calendar(
@@ -512,7 +878,6 @@ class AccountSettingsScreenComposeTest {
                         icsLabel = "Calendar Feeds",
                     ),
                     deviceCalendarsEnabled = true,
-                    hasReadCalendarPermission = true,
                     deviceCalendars = devices,
                     enabledDeviceCalendarIds = devices.mapTo(mutableSetOf()) { it.id },
                     mutedDeviceCalendarIds = mutedDevice,

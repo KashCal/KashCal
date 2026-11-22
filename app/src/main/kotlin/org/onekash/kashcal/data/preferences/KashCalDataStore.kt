@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import org.onekash.kashcal.util.zone.ZoneCatalog
 import java.io.IOException
 
 // A corrupt preferences file is replaced with empty preferences, so every setting reads its
@@ -126,6 +127,31 @@ class KashCalDataStore(
     suspend fun setTagsAboveNotes(above: Boolean) {
         setPreference(PreferencesKeys.TAGS_ABOVE_NOTES, above)
     }
+
+    /**
+     * Zones picked in the time zone sheet, newest first, at most [MAX_RECENT_TIME_ZONES]. Ids
+     * `ZoneId.of` rejects (from a backup made on other tzdata) are dropped on read.
+     */
+    val recentTimeZones: Flow<List<String>>
+        get() = getPreference(PreferencesKeys.RECENT_TIME_ZONES, "").map(::parseRecentTimeZones)
+
+    /**
+     * Puts [zoneId] first in [recentTimeZones], removing an earlier entry for the same zone
+     * ([ZoneCatalog.sameZone]). A pick of [deviceZoneId]'s zone, or an id `ZoneId.of` rejects,
+     * is not recorded.
+     */
+    suspend fun addRecentTimeZone(zoneId: String, deviceZoneId: String) {
+        if (!ZoneCatalog.isZoneId(zoneId) || ZoneCatalog.sameZone(zoneId, deviceZoneId)) return
+        dataStore.edit { preferences ->
+            val current = parseRecentTimeZones(preferences[PreferencesKeys.RECENT_TIME_ZONES].orEmpty())
+            val updated = (listOf(zoneId) + current.filterNot { ZoneCatalog.sameZone(it, zoneId) })
+                .take(MAX_RECENT_TIME_ZONES)
+            preferences[PreferencesKeys.RECENT_TIME_ZONES] = updated.joinToString(",")
+        }
+    }
+
+    private fun parseRecentTimeZones(value: String): List<String> =
+        value.split(',').map { it.trim() }.filter { it.isNotEmpty() && ZoneCatalog.isZoneId(it) }
 
     val showDeclinedEvents: Flow<Boolean>
         get() = getPreference(PreferencesKeys.SHOW_DECLINED_EVENTS, false)
@@ -478,6 +504,19 @@ class KashCalDataStore(
     }
 
     /**
+     * Pinch-to-zoom scale of the full-height month view's day cells, or 1 when never saved. Not
+     * clamped here: the ViewModel clamps on restore with `clampMonthFullZoom`.
+     */
+    val monthFullZoom: Flow<Float>
+        get() = getPreference(PreferencesKeys.MONTH_FULL_ZOOM, 1f)
+
+    suspend fun getMonthFullZoom(): Float = monthFullZoom.first()
+
+    suspend fun setMonthFullZoom(zoom: Float) {
+        setPreference(PreferencesKeys.MONTH_FULL_ZOOM, zoom)
+    }
+
+    /**
      * Time format: "system" follows the device's 24-hour setting, "12h" shows 2:30 PM, "24h"
      * shows 14:30. The setter throws on any other value.
      */
@@ -550,13 +589,6 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.SHOWN_SHARE_CARD_TOOLTIP, shown)
     }
 
-    val onboardingDismissed: Flow<Boolean>
-        get() = getPreference(PreferencesKeys.ONBOARDING_DISMISSED, false)
-
-    suspend fun setOnboardingDismissed(dismissed: Boolean) {
-        setPreference(PreferencesKeys.ONBOARDING_DISMISSED, dismissed)
-    }
-
     /**
      * True once the user tapped "No thanks" on the attendee picker's contacts-permission card
      * or denied the system dialog. It hides the banner for good: Android exposes no "user said
@@ -610,6 +642,14 @@ class KashCalDataStore(
     /** Zeroes the denial count; called when the permission is granted. */
     suspend fun resetNotificationPermissionDeniedCount() {
         setPreference(PreferencesKeys.NOTIFICATION_PERMISSION_DENIED_COUNT, 0)
+    }
+
+    /** Whether the notification ask is done; see [PreferencesKeys.NOTIFICATION_ASK_DONE]. */
+    val notificationAskDone: Flow<Boolean>
+        get() = getPreference(PreferencesKeys.NOTIFICATION_ASK_DONE, false)
+
+    suspend fun setNotificationAskDone() {
+        setPreference(PreferencesKeys.NOTIFICATION_ASK_DONE, true)
     }
 
     // ========== Contact Birthdays ==========
@@ -887,6 +927,22 @@ class KashCalDataStore(
         setICloudUrlMigrationCompleted(false)
     }
 
+    // ========== UTC Series Zone Repair ==========
+
+    suspend fun getUtcSeriesZoneRepaired(): Boolean =
+        getPreference(PreferencesKeys.UTC_SERIES_ZONE_REPAIRED, false).first()
+
+    suspend fun setUtcSeriesZoneRepaired(done: Boolean) {
+        setPreference(PreferencesKeys.UTC_SERIES_ZONE_REPAIRED, done)
+    }
+
+    suspend fun getFeedValidatorsClearedForUtcSeries(): Boolean =
+        getPreference(PreferencesKeys.FEED_VALIDATORS_CLEARED_FOR_UTC_SERIES, false).first()
+
+    suspend fun setFeedValidatorsClearedForUtcSeries(done: Boolean) {
+        setPreference(PreferencesKeys.FEED_VALIDATORS_CLEARED_FOR_UTC_SERIES, done)
+    }
+
     // ========== Share Availability ==========
 
     /**
@@ -946,6 +1002,9 @@ class KashCalDataStore(
     }
 
     companion object {
+        /** How many picks [recentTimeZones] keeps. */
+        const val MAX_RECENT_TIME_ZONES = 5
+
         const val REMINDER_OFF = -1  // no reminder set
         const val DEFAULT_REMINDER_MINUTES = 15
         // Signed minutes before start (the Android CalendarProvider convention): positive =

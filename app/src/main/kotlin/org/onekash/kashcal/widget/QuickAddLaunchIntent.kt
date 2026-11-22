@@ -10,8 +10,8 @@ import org.onekash.kashcal.MainActivity
  *
  * It carries the `widget_action = create_event` extra the widgets and the "New Event" app
  * shortcut use, so MainActivity's `handleIncomingIntent` routes it with no new dispatch code.
- * With no start timestamp, MainActivity shows the Quick Add dialog when Quick Add is enabled and
- * the full form otherwise.
+ * [org.onekash.kashcal.ui.viewmodels.HomeViewModel.requestCreateEvent] picks Quick Add or the
+ * full form.
  *
  * FLAG_ACTIVITY_NEW_TASK is required from a non-Activity context (TileService); the singleTop
  * MainActivity then receives it through onNewIntent.

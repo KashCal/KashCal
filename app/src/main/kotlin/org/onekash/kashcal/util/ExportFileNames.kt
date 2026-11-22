@@ -1,6 +1,7 @@
 package org.onekash.kashcal.util
 
 import java.text.Normalizer
+import java.util.Locale
 
 // Keeps Unicode letters, combining marks, digits, hyphens and whitespace from any script;
 // strips everything else. Marks are kept so NFD-form diacritics (common in iCloud/macOS
@@ -29,6 +30,21 @@ fun sanitizeExportBaseName(name: String, fallback: String, maxLength: Int = 50):
         .trim('-') // after take() so truncation can't leave a dangling hyphen
     return cleaned.ifEmpty { fallback }
 }
+
+/**
+ * Returns the key two names share when their export files would have the same name: the
+ * [sanitizeExportBaseName] result folded by [foldFileNameCase], or empty when nothing survives
+ * cleaning.
+ */
+fun exportNameKey(name: String): String =
+    foldFileNameCase(sanitizeExportBaseName(name, fallback = ""))
+
+/**
+ * Returns [name] with its case folded fully ("Straße" and "STRASSE" give "strasse"). Shared
+ * storage compares file names ignoring case, and some folds go beyond lower-casing, so names with
+ * the same fold are treated as one file.
+ */
+fun foldFileNameCase(name: String): String = name.uppercase(Locale.ROOT).lowercase(Locale.ROOT)
 
 private fun String.trimTrailingLoneSurrogate(): String =
     if (isNotEmpty() && last().isHighSurrogate()) dropLast(1) else this

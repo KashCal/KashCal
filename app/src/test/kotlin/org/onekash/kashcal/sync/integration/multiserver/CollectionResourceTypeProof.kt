@@ -56,8 +56,7 @@ object CollectionResourceTypeProof {
 
     /**
      * Returns whether the production CalDAV name filter skips [row]. [isICloud] selects
-     * [ICloudQuirks], which has no tasks path-segment skip because its `/tasks/` is a real
-     * calendar; every other server uses [DefaultQuirks]. Delegates to the shipped
+     * [ICloudQuirks]; every other server uses [DefaultQuirks]. Delegates to the shipped
      * `shouldSkipCalendar`, so the proof can't drift from production.
      */
     fun calDavNameFilterSkips(row: CollectionRow, isICloud: Boolean): Boolean =

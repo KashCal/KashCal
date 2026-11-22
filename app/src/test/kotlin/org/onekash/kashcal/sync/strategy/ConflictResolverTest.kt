@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import io.mockk.Runs
+import org.onekash.kashcal.testutil.FakeEventIcsSource
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -64,7 +65,8 @@ class ConflictResolverTest {
             attendeesDao = attendeesDao,
             pendingOperationsDao = pendingOperationsDao,
             occurrenceGenerator = occurrenceGenerator,
-            database = database
+            database = database,
+            icsSource = FakeEventIcsSource(),
         )
     }
 
@@ -205,6 +207,42 @@ class ConflictResolverTest {
             "SERVER_WINS should not apply default reminders when server has no VALARM",
             capturedEvent.captured.reminders
         )
+    }
+
+    @Test
+    fun `resolveServerWins stores a series written in UTC with the UTC zone`() = runTest {
+        val event = Event(
+            id = 51L, uid = "utc-series-uid", calendarId = 1L, title = "Local Version",
+            startTs = 1804518000000L, endTs = 1804521600000L, dtstamp = 1L,
+            rrule = "FREQ=WEEKLY;COUNT=4",
+            caldavUrl = "https://caldav.example.com/cal/utc-series.ics", etag = "etag-old",
+            syncStatus = SyncStatus.PENDING_UPDATE,
+        )
+        val operation = PendingOperation(
+            id = 21L, eventId = event.id, operation = PendingOperation.OPERATION_UPDATE, status = PendingOperation.STATUS_PENDING
+        )
+        val serverIcal = listOf(
+            "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Test//Test//EN",
+            "BEGIN:VEVENT", "UID:utc-series-uid", "DTSTAMP:20261025T000000Z",
+            "DTSTART:20270308T150000Z", "DTEND:20270308T160000Z", "RRULE:FREQ=WEEKLY;COUNT=4",
+            "SUMMARY:Server", "END:VEVENT", "END:VCALENDAR",
+        ).joinToString("\r\n")
+        val calendar = Calendar(id = 1L, accountId = 1L, caldavUrl = "https://caldav.example.com/cal/", displayName = "Test Calendar", color = 0)
+
+        coEvery { eventsDao.getById(event.id) } returns event
+        coEvery { client.fetchEvent(event.caldavUrl!!) } returns CalDavResult.success(
+            CalDavEvent("utc-series.ics", event.caldavUrl!!, "etag-server", serverIcal)
+        )
+        coEvery { calendarRepository.getCalendarById(event.calendarId) } returns calendar
+        val captured = slot<Event>()
+        coEvery { eventsDao.upsert(capture(captured)) } returns 1L
+        coEvery { occurrenceGenerator.generateOccurrences(any(), any(), any()) } returns 4
+        coEvery { pendingOperationsDao.deleteById(operation.id) } returns Unit
+
+        val result = conflictResolver.resolve(operation, strategy = ConflictStrategy.SERVER_WINS, client = client)
+
+        assert(result == ConflictResult.ServerVersionKept)
+        assertEquals("UTC", captured.captured.timezone)
     }
 
     @Test

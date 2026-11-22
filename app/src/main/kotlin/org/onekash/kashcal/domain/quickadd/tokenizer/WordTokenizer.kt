@@ -1,5 +1,6 @@
 package org.onekash.kashcal.domain.quickadd.tokenizer
 
+import org.onekash.kashcal.domain.quickadd.normalizer.SpannedText
 import org.onekash.kashcal.util.DateTimeUtils
 import java.time.DayOfWeek
 import java.time.LocalTime
@@ -74,6 +75,7 @@ object WordTokenizer {
 
     private val recurrenceKeywords = mapOf(
         "daily" to "DAILY",
+        "everyday" to "DAILY",
         "weekly" to "WEEKLY",
         "biweekly" to "BIWEEKLY",
         "monthly" to "MONTHLY",
@@ -83,19 +85,6 @@ object WordTokenizer {
 
     private val meridiems = setOf(
         "am", "pm", "a.m", "p.m", "a.m.", "p.m."
-    )
-
-    private val timezoneAbbreviations = mapOf(
-        "est" to "America/New_York",
-        "edt" to "America/New_York",
-        "cst" to "America/Chicago",
-        "cdt" to "America/Chicago",
-        "mst" to "America/Denver",
-        "mdt" to "America/Denver",
-        "pst" to "America/Los_Angeles",
-        "pdt" to "America/Los_Angeles",
-        "utc" to "UTC",
-        "gmt" to "GMT"
     )
 
     private val units = mapOf(
@@ -114,8 +103,8 @@ object WordTokenizer {
 
     // ==================== Regex Patterns ====================
 
-    // Time range: "2-3pm", "5pm-6", "10:30-11:30am", "3.15-4.30pm", "11pm-1am". A meridiem may
-    // sit on either side; parseTimeRange rejects a range with none.
+    // Time range: "2-3pm", "5pm-6", "10:30-11:30am", "3.15-4.30pm", "11pm-1am", "15:00-16:30". A
+    // meridiem may sit on either side; without one parseTimeRange needs colon minutes on both.
     private val timeRangeRegex = Regex(
         """(\d{1,2})(?:[:.](\d{2}))?(am|pm|a\.m\.?|p\.m\.?)?-(\d{1,2})(?:[:.](\d{2}))?(am|pm|a\.m\.?|p\.m\.?)?""",
         RegexOption.IGNORE_CASE
@@ -134,6 +123,17 @@ object WordTokenizer {
         RegexOption.IGNORE_CASE
     )
 
+    // Glued length: "1.5h", "2hr", "2hrs", "45m", "45min", "2h45m". A whole hour count with a
+    // bare "h" ("2h", "2h30") is the 24-hour notation below; DurationRule reads it as a length
+    // after "for" or another time.
+    private val gluedDurationRegex = Regex("""(?:(\d{1,2}(?:\.\d{1,2})?)(h|hr|hrs))?(?:(\d{1,3})(m|min|mins))?""")
+
+    // A range in 24-hour "h" notation: "15h30-18h", "9h-11h".
+    private val hRangeRegex = Regex("""(\d{1,2})h(\d{2})?-(\d{1,2})h(\d{2})?""", RegexOption.IGNORE_CASE)
+
+    // A pair of day or hour numbers: "23-28", "2-3".
+    private val numberPairRegex = Regex("""\d{1,2}-\d{1,2}""")
+
     // 24-hour "h" notation: "9h", "15h30".
     private val hNotationRegex = Regex("""(\d{1,2})h(\d{2})?""", RegexOption.IGNORE_CASE)
 
@@ -142,39 +142,58 @@ object WordTokenizer {
 
     // Ordinal ("15th", "1st") and plain number ("15").
     private val ordinalRegex = Regex("""(\d+)(st|nd|rd|th)""", RegexOption.IGNORE_CASE)
-    private val numberRegex = Regex("""\d+""")
     private val whitespaceRegex = Regex("""\s+""")
 
     // ==================== Tokenize ====================
 
+    /**
+     * Tokenizes already normalized [input] with no typed text behind it (rule-level tests): each
+     * token's original text is its own word and it has no span.
+     */
     fun tokenize(
         input: String,
-        originalWords: List<String>? = null,
         locale: Locale = Locale.getDefault()
     ): List<Token> {
         if (input.isBlank()) return emptyList()
-
-        val words = input.split(whitespaceRegex)
-        return words.mapIndexed { index, word ->
-            val original = originalWords?.getOrNull(index) ?: word
-            classifyWord(word, original, locale)
-        }
+        return input.split(whitespaceRegex).map { word -> classifyWord(word, word, locale) }
     }
+
+    /**
+     * Tokenizes [normalized] and gives each token its range in [source], the typed text
+     * [normalized] was built from, and that range's text as its original text.
+     */
+    fun tokenize(normalized: SpannedText, source: String, locale: Locale): List<Token> =
+        normalized.words().map { word ->
+            val range = word.sourceRange
+            classifyWord(word.text, source.substring(range.first, range.last + 1), locale)
+                .copy(span = range)
+        }
 
     private fun classifyWord(
         word: String,
         originalText: String = word,
         locale: Locale = Locale.getDefault()
     ): Token {
-        // The checks run in this order; the first match wins.
-        // Time range before structured date, so "2-3pm" is a range.
-        timeRangeRegex.matchEntire(word)?.let { match ->
-            parseTimeRange(word, match, originalText)?.let { return it }
-        }
+        // The checks run in this order; the first match wins. Every pattern below needs a digit,
+        // so a word without one only goes through the word maps, and an all-digit word can only be
+        // a year, a number, or UNKNOWN when too large. A digit is any Unicode digit: Android's
+        // regex \d matches Arabic or fullwidth digits too. A surrogate pair (a digit outside the
+        // BMP, or an emoji) takes the full path.
+        val hasDigit = word.any { it.isDigit() || it.isSurrogate() }
+        if (hasDigit && word.all { it.isDigit() }) return numberToken(word, originalText)
 
-        // Structured date before numbers, so "1/15" is a date.
-        structuredDateRegex.matchEntire(word)?.let { match ->
-            return parseStructuredDate(word, match, originalText, locale)
+        if (hasDigit) {
+            // Time range before structured date, so "2-3pm" is a range.
+            timeRangeRegex.matchEntire(word)?.let { match ->
+                parseTimeRange(word, match, originalText)?.let { return it }
+            }
+
+            parseHRange(word, originalText)?.let { return it }
+
+            // Structured date before numbers, so "1/15" is a date.
+            structuredDateRegex.matchEntire(word)?.let { match ->
+                return parseStructuredDate(word, match, originalText, locale)
+            }
         }
 
         months[word]?.let {
@@ -197,10 +216,6 @@ object WordTokenizer {
             return Token(TokenType.MERIDIEM, word, word, originalText)
         }
 
-        timezoneAbbreviations[word]?.let {
-            return Token(TokenType.TIMEZONE, word, it, originalText)
-        }
-
         recurrenceKeywords[word]?.let {
             return Token(TokenType.RECURRENCE_KEYWORD, word, it, originalText)
         }
@@ -213,11 +228,15 @@ object WordTokenizer {
             return Token(TokenType.KEYWORD, word, it, originalText)
         }
 
+        if (!hasDigit) return Token(TokenType.UNKNOWN, word, word, originalText)
+
         timeRegex.matchEntire(word)?.let { match ->
             parseTime(word, match, originalText)?.let { return it }
         }
 
-        // "h" notation before year and number.
+        parseGluedDuration(word, originalText)?.let { return it }
+
+        // "h" notation before ordinals.
         hNotationRegex.matchEntire(word)?.let { match ->
             val hour = match.groupValues[1].toIntOrNull()
             val minute = match.groupValues[2].takeIf { it.isNotEmpty() }?.toIntOrNull() ?: 0
@@ -226,23 +245,25 @@ object WordTokenizer {
             }
         }
 
-        // Year before plain numbers.
-        if (yearRegex.matchEntire(word) != null) {
-            return Token(TokenType.YEAR, word, word.toInt(), originalText)
-        }
-
         ordinalRegex.matchEntire(word)?.let { match ->
             val num = match.groupValues[1].toIntOrNull() ?: return Token(TokenType.UNKNOWN, word, word, originalText)
             return Token(TokenType.NUMBER, word, num, originalText)
         }
 
-        // A number too large for Int, such as "99999999999", is UNKNOWN.
-        if (numberRegex.matchEntire(word) != null) {
-            val num = word.toIntOrNull() ?: return Token(TokenType.UNKNOWN, word, word, originalText)
-            return Token(TokenType.NUMBER, word, num, originalText)
-        }
-
         return Token(TokenType.UNKNOWN, word, word, originalText)
+    }
+
+    /**
+     * Returns a YEAR (1000 to 2999), NUMBER, or UNKNOWN (too large for Int) token for an all-digit
+     * word.
+     */
+    private fun numberToken(word: String, originalText: String): Token {
+        if (yearRegex.matchEntire(word) != null) {
+            return Token(TokenType.YEAR, word, word.toInt(), originalText)
+        }
+        // A number too large for Int, such as "99999999999", is UNKNOWN.
+        val num = word.toIntOrNull() ?: return Token(TokenType.UNKNOWN, word, word, originalText)
+        return Token(TokenType.NUMBER, word, num, originalText)
     }
 
     private fun parseTimeRange(word: String, match: MatchResult, originalText: String = word): Token? {
@@ -254,8 +275,15 @@ object WordTokenizer {
         val endMeridiem = match.groupValues[6].lowercase().replace(".", "").takeIf { it.isNotEmpty() }
 
         if (startMinute > 59 || endMinute > 59) return null
-        // Without a meridiem, "2-3" is a structured date, not a range.
-        if (startMeridiem == null && endMeridiem == null) return null
+        // Without a meridiem, "2-3" is a structured date, not a range; with a colon and minutes
+        // on both sides ("15:00-16:30") it is a 24-hour range.
+        if (startMeridiem == null && endMeridiem == null) {
+            val parts = word.split('-')
+            if (parts.size != 2 || parts.any { ':' !in it }) return null
+            if (startHourRaw > 23 || endHourRaw > 23) return null
+            val range = TimeRange(LocalTime.of(startHourRaw, startMinute), LocalTime.of(endHourRaw, endMinute))
+            return Token(TokenType.TIME_RANGE, word, range, originalText)
+        }
 
         val startHour: Int
         val endHour: Int
@@ -277,24 +305,51 @@ object WordTokenizer {
                 sameAsStart
             }
         } else {
-            // The start takes the end's meridiem, or the opposite one when that would put it
-            // after the end: "9-5pm" is 9:00 to 17:00. endMeridiem is non-null by the guard.
+            // endMeridiem is non-null by the guard.
             endHour = resolveMeridiemHour(endHourRaw, endMeridiem!!) ?: return null
-            val sameAsEnd = resolveMeridiemHour(startHourRaw, endMeridiem) ?: return null
-            val endTime24 = endHour * 60 + endMinute
-            val startSame = sameAsEnd * 60 + startMinute
-            startHour = if (startSame > endTime24) {
-                val oppositeMeridiem = if (endMeridiem.startsWith("p")) "am" else "pm"
-                resolveMeridiemHour(startHourRaw, oppositeMeridiem) ?: sameAsEnd
-            } else {
-                sameAsEnd
-            }
+            startHour = borrowMeridiem(startHourRaw, startMinute, endHour, endMinute, endMeridiem) ?: return null
         }
 
         val startTime = LocalTime.of(startHour, startMinute)
         val endTime = LocalTime.of(endHour, endMinute)
 
         return Token(TokenType.TIME_RANGE, word, TimeRange(startTime, endTime), originalText)
+    }
+
+    /**
+     * Returns the 24-hour start of a range whose start has no meridiem: the start takes the end's
+     * [endMeridiem], or the opposite one when that would put it after the end, so "9-5pm" is 9:00
+     * to 17:00 and "3 to 5pm" is 15:00 to 17:00. Null when [startHour] isn't 1 to 12.
+     */
+    internal fun borrowMeridiem(startHour: Int, startMinute: Int, endHour24: Int, endMinute: Int, endMeridiem: String): Int? {
+        val sameAsEnd = resolveMeridiemHour(startHour, endMeridiem) ?: return null
+        if (sameAsEnd * 60 + startMinute <= endHour24 * 60 + endMinute) return sameAsEnd
+        val opposite = if (endMeridiem.startsWith("p")) "am" else "pm"
+        return resolveMeridiemHour(startHour, opposite) ?: sameAsEnd
+    }
+
+    /**
+     * True when [word] (lowercase, hyphenated) is a range the rules read: a time range ("3pm-5pm",
+     * "15:00-16:30", "9a.m.-5p.m."), an h-notation range ("15h30-18h") or two 1-2 digit numbers
+     * ("23-28"). The dash normalizer asks this to decide whether a glued en or em dash is a range
+     * dash.
+     */
+    internal fun isRangeWord(word: String): Boolean {
+        if (numberPairRegex.matches(word)) return true
+        if (parseHRange(word, word) != null) return true
+        val match = timeRangeRegex.matchEntire(word) ?: return false
+        return parseTimeRange(word, match) != null
+    }
+
+    private fun parseHRange(word: String, originalText: String): Token? {
+        val match = hRangeRegex.matchEntire(word) ?: return null
+        val startHour = match.groupValues[1].toInt()
+        val startMinute = match.groupValues[2].ifEmpty { "0" }.toInt()
+        val endHour = match.groupValues[3].toInt()
+        val endMinute = match.groupValues[4].ifEmpty { "0" }.toInt()
+        if (startHour > 23 || endHour > 23 || startMinute > 59 || endMinute > 59) return null
+        val range = TimeRange(LocalTime.of(startHour, startMinute), LocalTime.of(endHour, endMinute))
+        return Token(TokenType.TIME_RANGE, word, range, originalText)
     }
 
     internal fun resolveMeridiemHour(hour: Int, meridiem: String): Int? {
@@ -348,6 +403,29 @@ object WordTokenizer {
     }
 
     data class TimeRange(val start: LocalTime, val end: LocalTime)
+
+    /**
+     * A glued length in [minutes]. [hasHourPart] when it names hours ("1.5h", "2h45m");
+     * [minuteWord] when its minutes use "min" or "mins", not a bare "m" that may be metres
+     * ("400m").
+     */
+    data class GluedDuration(val minutes: Int, val hasHourPart: Boolean, val minuteWord: Boolean)
+
+    private fun parseGluedDuration(word: String, originalText: String): Token? {
+        val match = gluedDurationRegex.matchEntire(word) ?: return null
+        val hours = match.groupValues[1]
+        val hourUnit = match.groupValues[2]
+        val mins = match.groupValues[3]
+        val minUnit = match.groupValues[4]
+        if (hours.isEmpty() && mins.isEmpty()) return null
+        // "2h" alone is 24-hour notation.
+        if (mins.isEmpty() && hourUnit == "h" && '.' !in hours) return null
+        val hourMinutes = hours.toDoubleOrNull()?.let { Math.round(it * 60).toInt() } ?: 0
+        val minutes = mins.toIntOrNull() ?: 0
+        if (mins.isNotEmpty() && hours.isNotEmpty() && minutes > 59) return null
+        val value = GluedDuration(hourMinutes + minutes, hours.isNotEmpty(), minUnit == "min" || minUnit == "mins")
+        return Token(TokenType.DURATION, word, value, originalText)
+    }
 
     data class DateParts(val day: Int, val month: Int, val year: Int?)
 

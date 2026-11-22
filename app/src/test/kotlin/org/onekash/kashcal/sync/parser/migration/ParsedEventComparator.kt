@@ -43,11 +43,16 @@ object ParsedEventComparator {
         }
         Assert.assertEquals("${prefix}endTs mismatch", expectedEndTs, event.endTs)
 
-        Assert.assertEquals(
-            "${prefix}timezone mismatch",
-            icalEvent.dtStart.timezone?.id,
-            event.timezone
-        )
+        // A timed series whose start is a UTC time is stored in UTC (RFC 5545 §3.3.5); every
+        // other start keeps its own zone. Restated here so the comparator checks the mapper
+        // against the rule rather than against itself.
+        val start = icalEvent.dtStart
+        val expectedZone = if (icalEvent.rrule != null && start.isUtc && !start.isDate) {
+            org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper.UTC_SERIES_ZONE
+        } else {
+            start.timezone?.id
+        }
+        Assert.assertEquals("${prefix}timezone mismatch", expectedZone, event.timezone)
 
         Assert.assertEquals(
             "${prefix}status mismatch",

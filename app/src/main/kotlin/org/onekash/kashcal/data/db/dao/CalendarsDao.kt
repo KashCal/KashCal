@@ -1,13 +1,28 @@
 package org.onekash.kashcal.data.db.dao
 
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Update
+import androidx.room3.ColumnInfo
+import androidx.room3.Dao
+import androidx.room3.Delete
+import androidx.room3.Embedded
+import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
+import androidx.room3.Query
+import androidx.room3.Update
 import kotlinx.coroutines.flow.Flow
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.domain.model.AccountProvider
+
+/** Pairs a calendar with its event count from [CalendarsDao.getWithEventCountsByProvider]. */
+data class CalendarWithEventCount(
+    @Embedded val calendar: Calendar,
+    @ColumnInfo(name = "event_count") val eventCount: Int
+)
+
+/** One calendar's id and event count from [CalendarsDao.getAllEventCounts]. */
+data class CalendarEventCount(
+    @ColumnInfo(name = "calendar_id") val calendarId: Long,
+    @ColumnInfo(name = "event_count") val eventCount: Int
+)
 
 /**
  * Reads and writes the `calendars` table.
@@ -173,6 +188,39 @@ interface CalendarsDao {
         ORDER BY c.sort_order ASC
     """)
     fun getCalendarsByProvider(provider: String): Flow<List<Calendar>>
+
+    /**
+     * Emits the calendars of accounts with [provider], each with its event count by the rule of
+     * [EventsDao.countUserEventsInCalendar]. Emits again when an event is written, since the
+     * count reads the events table.
+     */
+    @Query("""
+        SELECT c.*, (
+            SELECT COUNT(*) FROM events e
+            WHERE e.calendar_id = c.id
+            AND e.sync_status != 'PENDING_DELETE'
+            AND e.original_event_id IS NULL
+        ) AS event_count
+        FROM calendars c
+        INNER JOIN accounts a ON c.account_id = a.id
+        WHERE a.provider = :provider
+    """)
+    fun getWithEventCountsByProvider(provider: AccountProvider): Flow<List<CalendarWithEventCount>>
+
+    /**
+     * Emits every calendar with its event count by the rule of [getWithEventCountsByProvider],
+     * whatever its account. Emits again when an event is written.
+     */
+    @Query("""
+        SELECT c.id AS calendar_id, (
+            SELECT COUNT(*) FROM events e
+            WHERE e.calendar_id = c.id
+            AND e.sync_status != 'PENDING_DELETE'
+            AND e.original_event_id IS NULL
+        ) AS event_count
+        FROM calendars c
+    """)
+    fun getAllEventCounts(): Flow<List<CalendarEventCount>>
 
     /** Emits the calendar count for [provider], matched like [getCalendarsByProvider]. */
     @Query("""

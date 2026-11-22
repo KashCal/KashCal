@@ -5,6 +5,7 @@ import org.onekash.kashcal.sync.client.model.CalDavEvent
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.client.model.CalendarMetadataProbe
 import org.onekash.kashcal.sync.client.model.SyncReport
+import org.onekash.kashcal.sync.quirks.CalDavQuirks
 
 /**
  * Talks CalDAV to one server: discovery (PROPFIND, OPTIONS), fetching (calendar-query,
@@ -85,6 +86,18 @@ interface CalDavClient {
 
     /** Lists the calendars in [calendarHomeUrl] with a Depth: 1 PROPFIND. */
     suspend fun listCalendars(calendarHomeUrl: String): CalDavResult<List<CalDavCalendar>>
+
+    /**
+     * Lists the calendar feeds (`CS:subscribed` collections) in [calendarHomeUrl] with its own
+     * Depth: 1 PROPFIND; [listCalendars] is a separate request and never returns them.
+     *
+     * @return Success with the feeds (empty when there are none), or an Error: the HTTP status,
+     *   [CalDavResult.CODE_NOT_MULTISTATUS] for a 2xx that isn't a multistatus, or 500 when the
+     *   multistatus can't be parsed.
+     */
+    suspend fun listWebcalFeeds(
+        calendarHomeUrl: String
+    ): CalDavResult<List<CalDavQuirks.ParsedWebcalFeed>>
 
     /**
      * Asks the server about one calendar URL directly (PROPFIND, Depth: 0).

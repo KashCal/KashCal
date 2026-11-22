@@ -10,7 +10,8 @@ import java.util.TimeZone
  *
  * @param month 1-12
  * @param day 1-31
- * @param year the event year, or null if the contact has none
+ * @param year the event year, or null when the contact has none or it is outside the range
+ *   [ContactEventUtils.parseContactDate] keeps
  */
 data class ContactEventDate(
     val month: Int,
@@ -43,7 +44,9 @@ object ContactEventUtils {
      * - `MM/DD/YYYY` or `MM-DD-YYYY`; a day-first date is read as month-first, and rejected
      *   when its day is over 12
      *
-     * A date with a year must fall in 1900-2100.
+     * A date with a year must be a calendar date in that year. A year outside [EVENT_YEAR_RANGE]
+     * is dropped and the month and day kept, since some sources store a date without a year
+     * under a placeholder year such as 1604 (#395).
      */
     fun parseContactDate(dateString: String?): ContactEventDate? {
         if (dateString.isNullOrBlank()) return null
@@ -69,8 +72,8 @@ object ContactEventUtils {
             val year = match.groupValues[1].toIntOrNull()
             val month = match.groupValues[2].toIntOrNull()
             val day = match.groupValues[3].toIntOrNull()
-            if (year != null && month != null && day != null && isValidDate(year, month, day)) {
-                return ContactEventDate(month, day, year)
+            if (year != null && month != null && day != null && isCalendarDate(year, month, day)) {
+                return datedOrYearless(month, day, year)
             }
         }
 
@@ -80,8 +83,8 @@ object ContactEventUtils {
             val month = match.groupValues[1].toIntOrNull()
             val day = match.groupValues[2].toIntOrNull()
             val year = match.groupValues[3].toIntOrNull()
-            if (year != null && month != null && day != null && isValidDate(year, month, day)) {
-                return ContactEventDate(month, day, year)
+            if (year != null && month != null && day != null && isCalendarDate(year, month, day)) {
+                return datedOrYearless(month, day, year)
             }
         }
 
@@ -291,8 +294,12 @@ object ContactEventUtils {
         return month in 1..12 && day in 1..31
     }
 
-    private fun isValidDate(year: Int, month: Int, day: Int): Boolean {
-        if (year < 1900 || year > 2100) return false
+    private val EVENT_YEAR_RANGE = 1900..2100
+
+    private fun datedOrYearless(month: Int, day: Int, year: Int): ContactEventDate =
+        ContactEventDate(month, day, year.takeIf { it in EVENT_YEAR_RANGE })
+
+    private fun isCalendarDate(year: Int, month: Int, day: Int): Boolean {
         if (month < 1 || month > 12) return false
         if (day < 1 || day > 31) return false
 

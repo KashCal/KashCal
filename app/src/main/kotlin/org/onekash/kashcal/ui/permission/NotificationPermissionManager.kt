@@ -111,16 +111,21 @@ class NotificationPermissionManager(
     }
 
     /**
-     * Records a denial. Called from the permission result callback and when the user declines
-     * the rationale dialog.
+     * Records a denial, and that the app asked. Called from the permission result callback and
+     * when the user declines the rationale dialog.
      */
     suspend fun onPermissionDenied() {
         userPreferences.incrementNotificationPermissionDeniedCount()
+        userPreferences.setNotificationAskDone()
     }
 
-    /** Resets the denial count. Called from the permission result callback on a grant. */
+    /**
+     * Resets the denial count and records that the app asked. Called from the permission result
+     * callback on a grant.
+     */
     suspend fun onPermissionGranted() {
         userPreferences.resetNotificationPermissionDeniedCount()
+        userPreferences.setNotificationAskDone()
     }
 
     /** Returns true on Android 13 and later, where POST_NOTIFICATIONS is a runtime permission. */

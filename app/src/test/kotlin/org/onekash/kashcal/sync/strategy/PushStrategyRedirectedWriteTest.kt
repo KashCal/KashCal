@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -17,6 +17,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.KashCalDatabase
+import org.onekash.kashcal.data.db.PendingOperationTriggers
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.data.db.entity.Calendar
@@ -29,6 +30,7 @@ import org.onekash.kashcal.sync.auth.Credentials
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.util.Collections
@@ -73,7 +75,8 @@ class PushStrategyRedirectedWriteTest {
         )
 
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
+            .addCallback(PendingOperationTriggers.callback())
             .allowMainThreadQueries().build()
         val accountId = database.accountsDao().insert(Account(provider = AccountProvider.CALDAV, email = "me@example.test"))
         val calendarId = database.calendarsDao().insert(
@@ -98,7 +101,8 @@ class PushStrategyRedirectedWriteTest {
             pendingOperationsDao = database.pendingOperationsDao(),
             accountRepository = accountRepository,
             attendeesDao = database.attendeesDao(),
-            pendingCancelsDao = database.pendingCancelsDao()
+            pendingCancelsDao = database.pendingCancelsDao(),
+            icsSource = EventIcsStore(database),
         )
         database.pendingOperationsDao().insert(
             PendingOperation(eventId = eventId, operation = PendingOperation.OPERATION_UPDATE, status = PendingOperation.STATUS_PENDING)

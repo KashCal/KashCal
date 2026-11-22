@@ -869,7 +869,7 @@ class DeviceEventMapperTest {
             timezone = "America/New_York"
         )
         val synthetic = event.toExportEvent(reminderMinutes = listOf(15))
-        val ics = IcsPatcher.serialize(synthetic)
+        val ics = IcsPatcher.serialize(synthetic, ics = null)
 
         assertTrue("ICS should contain VCALENDAR", ics.contains("BEGIN:VCALENDAR"))
         assertTrue("ICS should contain VEVENT", ics.contains("BEGIN:VEVENT"))
@@ -904,7 +904,7 @@ class DeviceEventMapperTest {
         val masterSynthetic = master.toExportEvent()
         val exceptionSynthetic = exception.toExportEvent()
 
-        val ics = IcsPatcher.serializeWithExceptions(masterSynthetic, listOf(exceptionSynthetic))
+        val ics = IcsPatcher.serializeWithExceptions(masterSynthetic, null, listOf(exceptionSynthetic))
 
         // Shared UID appears at least twice (once per VEVENT)
         val uidOccurrences = Regex("UID:device-$masterId@kashcal").findAll(ics).count()
@@ -946,7 +946,7 @@ class DeviceEventMapperTest {
         val synthetic = canceledException.toExportEvent()
         assertEquals("CANCELLED", synthetic.status)
 
-        val ics = IcsPatcher.serialize(synthetic)
+        val ics = IcsPatcher.serialize(synthetic, ics = null)
         assertTrue("STATUS:CANCELLED must appear in ICS", ics.contains("STATUS:CANCELLED"))
     }
 
@@ -968,7 +968,7 @@ class DeviceEventMapperTest {
     @Test
     fun `toExportEvent originalEventId is non-null for exceptions (signals to mapper)`() {
         // Export never dereferences originalEventId as a Room FK. IcsPatcher reads only its
-        // nullness, and only for a row with rawIcal, which a synthetic event lacks.
+        // nullness, and only for a row with a stored ICS, which a synthetic event lacks.
         val exception = createDeviceEvent(
             id = 200L,
             rrule = null,

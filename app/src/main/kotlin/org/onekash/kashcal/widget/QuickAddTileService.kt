@@ -22,7 +22,7 @@ class QuickAddTileService : TileService() {
         qsTile?.apply {
             label = getString(R.string.qs_tile_label)
             // A full-frame calendar symbol, matching the weight of the system alarm and
-            // airplane tiles. The launcher's monochrome "31" mark is sized for the
+            // airplane tiles. The launcher's themed calendar glyph is sized for the
             // adaptive-icon safe zone, so it renders tiny and illegible in a tile.
             icon = Icon.createWithResource(this@QuickAddTileService, R.drawable.ic_qs_tile_calendar)
             state = Tile.STATE_INACTIVE

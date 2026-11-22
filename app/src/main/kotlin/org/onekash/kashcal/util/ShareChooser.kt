@@ -3,6 +3,7 @@ package org.onekash.kashcal.util
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import org.onekash.kashcal.MainActivity
 
 /**
@@ -23,5 +24,15 @@ object ShareChooser {
                 arrayOf(ComponentName(context, MainActivity::class.java))
             )
         }
+    }
+
+    /** Returns a chooser titled [title] that sends the [mimeType] file at [uri], read-granted. */
+    fun createFileChooser(context: Context, uri: Uri, mimeType: String, title: CharSequence?): Intent {
+        val send = Intent(Intent.ACTION_SEND).apply {
+            type = mimeType
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        return createKashCalChooser(context, send, title)
     }
 }

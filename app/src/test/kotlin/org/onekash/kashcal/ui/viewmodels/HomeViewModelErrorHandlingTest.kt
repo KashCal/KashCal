@@ -110,7 +110,7 @@ class HomeViewModelErrorHandlingTest {
         every { dataStore.defaultCalendar } returns flowOf(null)
         coEvery { dataStore.defaultReminderMinutes } returns flowOf(15)
         coEvery { dataStore.defaultAllDayReminder } returns flowOf(1440)
-        coEvery { dataStore.onboardingDismissed } returns flowOf(true)
+        coEvery { dataStore.onboardingCompleted } returns flowOf(true)
         coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns emptyList()
         coEvery { accountRepository.hasCredentials(any()) } returns false
         coEvery { eventReader.getVisibleOccurrencesInRange(any(), any()) } returns flowOf(emptyList())
@@ -140,7 +140,8 @@ class HomeViewModelErrorHandlingTest {
             attendeeBackfill = io.mockk.mockk(relaxed = true),
             contactEmailReader = io.mockk.mockk(relaxed = true),
             context = io.mockk.mockk(relaxed = true),
-            ioDispatcher = testDispatcher
+            ioDispatcher = testDispatcher,
+            applicationScope = kotlinx.coroutines.CoroutineScope(testDispatcher)
         )
     }
 

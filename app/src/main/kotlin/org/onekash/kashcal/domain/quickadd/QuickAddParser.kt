@@ -3,7 +3,9 @@ package org.onekash.kashcal.domain.quickadd
 import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.domain.category.TagTokenizer
 import org.onekash.kashcal.domain.quickadd.normalizer.NormalizerChain
+import org.onekash.kashcal.domain.quickadd.normalizer.SpannedText
 import org.onekash.kashcal.domain.quickadd.rule.AbsoluteDateRule
+import org.onekash.kashcal.domain.quickadd.rule.DateRangeRule
 import org.onekash.kashcal.domain.quickadd.rule.DurationRule
 import org.onekash.kashcal.domain.quickadd.rule.LocationRule
 import org.onekash.kashcal.domain.quickadd.rule.ParseContext
@@ -16,13 +18,17 @@ import org.onekash.kashcal.domain.quickadd.rule.WeekdayRule
 import org.onekash.kashcal.domain.quickadd.tokenizer.Token
 import org.onekash.kashcal.domain.quickadd.tokenizer.TokenType
 import org.onekash.kashcal.domain.quickadd.tokenizer.WordTokenizer
+import org.onekash.kashcal.domain.rrule.RruleBuilder
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 object QuickAddParser {
 
     private val normalizer = NormalizerChain()
-    private val normalizerNoLowercase = NormalizerChain(lowercase = false)
 
     // A note is everything after the first whitespace-preceded "//". Requiring the
     // whitespace means a pasted URL ("https://…", "zoom.us//x") is never split.
@@ -33,6 +39,8 @@ object QuickAddParser {
         RelativeDateRule,
         RecurrenceRule,
         WeekdayRule,
+        // Before AbsoluteDateRule, which would take only a range's start date.
+        DateRangeRule,
         AbsoluteDateRule,
         StructuredDateRule,
         TimeRule,
@@ -41,11 +49,20 @@ object QuickAddParser {
         LocationRule
     )
 
+    /**
+     * Parses Quick Add [input] against [reference].
+     *
+     * @param zone the zone the event is saved in; a timed series' "until" day ends at 23:59:59
+     *   there. Null means the device zone (where QuickAddViewModel.save writes the start), looked
+     *   up only when a timed series has an end.
+     */
+    @JvmOverloads
     fun parse(
         input: String,
         reference: LocalDateTime = LocalDateTime.now(),
         locale: Locale = Locale.getDefault(),
         firstDayOfWeek: Int = 0,
+        zone: ZoneId? = null,
     ): QuickAddResult {
         if (input.isBlank()) {
             return QuickAddResult(
@@ -66,15 +83,16 @@ object QuickAddParser {
             ?.ifEmpty { null }
 
         // Take #tags before normalizing, whose character cleanup strips '#'. Doing it after
-        // the note split keeps a '#tag' inside the note verbatim.
-        val (detagged, categories) = TagTokenizer.extract(beforeNote)
+        // the note split keeps a '#tag' inside the note verbatim. Accepted tags are blanked to
+        // spaces, so positions in the typed text stay as they were.
+        val tagged = TagTokenizer.extractRanges(beforeNote)
+        val categories = tagged.tags
+        val source = blankRanges(beforeNote, tagged.ranges)
 
-        val normalized = normalizer.normalize(detagged)
-        // The same transforms without lowercasing, so the title keeps the user's case.
-        val originalCased = normalizerNoLowercase.normalize(detagged)
-        val originalWords = if (originalCased.isNotEmpty()) originalCased.split(" ") else emptyList()
-
-        val tokens = WordTokenizer.tokenize(normalized, originalWords, locale)
+        // The rules read the normalized words; the title and location are cut out of the typed
+        // text by each token's span, so they keep what the user typed.
+        val normalized = normalizer.normalize(SpannedText.of(source))
+        val tokens = WordTokenizer.tokenize(normalized, source, locale)
 
         if (tokens.isEmpty()) {
             // A tags-only input (e.g. "#work") has no tokens left but keeps its categories.
@@ -88,19 +106,20 @@ object QuickAddParser {
             )
         }
 
-        val context = ParseContext(reference, firstDayOfWeek = firstDayOfWeek)
+        val context = ParseContext(reference, firstDayOfWeek = firstDayOfWeek, source = source)
         for (rule in rules) {
             rule.apply(tokens, context)
         }
 
-        val title = extractTitle(tokens, context)
+        val title = extractTitle(tokens, context, source)
         val emoji = EmojiMatcher.getEmoji(title)
         val startDate = context.resolveDate()
         val startTime = context.resolveTime()
+        val rrule = finishUntil(context, startDate, startTime, zone)
 
         val confidence = when {
             context.dateSet && context.timeSet -> ParseConfidence.HIGH
-            context.dateSet || context.timeSet || context.rrule != null -> ParseConfidence.MEDIUM
+            context.dateSet || context.timeSet || rrule != null -> ParseConfidence.MEDIUM
             else -> ParseConfidence.LOW
         }
 
@@ -110,9 +129,8 @@ object QuickAddParser {
             startTime = startTime,
             endTime = context.endTime,
             endDate = context.endDate,
-            timezone = context.timezone,
             location = context.location,
-            rrule = context.rrule,
+            rrule = rrule,
             categories = categories,
             emoji = emoji,
             note = note,
@@ -120,13 +138,48 @@ object QuickAddParser {
         )
     }
 
-    private fun extractTitle(tokens: List<Token>, context: ParseContext): String {
+    /**
+     * Returns [source] with every token the rules consumed cut out, plus the KEYWORD tokens
+     * ("at", "on", "the") left at either end of what remains.
+     */
+    private fun extractTitle(tokens: List<Token>, context: ParseContext, source: String): String {
         val consumed = context.getConsumedIndices()
-        val titleTokens = tokens.indices
+        val kept = tokens.indices
             .filter { i -> i !in consumed }
-            .map { i -> tokens[i] }
-            .dropWhile { it.type == TokenType.KEYWORD }
-            .dropLastWhile { it.type == TokenType.KEYWORD }
-        return titleTokens.joinToString(" ") { it.originalText }.trim()
+            .dropWhile { tokens[it].type == TokenType.KEYWORD }
+            .dropLastWhile { tokens[it].type == TokenType.KEYWORD }
+            .toSet()
+        val removed = tokens.indices.filter { it !in kept }.mapNotNull { tokens[it].span }
+        return TypedText.cut(source, 0, source.length, removed)
+    }
+
+    /**
+     * Returns the rule with the UNTIL for [ParseContext.untilDate], written here because the time
+     * is read after the rules that set it: a DATE for an all-day series (RFC 5545 §3.3.10 makes
+     * UNTIL a DATE for a DATE start), 23:59:59 of that day in [zone], in UTC, for a timed one, so
+     * the named day's occurrence stays. An end before the start date leaves no series.
+     */
+    private fun finishUntil(
+        context: ParseContext,
+        startDate: LocalDate,
+        startTime: LocalTime?,
+        zone: ZoneId?,
+    ): String? {
+        val rrule = context.rrule ?: return null
+        val until = context.untilDate ?: return rrule
+        if (until.isBefore(startDate)) return null
+        if (startTime == null) return "$rrule;UNTIL=${until.format(DateTimeFormatter.BASIC_ISO_DATE)}"
+        val saveZone = zone ?: ZoneId.systemDefault()
+        val endOfDay = until.atTime(23, 59, 59).atZone(saveZone).toInstant().toEpochMilli()
+        return RruleBuilder.withUntil(rrule, endOfDay)
+    }
+
+    private fun blankRanges(text: String, ranges: List<IntRange>): String {
+        if (ranges.isEmpty()) return text
+        val chars = text.toCharArray()
+        for (range in ranges) {
+            for (i in range) chars[i] = ' '
+        }
+        return String(chars)
     }
 }

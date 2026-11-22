@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.integration.multiserver
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.every
 import io.mockk.mockk
@@ -31,6 +31,7 @@ import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.sync.strategy.PushResult
 import org.onekash.kashcal.sync.strategy.PushStrategy
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.text.SimpleDateFormat
@@ -49,7 +50,7 @@ import java.util.UUID
  * serialized body and etag, this drives the chain the reporter hit:
  *
  *   raw server PUT (a body the app didn't serialize)
- *     -> PullStrategy.pull (into real Room: caldavUrl, etag, rawIcal)
+ *     -> PullStrategy.pull (into real Room: caldavUrl, etag, stored ICS)
  *     -> EventWriter.updateEvent or editSingleOccurrence (queues a pending op)
  *     -> PushStrategy.pushForCalendar (drains it with an If-Match PUT)
  *     -> fetch back from the server and check the edit landed
@@ -59,7 +60,7 @@ import java.util.UUID
  * frozen link.
  *
  * Uses a real in-memory Room database and the real Pull and Push strategies, so the etag,
- * caldavUrl and rawIcal are the ones the strategies persist. The other collaborators are relaxed
+ * caldavUrl and stored ICS are the ones the strategies persist. The other collaborators are relaxed
  * mocks: the data store (its reminder and lookback flows stubbed), PullStrategy's account
  * repository, the invite notifier, the reminder schedulers, the credential manager, WorkManager
  * and the contacts collaborators.
@@ -111,7 +112,7 @@ class MultiServerServerOriginEditRoundTripTest(
     @Before
     fun setup() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries().build()
 
         occurrenceGenerator = OccurrenceGenerator(
@@ -137,7 +138,8 @@ class MultiServerServerOriginEditRoundTripTest(
             dataStore = dataStore,
             inviteNotifier = mockk(relaxed = true),
             accountRepository = mockk(relaxed = true),
-            reminderScheduler = mockk(relaxed = true)
+            reminderScheduler = mockk(relaxed = true),
+            icsSource = EventIcsStore(database),
         )
 
         pushStrategy = PushStrategy(
@@ -157,7 +159,8 @@ class MultiServerServerOriginEditRoundTripTest(
                 contactsProviderRepository = mockk(relaxed = true)
             ),
             attendeesDao = database.attendeesDao(),
-            pendingCancelsDao = database.pendingCancelsDao()
+            pendingCancelsDao = database.pendingCancelsDao(),
+            icsSource = EventIcsStore(database),
         )
 
         CalDavTestServerLoader.createClient(config)?.let {

@@ -12,27 +12,44 @@ package org.onekash.kashcal.domain.quickadd.normalizer
 object FuzzyQuantifierNormalizer : Normalizer {
 
     // Longest phrase first, so "a couple of" wins over "a couple".
-    private val replacements: List<Pair<Regex, String>> = listOf(
+    private val replacements: List<Pair<String, String>> = listOf(
         // Fractions of an hour become minutes.
-        phrase("a quarter of an hour") to "15 minutes",
-        phrase("quarter of an hour") to "15 minutes",
-        phrase("half an hour") to "30 minutes",
-        phrase("half hour") to "30 minutes",
+        "a quarter of an hour" to "15 minutes",
+        "quarter of an hour" to "15 minutes",
+        "half an hour" to "30 minutes",
+        "half hour" to "30 minutes",
         // Fuzzy counts. Only the article-led forms, so a bare "couple" or "few" stays;
         // "a couple of friends" still becomes "2 friends".
-        phrase("a couple of") to "2",
-        phrase("a couple") to "2",
-        phrase("a few") to "3",
+        "a couple of" to "2",
+        "a couple" to "2",
+        "a few" to "3",
     )
 
-    private fun phrase(text: String): Regex =
-        Regex("""\b${Regex.escape(text)}\b""", RegexOption.IGNORE_CASE)
+    // All phrases in one pattern, in the order above, one capturing group each, so the input is
+    // scanned once and the replacement comes from the group that matched (case folding can make
+    // the matched text differ from the phrase).
+    private val phraseRegex = Regex(
+        buildString {
+            append("\\b(?:")
+            for (i in replacements.indices) {
+                if (i > 0) append('|')
+                append('(').append(Regex.escape(replacements[i].first)).append(')')
+            }
+            append(")\\b")
+        },
+        RegexOption.IGNORE_CASE
+    )
 
-    override fun normalize(input: String): String {
-        var result = input
-        for ((regex, replacement) in replacements) {
-            result = regex.replace(result, replacement)
+    override fun normalize(input: SpannedText): SpannedText =
+        input.replace(phraseRegex) { match ->
+            val groups = match.groups
+            var replacement = ""
+            for (i in 1 until groups.size) {
+                if (groups[i] != null) {
+                    replacement = replacements[i - 1].second
+                    break
+                }
+            }
+            replacement
         }
-        return result
-    }
 }

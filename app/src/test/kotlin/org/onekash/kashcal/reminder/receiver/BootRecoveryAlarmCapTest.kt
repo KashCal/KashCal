@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.onekash.kashcal.reminder.device.DeviceCalendarChangeWatcher
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.widget.WidgetUpdateManager
@@ -49,7 +50,7 @@ class BootRecoveryAlarmCapTest {
         deviceScheduler = mockk()
         coJustRun { deviceScheduler.scheduleNextReminder() }
 
-        handler = BootRecoveryHandler(reminderScheduler, deviceScheduler, WidgetUpdateManager(context))
+        handler = BootRecoveryHandler(reminderScheduler, deviceScheduler, WidgetUpdateManager(context), mockk<DeviceCalendarChangeWatcher>(relaxed = true))
     }
 
     @Test

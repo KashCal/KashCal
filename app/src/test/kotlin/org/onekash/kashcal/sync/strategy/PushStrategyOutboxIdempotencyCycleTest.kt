@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -12,6 +12,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.KashCalDatabase
+import org.onekash.kashcal.data.db.PendingOperationTriggers
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Calendar
@@ -28,6 +29,8 @@ import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.client.model.CalendarMetadataProbe
 import org.onekash.kashcal.sync.client.model.OutboxResponse
 import org.onekash.kashcal.sync.client.model.SyncReport
+import org.onekash.kashcal.sync.quirks.CalDavQuirks
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -83,6 +86,7 @@ class PushStrategyOutboxIdempotencyCycleTest {
         override suspend fun discoverScheduleOutboxUrl(principalUrl: String): CalDavResult<String?> = CalDavResult.success(null)
         override suspend fun supportsAutoSchedule(calendarUrl: String): CalDavResult<Boolean> = CalDavResult.success(false)
         override suspend fun listCalendars(calendarHomeUrl: String): CalDavResult<List<CalDavCalendar>> = CalDavResult.success(emptyList())
+        override suspend fun listWebcalFeeds(calendarHomeUrl: String): CalDavResult<List<CalDavQuirks.ParsedWebcalFeed>> = CalDavResult.success(emptyList())
         override suspend fun probeCalendarCollection(calendarUrl: String): CalDavResult<Boolean> = CalDavResult.success(true)
         override suspend fun getCtag(calendarUrl: String): CalDavResult<CalendarMetadataProbe> = CalDavResult.error(404, "no")
         override suspend fun getSyncToken(calendarUrl: String): CalDavResult<String?> = CalDavResult.success(null)
@@ -116,7 +120,8 @@ class PushStrategyOutboxIdempotencyCycleTest {
     @Before
     fun setup() = runTest {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
+            .addCallback(PendingOperationTriggers.callback())
             .allowMainThreadQueries().build()
 
         val accountId = database.accountsDao().insert(
@@ -154,7 +159,8 @@ class PushStrategyOutboxIdempotencyCycleTest {
             pendingOperationsDao = database.pendingOperationsDao(),
             accountRepository = accountRepository,
             attendeesDao = database.attendeesDao(),
-            pendingCancelsDao = database.pendingCancelsDao()
+            pendingCancelsDao = database.pendingCancelsDao(),
+            icsSource = EventIcsStore(database),
         )
     }
 

@@ -12,9 +12,10 @@ import org.robolectric.RobolectricTestRunner
  * Tests [formatReminderMedium], the abbreviated-word format of the Settings rows Default event
  * length, Timed alert and All-day alert.
  *
- * Timed values read "30 min", "1 hr", "1 day", "1 wk", "Off" and "At event". All-day 9 AM offsets
- * read as their day or week meaning (900 is "1 day", not "15 hr"), and the day-of offset reads
- * "Day of"; the sheet hint, not the row, shows the 9 AM fire time.
+ * Timed values read "30 min", "1 hr", "1 day", "1 wk", "Off" and "At event", and a mixed value
+ * reads in its parts ("5 days 1 hr 10 min"). All-day 9 AM offsets read as their day or week
+ * meaning (900 is "1 day", not "15 hr"), and the day-of offset reads "Day of"; the sheet hint,
+ * not the row, shows the 9 AM fire time.
  */
 @RunWith(RobolectricTestRunner::class)
 class FormConstantsMediumTest {
@@ -22,6 +23,23 @@ class FormConstantsMediumTest {
     private val resources: Resources = ApplicationProvider.getApplicationContext<Context>().resources
 
     // ---- timed durations ----
+
+    @Test
+    fun `a mixed value renders in days, hours and minutes`() {
+        assertEquals("5 days 1 hr 10 min", formatReminderMedium(7270, isAllDay = false, resources = resources))
+        assertEquals("1 hr 30 min", formatReminderMedium(90, isAllDay = false, resources = resources))
+        assertEquals("1 day 1 min", formatReminderMedium(1441, isAllDay = false, resources = resources))
+    }
+
+    @Test
+    fun `a timed 540 reads as 9 hours`() {
+        assertEquals("9 hr", formatReminderMedium(540, isAllDay = false, resources = resources))
+    }
+
+    @Test
+    fun `a negative timed value keeps its sign`() {
+        assertEquals("-90 min", formatReminderMedium(-90, isAllDay = false, resources = resources))
+    }
 
     @Test
     fun `minutes render as N min`() {

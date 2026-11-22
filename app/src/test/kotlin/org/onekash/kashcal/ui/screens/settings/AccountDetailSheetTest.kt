@@ -8,8 +8,10 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -86,12 +88,40 @@ class AccountDetailSheetTest {
         composeTestRule.onNodeWithText(str(R.string.badge_beta)).assertDoesNotExist()
     }
 
-    private fun renderSheet(provider: AccountProvider) {
+    @Test
+    fun `an account that needs sign in offers Sign in again instead of Change Password`() {
+        var signInAgainTaps = 0
+        renderSheet(AccountProvider.CALDAV, needsSignIn = true, onSignInAgain = { signInAgainTaps++ })
+
+        composeTestRule.onNodeWithText(str(R.string.account_detail_sign_in_again_subtitle)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(str(R.string.account_detail_change_password)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(str(R.string.account_detail_sign_in_again)).assertIsDisplayed().performClick()
+        assertEquals(1, signInAgainTaps)
+        composeTestRule.onNodeWithText(str(R.string.account_detail_sign_out)).assertIsDisplayed()
+    }
+
+    @Test
+    fun `an account with credentials keeps Change Password and no Sign in again`() {
+        var changePasswordTaps = 0
+        renderSheet(AccountProvider.CALDAV, onChangePassword = { changePasswordTaps++ })
+
+        composeTestRule.onNodeWithText(str(R.string.account_detail_sign_in_again)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(str(R.string.account_detail_sign_in_again_subtitle)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(str(R.string.account_detail_change_password)).assertIsDisplayed().performClick()
+        assertEquals(1, changePasswordTaps)
+    }
+
+    private fun renderSheet(
+        provider: AccountProvider,
+        needsSignIn: Boolean = false,
+        onChangePassword: () -> Unit = {},
+        onSignInAgain: () -> Unit = {},
+    ) {
         composeTestRule.setContent {
             MaterialTheme {
                 AccountDetailSheet(
                     sheetState = rememberModalBottomSheetState(),
-                    account = model(provider),
+                    account = model(provider).copy(needsSignIn = needsSignIn),
                     syncStatus = AccountDetailSyncStatus.Idle,
                     discoverStatus = AccountDetailDiscoverStatus.Idle,
                     onRename = {},
@@ -103,7 +133,8 @@ class AccountDetailSheetTest {
                     onDismissContactSyncConfirmation = {},
                     onGrantContactsPermission = {},
                     onDiscoverCalendars = {},
-                    onChangePassword = {},
+                    onChangePassword = onChangePassword,
+                    onSignInAgain = onSignInAgain,
                     onSignOut = {},
                     onDismiss = {},
                 )

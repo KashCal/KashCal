@@ -194,6 +194,9 @@ class ReminderScheduler @Inject constructor(
          */
         const val SCHEDULE_WINDOW_DAYS = 7
 
+        /** [SCHEDULE_WINDOW_DAYS] in milliseconds. */
+        const val SCHEDULE_WINDOW_MS = SCHEDULE_WINDOW_DAYS * 24 * 60 * 60 * 1000L
+
         /**
          * How long before its occurrence a reminder can be set and still be armed.
          * A reminder a week before its event comes into the window once the event
@@ -203,6 +206,18 @@ class ReminderScheduler @Inject constructor(
 
         /** How far ahead occurrences are read when looking for reminders to arm. */
         const val OCCURRENCE_LOOKAHEAD_DAYS = SCHEDULE_WINDOW_DAYS + MAX_REMINDER_LEAD_DAYS
+
+        /**
+         * How long ago an occurrence may have started and still have its reminders armed; each
+         * reminder is then armed only if its own time is ahead. An all-day occurrence is stored
+         * at UTC midnight while its alarms count from local midnight (RFC 5545 §3.8.6.3), at
+         * most 12 hours later, so 36 hours covers any day-of offset under 24 hours in any zone,
+         * and a timed reminder up to 36 hours after its start. An alarm later than that after
+         * its occurrence's start (a later day of a multi-day event) is armed only if its row
+         * was made before then: occurrences that started earlier are left out so the scan
+         * stays on the start_ts index.
+         */
+        const val STARTED_LOOKBACK_MS = 36 * 60 * 60 * 1000L
 
         private const val DAY_MS = 24 * 60 * 60 * 1000L
 
@@ -225,27 +240,32 @@ class ReminderScheduler @Inject constructor(
      */
     private val rearmMutex = Mutex()
 
-    private fun windowEnd(now: Long): Long = now + SCHEDULE_WINDOW_DAYS * DAY_MS
+    private fun windowEnd(now: Long): Long = now + SCHEDULE_WINDOW_MS
 
     /** Returns whether a reminder at [triggerTime] is armed now: not past, and in the window. */
     private fun isArmable(triggerTime: Long, now: Long): Boolean =
         triggerTime >= now + MIN_TRIGGER_FUTURE_MS && triggerTime <= windowEnd(now)
 
-    /** Returns the event's alarm offsets: every VALARM in rawIcal when it has over 3 alarms. */
-    private fun reminderOffsetsFor(event: Event): List<String> =
-        if (event.alarmCount > 3 && event.rawIcal != null) {
-            RawIcsParser.getAllAlarmTriggers(event.rawIcal)
-                .takeIf { it.isNotEmpty() }
-                ?: event.reminders.orEmpty()
-        } else {
-            event.reminders.orEmpty()
-        }
+    /**
+     * Returns the event's alarm offsets: every VALARM in its stored ICS when it has over 3
+     * alarms, since [Event.reminders] holds at most 5; [Event.reminders] for a file's copy
+     * ([Event.holdsFileCopy]), whose alarms are the file's, not the user's, and when the stored
+     * ICS can't be read ([EventReader.getStoredIcsOrNull]), so one event can't stop a scan. The
+     * stored ICS is read only past 3 alarms.
+     */
+    private suspend fun reminderOffsetsFor(event: Event): List<String> {
+        // Any stored ICS of an unsynced import is a file's ([Event.holdsFileCopy]).
+        if (event.alarmCount <= 3 || event.isUnsyncedImport) return event.reminders.orEmpty()
+        val ics = eventReader.getStoredIcsOrNull(event) ?: return event.reminders.orEmpty()
+        return RawIcsParser.getAllAlarmTriggers(ics).takeIf { it.isNotEmpty() } ?: event.reminders.orEmpty()
+    }
 
     private fun triggerTimeFor(occurrenceStartTs: Long, offsetMs: Long, isAllDay: Boolean): Long =
         if (isAllDay) calculateAllDayTriggerTime(occurrenceStartTs, offsetMs) else occurrenceStartTs + offsetMs
 
     /**
-     * Schedules [event]'s reminders for its future [occurrences] that fall due within the window.
+     * Schedules [event]'s reminders for its [occurrences] within [STARTED_LOOKBACK_MS], arming
+     * each reminder whose own time falls due within the window.
      *
      * A reminder that already has a row is left alone. Nothing is scheduled when the event's
      * calendar is muted ([org.onekash.kashcal.data.db.entity.Calendar.isNotificationMuted]); the
@@ -265,16 +285,7 @@ class ReminderScheduler @Inject constructor(
             return
         }
 
-        // Determine which alarms to schedule
-        val reminderOffsets: List<String> = if (event.alarmCount > 3 && event.rawIcal != null) {
-            // More than 3 alarms: read every VALARM from rawIcal
-            Log.d(TAG, "Event ${event.id} has ${event.alarmCount} alarms, parsing rawIcal")
-            RawIcsParser.getAllAlarmTriggers(event.rawIcal)
-                .takeIf { it.isNotEmpty() }
-                ?: storedReminders.orEmpty()
-        } else {
-            storedReminders.orEmpty()
-        }
+        val reminderOffsets = reminderOffsetsFor(event)
 
         if (reminderOffsets.isEmpty()) {
             Log.d(TAG, "No reminders after processing for event ${event.id}")
@@ -290,8 +301,9 @@ class ReminderScheduler @Inject constructor(
         val now = System.currentTimeMillis()
 
         for (occurrence in occurrences) {
-            // Only future occurrences; each reminder is checked against the window
-            if (occurrence.startTs < now) continue
+            // An exception's occurrence arrives unfiltered; each reminder is then checked by its
+            // own time
+            if (occurrence.startTs < now - STARTED_LOOKBACK_MS) continue
 
             for (reminderOffset in reminderOffsets) {
                 scheduleReminderForOccurrence(
@@ -309,6 +321,7 @@ class ReminderScheduler @Inject constructor(
      * re-arms pending ones whose row already exists (a reboot re-arms only rows inside the
      * window, so a row can be left without an alarm until it comes into range). Re-arming
      * replaces the alarm already set for that row, so running this again adds nothing.
+     * Occurrences are read from [STARTED_LOOKBACK_MS] ago.
      *
      * Muted calendars get nothing: the scan first sweeps any alarm still armed for one
      * ([sweepMutedCalendars]), and the occurrence query leaves them out.
@@ -324,13 +337,13 @@ class ReminderScheduler @Inject constructor(
         val now = System.currentTimeMillis()
 
         val offsetsByEventId = mutableMapOf<Long, List<String>>()
-        fun offsetsOf(event: Event) = offsetsByEventId.getOrPut(event.id) { reminderOffsetsFor(event) }
+        suspend fun offsetsOf(event: Event) = offsetsByEventId.getOrPut(event.id) { reminderOffsetsFor(event) }
 
         // Most occurrences read are beyond the window. Drop them before any
         // further query; either all-day flag is tried since a changed
         // occurrence may differ from its series.
         val eventsWithReminders = eventReader.getEventsWithRemindersInRange(
-            now, now + OCCURRENCE_LOOKAHEAD_DAYS * DAY_MS
+            now - STARTED_LOOKBACK_MS, now + OCCURRENCE_LOOKAHEAD_DAYS * DAY_MS
         ).filter { eventData ->
             offsetsOf(eventData.event).any { offset ->
                 val offsetMs = parseReminderOffset(offset) ?: return@any false
@@ -653,21 +666,159 @@ class ReminderScheduler @Inject constructor(
         Log.d(TAG, "Cancelled alarm for reminder $reminderId")
     }
 
-    /** Cancels the alarms of [eventId]'s pending and snoozed reminders and deletes all its rows. */
+    /**
+     * Reads [calendarId]'s pending and snoozed reminders, runs [delete], and then cancels those
+     * reminders' alarms; returns what [delete] returned. If [delete] throws, no alarm is cancelled.
+     *
+     * For deleting the calendar row, whose cascade removes the reminder rows: the alarms are
+     * cancelled only once the rows are gone, so a failed delete keeps every reminder. An alarm is
+     * keyed by its reminder id alone ([createAlarmPendingIntent]), so a row re-armed in between
+     * is cancelled too. A row created in between, or re-armed after the cancel by a caller that
+     * read it before the delete, keeps a stray alarm; ReminderAlarmReceiver finds no row when it
+     * fires and posts nothing. Takes no lock.
+     */
+    suspend fun <T> cancelCalendarAlarmsAfter(calendarId: Long, delete: suspend () -> T): T {
+        val reminderIds = scheduledRemindersDao.getPendingForCalendar(calendarId).map { it.id }
+        val result = delete()
+        reminderIds.forEach { cancelAlarm(it) }
+        Log.d(TAG, "Cancelled ${reminderIds.size} alarms of deleted calendar $calendarId")
+        return result
+    }
+
+    /**
+     * Deletes all of [eventId]'s reminder rows, cancelling the alarms of the pending and snoozed
+     * ones and the notifications of the fired ones. For an event that is gone, declined or
+     * cancelled; an edit keeps the rows still valid ([reconcileRemindersForEvent]).
+     */
     suspend fun cancelRemindersForEvent(eventId: Long) {
-        val reminders = scheduledRemindersDao.getPendingForEvent(eventId)
-        for (reminder in reminders) {
-            cancelAlarm(reminder.id)
-        }
+        val reminders = scheduledRemindersDao.getAllForEvent(eventId)
+        reminders.forEach { cancelAlarmAndNotification(it) }
         scheduledRemindersDao.deleteForEvent(eventId)
         Log.d(TAG, "Cancelled ${reminders.size} reminders for event $eventId")
     }
 
     /**
+     * Brings [event]'s reminder rows in line with the event as an edit stored it, keeping each
+     * row that still applies with its id, so a notification on screen keeps a working Snooze
+     * (its actions carry the row id) and a snoozed reminder, which no scheduling path can create
+     * again, still fires. Callers run it after the event and its occurrences are stored, then
+     * [scheduleRemindersForEvent] for the reminders with no row.
+     *
+     * A row's occurrence must still exist, uncancelled, at exactly its occurrence_time (rows are
+     * keyed by the exact start, and linking an exception moves its occurrence's start). A
+     * snoozed row needs only that: a snooze is the user's own alarm (RFC 9074 §7) and outlives
+     * the offset it came from. Any other row also needs its offset among the event's, compared
+     * by value and respelled to the event's string so [scheduleRemindersForEvent] finds it; an
+     * exception's rows are written with its own offsets and with its master's (the master's
+     * step covers every occurrence, and the window scan uses the master's when the exception
+     * has none), so both count. Every other row is deleted with its alarm and, if it fired, its
+     * notification.
+     *
+     * A kept pending row takes its time recomputed from occurrence and offset (an all-day
+     * reminder moves with a time-zone change). Kept pending and snoozed rows are re-read before
+     * arming, so a time-zone reschedule or a snooze that changed the row since is not undone;
+     * one landing between the re-read and the arm still can be. Muting is read once, so an
+     * unmute landing mid-run can leave a kept row unarmed until the next window scan. Kept rows
+     * get the event's display copy, which the notification shows, unless the calendar is gone.
+     *
+     * Takes no lock: a feed refresh calls it inside a database transaction. If that transaction
+     * rolls back, the deleted rows come back but their alarms and notifications don't; the next
+     * window scan re-arms pending ones.
+     */
+    suspend fun reconcileRemindersForEvent(event: Event) {
+        val rows = scheduledRemindersDao.getAllForEvent(event.id)
+        if (rows.isEmpty()) return
+
+        val liveStarts = if (event.isException) {
+            listOfNotNull(occurrencesDao.getByExceptionEventId(event.id))
+        } else {
+            occurrencesDao.getForEvent(event.id).filter { it.exceptionEventId == null }
+        }.filterNot { it.isCancelled }.map { it.startTs }.toSet()
+        val master = event.originalEventId?.let { eventReader.getEventById(it) }
+        val offsets = reminderOffsetsFor(event).toSet() +
+            master?.let { reminderOffsetsFor(it) }.orEmpty()
+        // The event form and the pull spell some offsets differently (-PT24H and -P1D, PT0M
+        // and PT0S), so a row matches by value; the event's own spelling wins over its master's.
+        val offsetByValue = offsets.reversed().mapNotNull { offset ->
+            parseReminderOffset(offset)?.let { it to offset }
+        }.toMap()
+        val calendar = calendarsDao.getById(event.calendarId)
+        val muted = calendar?.isNotificationMuted == true
+        val now = System.currentTimeMillis()
+
+        var dropped = 0
+        for (row in rows) {
+            val spelling = if (row.reminderOffset in offsets) {
+                row.reminderOffset
+            } else {
+                parseReminderOffset(row.reminderOffset)?.let { offsetByValue[it] }
+            }
+            val keep = row.occurrenceTime in liveStarts &&
+                (row.status == ReminderStatus.SNOOZED || spelling != null)
+            // A respelled row that collides with a row already under the new spelling is a
+            // second copy of the same reminder.
+            val duplicate = keep && spelling != null && spelling != row.reminderOffset &&
+                scheduledRemindersDao.updateOffset(row.id, spelling) == 0
+            if (!keep || duplicate) {
+                cancelAlarmAndNotification(row)
+                scheduledRemindersDao.deleteById(row.id)
+                dropped++
+                continue
+            }
+            if (row.status != ReminderStatus.PENDING && row.status != ReminderStatus.SNOOZED) continue
+
+            var trigger = row.triggerTime
+            var moved = false
+            if (row.status == ReminderStatus.PENDING) {
+                val offsetMs = parseReminderOffset(row.reminderOffset)
+                val recomputed = offsetMs?.let { triggerTimeFor(row.occurrenceTime, it, event.isAllDay) }
+                if (recomputed != null && recomputed != trigger) {
+                    scheduledRemindersDao.updateTriggerTime(row.id, recomputed)
+                    trigger = recomputed
+                    moved = true
+                }
+            }
+            when {
+                muted -> cancelAlarm(row.id)
+                isArmable(trigger, now) -> {
+                    val current = scheduledRemindersDao.getById(row.id)
+                    if (current?.status == row.status && current.triggerTime == trigger) {
+                        scheduleAlarm(row.id, trigger)
+                    }
+                }
+                moved -> cancelAlarm(row.id)
+            }
+        }
+
+        if (calendar != null) {
+            scheduledRemindersDao.updateDisplayForEvent(
+                eventId = event.id,
+                title = event.title,
+                location = event.location,
+                isAllDay = event.isAllDay,
+                calendarColor = calendar.color
+            )
+        }
+        Log.d(TAG, "Kept ${rows.size - dropped} and dropped $dropped reminders for event ${event.id}")
+    }
+
+    /**
+     * Cancels [reminder]'s alarm if it may have one (pending or snoozed) and its notification if
+     * it posted one that may still show (fired); its row is left alone.
+     */
+    private fun cancelAlarmAndNotification(reminder: ScheduledReminder) {
+        when (reminder.status) {
+            ReminderStatus.PENDING, ReminderStatus.SNOOZED -> cancelAlarm(reminder.id)
+            ReminderStatus.FIRED -> channels.cancelForReminder(reminder.id)
+            else -> Unit
+        }
+    }
+
+    /**
      * Cancels the alarms of [calendarId]'s pending and snoozed reminders and keeps the rows, so
      * unmuting can arm them again ([restoreRemindersForCalendar]): the window scan alone can't
-     * rebuild a reminder of an occurrence that has started (today's all-day event) or one whose
-     * own time has passed (a snoozed reminder). Called when the calendar is muted.
+     * rebuild a reminder whose original time has passed (a snoozed one) or one of an occurrence
+     * that started more than [STARTED_LOOKBACK_MS] ago. Called when the calendar is muted.
      */
     suspend fun silenceRemindersForCalendar(calendarId: Long) {
         rearmMutex.withLock {
@@ -711,33 +862,28 @@ class ReminderScheduler @Inject constructor(
     }
 
     /**
-     * Cancels the alarms of one occurrence's pending and snoozed reminders and deletes all its
-     * rows.
+     * Deletes all of one occurrence's reminder rows, cancelling the alarms of the pending and
+     * snoozed ones and the notifications of the fired ones.
      *
      * @param occurrenceTime the occurrence start time
      */
     suspend fun cancelReminderForOccurrence(eventId: Long, occurrenceTime: Long) {
-        val reminders = scheduledRemindersDao.getPendingForEvent(eventId)
+        scheduledRemindersDao.getAllForEvent(eventId)
             .filter { it.occurrenceTime == occurrenceTime }
-
-        for (reminder in reminders) {
-            cancelAlarm(reminder.id)
-        }
+            .forEach { cancelAlarmAndNotification(it) }
         scheduledRemindersDao.deleteForOccurrence(eventId, occurrenceTime)
         Log.d(TAG, "Cancelled reminders for occurrence at $occurrenceTime")
     }
 
     /**
-     * Cancels the reminders of [eventId]'s occurrences at or after [fromTimeMs], for a
-     * this-and-future edit or delete that ends the series there.
+     * Deletes the reminders of [eventId]'s occurrences at or after [fromTimeMs], cancelling their
+     * alarms and fired notifications, for a this-and-future edit or delete that ends the series
+     * there.
      */
     suspend fun cancelRemindersForOccurrencesAfter(eventId: Long, fromTimeMs: Long) {
-        val reminders = scheduledRemindersDao.getPendingForEvent(eventId)
+        val reminders = scheduledRemindersDao.getAllForEvent(eventId)
             .filter { it.occurrenceTime >= fromTimeMs }
-
-        for (reminder in reminders) {
-            cancelAlarm(reminder.id)
-        }
+        reminders.forEach { cancelAlarmAndNotification(it) }
         scheduledRemindersDao.deleteForOccurrencesAfter(eventId, fromTimeMs)
         Log.d(TAG, "Cancelled ${reminders.size} reminders for occurrences after $fromTimeMs")
     }

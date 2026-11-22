@@ -16,6 +16,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -66,7 +69,6 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.ics.IcsImportFile
 import org.onekash.kashcal.domain.ics.GroupPlan
-import org.onekash.kashcal.domain.initializer.LocalCalendarInitializer
 import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.model.PickerCalendar
 import org.onekash.kashcal.ui.model.localizedDisplayName
@@ -75,13 +77,23 @@ import org.onekash.kashcal.util.DateTimeUtils
 /** Test tag for the primary Import action button. */
 const val ICS_IMPORT_BUTTON_TAG = "ics_import_button"
 
+/** Test tag for the scrolling content above the action buttons. */
+const val ICS_IMPORT_BODY_TAG = "ics_import_body"
+
 /**
  * Shows the events parsed from an ICS file, a target calendar picker (Room or device), what the
  * import will do in the chosen calendar with inline notices, and the Import action.
  *
+ * The sheet opens at full height: the content above the buttons scrolls, and Cancel and the
+ * import button stay at the bottom, so a preview that arrives after the sheet opened can't push
+ * them off screen. The event list gives up height first, so in a short window (landscape, a large
+ * font) the target calendar still shows above the buttons without scrolling.
+ *
  * @param calendars Room calendars; the sheet offers only the writable ones.
  * @param deviceCalendarGroups device calendars by account; the sheet offers only the writable
  *   ones.
+ * @param offlineCalendarIds ids of the offline account's Room calendars; an import into one
+ *   sends nothing, so the sheet shows no notices for it.
  * @param loadPreview reads the import plan for a calendar, writing nothing; called again for
  *   each calendar picked. A failure leaves Import available.
  * @param onImport called once with the target calendar ID and whether it is a device calendar.
@@ -94,6 +106,7 @@ fun IcsImportSheet(
     defaultCalendarId: Long?,
     deviceCalendarGroups: List<CalendarGroup>,
     defaultDeviceCalendarId: Long?,
+    offlineCalendarIds: Set<Long>,
     loadPreview: suspend (calendarId: Long, isDevice: Boolean) -> List<GroupPlan>,
     onDismiss: () -> Unit,
     onImport: (calendarId: Long, isDeviceCalendar: Boolean) -> Unit
@@ -157,12 +170,12 @@ fun IcsImportSheet(
     LaunchedEffect(selectedCalendarId, selectedIsDevice) {
         if (selectedCalendarId > 0) previewState.select(selectedCalendarId, selectedIsDevice)
     }
-    // Nothing leaves the phone from the on-phone calendar or an unsynced device calendar.
+    // Nothing leaves the phone from an offline calendar or an unsynced device calendar.
     val targetCanSend = if (selectedIsDevice) {
         (writableDeviceCalendars.find { it.id == selectedCalendarId } as? PickerCalendar.Device)
             ?.calendar?.accountType != CalendarContract.ACCOUNT_TYPE_LOCAL
     } else {
-        writableCalendars.find { it.id == selectedCalendarId }?.caldavUrl != LocalCalendarInitializer.LOCAL_CALENDAR_URL
+        selectedCalendarId !in offlineCalendarIds
     }
     var dismissedNotices by remember { mutableStateOf(emptySet<ImportNotice>()) }
 
@@ -171,83 +184,94 @@ fun IcsImportSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
+        modifier = Modifier.fillMaxHeight(),
         dragHandle = { BottomSheetDefaults.DragHandle() }
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
+                .fillMaxSize()
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 32.dp)
         ) {
-            // Header
-            Text(
-                text = pluralStringResource(R.plurals.import_events_title, events.size, events.size),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Event preview list
-            LazyColumn(
-                modifier = Modifier.heightIn(max = 250.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+            BoxWithConstraints(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
             ) {
-                items(events.take(10)) { event ->
-                    IcsEventPreviewItem(event)
-                }
-                if (events.size > 10) {
-                    item {
+                // Leaves room for the title and the calendar picker's row above the fold.
+                val listMaxHeight = (maxHeight - 176.dp).coerceIn(48.dp, 250.dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .testTag(ICS_IMPORT_BODY_TAG)
+                ) {
+                    Text(
+                        text = pluralStringResource(R.plurals.import_events_title, events.size, events.size),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    LazyColumn(
+                        modifier = Modifier.heightIn(max = listMaxHeight),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        items(events.take(10)) { event ->
+                            IcsEventPreviewItem(event)
+                        }
+                        if (events.size > 10) {
+                            item {
+                                Text(
+                                    text = pluralStringResource(R.plurals.ics_remaining_events, events.size - 10, events.size - 10),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    if (hasAnyWritableCalendar) {
+                        ImportCalendarPicker(
+                            selectedCalendarId = selectedCalendarId,
+                            selectedCalendarName = selectedCalendarName,
+                            selectedCalendarColor = selectedCalendarColor,
+                            selectedIsDevice = selectedIsDevice,
+                            writableCalendars = writableCalendars,
+                            deviceCalendarGroups = deviceCalendarGroups,
+                            isExpanded = showCalendarPicker,
+                            onToggle = { showCalendarPicker = !showCalendarPicker },
+                            onSelect = { id, isDevice ->
+                                selectedCalendarId = id
+                                selectedIsDevice = isDevice
+                                showCalendarPicker = false
+                            }
+                        )
+                    } else {
                         Text(
-                            text = pluralStringResource(R.plurals.ics_remaining_events, events.size - 10, events.size - 10),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(vertical = 8.dp)
+                            text = stringResource(R.string.status_no_writable_calendars),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+
+                    if (hasAnyWritableCalendar && selectedCalendarId > 0) {
+                        ImportPreviewSection(
+                            state = previewState.preview,
+                            targetCanSend = targetCanSend,
+                            dismissedNotices = dismissedNotices,
+                            onDismissNotice = { dismissedNotices = dismissedNotices + it },
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Calendar picker
-            if (hasAnyWritableCalendar) {
-                ImportCalendarPicker(
-                    selectedCalendarId = selectedCalendarId,
-                    selectedCalendarName = selectedCalendarName,
-                    selectedCalendarColor = selectedCalendarColor,
-                    selectedIsDevice = selectedIsDevice,
-                    writableCalendars = writableCalendars,
-                    deviceCalendarGroups = deviceCalendarGroups,
-                    isExpanded = showCalendarPicker,
-                    onToggle = { showCalendarPicker = !showCalendarPicker },
-                    onSelect = { id, isDevice ->
-                        selectedCalendarId = id
-                        selectedIsDevice = isDevice
-                        showCalendarPicker = false
-                    }
-                )
-            } else {
-                Text(
-                    text = stringResource(R.string.status_no_writable_calendars),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
-
-            if (hasAnyWritableCalendar && selectedCalendarId > 0) {
-                ImportPreviewSection(
-                    state = previewState.preview,
-                    targetCanSend = targetCanSend,
-                    dismissedNotices = dismissedNotices,
-                    onDismissNotice = { dismissedNotices = dismissedNotices + it },
-                )
-            }
-
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Action buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End

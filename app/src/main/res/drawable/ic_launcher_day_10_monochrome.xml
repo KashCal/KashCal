@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated themed layer for day 10: outlined calendar card with binding tabs and the day number. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="88"
+    android:viewportHeight="88">
+    <group android:translateX="44" android:translateY="44" android:scaleX="0.9" android:scaleY="0.9" android:rotation="-2">
+        <path android:strokeColor="#FFFFFF" android:strokeWidth="3.5" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M-12,-17H12A6,6 0 0 1 18,-11V15A6,6 0 0 1 12,21H-12A6,6 0 0 1 -18,15V-11A6,6 0 0 1 -12,-17Z" />
+        <path android:strokeColor="#FFFFFF" android:strokeWidth="3.5" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M-9,-23V-12" />
+        <path android:strokeColor="#FFFFFF" android:strokeWidth="3.5" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M9,-23V-12" />
+        <path android:fillColor="#FFFFFF" android:pathData="M-3.498 12.354H-6.82V3.268Q-6.82 2.894 -6.809 2.344Q-6.798 1.794 -6.776 1.2Q-6.754 0.606 -6.732 0.144Q-6.842 0.276 -7.205 0.617Q-7.568 0.958 -7.876 1.222L-9.68 2.674L-11.286 0.672L-6.226 -3.354H-3.498ZM11.77 4.5Q11.77 6.392 11.473 7.888Q11.176 9.384 10.527 10.429Q9.878 11.474 8.833 12.024Q7.788 12.574 6.27 12.574Q4.378 12.574 3.168 11.606Q1.958 10.638 1.375 8.834Q0.792 7.03 0.792 4.5Q0.792 1.948 1.32 0.144Q1.848 -1.66 3.058 -2.628Q4.268 -3.596 6.27 -3.596Q8.162 -3.596 9.372 -2.639Q10.582 -1.682 11.176 0.133Q11.77 1.948 11.77 4.5ZM4.092 4.5Q4.092 6.282 4.29 7.481Q4.488 8.68 4.961 9.285Q5.434 9.89 6.27 9.89Q7.106 9.89 7.579 9.296Q8.052 8.702 8.261 7.503Q8.47 6.304 8.47 4.5Q8.47 2.696 8.261 1.497Q8.052 0.298 7.579 -0.307Q7.106 -0.912 6.27 -0.912Q5.434 -0.912 4.961 -0.307Q4.488 0.298 4.29 1.497Q4.092 2.696 4.092 4.5Z" />
+    </group>
+</vector>

@@ -35,12 +35,12 @@ import org.robolectric.annotation.Config
  * reminders it had: muting cancels the alarms and keeps the rows, unmuting re-arms the rows still
  * ahead in the window and leaves those whose time has passed unarmed.
  *
- * The rows matter because the window scan alone can't rebuild every reminder: it skips an
- * occurrence that has already started (today's all-day event, stored at UTC midnight) and a
- * reminder whose own time has passed (a snoozed one). Runs the real coordinator and scheduler over
- * an in-memory database, the phone in New York, and reads alarms back from Robolectric's
- * AlarmManager. The unmute racing the scan's sweep of muted calendars ends with the reminder
- * armed whichever runs first.
+ * The rows matter because the window scan alone can't rebuild every reminder: it arms a reminder
+ * only while its original time is ahead, which a snoozed one has passed, and it skips an
+ * occurrence that started more than [ReminderScheduler.STARTED_LOOKBACK_MS] ago. Runs the real
+ * coordinator and scheduler over an in-memory database, the phone in New York, and reads alarms
+ * back from Robolectric's AlarmManager. The unmute racing the scan's sweep of muted calendars
+ * ends with the reminder armed whichever runs first.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -72,7 +72,8 @@ class MuteUnmuteReminderTest {
     fun `today's all-day reminder is armed again after mute and unmute`() = runTest {
         // Stored at UTC midnight today; "11 PM on the day" in New York is 03:00 UTC tomorrow, so
         // it is still ahead at any time of day. The row was armed days ago, while the occurrence
-        // was still ahead.
+        // was still ahead. The unmute's restore and the scan after it can both arm it; the snooze
+        // tests pin the restore on its own.
         val todayUtc = LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
         val event = fixture.insertEvent("Birthday", todayUtc, listOf("PT23H"), isAllDay = true)
         val trigger = DateTimeUtils.allDayReminderTriggerTime(todayUtc, 23 * 60 * MINUTE)
@@ -155,13 +156,14 @@ class MuteUnmuteReminderTest {
     }
 
     @Test
-    fun `an unmute that lands between the sweep's check and its cancel keeps today's all-day reminder`() = runTest {
-        // The scan after the sweep can't re-arm this one (its occurrence has started), so only
-        // the sweep and the restore taking turns keeps it armed.
-        val todayUtc = LocalDate.now(ZoneOffset.UTC).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
-        val event = fixture.insertEvent("Birthday", todayUtc, listOf("PT23H"), isAllDay = true)
-        val trigger = DateTimeUtils.allDayReminderTriggerTime(todayUtc, 23 * 60 * MINUTE)
-        val rowId = fixture.insertReminderRow(event, todayUtc, "PT23H", triggerTime = trigger)
+    fun `an unmute that lands between the sweep's check and its cancel keeps a snoozed reminder`() = runTest {
+        // The 15-minute reminder fired 5 minutes ago and was snoozed for 10. The scan after the
+        // sweep can't re-arm it (its original time has passed), so only the sweep and the
+        // restore taking turns keeps it armed.
+        val start = now + 10 * MINUTE
+        val event = fixture.insertEvent("Meeting", start, listOf("-PT15M"))
+        val trigger = now + 5 * MINUTE
+        val rowId = fixture.insertReminderRow(event, start, "-PT15M", trigger, ReminderStatus.SNOOZED)
         fixture.setMuted(fixture.calendarId, true)
         val real = fixture.database.calendarsDao()
         lateinit var scheduler: ReminderScheduler

@@ -1,5 +1,6 @@
 package org.onekash.kashcal.sync.discovery
 
+import android.util.Log
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.sync.client.CalDavClient
@@ -47,6 +48,14 @@ enum class DiscoveryErrorReason {
      * a redirect loop. The password was not sent.
      */
     INSECURE_CONNECTION_REFUSED,
+
+    /**
+     * Signing in again no longer matches the account it was opened from: a different username or
+     * server, an account that is gone or isn't CalDAV, or a stored home set that can't be used
+     * (see `CalDavAccountDiscoveryService.createAccountWithSelectedCalendars`). Nothing was
+     * written.
+     */
+    ACCOUNT_MISMATCH,
 }
 
 /**
@@ -119,4 +128,18 @@ interface AccountDiscoveryService {
 
     /** Removes the account with [email], for a sign-out that only knows the email. */
     suspend fun removeAccountByEmail(email: String)
+}
+
+/**
+ * Logs and returns the error a sign-in reports when it couldn't save the account's credentials.
+ *
+ * An account without credentials can't sync, so every sign-in saves them before it writes an
+ * existing account: a failed save leaves that account, its calendars and its events as they were
+ * (#371). A brand-new account the sign-in created is deleted instead.
+ */
+internal fun credentialSaveFailed(tag: String): DiscoveryResult.Error {
+    Log.e(tag, "Failed to save credentials - secure storage unavailable")
+    return DiscoveryResult.Error(
+        "Could not save credentials securely. Please try again, or restart your device if the problem persists."
+    )
 }

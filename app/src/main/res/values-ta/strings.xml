@@ -43,6 +43,8 @@
     <string name="channel_event_invitations">நிகழ்வு அழைப்புகள்</string>
     <string name="channel_event_invitations_desc">புதிய நாட்காட்டி அழைப்பைப் பெறும்போது அறிவிப்புகள்</string>
     <string name="channel_calendar_updates">நாட்காட்டி மாற்றங்கள்</string>
+    <string name="channel_calendar_backup">தானியங்கு நாட்காட்டி காப்புப்பிரதி</string>
+    <string name="channel_calendar_backup_description">நாட்காட்டி காப்புப்பிரதி தோல்வியடையும்போது உங்களுக்குத் தெரிவிக்கும்</string>
     <string name="invite_notification_body">%1$s இலிருந்து · பதிலளிக்க தட்டவும்</string>
 
     <!-- ==================== App Shortcuts ==================== -->
@@ -88,7 +90,6 @@
     <string name="action_discard">நிராகரி</string>
     <string name="action_discard_confirm">மாற்றங்களை நிராகரிக்கவா?</string>
     <string name="action_dismiss">நிராகரி</string>
-    <string name="action_show_all">அனைத்தையும் காட்டு</string>
     <string name="action_connect">இணை</string>
     <string name="action_duplicate">நகலெடு</string>
     <string name="action_share">பகிர்</string>
@@ -119,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d மேலும்</string>
     <string name="tags_autocomplete_create_new">\"%1$s\" உருவாக்கு</string>
     <string name="cd_tag">டேக்: %1$s</string>
+    <string name="tags_show_events_click_label">இந்த டேக்கின் நிகழ்வுகளைக் காட்டு</string>
+    <string name="tags_show_events">நிகழ்வுகளைக் காட்டு</string>
     <string name="cd_tags_move_menu">டேக்குகளை நகர்த்து</string>
     <string name="tags_move_above_notes">குறிப்புகளுக்கு மேலே நகர்த்து</string>
     <string name="tags_move_below_notes">குறிப்புகளுக்கு கீழே நகர்த்து</string>
@@ -148,7 +151,6 @@
     <string name="label_enter_hex">6 hex எழுத்துகள் உள்ளிடவும் (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">அனைத்தும்</string>
     <string name="view_week">வாரம்</string>
     <string name="view_month">மாதம்</string>
     <string name="label_all_day">நாள் முழுவதும்</string>
@@ -190,17 +192,38 @@
     <string name="settings_event_emojis_info">தலைப்பின் அடிப்படையில் நிகழ்வுகளுக்கு ஒரு எமோஜியைச் சேர்க்கிறது, எடுத்துக்காட்டாக \"பிறந்தநாள்\" க்கு 🎂.</string>
     <string name="settings_force_sync">கட்டாய முழு ஒத்திசைவு</string>
     <string name="settings_force_sync_subtitle">சேவையகத்திலிருந்து அனைத்து நாட்காட்டி தரவையும் மீண்டும் பதிவிறக்கு</string>
+    <string name="settings_force_sync_no_account">ஒத்திசைவு கணக்கு எதுவும் அமைக்கப்படவில்லை</string>
+    <string name="force_sync_confirm">%2$s இலிருந்து %1$s ஐ மீண்டும் பதிவிறக்கவும். இன்னும் ஒத்திசைக்கப்படாத மாற்றங்கள் பாதுகாக்கப்படும்.</string>
+    <string name="action_start">தொடங்கு</string>
     <string name="settings_sync_history">ஒத்திசைவு வரலாறு</string>
     <string name="settings_sync_history_subtitle">ஒத்திசைவு அமர்வுகளைக் காண் (கடந்த 48 மணி)</string>
     <string name="settings_import_subtitle">ICS கோப்பிலிருந்து நிகழ்வுகளை எந்த நாட்காட்டியிலும் சேர்</string>
-    <string name="settings_export_subtitle">நிகழ்வுகளை ICS கோப்பில் சேமி</string>
     <string name="settings_birthday_reminder">பிறந்தநாள் நினைவூட்டல்</string>
-    <string name="settings_use_device_timezone">சாதன நேரமண்டலத்தைப் பயன்படுத்து</string>
     <string name="settings_section_calendars">நாள்காட்டிகள் &amp; கணக்குகள்</string>
     <string name="settings_section_appearance">தோற்றம்</string>
     <string name="settings_section_creating_events">நிகழ்வு விருப்பங்கள்</string>
     <string name="settings_section_sync">ஒத்திசைவு</string>
     <string name="settings_section_data">காப்புப்பிரதி மற்றும் மீட்டெடுப்பு</string>
+    <string name="settings_section_troubleshooting">சிக்கல் சரிசெய்தல்</string>
+
+    <!-- ==================== Debug report (Settings > Troubleshooting) ==================== -->
+    <string name="debug_report_row_label">பிழைத்திருத்த அறிக்கையை ஏற்றுமதி செய்</string>
+    <string name="debug_report_row_subtitle">பிழை அறிக்கையுடன் அனுப்ப செயலிழப்பு, ஒத்திசைவு மற்றும் அமைவு விவரங்கள்</string>
+    <string name="debug_report_sheet_title">பிழைத்திருத்த அறிக்கை</string>
+    <string name="debug_report_sheet_body">பிழை அறிக்கையுடன் அனுப்ப ஒரு உரைக் கோப்பு. சிக்கல் ஏற்பட்டவுடன் விரைவில் அனுப்பவும்: ஆப் பதிவு சமீபத்திய செயல்பாட்டை மட்டுமே வைத்திருக்கும்.</string>
+    <string name="debug_report_item_exits">ஆப் சமீபத்தில் ஏன் மூடப்பட்டது</string>
+    <string name="debug_report_item_exits_detail">செயலிழப்புகள், ஆப் உறைதல், குறைந்த நினைவகம்</string>
+    <string name="debug_report_item_log">ஆப் பதிவு</string>
+    <string name="debug_report_item_log_detail">KashCal-இன் சொந்தச் செய்திகள், செயலிழப்பு விவரங்கள் உட்பட</string>
+    <string name="debug_report_item_sync_detail">சமீபத்திய ஒத்திசைவுகள், 48 மணிநேரம் வரை</string>
+    <string name="debug_report_item_pending">அனுப்பக் காத்திருக்கும் மாற்றங்கள்</string>
+    <string name="debug_report_item_pending_detail">உங்கள் சேவையகத்துக்கு இன்னும் அனுப்பப்படாத திருத்தங்கள்</string>
+    <string name="debug_report_item_setup">அமைவு</string>
+    <string name="debug_report_item_setup_detail">ஆப் மற்றும் Android பதிப்பு, அனுமதிகள், பேட்டரி அமைப்புகள், கணக்கு வகைகள்</string>
+    <string name="debug_report_privacy_note">மின்னஞ்சல் முகவரிகள், இணைய முகவரிகள் மற்றும் டோக்கன்கள் மறைக்கப்படும். நிகழ்வுத் தலைப்புகள், நாட்காட்டிப் பெயர்கள் மற்றும் தொடர்புப் பெயர்கள் மறைக்கப்படாது. இதை மின்னஞ்சலில் அனுப்பவும், பொது இடுகையில் அல்ல.</string>
+    <string name="debug_report_share">அறிக்கையைப் பகிர்</string>
+    <string name="debug_report_chooser_title">பிழைத்திருத்த அறிக்கையைப் பகிர்</string>
+    <string name="debug_report_failed">பிழைத்திருத்த அறிக்கையை உருவாக்க முடியவில்லை</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">ஆப் பூட்டு</string>
@@ -236,9 +259,37 @@
     <string name="backup_error_read_failed">கோப்பை படிக்க முடியவில்லை</string>
 
     <!-- ==================== Onboarding ==================== -->
-    <string name="onboarding_apple_calendar">Apple Calendar?</string>
-    <string name="onboarding_got_you">உங்களுக்கு உதவ தயாராக இருக்கிறோம்.</string>
-    <string name="onboarding_connect_prompt">உங்கள் நிகழ்வுகளை இங்கே காண iCloud இணைக்கவும்</string>
+    <string name="onboarding_title">உங்கள் நாட்காட்டிகள் எங்கே உள்ளன?</string>
+    <string name="onboarding_subtitle">இணைக்க ஒன்றைத் தேர்ந்தெடுக்கவும்.</string>
+    <string name="onboarding_icloud_detail">Apple ID மற்றும் ஆப்ப் கடவுச்சொல்</string>
+    <string name="onboarding_caldav_title">CalDAV சேவையகம்</string>
+    <string name="onboarding_caldav_detail">Nextcloud, Fastmail, Radicale மற்றும் பிற</string>
+    <string name="onboarding_device_title">இந்தச் சாதனத்தில்</string>
+    <string name="onboarding_phone_detail">Google, Outlook மற்றும் ஒத்திசைவு ஆப்ப்கள்</string>
+    <string name="onboarding_use_offline">ஆஃப்லைன் நாட்காட்டியைப் பயன்படுத்து</string>
+    <string name="onboarding_trust">திறந்த மூலம். விளம்பரங்கள் இல்லை. கண்காணிப்பு இல்லை.</string>
+
+    <!-- ==================== Reminders are off ==================== -->
+    <string name="reminders_off_title">நினைவூட்டல்கள் ஆஃபில் உள்ளன</string>
+    <plurals name="reminders_off_body">
+        <item quantity="one">இந்த வாரம் %d நிகழ்வுக்கு நினைவூட்டல் உள்ளது.</item>
+        <item quantity="other">இந்த வாரம் %d நிகழ்வுகளுக்கு நினைவூட்டல்கள் உள்ளன.</item>
+    </plurals>
+    <string name="reminders_off_not_now">இப்போது வேண்டாம்</string>
+    <string name="reminders_off_turn_on">இயக்கு</string>
+    <string name="reminders_on_snackbar">நினைவூட்டல்கள் இயக்கப்பட்டன</string>
+
+    <!-- ==================== About ==================== -->
+    <string name="about_tagline">உங்கள் எல்லா நாட்காட்டிகளும் ஒரே தனிப்பட்ட ஆப்பில்.</string>
+    <string name="about_help_title">உதவி மற்றும் வழிகாட்டிகள்</string>
+    <string name="about_help_detail">அமைப்பு, ஒத்திசைவு மற்றும் கேள்விகள்</string>
+    <string name="about_source_title">மூலக் குறியீடு</string>
+    <string name="about_source_detail">Apache 2.0, GitHub-இல்</string>
+    <string name="about_support_title">KashCal-ஐ ஆதரிக்கவும்</string>
+    <string name="about_support_detail">ஏற்கெனவே ஆதரிக்கும் அனைவருக்கும் நன்றி</string>
+    <string name="about_link_failed">இந்த இணைப்பைத் திறக்கக்கூடிய ஆப் எதுவும் இல்லை.</string>
+    <string name="about_built_in_austin">Austin-இல் ❤️ உடன் உருவாக்கப்பட்டது</string>
+    <string name="about_version">பதிப்பு %1$s</string>
 
     <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">தவிர்</string>
@@ -257,22 +308,32 @@
     <string name="whats_new_v772_changes_title">என்ன மாறியது எனப் பாருங்கள்</string>
     <string name="whats_new_v772_changes_body">உங்கள் iCloud மற்றும் CalDAV நாட்காட்டிகளின் புதிய, திருத்தப்பட்ட மற்றும் நீக்கப்பட்ட நிகழ்வுகள் 7 நாட்களுக்கு சமீபத்திய மாற்றங்கள் பட்டியலில் சேரும். ஒன்றைத் திறக்க அதைத் தட்டவும்.</string>
     <string name="whats_new_v772_notifications_body">பின்னணி ஒத்திசைவு உங்கள் iCloud அல்லது CalDAV நிகழ்வுகளில் மாற்றங்களைக் கண்டறியும்போது அறிவிப்பைப் பெறுங்கள். நீங்கள் இயக்கும் வரை இது முடக்கத்திலேயே இருக்கும்.</string>
+    <string name="whats_new_v803_offline_title">உங்கள் தொலைபேசியிலேயே தங்கும் நாட்காட்டிகள்</string>
+    <string name="whats_new_v803_offline_body">சில திட்டங்கள் சேவையகத்தில் இருக்க வேண்டியவை அல்ல. அவற்றுக்கென ஆஃப்லைன் நாட்காட்டிகளை உருவாக்குங்கள், எத்தனை வேண்டுமானாலும்.</string>
+    <string name="whats_new_v803_backup_title">காப்புப்பிரதி பற்றிக் கவலை வேண்டாம்</string>
+    <string name="whats_new_v803_backup_body">ஒருமுறை ஒரு கோப்புறையைத் தேர்வுசெய்யுங்கள், KashCal உங்கள் ஆஃப்லைன் நாட்காட்டிகளின் புதிய நகலை அங்கே வைத்திருக்கும்.</string>
+    <string name="whats_new_v803_print_title">உங்கள் வாரம், காகிதத்தில்</string>
+    <string name="whats_new_v803_print_body">நீங்கள் பார்க்கும் வாரத்தை அச்சிடுங்கள். எந்த ஃப்ரிட்ஜில் ஒட்டுவது என்பது உங்கள் விருப்பம்.</string>
     <string name="whats_new_hero_sample_lunch">குழு மதிய உணவு</string>
     <string name="whats_new_hero_sample_review">வடிவமைப்பு மதிப்பாய்வு</string>
     <string name="whats_new_hero_sample_book_club">புத்தகக் கழகம்</string>
+    <string name="whats_new_hero_sample_dentist">பல் மருத்துவர்</string>
+    <string name="whats_new_hero_sample_yoga">யோகா</string>
     <string name="whats_new_hero_sample_calendar">வேலை</string>
+    <string name="whats_new_hero_sample_family">குடும்பம்</string>
+    <string name="whats_new_hero_sample_garden">தோட்டம்</string>
+    <string name="whats_new_hero_sample_folder">நாட்காட்டி காப்புப்பிரதிகள்</string>
     <string name="whats_new_hero_now">இப்போது</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud இணை</string>
     <string name="signin_caldav_title">CalDAV கணக்கு சேர்</string>
+    <string name="signin_caldav_sign_in_again_title">மீண்டும் உள்நுழை</string>
     <string name="signin_connected_to">%1$s இல் இணைக்கப்பட்டது</string>
 
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">புதிய நிகழ்வு</string>
     <string name="dialog_edit_event_title">நிகழ்வைத் திருத்து</string>
-    <string name="dialog_force_sync_title">கட்டாய முழு ஒத்திசைவா?</string>
-    <string name="dialog_force_sync_message">இது சேவையகத்திலிருந்து அனைத்து நாட்காட்டி தரவையும் மீண்டும் பதிவிறக்கும். உள்ளூர் மாற்றங்கள் பாதுகாக்கப்படும்.</string>
     <string name="dialog_enable_notifications">அறிவிப்புகளை இயக்கவா?</string>
     <string name="dialog_action_required">தொடர இந்தச் செயல் தேவை.</string>
     <string name="dialog_add_to_calendar">நாட்காட்டியில் சேர்</string>
@@ -285,6 +346,7 @@
     <string name="status_no_events_week">இந்த வாரம் நிகழ்வுகள் இல்லை</string>
     <string name="status_more_events">+%1$d மேலும்</string>
     <string name="status_no_sync_sessions">இன்னும் ஒத்திசைவு அமர்வுகள் இல்லை.\n\nநாட்காட்டிக் காட்சியில் கீழே இழுத்து புதுப்பிக்கவும்.</string>
+    <string name="status_no_sync_account">ஒத்திசைவு கணக்கு எதுவும் அமைக்கப்படவில்லை. ஆஃப்லைன் நாட்காட்டிகள் இந்தச் சாதனத்திலேயே இருக்கும்; சாதன நாட்காட்டிகள் அவற்றின் சொந்தக் கணக்கு மூலம் ஒத்திசைக்கப்படும்.</string>
     <string name="status_no_writable_calendars">எழுதக்கூடிய நாட்காட்டிகள் இல்லை</string>
     <string name="status_events_count">%1$d நிகழ்வுகள்</string>
     <string name="status_sync_history">ஒத்திசைவு வரலாறு</string>
@@ -333,6 +395,7 @@
     <string name="caldav_error_unexpected">எதிர்பாராத பிழை. மீண்டும் முயற்சிக்கவும்.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nஇது உங்கள் லோக்கல் நெட்வொர்க்கில் உள்ள சர்வராக இருந்தால், இணைக்க லோக்கல் நெட்வொர்க் அணுகலை அனுமதிக்கவும்.</string>
     <string name="caldav_error_connection_refused_insecure">KashCal பின்தொடராத இடத்திற்கு (மறையாக்கம் இல்லாத முகவரி அல்லது திசைதிருப்பல் சுழற்சி) சேவையகம் இணைப்பைத் திருப்பியது, எனவே உங்கள் கடவுச்சொல்லை அனுப்பும் முன்பே KashCal நின்றது. சேவையக முகவரியைச் சரிபார்க்கவும்.</string>
+    <string name="caldav_error_sign_in_again_mismatch">இது வேறு கணக்கு. இந்தக் கணக்கு பயன்படுத்தும் பயனர் பெயர் மற்றும் சேவையகத்துடன் உள்நுழையவும்.</string>
     <string name="local_network_banner_title">லோக்கல் நெட்வொர்க் அணுகல் தேவை</string>
     <string name="local_network_banner_body">இந்த சர்வர் உங்கள் லோக்கல் நெட்வொர்க்கில் இருப்பது போல் தெரிகிறது. KashCal இதனுடன் இணைய லோக்கல் நெட்வொர்க் அணுகலை அனுமதிக்கவும்.</string>
     <string name="local_network_banner_allow">அணுகலை அனுமதி</string>
@@ -374,7 +437,6 @@
     <string name="error_device_calendar_title">நாட்காட்டிப் பிழை</string>
     <string name="error_device_calendar_write_failed">சாதன நாட்காட்டியில் சேமிக்கத் தோல்வி. மீண்டும் முயற்சிக்கவும்.</string>
     <string name="error_device_calendar_permission">நாட்காட்டி எழுத அனுமதி தேவை. அமைப்புகளில் அனுமதி வழங்கவும்.</string>
-    <string name="error_device_calendar_permission_denied">எழுதும் அணுகலை வழங்க அமைப்புகளில் நாட்காட்டி அனுமதியை அணைத்து மீண்டும் இயக்கவும்</string>
     <string name="error_device_calendar_not_found">நாட்காட்டி கிடைக்கவில்லை. அது நீக்கப்பட்டிருக்கலாம்.</string>
     <string name="error_device_event_not_found">நிகழ்வு கிடைக்கவில்லை. அது நீக்கப்பட்டிருக்கலாம்.</string>
     <string name="error_device_calendar_read_only">இந்த நாட்காட்டி படிக்க மட்டும்.</string>
@@ -401,12 +463,11 @@
     <string name="cd_recurring">மறுநிகழ்வு</string>
     <string name="cd_enabled">இயக்கப்பட்டது</string>
     <string name="cd_sync_error">ஒத்திசைவுப் பிழை</string>
-    <string name="cd_select_label">%1$s தேர்வுசெய்</string>
     <string name="cd_wheel_picker">%1$d விருப்பங்களுடன் சக்கரத் தேர்வி</string>
     <string name="cd_time_entry_keyboard">சரியான நேரத்தை உள்ளிடவும்</string>
     <string name="time_entry_dialog_title">நேரத்தை உள்ளிடவும்</string>
     <string name="time_entry_tap_to_edit">திருத்த தட்டவும்</string>
-    <string name="cd_version_info">KashCal பதிப்பு %1$s. பிழைத்திருத்த விருப்பங்களுக்கு நீண்ட நேரம் அழுத்தவும்.</string>
+    <string name="cd_version_info">KashCal பதிப்பு %1$s</string>
     <string name="cd_about_setting">%1$s பற்றி</string>
     <string name="cd_color_slider">நிற நழுவி, தற்போது %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d பாகை</string>
@@ -435,7 +496,6 @@
     <string name="label_recurrence_on_date">தேதியில்</string>
 
     <!-- ==================== Settings (Additional) ==================== -->
-    <string name="settings_visible_calendars">காணக்கூடிய நாட்காட்டிகள்</string>
     <string name="settings_default_calendar">இயல்புநிலை நாட்காட்டி</string>
     <string name="settings_default_event_length">இயல்புநிலை நிகழ்வு நீளம்</string>
     <string name="settings_default_event_length_hint">புதிய நிகழ்வுகளுக்கான இயல்புநிலை நீளம்</string>
@@ -455,7 +515,6 @@
     <string name="option_saturday">சனிக்கிழமை</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">நிகழ்வுகள் கிடைக்கவில்லை</string>
     <string name="empty_no_upcoming_events">வரவிருக்கும் நிகழ்வுகள் இல்லை</string>
     <string name="empty_no_calendars">நாட்காட்டிகள் இல்லை</string>
 
@@ -466,7 +525,15 @@
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">நாட்காட்டியைப் பெறு</string>
     <string name="action_import_from_file">கோப்பிலிருந்து நிகழ்வுகளை இறக்குமதி செய்</string>
-    <string name="action_export_local_calendar">உள்ளூர் நாட்காட்டியை ஏற்றுமதி செய்</string>
+    <string name="settings_export_calendars">நாட்காட்டிகளை ஏற்றுமதி செய்</string>
+    <string name="settings_export_calendars_subtitle">நாட்காட்டியை ICS கோப்பாக சேமிக்கவும்</string>
+    <string name="export_calendar_no_events">நிகழ்வுகள் இல்லை</string>
+    <string name="export_calendar_preparing">தயாராகிறது…</string>
+    <string name="cd_export_calendar">%1$s ஏற்றுமதி செய்</string>
+    <string name="cd_export_calendar_preparing">%1$s தயாராகிறது</string>
+    <string name="export_calendar_chooser_title">நாட்காட்டியை ஏற்றுமதி செய்</string>
+    <string name="export_event_chooser_title">நிகழ்வை ஏற்றுமதி செய்</string>
+    <string name="export_file_failed">கோப்பை உருவாக்க முடியவில்லை.</string>
 
     <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
@@ -504,12 +571,14 @@
     <string name="accounts_cd_back">பின்செல்</string>
     <string name="accounts_sync_issue">ஒத்திசைவுச் சிக்கல்</string>
     <string name="accounts_cd_sync_warning">ஒத்திசைவு எச்சரிக்கை</string>
+    <string name="accounts_cd_sync_off">ஒத்திசைவு ஆஃப்</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">நாட்காட்டி ஊட்டங்கள்</string>
     <string name="subscriptions_section_add">சேர்</string>
     <string name="subscriptions_empty_ics">ICS சந்தாக்கள் இல்லை</string>
     <string name="subscriptions_empty_ics_hint">நிகழ்வுகளைக் காண நாட்காட்டி ஊட்டம் சேர்க்கவும்</string>
+    <string name="subscriptions_swipe_hint">நீக்க ஊட்டத்தை ஸ்வைப் செய்யவும்.</string>
     <string name="subscriptions_add_ics">ICS நாட்காட்டி சேர்</string>
     <string name="qs_tile_label">நிகழ்வு சேர்</string>
     <string name="holiday_catalog_add">விடுமுறை நாட்காட்டியைச் சேர்க்கவும்</string>
@@ -519,6 +588,11 @@
     <string name="holiday_catalog_empty_hint">வேறு பெயரை முயற்சிக்கவும்</string>
     <string name="holiday_catalog_validate_error">இந்த நாட்காட்டியை அணுக முடியவில்லை. உங்கள் இணைப்பைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.</string>
     <string name="holiday_catalog_attribution">Mozilla Thunderbird இலிருந்து விடுமுறை நாட்காட்டிகள், %1$s இன் கீழ் உரிமம் பெற்றவை.</string>
+    <string name="account_feeds_add">கணக்கிலிருந்து சேர்க்கவும்</string>
+    <string name="account_feeds_note">உங்கள் iCloud மற்றும் CalDAV கணக்குகளில் சேமிக்கப்பட்ட நாட்காட்டி ஊட்டங்களைப் பட்டியலிடுகிறது. நாட்காட்டி ஊட்டங்கள் பகுதியில் சேர்க்க இயக்கவும்.</string>
+    <string name="account_feeds_checking">சரிபார்க்கிறது…</string>
+    <string name="account_feeds_none">நாட்காட்டி ஊட்டங்கள் எதுவும் கிடைக்கவில்லை</string>
+    <string name="account_feeds_failed">நாட்காட்டி ஊட்டங்களை ஏற்ற முடியவில்லை</string>
     <string name="subscriptions_row_label">நாட்காட்டி ஊட்டங்கள் (ICS)</string>
     <string name="subscriptions_row_hint">எ.கா. விடுமுறை, விளையாட்டு, பள்ளி</string>
 
@@ -564,6 +638,8 @@
     <string name="account_detail_discovering">கண்டறிகிறது…</string>
     <string name="account_detail_discover_calendars">புதிய நாட்காட்டிகளைக் கண்டறி</string>
     <string name="account_detail_change_password">கடவுச்சொல் மாற்று</string>
+    <string name="account_detail_sign_in_again">மீண்டும் உள்நுழை</string>
+    <string name="account_detail_sign_in_again_subtitle">KashCal-இடம் இந்தக் கணக்கின் கடவுச்சொல் இனி இல்லை. மீண்டும் ஒத்திசைக்க உள்நுழையவும். உங்கள் நாட்காட்டிகளும் நிகழ்வுகளும் அப்படியே இருக்கும்.</string>
     <string name="account_detail_sign_out">வெளியேறு</string>
     <string name="account_detail_never_synced">ஒருபோதும் ஒத்திசைக்கப்படவில்லை</string>
     <string name="account_detail_last_success">கடைசி வெற்றி: %1$s</string>
@@ -587,6 +663,107 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">சாதன நாட்காட்டிகள்</string>
     <string name="settings_device_calendars_hint">பிற ஆப்ப்களின் நாட்காட்டிகள்</string>
+    <string name="offline_calendars_row_label">ஆஃப்லைன் நாட்காட்டிகள்</string>
+    <string name="offline_calendars_row_hint">இந்தச் சாதனத்தில் இருக்கும் நாட்காட்டிகள்</string>
+    <string name="offline_calendars_manage_note">நீக்க நாட்காட்டியை ஸ்வைப் செய்யவும்.</string>
+    <string name="offline_calendars_info">இந்தச் சாதனத்தில் வைக்கப்படும், ஒருபோதும் ஒத்திசைக்கப்படாது.</string>
+    <string name="offline_calendars_info_cd">ஆஃப்லைன் நாட்காட்டிகள் பற்றி</string>
+    <string name="offline_calendar_default_state">இயல்புநிலை</string>
+    <string name="offline_calendar_new">புதிய நாட்காட்டி</string>
+    <string name="offline_calendar_new_in_picker">புதிய ஆஃப்லைன் நாட்காட்டி</string>
+    <string name="action_create">உருவாக்கு</string>
+    <string name="offline_calendar_rename">மறுபெயரிடு</string>
+    <string name="offline_calendar_color">நிறம்</string>
+    <string name="offline_calendar_export">நாட்காட்டியை ஏற்றுமதி செய்</string>
+    <string name="offline_calendar_builtin_info">உள்ளமைந்த நாட்காட்டியை மறுபெயரிடவோ நீக்கவோ முடியாது. எந்த நாட்காட்டியும் தேர்ந்தெடுக்கப்படாதபோது புதிய நிகழ்வுகள் இங்கே சேரும்.</string>
+    <string name="offline_calendar_builtin_info_cd">உள்ளமைந்த நாட்காட்டி பற்றி</string>
+    <string name="offline_calendar_rename_cancel_cd">மறுபெயரிடலை ரத்துசெய்</string>
+    <string name="offline_calendar_rename_save_cd">பெயரைச் சேமி</string>
+    <string name="offline_calendar_delete_cd">%1$s ஐ நீக்கு</string>
+    <plurals name="offline_calendar_delete_confirm">
+        <item quantity="one">\"%2$s\" மற்றும் அதன் %1$d நிகழ்வை நிரந்தரமாக நீக்கவா? செயல்தவிர்க்க முடியாது.</item>
+        <item quantity="other">\"%2$s\" மற்றும் அதன் %1$d நிகழ்வுகளை நிரந்தரமாக நீக்கவா? செயல்தவிர்க்க முடியாது.</item>
+    </plurals>
+    <string name="offline_calendar_delete_empty">\"%1$s\" ஐ நிரந்தரமாக நீக்கவா? இதில் நிகழ்வுகள் இல்லை.</string>
+    <plurals name="offline_calendar_delete_also">
+        <item quantity="one">%1$d நிகழ்வையும் நீக்கு</item>
+        <item quantity="other">%1$d நிகழ்வுகளையும் நீக்கு</item>
+    </plurals>
+    <string name="offline_calendar_deleted">%1$s நீக்கப்பட்டது</string>
+    <string name="offline_calendar_duplicate_name">\"%1$s\" என்ற பெயரில் ஒரு ஆஃப்லைன் நாட்காட்டி ஏற்கனவே உள்ளது</string>
+    <string name="offline_calendar_similar_name">\"%1$s\" உடன் மிகவும் ஒத்துள்ளது. வேறு பெயரைத் தேர்வுசெய்யவும்.</string>
+    <string name="calendar_backup_title">தானியங்கு நாட்காட்டி காப்புப்பிரதி</string>
+    <string name="calendar_backup_row_off">ஆஃப்</string>
+    <string name="calendar_backup_row_on">%1$s · %2$s</string>
+    <string name="calendar_backup_row_problem">காப்புப்பிரதிக் கோப்புறையை அணுக முடியவில்லை</string>
+    <string name="calendar_backup_intro">ஒவ்வொரு ஆஃப்லைன் நாட்காட்டியையும் நீங்கள் தேர்வுசெய்யும் கோப்புறையில் ICS கோப்பாகச் சேமிக்கிறது.</string>
+    <string name="calendar_backup_choose_folder">கோப்புறையைத் தேர்வுசெய்</string>
+    <string name="calendar_backup_choose_folder_hint">ஒரு கோப்புறையைத் தேர்வுசெய்யவும் அல்லது உருவாக்கவும், எடுத்துக்காட்டாக Documents இல். சேமிப்பகத்தின் மேல்நிலையையோ Download கோப்புறையையோ நேரடியாகப் பயன்படுத்த Android அனுமதிப்பதில்லை.</string>
+    <string name="calendar_backup_folder">கோப்புறை</string>
+    <string name="calendar_backup_change">மாற்று</string>
+    <string name="calendar_backup_frequency">எவ்வளவு அடிக்கடி</string>
+    <string name="calendar_backup_frequency_info">காப்புப்பிரதிகள் தாமதமாக இயங்கலாம்: ஃபோன் செயலற்று இருக்கும்போதோ KashCal சில நாட்களாகத் திறக்கப்படாதபோதோ Android பின்னணி வேலையை நிறுத்திவைக்கும்.</string>
+    <string name="calendar_backup_copies">வைத்திருக்க வேண்டிய நகல்கள்</string>
+    <string name="calendar_backup_copies_explained">ஒவ்வொரு காப்புப்பிரதியும் முந்தைய கோப்பைத் தேதியிட்ட நகலாக வைத்திருக்கும். நகல்கள் இந்த எண்ணிக்கையை விட அதிகமானால், மிகப் பழையவை நீக்கப்படும். மிகப் புதிய கோப்புக்கு எப்போதும் நாட்காட்டியின் பெயர் இருக்கும்.</string>
+    <string name="calendar_backup_copies_fewer">குறைவான நகல்களை வைத்திரு</string>
+    <string name="calendar_backup_copies_more">அதிக நகல்களை வைத்திரு</string>
+    <plurals name="calendar_backup_copies_state">
+        <item quantity="one">%d நகல்</item>
+        <item quantity="other">%d நகல்கள்</item>
+    </plurals>
+    <plurals name="calendar_backup_deletes">
+        <item quantity="one">%d பழைய நகலை நீக்கும். செயல்தவிர்க்க முடியாது.</item>
+        <item quantity="other">%d பழைய நகல்களை நீக்கும். செயல்தவிர்க்க முடியாது.</item>
+    </plurals>
+    <string name="calendar_backup_deletes_unknown">இந்த எண்ணிக்கைக்கு மேல் உள்ள பழைய நகல்களை நீக்கும். செயல்தவிர்க்க முடியாது.</string>
+    <string name="calendar_backup_calendars">ஆஃப்லைன் நாட்காட்டிகள்</string>
+    <string name="calendar_backup_calendar_nothing_saved">%1$s · நிகழ்வுகள் இல்லை, எதுவும் சேமிக்கப்படவில்லை</string>
+    <string name="calendar_backup_calendar_save_failed">%1$s · சேமிக்க முடியவில்லை. அடுத்த காப்புப்பிரதியின்போது மீண்டும் முயலும்.</string>
+    <string name="calendar_backup_status">கடைசி காப்புப்பிரதி %1$s</string>
+    <plurals name="calendar_backup_status_failed">
+        <item quantity="one">கடைசி காப்புப்பிரதி %1$s · %2$d நாட்காட்டி தோல்வியடைந்தது</item>
+        <item quantity="other">கடைசி காப்புப்பிரதி %1$s · %2$d நாட்காட்டிகள் தோல்வியடைந்தன</item>
+    </plurals>
+    <string name="calendar_backup_now">இப்போது காப்புப்பிரதி எடு</string>
+    <string name="calendar_backup_running">காப்புப்பிரதி எடுக்கப்படுகிறது…</string>
+    <string name="calendar_backup_footer_overwrites">ஒவ்வொரு காப்புப்பிரதியின்போதும் KashCal இந்தக் கோப்புகளை மேலெழுதும், எனவே பிற ஆப்களில் இவற்றில் செய்யும் மாற்றங்கள் நிலைக்காது. நாட்காட்டியை மீட்டெடுக்க, \"கோப்பிலிருந்து நிகழ்வுகளை இறக்குமதி செய்\" என்பதைப் பயன்படுத்தவும்.</string>
+    <string name="calendar_backup_off_files_stay">ஏற்கெனவே உள்ள கோப்புகள் %1$s இல் அப்படியே இருக்கும்.</string>
+    <string name="calendar_backup_folder_unreachable">%1$s ஐ அணுக முடியவில்லை. அது நகர்த்தப்பட்டிருக்கலாம், நீக்கப்பட்டிருக்கலாம் அல்லது துண்டிக்கப்பட்டிருக்கலாம்.</string>
+    <string name="calendar_backup_error_unsupported">%1$s இல் கோப்புகளைச் சேமிக்க முடியாது. வேறு கோப்புறையைத் தேர்வுசெய்யவும்.</string>
+    <string name="calendar_backup_choose_again">மீண்டும் தேர்வுசெய்</string>
+    <string name="calendar_backup_pick_refused">KashCal அந்தக் கோப்புறையைப் பயன்படுத்த முடியாது. வேறொன்றைத் தேர்வுசெய்யவும்.</string>
+    <string name="calendar_backup_pick_cannot_create">அந்தக் கோப்புறையில் KashCal ஆல் கோப்புகளை உருவாக்க முடியாது. வேறொன்றைத் தேர்வுசெய்யவும்.</string>
+    <string name="calendar_backup_failed_title">நாட்காட்டி காப்புப்பிரதி தோல்வியடைந்தது</string>
+    <string name="calendar_backup_folder_unnamed">காப்புப்பிரதிக் கோப்புறை</string>
+    <string name="calendar_backup_alert_unreachable">%1$s ஐ அணுக முடியவில்லை. மீண்டும் தேர்வுசெய்யத் தட்டவும்.</string>
+    <string name="calendar_backup_alert_unsupported">%1$s இல் கோப்புகளைச் சேமிக்க முடியாது. வேறு கோப்புறையைத் தேர்வுசெய்யத் தட்டவும்.</string>
+    <string name="calendar_backup_alert_file_retry">%1$s ஐச் சேமிக்க முடியவில்லை. அடுத்த காப்புப்பிரதியின்போது KashCal மீண்டும் முயலும்.</string>
+    <string name="calendar_backup_every_hour">ஒவ்வொரு மணிநேரமும்</string>
+    <string name="calendar_backup_every_day">ஒவ்வொரு நாளும்</string>
+    <plurals name="calendar_backup_every_hours">
+        <item quantity="one">%d மணிநேரத்திற்கு ஒருமுறை</item>
+        <item quantity="other">%d மணிநேரத்திற்கு ஒருமுறை</item>
+    </plurals>
+    <plurals name="calendar_backup_every_days">
+        <item quantity="one">%d நாளுக்கு ஒருமுறை</item>
+        <item quantity="other">%d நாட்களுக்கு ஒருமுறை</item>
+    </plurals>
+    <string name="calendar_backup_every_day_hours">1 நாள் %1$s இடைவெளியில்</string>
+    <string name="calendar_backup_every_days_hours">%1$s %2$s இடைவெளியில்</string>
+    <string name="calendar_backup_interval_too_short">குறைந்தது 1 மணிநேரம் தேர்வுசெய்யவும்.</string>
+    <string name="calendar_backup_interval_too_long">30 நாட்கள் அல்லது அதற்குக் குறைவாகத் தேர்வுசெய்யவும்.</string>
+    <plurals name="calendar_backup_alert_files_retry">
+        <item quantity="one">%d நாட்காட்டியைச் சேமிக்க முடியவில்லை. அடுத்த காப்புப்பிரதியின்போது KashCal மீண்டும் முயலும்.</item>
+        <item quantity="other">%d நாட்காட்டிகளைச் சேமிக்க முடியவில்லை. அடுத்த காப்புப்பிரதியின்போது KashCal மீண்டும் முயலும்.</item>
+    </plurals>
+    <string name="calendar_backup_notifications_app_off">KashCal க்கான அறிவிப்புகள் முடக்கப்பட்டுள்ளன, எனவே காப்புப்பிரதி தோல்வியடைந்தால் அதனால் உங்களுக்குத் தெரிவிக்க முடியாது.</string>
+    <string name="calendar_backup_notifications_channel_off">காப்புப்பிரதி அறிவிப்புகள் முடக்கப்பட்டுள்ளன, எனவே காப்புப்பிரதி தோல்வியடைந்தால் KashCal ஆல் உங்களுக்குத் தெரிவிக்க முடியாது.</string>
+    <string name="calendar_backup_open_settings">அமைப்புகளைத் திற</string>
+    <string name="calendar_backup_not_now">இப்போது வேண்டாம்</string>
+    <plurals name="calendar_backup_row_calendars_failed">
+        <item quantity="one">%d நாட்காட்டி தோல்வியடைந்தது</item>
+        <item quantity="other">%d நாட்காட்டிகள் தோல்வியடைந்தன</item>
+    </plurals>
     <string name="settings_quick_event_add">ஸ்மார்ட் நிகழ்வு சேர்</string>
     <string name="settings_quick_event_add_info">இயல்பாகத் தட்டச்சு செய்து நிகழ்வுகளை உருவாக்குங்கள். \"வெள்ளிக்கிழமை மதியம் 1 மணிக்கு Sam உடன் மதிய உணவு\" உங்களுக்காகத் தலைப்பு, தேதி மற்றும் நேரத்தை நிரப்புகிறது.</string>
     <string name="settings_suggest_titles">நிகழ்வு தலைப்புகளை பரிந்துரை</string>
@@ -646,6 +823,8 @@
     <string name="cd_pick_month_year">மாதம் மற்றும் ஆண்டு தேர்வு</string>
     <string name="cd_previous_month">முந்தைய மாதம்</string>
     <string name="cd_next_month">அடுத்த மாதம்</string>
+    <string name="cd_previous_day">முந்தைய நாள்</string>
+    <string name="cd_next_day">அடுத்த நாள்</string>
     <string name="cd_month_year_picker">மாதம் மற்றும் ஆண்டு தேர்வி</string>
     <string name="cd_remove_alert">எச்சரிக்கையை நீக்கு</string>
     <string name="cd_warning">எச்சரிக்கை</string>
@@ -655,7 +834,25 @@
     <string name="label_on_days">நாட்களில்</string>
     <string name="label_pattern">வடிவம்</string>
     <string name="label_ends">முடிவு</string>
+    <string name="sheet_hint_change_end">முடிவை மாற்ற ஒரு நாளைத் தட்டவும்</string>
     <string name="label_timezone">நேர மண்டலம்</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">நகரம், நாடு அல்லது நேர மண்டலத்தைத் தேடுக</string>
+    <string name="timezone_section_this_event">இந்த நிகழ்வு</string>
+    <string name="timezone_section_device">சாதன நேர மண்டலம்</string>
+    <string name="timezone_section_recent">சமீபத்தியவை</string>
+    <string name="timezone_section_all">அனைத்து நேர மண்டலங்களும்</string>
+    <string name="timezone_offsets_on">%1$s அன்றைய ஆஃப்செட்கள்</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">நாட்காட்டியிலிருந்து: %1$s</string>
+    <string name="timezone_shown_in_device_time">சாதன நேரத்தில் காட்டப்படுகிறது</string>
+    <string name="timezone_loading">நேர மண்டலங்கள் ஏற்றப்படுகின்றன…</string>
+    <string name="timezone_no_match">எந்த நேர மண்டலமும் பொருந்தவில்லை</string>
+    <string name="timezone_no_match_hint">நகரம், நாடு அல்லது +5:30 போன்ற ஆஃப்செட்டை முயலவும்</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">எச்சரிக்கைகள்</string>
     <string name="label_add_alert">எச்சரிக்கை சேர்</string>
     <string name="label_recurrence_never">ஒருபோதும் இல்லை</string>
@@ -663,11 +860,8 @@
     <string name="label_yesterday">நேற்று</string>
     <string name="label_device_calendars">சாதன நாட்காட்டிகள்</string>
     <string name="label_default_calendar_hint">புதிய நிகழ்வுகள் இந்த நாட்காட்டியில் உருவாக்கப்படும்</string>
-    <string name="label_visible_count">%1$d / %2$d காணக்கூடியவை</string>
     <string name="label_reminders_truncated">%1$d காட்டப்படவில்லை (%2$d மொத்தம், அதிகபட்சம் %3$d திருத்தக்கூடியவை)</string>
     <string name="label_found_events">கண்டறியப்பட்டவை: %1$d நிகழ்வுகள்</string>
-    <string name="label_open_debug_menu">பிழைத்திருத்த மெனு திற</string>
-    <string name="placeholder_search">தேடு…</string>
     <string name="settings_search_placeholder">அமைப்புகளைத் தேடு…</string>
     <string name="settings_search_no_results">\"%1$s\" க்கான அமைப்புகள் எதுவும் இல்லை</string>
     <string name="cd_search_settings">அமைப்புகளைத் தேடு</string>
@@ -678,16 +872,13 @@
     <string name="status_hours_ago">%1$d ம. முன்</string>
 
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
-    <string name="device_calendars_description">உங்கள் சாதனத்தில் உள்ள பிற நாட்காட்டி ஆப்ப்களின் நிகழ்வுகளைக் காட்டு (ஒத்திசைவு அடாப்டர்கள், உள்ளூர் நாட்காட்டிகள்).</string>
-    <string name="device_calendars_permission_required">நாட்காட்டி அனுமதி தேவை. அணுகலை வழங்க இயக்கு என்பதை தட்டவும்.</string>
-    <string name="device_calendars_read_only_access">படிக்க மட்டும் அணுகல்</string>
-    <string name="device_calendars_grant_write">சாதன நாட்காட்டி நிகழ்வுகளை திருத்த எழுத அனுமதி வழங்கவும்</string>
-    <string name="device_calendars_grant">வழங்கு</string>
-    <string name="device_calendars_none_found">சாதன நாட்காட்டிகள் கிடைக்கவில்லை.</string>
+    <string name="device_calendars_intro">இந்தச் சாதனத்தில் உள்ள Google, Outlook மற்றும் ஒத்திசைவு ஆப்ப்களின் நாட்காட்டிகளைக் காட்டு.</string>
+    <string name="device_calendars_show_switch">சாதன நாட்காட்டிகளைக் காட்டு</string>
+    <string name="device_calendars_access_off">KashCal-க்கான நாட்காட்டி அணுகல் ஆஃபில் உள்ளது.</string>
+    <string name="device_calendars_pick_hint">காட்ட வேண்டிய நாட்காட்டிகளைத் தேர்ந்தெடுக்கவும்.</string>
+    <string name="device_calendars_empty">நாட்காட்டிகள் எதுவும் கிடைக்கவில்லை.</string>
     <string name="device_calendars_local">உள்ளூர்</string>
-    <string name="device_calendars_read_only_no_write">படிக்க மட்டும் (எழுத அனுமதி இல்லை)</string>
     <string name="device_calendars_read_only_calendar">படிக்க மட்டும் (நாட்காட்டி படிக்க மட்டும்)</string>
-    <string name="settings_developer_options">டெவலப்பர் விருப்பங்கள்</string>
     <string name="settings_sync_frequency">ஒத்திசைவு இடைவெளி</string>
     <string name="settings_sync_frequency_hint">பின்னணியில் எவ்வளவு அடிக்கடி ஒத்திசைக்க வேண்டும்</string>
 
@@ -817,6 +1008,9 @@
     <string name="ics_import_reason_this_and_future">இதற்கும் அடுத்த மறுநிகழ்வுகளுக்குமான மாற்றங்கள் ஆதரிக்கப்படவில்லை</string>
     <string name="ics_import_reason_own_cancel">இந்தச் சந்திப்பை நீங்கள் ஏற்பாடு செய்கிறீர்கள், எனவே நிகழ்விலிருந்தே ரத்து செய்யுங்கள்</string>
     <string name="ics_import_reason_on_another_calendar">இது ஏற்கெனவே இந்தக் கணக்கின் மற்றொரு நாட்காட்டியில் உள்ளது</string>
+    <string name="ics_import_reason_calendar_keeps_copy">இந்த நாட்காட்டி நிகழ்வின் சொந்த நகலை வைத்திருக்கிறது</string>
+    <string name="ics_import_reason_own_update">இந்தச் சந்திப்பை நீங்கள் ஏற்பாடு செய்கிறீர்கள், எனவே நிகழ்விலிருந்தே மாற்றுங்கள்</string>
+    <string name="ics_import_reason_change_waiting">நிகழ்வில் ஒரு மாற்றம் ஒத்திசைக்கப்படக் காத்திருக்கிறது; ஒத்திசைக்கப்பட்ட பிறகு மீண்டும் இறக்குமதி செய்யுங்கள்</string>
     <string name="ics_import_notice_unverified">அழைப்புக் கோப்பை அனுப்பியவரைச் சரிபார்க்க முடியாது. இது ஏற்பாட்டாளரிடமிருந்து வந்ததா எனச் சரிபாருங்கள்.</string>
     <string name="ics_import_notice_answer_notifies">இந்த அழைப்புக்குப் பதிலளித்தால் ஏற்பாட்டாளருக்குத் தெரிவிக்கப்படலாம்.</string>
     <string name="ics_import_notice_guests_again">நீங்கள் ஏற்பாட்டாளர், எனவே விருந்தினர்கள் இந்த அழைப்பை மீண்டும் பெறக்கூடும்.</string>
@@ -847,13 +1041,17 @@
     </plurals>
     <string name="ics_import_summary_separator">", "</string>
     <string name="ics_import_summary_nothing">இறக்குமதி செய்ய எதுவும் இல்லை</string>
-    <plurals name="exported_events">
-        <item quantity="one">%1$d நிகழ்வு ஏற்றுமதி செய்யப்பட்டது</item>
-        <item quantity="other">%1$d நிகழ்வுகள் ஏற்றுமதி செய்யப்பட்டன</item>
-    </plurals>
     <plurals name="event_count">
         <item quantity="one">%1$d நிகழ்வு</item>
         <item quantity="other">%1$d நிகழ்வுகள்</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d நாட்காட்டி</item>
+        <item quantity="other">%1$d நாட்காட்டிகள்</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d கணக்கு</item>
+        <item quantity="other">%1$d கணக்குகள்</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d நாட்காட்டி</item>
@@ -887,10 +1085,6 @@
         <item quantity="one">%1$d ஆண்டு</item>
         <item quantity="other">%1$d ஆண்டுகள்</item>
     </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d வி.</item>
-        <item quantity="other">%1$d வி.</item>
-    </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d நிமிடம் முன்</item>
         <item quantity="other">%1$d நிமிடங்கள் முன்</item>
@@ -914,8 +1108,13 @@
     <string name="dialog_move_recurring_title">நகர்த்து</string>
     <string name="snackbar_event_rescheduled">நிகழ்வு நேரம் மாற்றப்பட்டது</string>
     <string name="snackbar_reschedule_failed">நிகழ்வு நேரத்தை மாற்ற முடியவில்லை</string>
+    <string name="snackbar_move_failed">\"%1$s\" ஐ நகர்த்த முடியவில்லை</string>
+    <string name="snackbar_move_changed_elsewhere">\"%1$s\" வேறு இடத்தில் மாற்றப்பட்டதால் நகர்த்தப்படவில்லை</string>
+    <string name="event_untitled">தலைப்பில்லாத நிகழ்வு</string>
     <string name="recurring_this_event">இந்த நிகழ்வு</string>
     <string name="recurring_all_events">அனைத்து நிகழ்வுகளும்</string>
+    <string name="recurring_scope_move_not_expressible">மீண்டும் நிகழும் விதியால் இந்த மாற்றத்தைப் பின்பற்ற முடியாது</string>
+    <string name="event_form_move_not_expressible">மீண்டும் நிகழும் விதியால் இந்த மாற்றத்தைப் பின்பற்ற முடியாது. எதுவும் சேமிக்கப்படவில்லை.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">கலந்துகொள்வோர்</string>
@@ -979,8 +1178,67 @@
     <string name="empty_no_events_day_3">ஒரு பரிசு: காலியான ஒரு நாள்.</string>
     <string name="empty_no_events_day_4">காலெண்டர் நிலை: அற்புதமாக காலி.</string>
     <string name="empty_no_events_day_5">எதுவும் திட்டமிடப்படவில்லை. அமைதியை ரசியுங்கள்.</string>
-    <string name="cd_empty_no_events_day">அமைதியான நாள், எதுவும் திட்டமிடப்படவில்லை</string>
     <string name="filter_date">தேதி</string>
+    <string name="search_tab_upcoming">வருபவை</string>
+    <string name="search_tab_past">கடந்தவை</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d நிகழ்வு</item>
+        <item quantity="other">%1$s, %2$d நிகழ்வுகள்</item>
+    </plurals>
+    <string name="search_date_this_week">இந்த வாரம்</string>
+    <string name="search_date_this_month">இந்த மாதம்</string>
+    <string name="search_date_pick">தேதிகளைத் தேர்ந்தெடு…</string>
+    <string name="search_next">அடுத்து: %1$s</string>
+    <string name="search_last">கடைசியாக: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">இடம்:</string>
+    <string name="search_reason_notes">குறிப்புகள்:</string>
+    <string name="search_reason_guest">விருந்தினர்:</string>
+    <string name="search_keep_typing">தேட தொடர்ந்து தட்டச்சு செய்யவும்</string>
+    <string name="search_no_matches">“%1$s” உடன் பொருந்தும் நிகழ்வுகள் இல்லை</string>
+    <string name="search_no_events_tagged">“%1$s” என்று டேக் செய்யப்பட்ட நிகழ்வுகள் இல்லை</string>
+    <string name="search_lookback_line">ஒத்திசைவு திரும்பப்பார்வை: %1$s</string>
+    <string name="search_sync_settings">ஒத்திசைவு அமைப்புகள்</string>
+    <string name="cd_search_sync_settings">ஒத்திசைவு திரும்பப்பார்வை அமைப்பைத் திற</string>
+    <plurals name="search_show_past">
+        <item quantity="one">%d கடந்த நிகழ்வைக் காட்டு</item>
+        <item quantity="other">%d கடந்த நிகழ்வுகளைக் காட்டு</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">மறைக்கப்பட்ட நாட்காட்டியில் மேலும் %d</item>
+        <item quantity="other">மறைக்கப்பட்ட நாட்காட்டிகளில் மேலும் %d</item>
+    </plurals>
+    <string name="search_show">காட்டு</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">மறைக்கப்பட்ட நாட்காட்டியில் %d பொருத்தத்தைக் காட்டு</item>
+        <item quantity="other">மறைக்கப்பட்ட நாட்காட்டிகளில் %d பொருத்தங்களைக் காட்டு</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">மறைக்கப்பட்ட நாட்காட்டியில் %d காட்டு</item>
+        <item quantity="other">மறைக்கப்பட்ட நாட்காட்டிகளில் %d காட்டு</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">%d மறைக்கப்பட்ட நாட்காட்டி உட்பட</item>
+        <item quantity="other">%d மறைக்கப்பட்ட நாட்காட்டிகள் உட்பட</item>
+    </plurals>
+    <string name="search_leave_out">விலக்கு</string>
+    <string name="cd_search_leave_out">மறைக்கப்பட்ட நாட்காட்டிகளை விலக்கு</string>
+    <string name="search_hidden_calendar">%1$s · மறைக்கப்பட்டது</string>
+    <string name="cd_search_date_this_week">இந்த வாரப் பொருத்தங்களைக் காட்டு</string>
+    <string name="cd_search_date_this_month">இந்த மாதப் பொருத்தங்களைக் காட்டு</string>
+    <string name="cd_search_date_pick">தேட தேதிகளைத் தேர்ந்தெடு</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d வருபவை</item>
+        <item quantity="other">%d வருபவை</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d கடந்தவை</item>
+        <item quantity="other">%d கடந்தவை</item>
+    </plurals>
+    <string name="search_no_past_events">கடந்த நிகழ்வுகள் இல்லை</string>
+    <string name="search_no_events_in_dates">இந்தத் தேதிகளில் நிகழ்வுகள் இல்லை</string>
     <string name="label_select_date">தேதி தேர்வுசெய்</string>
     <string name="hint_tap_date_range">ஒரு நாளுக்கு அதே தேதியைத் தட்டவும், அல்லது வரம்புக்கு வேறு தேதியைத் தட்டவும்</string>
     <string name="cd_clear">அழி</string>
@@ -1072,7 +1330,6 @@
     <string name="reminder_none">நினைவூட்டல் இல்லை</string>
     <string name="reminder_at_time_of_event">நிகழ்வின் நேரத்தில்</string>
     <string name="reminder_time_before">%1$s முன்பு</string>
-    <string name="reminder_time_after">%1$s பின்பு</string>
     <string name="reminder_day_of_event_12h">நிகழ்வு நாளில் 9 AM</string>
     <string name="reminder_day_of_event_24h">நிகழ்வு நாளில் 09:00</string>
     <string name="reminder_day_of_event">நிகழ்வு நாள்</string>
@@ -1116,7 +1373,7 @@
     <string name="sync_notification_auth_reauth">உங்கள் கணக்கை மீண்டும் அங்கீகரிக்கவும்</string>
     <string name="sync_notification_failed">ஒத்திசைவு தோல்வி</string>
     <string name="sync_notification_parse_title">சில நிகழ்வுகளை ஒத்திசைக்க முடியவில்லை</string>
-    <string name="sync_notification_parse_content">%2$s-ல் %1$s ஒத்திசைக்க முடியவில்லை। அமைப்புகளில் ஃபோர்ஸ் சிங்க் முயற்சிக்கவும்.</string>
+    <string name="sync_notification_parse_content">%2$s-ல் %1$s ஒத்திசைக்க முடியவில்லை. அமைப்புகளில் ஃபோர்ஸ் சிங்க் முயற்சிக்கவும்.</string>
     <string name="sync_notification_conflict_title">ஒத்திசைவு முரண்பாடு தீர்க்கப்பட்டது</string>
     <string name="sync_notification_conflict_single">ஒத்திசைவு முரண்பாடு காரணமாக \"%1$s\"-க்கான உள்ளூர் மாற்றங்கள் இழக்கப்பட்டன. சர்வர் பதிப்பு பயன்படுத்தப்படும்.</string>
     <string name="sync_notification_conflict_multi">ஒத்திசைவு முரண்பாடுகள் காரணமாக %1$s-க்கான உள்ளூர் மாற்றங்கள் இழக்கப்பட்டன. சர்வர் பதிப்புகள் பயன்படுத்தப்படும்.</string>
@@ -1204,6 +1461,7 @@
     <!-- ==================== i18n: Round 2 audit gaps ==================== -->
     <string name="action_save_event">நிகழ்வைச் சேமி</string>
     <string name="badge_beta">Beta</string>
+    <string name="badge_sync_off">ஒத்திசைவு ஆஃப்</string>
     <string name="badge_new">புதிய</string>
     <string name="color_red">சிவப்பு</string>
     <string name="color_orange">ஆரஞ்சு</string>
@@ -1232,6 +1490,19 @@
     <string name="ics_fetch_error_http">சர்வர் ஒரு பிழையை வழங்கியது (%1$d). URL ஐ சரிபார்க்கவும்.</string>
     <string name="ics_fetch_error_empty">காலெண்டர் ஊட்டம் காலியாக உள்ளது.</string>
     <string name="ics_fetch_error_not_calendar">அந்த URL காலெண்டர் ஊட்டம் போல் தெரியவில்லை.</string>
+    <string name="ics_feed_error_empty_response">சர்வர் சரியான ஊட்டத்தை அனுப்பவில்லை.</string>
+    <string name="ics_feed_error_access_denied">இந்த ஊட்டத்தின் சர்வர் அணுகலை மறுத்தது.</string>
+    <string name="ics_feed_error_too_large">இந்தக் காலெண்டர் ஊட்டம் பதிவிறக்க முடியாத அளவுக்குப் பெரியது.</string>
+    <string name="ics_feed_error_unreadable">இந்த ஊட்டத்தின் நிகழ்வுகளைக் காட்ட முடியவில்லை.</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s” சேமிக்கப்படவில்லை.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d நிகழ்வு சேமிக்கப்படவில்லை.</item>
+        <item quantity="other">%1$d நிகழ்வுகள் சேமிக்கப்படவில்லை.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">“%2$s” உட்பட %1$d நிகழ்வு சேமிக்கப்படவில்லை.</item>
+        <item quantity="other">“%2$s” உட்பட %1$d நிகழ்வுகள் சேமிக்கப்படவில்லை.</item>
+    </plurals>
     <string name="insights_title">நுண்ணறிவுகள்</string>
     <string name="insights_period_this_week">வாரம்</string>
     <string name="insights_period_last_week">கடந்த வாரம்</string>
@@ -1359,7 +1630,7 @@
         <item quantity="other">அடுத்த %1$d நாட்களில் காலி (%2$s – %3$s):</item>
     </plurals>
     <string name="share_availability_day_line">%1$s: %2$s</string>
-    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_block_separator">", "</string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">தேர்ந்தெடுக்கப்பட்ட வரம்பில் குறைந்தது ஒரு மணி நேர காலி பிளாக்குகள் இல்லை.</string>
     <string name="share_from_kashcal_footer">KashCal-இலிருந்து பகிரப்பட்டது</string>
@@ -1381,5 +1652,31 @@
     <string name="share_as_card_all_day">நாள் முழுவதும்</string>
     <string name="share_as_card_chooser_title">நிகழ்வைப் பகிர்</string>
     <string name="share_as_card_share_failed">கார்டைப் பகிர முடியவில்லை</string>
+    <string name="print_your_week">உங்கள் வாரத்தை அச்சிடுங்கள்</string>
+    <string name="print_options_title">அச்சு விருப்பங்களைத் தேர்வுசெய்யவும்</string>
+    <string name="print_pages_header">பக்கங்கள்</string>
+    <string name="print_page_week">வார நாட்காட்டி</string>
+    <string name="print_page_week_detail">வாரம் ஒரு கட்டமாக</string>
+    <string name="print_page_details">விவரங்கள்</string>
+    <string name="print_page_details_detail">ஒவ்வொரு நிகழ்வும் முழுமையாக</string>
+    <string name="print_action">அச்சிடு</string>
+    <string name="cd_print_previous_week">முந்தைய வாரம்</string>
+    <string name="cd_print_next_week">அடுத்த வாரம்</string>
+    <plurals name="print_summary_pages">
+        <item quantity="one">%d பக்கம்</item>
+        <item quantity="other">%d பக்கங்கள்</item>
+    </plurals>
+    <plurals name="print_summary_calendars">
+        <item quantity="one">%2$d இல் %1$d நாட்காட்டி</item>
+        <item quantity="other">%2$d இல் %1$d நாட்காட்டிகள்</item>
+    </plurals>
+    <string name="print_summary">%1$s · %2$s</string>
+    <string name="print_job_name">%1$s – %2$s வாரம்</string>
+    <string name="print_failed">அச்சிட முடியவில்லை. மீண்டும் முயற்சிக்கவும்.</string>
+    <string name="print_doc_week">வாரம்</string>
+    <string name="print_doc_printed">%1$s அன்று அச்சிடப்பட்டது</string>
+    <string name="print_doc_page_of">%2$s இல் பக்கம் %1$s</string>
+    <string name="print_doc_numbers_note">எண்கள் விவரங்கள் பக்கத்துடன் பொருந்தும்; அதில் ஒவ்வொரு நிகழ்வும் முழுமையாக உள்ளது.</string>
+    <string name="print_doc_times_in">நேரங்கள் %1$s இல் காட்டப்பட்டுள்ளன</string>
 
 </resources>

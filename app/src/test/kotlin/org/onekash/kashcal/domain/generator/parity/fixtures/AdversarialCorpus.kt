@@ -24,6 +24,7 @@ import java.time.ZonedDateTime
  *   - BYMONTHDAY=30 across February, Feb 29 in non-leap years
  *   - DST spring-forward and fall-back landing on the transition hour, all-day across DST
  *   - very large COUNT, out-of-range BYSETPOS and BYMONTH
+ *   - EXDATE and RDATE at another time of day than the series; a UTC series across DST
  */
 object AdversarialCorpus {
 
@@ -295,6 +296,39 @@ object AdversarialCorpus {
             rangeStartMs = utc(2025, 1, 1),
             rangeEndMs = utc(2028, 1, 1),
             knownDivergenceReason = "BYMONTH=13 invalid; engines may reject or silently drop",
+        ),
+
+        // EXDATE and RDATE at another time of day than the series, as epoch ms (the form the
+        // pull stores). RFC 5545 §3.8.5.1-2 matches start DATE-TIME values, so the 09:00 EXDATE
+        // removes nothing and the 15:00 RDATE adds a second occurrence on 4 Mar.
+        adv(
+            name = "adversarial: EXDATE at another time of day than the series removes nothing",
+            rrule = "FREQ=DAILY;COUNT=6",
+            dtstartMs = et(2027, 3, 1, 10),
+            timezone = "America/New_York",
+            exdateStrings = "${et(2027, 3, 3, 9)}",
+            rangeStartMs = et(2027, 3, 1, 0),
+            rangeEndMs = et(2027, 4, 1, 0),
+        ),
+        adv(
+            name = "adversarial: RDATE at another time on a day with an occurrence adds one",
+            rrule = "FREQ=DAILY;COUNT=6",
+            dtstartMs = et(2027, 3, 1, 10),
+            timezone = "America/New_York",
+            rdateStrings = "${et(2027, 3, 4, 15)}",
+            rangeStartMs = et(2027, 3, 1, 0),
+            rangeEndMs = et(2027, 4, 1, 0),
+        ),
+
+        // A series stored in UTC (a DTSTART written with Z) keeps 15:00Z across the US clock
+        // change on 14 Mar 2027.
+        adv(
+            name = "adversarial: weekly series in UTC across a DST change keeps its UTC time",
+            rrule = "FREQ=WEEKLY;COUNT=4",
+            dtstartMs = utc(2027, 3, 8, 15),
+            timezone = "UTC",
+            rangeStartMs = utc(2027, 3, 1),
+            rangeEndMs = utc(2027, 4, 1),
         ),
     )
 }

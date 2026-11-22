@@ -15,6 +15,7 @@ import org.junit.runner.RunWith
 import org.onekash.vcard.VCardParser
 import org.onekash.vcard.VCardWriter
 import org.onekash.vcard.model.Contact
+import org.onekash.vcard.model.ContactDate
 import org.onekash.vcard.model.PostalAddress
 import org.onekash.vcard.model.StructuredName as VStructuredName
 import org.robolectric.RobolectricTestRunner
@@ -51,9 +52,12 @@ class DeviceContactRowMapperTest {
     private fun forward(contact: Contact): List<ContentValues> =
         VCardContactMapper.toEntity(contact).dataRows
 
-    /** Parses [name], maps it forward and back, and passes the parsed identity fields through. */
-    private fun roundTrip(name: String): Pair<Contact, Contact> {
-        val parsed = parse(name)
+    /** Runs [roundTripBody] over the fixture [name]. */
+    private fun roundTrip(name: String): Pair<Contact, Contact> = roundTripBody(fixture(name))
+
+    /** Parses [body], maps it forward and back, and passes the parsed identity fields through. */
+    private fun roundTripBody(body: String): Pair<Contact, Contact> {
+        val parsed = parser.parse(body).single()
         val reversed = DeviceContactRowMapper.toContact(
             dataRows = forward(parsed),
             uid = parsed.uid,
@@ -430,6 +434,21 @@ class DeviceContactRowMapperTest {
         val (parsed, reversed) = roundTrip("kashcal_full_v3.vcf")
         assertEquals(parsed.birthday, reversed.birthday)
         assertEquals(parsed.anniversary?.date, reversed.anniversary?.date)
+    }
+
+    @Test
+    fun `a 1604 birthday and anniversary map back equal to the parsed dates`() {
+        // Full equality is what keeps both lines verbatim when the phone edits another field.
+        val (parsed, reversed) = roundTripBody(
+            "BEGIN:VCARD\r\nVERSION:3.0\r\nUID:yearless-device\r\nFN:Jane Doe\r\nN:Doe;Jane;;;\r\n" +
+                "BDAY;X-APPLE-OMIT-YEAR=1604:1604-03-15\r\n" +
+                "item1.X-ABDATE;X-APPLE-OMIT-YEAR=1604:1604-09-22\r\n" +
+                "item1.X-ABLabel:_\$!<Anniversary>!\$_\r\nEND:VCARD\r\n",
+        )
+        assertEquals(ContactDate(text = "--03-15"), parsed.birthday)
+        assertEquals(ContactDate(text = "--09-22"), parsed.anniversary)
+        assertEquals(parsed.birthday, reversed.birthday)
+        assertEquals(parsed.anniversary, reversed.anniversary)
     }
 
     @Test

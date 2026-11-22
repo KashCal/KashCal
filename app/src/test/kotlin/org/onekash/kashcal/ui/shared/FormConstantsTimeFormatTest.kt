@@ -11,11 +11,11 @@ import org.robolectric.RobolectricTestRunner
 /**
  * Tests the 9 AM reminder labels against the time format (#96).
  *
- * For a timed value, [formatReminderShort] labels 540 "9AM" or "09:00" by `use24Hour`; the other
- * values tested (off, at event, 1d, 1w) don't change with it. [formatReminderOption] takes no time
- * format: the all-day -540 reads "Day of event" and a legacy all-day 540 reads by magnitude.
- * [getAllDayReminderOptions] labels -540 "Day of event" and has one option per
- * [ALL_DAY_REMINDER_MINUTES] entry.
+ * [formatReminderShort] labels the all-day -540 "9AM" or "09:00" by `use24Hour`; a timed 540 is 9
+ * hours before and reads "9h" either way, and the other values tested (off, at event, 1d, 1w) don't
+ * change with it. [formatReminderOption] takes no time format: the all-day -540 reads "Day of
+ * event" and a legacy all-day 540 reads by magnitude. [getAllDayReminderOptions] labels -540 "Day
+ * of event" and has one option per [ALL_DAY_REMINDER_MINUTES] entry.
  */
 @RunWith(RobolectricTestRunner::class)
 class FormConstantsTimeFormatTest {
@@ -25,13 +25,25 @@ class FormConstantsTimeFormatTest {
     // ==================== formatReminderShort tests ====================
 
     @Test
-    fun `formatReminderShort 540 with use24Hour true returns 09 colon 00`() {
-        assertEquals("09:00", formatReminderShort(540, use24Hour = true, resources = resources))
+    fun `formatReminderShort all-day -540 with use24Hour true returns 09 colon 00`() {
+        assertEquals("09:00", formatReminderShort(-540, use24Hour = true, isAllDay = true, resources = resources))
     }
 
     @Test
-    fun `formatReminderShort 540 with use24Hour false returns 9AM`() {
-        assertEquals("9AM", formatReminderShort(540, use24Hour = false, resources = resources))
+    fun `formatReminderShort all-day -540 with use24Hour false returns 9AM`() {
+        assertEquals("9AM", formatReminderShort(-540, use24Hour = false, isAllDay = true, resources = resources))
+    }
+
+    @Test
+    fun `formatReminderShort timed 540 is 9 hours before in either time format`() {
+        // The custom wheel can set 9 h 0 m on a timed event; that is not 9 AM.
+        assertEquals("9h", formatReminderShort(540, use24Hour = true, resources = resources))
+        assertEquals("9h", formatReminderShort(540, use24Hour = false, resources = resources))
+    }
+
+    @Test
+    fun `formatReminderShort legacy all-day 540 reads by magnitude`() {
+        assertEquals("9h", formatReminderShort(540, isAllDay = true, resources = resources))
     }
 
     @Test

@@ -35,7 +35,9 @@ sealed class ICloudConnectionState {
         val appleId: String,
         val lastSyncTime: Long? = null,
         val calendarCount: Int = 0,
-        val consecutiveSyncFailures: Int = 0
+        val consecutiveSyncFailures: Int = 0,
+        /** Mirrors [org.onekash.kashcal.data.db.entity.Account.isEnabled]. */
+        val isEnabled: Boolean = true
     ) : ICloudConnectionState()
 }
 
@@ -52,7 +54,22 @@ data class ICloudAccountUiModel(
     /** 0 when healthy. */
     val consecutiveSyncFailures: Int = 0,
     /** Null when the account never synced. */
-    val lastSuccessfulSyncAt: Long? = null
+    val lastSuccessfulSyncAt: Long? = null,
+    /**
+     * Mirrors [org.onekash.kashcal.data.db.entity.Account.isEnabled]; false shows a
+     * [SyncOffBadge].
+     */
+    val isEnabled: Boolean = true
+)
+
+/** Maps the Connected iCloud state to its row in the accounts list. */
+fun ICloudConnectionState.Connected.toAccountUiModel() = ICloudAccountUiModel(
+    accountId = accountId,
+    email = appleId,
+    calendarCount = calendarCount,
+    consecutiveSyncFailures = consecutiveSyncFailures,
+    lastSuccessfulSyncAt = lastSyncTime,
+    isEnabled = isEnabled
 )
 
 /**
@@ -197,3 +214,23 @@ suspend fun fetchCalendarInfo(rawUrl: String): FetchCalendarState = withContext(
     }
 }
 
+/** Counts what a full sync would re-download: [accounts] sync accounts and their [calendars]. */
+@Immutable
+data class SyncScope(val accounts: Int, val calendars: Int) {
+    /** Whether the calendar sync worker has an account to sync; false greys out Force full sync. */
+    val hasSyncAccount: Boolean get() = accounts > 0
+}
+
+/**
+ * Returns the [SyncScope] of a full sync: the iCloud account when connected and not Sync off,
+ * plus every CalDAV account not Sync off. Offline calendars, device calendars and calendar feeds
+ * never count, because the calendar sync worker skips them.
+ */
+fun syncScopeOf(iCloudState: ICloudConnectionState, calDavAccounts: List<CalDavAccountUiModel>): SyncScope {
+    val iCloud = (iCloudState as? ICloudConnectionState.Connected)?.takeIf { it.isEnabled }
+    val calDav = calDavAccounts.filter { it.isEnabled }
+    return SyncScope(
+        accounts = (if (iCloud != null) 1 else 0) + calDav.size,
+        calendars = (iCloud?.calendarCount ?: 0) + calDav.sumOf { it.calendarCount },
+    )
+}

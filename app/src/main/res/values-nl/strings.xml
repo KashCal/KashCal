@@ -43,6 +43,8 @@
     <string name="channel_event_invitations">Afspraakuitnodigingen</string>
     <string name="channel_event_invitations_desc">Meldingen wanneer je een nieuwe agenda-uitnodiging ontvangt</string>
     <string name="channel_calendar_updates">Agendawijzigingen</string>
+    <string name="channel_calendar_backup">Automatische agenda-back-up</string>
+    <string name="channel_calendar_backup_description">Laat je weten wanneer een agenda-back-up mislukt</string>
     <string name="invite_notification_body">Van %1$s · Tik om te reageren</string>
 
     <!-- ==================== App Shortcuts ==================== -->
@@ -88,7 +90,6 @@
     <string name="action_discard">Verwerpen</string>
     <string name="action_discard_confirm">Verwerpen?</string>
     <string name="action_dismiss">Sluiten</string>
-    <string name="action_show_all">Alles tonen</string>
     <string name="action_connect">Verbinden</string>
     <string name="action_duplicate">Dupliceren</string>
     <string name="action_share">Delen</string>
@@ -119,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d meer</string>
     <string name="tags_autocomplete_create_new">\"%1$s\" aanmaken</string>
     <string name="cd_tag">Label: %1$s</string>
+    <string name="tags_show_events_click_label">Afspraken met dit label weergeven</string>
+    <string name="tags_show_events">Afspraken weergeven</string>
     <string name="cd_tags_move_menu">Labels verplaatsen</string>
     <string name="tags_move_above_notes">Boven notities verplaatsen</string>
     <string name="tags_move_below_notes">Onder notities verplaatsen</string>
@@ -148,7 +151,6 @@
     <string name="label_enter_hex">Voer 6 hex-tekens in (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Alles</string>
     <string name="view_week">Week</string>
     <string name="view_month">Maand</string>
     <string name="label_all_day">Hele dag</string>
@@ -190,17 +192,38 @@
     <string name="settings_event_emojis_info">Voegt een emoji toe aan afspraken op basis van de titel, zoals 🎂 voor \"Verjaardag\".</string>
     <string name="settings_force_sync">Volledige synchronisatie</string>
     <string name="settings_force_sync_subtitle">Alle agendagegevens opnieuw downloaden</string>
+    <string name="settings_force_sync_no_account">Geen synchronisatieaccount ingesteld</string>
+    <string name="force_sync_confirm">%1$s van %2$s opnieuw downloaden. Nog niet gesynchroniseerde wijzigingen blijven behouden.</string>
+    <string name="action_start">Starten</string>
     <string name="settings_sync_history">Synchronisatiegeschiedenis</string>
     <string name="settings_sync_history_subtitle">Sync-sessies bekijken (afgelopen 48 uur)</string>
     <string name="settings_import_subtitle">Afspraken vanuit een ICS-bestand aan een agenda toevoegen</string>
-    <string name="settings_export_subtitle">Afspraken opslaan in een ICS-bestand</string>
     <string name="settings_birthday_reminder">Verjaardagsherinnering</string>
-    <string name="settings_use_device_timezone">Apparaattijdzone gebruiken</string>
     <string name="settings_section_calendars">Agenda\'s &amp; accounts</string>
     <string name="settings_section_appearance">Weergave</string>
     <string name="settings_section_creating_events">Afspraakvoorkeuren</string>
     <string name="settings_section_sync">Synchronisatie</string>
     <string name="settings_section_data">Back-up &amp; herstel</string>
+    <string name="settings_section_troubleshooting">Probleemoplossing</string>
+
+    <!-- ==================== Debug report (Settings > Troubleshooting) ==================== -->
+    <string name="debug_report_row_label">Debugrapport exporteren</string>
+    <string name="debug_report_row_subtitle">Crash-, synchronisatie- en configuratiegegevens om mee te sturen met een bugmelding</string>
+    <string name="debug_report_sheet_title">Debugrapport</string>
+    <string name="debug_report_sheet_body">Een tekstbestand om mee te sturen met een bugmelding. Stuur het kort na het probleem: het app-logboek bewaart alleen recente activiteit.</string>
+    <string name="debug_report_item_exits">Waarom de app onlangs werd afgesloten</string>
+    <string name="debug_report_item_exits_detail">Crashes, vastlopers, weinig geheugen</string>
+    <string name="debug_report_item_log">App-logboek</string>
+    <string name="debug_report_item_log_detail">KashCals eigen berichten, inclusief crashgegevens</string>
+    <string name="debug_report_item_sync_detail">Recente synchronisaties, tot 48 uur terug</string>
+    <string name="debug_report_item_pending">Wachtende wijzigingen</string>
+    <string name="debug_report_item_pending_detail">Wijzigingen die nog niet naar je server zijn verzonden</string>
+    <string name="debug_report_item_setup">Configuratie</string>
+    <string name="debug_report_item_setup_detail">App- en Android-versie, machtigingen, batterij-instellingen, accounttypen</string>
+    <string name="debug_report_privacy_note">E-mailadressen, webadressen en tokens worden afgeschermd. Afspraaktitels, agendanamen en contactnamen niet. Stuur het per e-mail, niet in een openbaar bericht.</string>
+    <string name="debug_report_share">Rapport delen</string>
+    <string name="debug_report_chooser_title">Debugrapport delen</string>
+    <string name="debug_report_failed">Kan het debugrapport niet maken</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">App-vergrendeling</string>
@@ -236,9 +259,37 @@
     <string name="backup_error_read_failed">Kan bestand niet lezen</string>
 
     <!-- ==================== Onboarding ==================== -->
-    <string name="onboarding_apple_calendar">Apple Agenda?</string>
-    <string name="onboarding_got_you">Wij helpen je.</string>
-    <string name="onboarding_connect_prompt">Koppel iCloud om je afspraken hier te zien</string>
+    <string name="onboarding_title">Waar staan je agenda\'s?</string>
+    <string name="onboarding_subtitle">Kies er een om te koppelen.</string>
+    <string name="onboarding_icloud_detail">Apple ID en app-wachtwoord</string>
+    <string name="onboarding_caldav_title">CalDAV-server</string>
+    <string name="onboarding_caldav_detail">Nextcloud, Fastmail, Radicale en andere</string>
+    <string name="onboarding_device_title">Op dit apparaat</string>
+    <string name="onboarding_phone_detail">Google, Outlook en sync-apps</string>
+    <string name="onboarding_use_offline">Offline agenda gebruiken</string>
+    <string name="onboarding_trust">Open source. Geen advertenties. Geen tracking.</string>
+
+    <!-- ==================== Reminders are off ==================== -->
+    <string name="reminders_off_title">Herinneringen staan uit</string>
+    <plurals name="reminders_off_body">
+        <item quantity="one">%d afspraak deze week heeft een herinnering.</item>
+        <item quantity="other">%d afspraken deze week hebben herinneringen.</item>
+    </plurals>
+    <string name="reminders_off_not_now">Niet nu</string>
+    <string name="reminders_off_turn_on">Aanzetten</string>
+    <string name="reminders_on_snackbar">Herinneringen staan aan</string>
+
+    <!-- ==================== About ==================== -->
+    <string name="about_tagline">Al je agenda\'s in één privé-app.</string>
+    <string name="about_help_title">Hulp en handleidingen</string>
+    <string name="about_help_detail">Instellen, synchronisatie en vragen</string>
+    <string name="about_source_title">Broncode</string>
+    <string name="about_source_detail">Apache 2.0, op GitHub</string>
+    <string name="about_support_title">Steun KashCal</string>
+    <string name="about_support_detail">Dank aan iedereen die dat al doet</string>
+    <string name="about_link_failed">Er is geen app die deze link kan openen.</string>
+    <string name="about_built_in_austin">Gemaakt met ❤️ in Austin</string>
+    <string name="about_version">Versie %1$s</string>
 
     <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Overslaan</string>
@@ -257,22 +308,32 @@
     <string name="whats_new_v772_changes_title">Zie wat er veranderd is</string>
     <string name="whats_new_v772_changes_body">Nieuwe, bewerkte en verwijderde afspraken uit je iCloud- en CalDAV-agenda\'s worden 7 dagen bewaard in Recente wijzigingen. Tik op een afspraak om hem te openen.</string>
     <string name="whats_new_v772_notifications_body">Krijg een melding wanneer een synchronisatie op de achtergrond wijzigingen in je iCloud- of CalDAV-afspraken vindt. Dit staat uit totdat je het aanzet.</string>
+    <string name="whats_new_v803_offline_title">Agenda\'s die op je telefoon blijven</string>
+    <string name="whats_new_v803_offline_body">Sommige plannen horen niet op een server. Geef ze hun eigen offline agenda\'s, zoveel als je wilt.</string>
+    <string name="whats_new_v803_backup_title">Back-ups waar je niet meer aan hoeft te denken</string>
+    <string name="whats_new_v803_backup_body">Kies één keer een map, en KashCal bewaart daar steeds een verse kopie van je offline agenda\'s.</string>
+    <string name="whats_new_v803_print_title">Je week op papier</string>
+    <string name="whats_new_v803_print_body">Print de week die je bekijkt. Op welke koelkast hij komt, mag je zelf weten.</string>
     <string name="whats_new_hero_sample_lunch">Teamlunch</string>
     <string name="whats_new_hero_sample_review">Ontwerpreview</string>
     <string name="whats_new_hero_sample_book_club">Leesclub</string>
+    <string name="whats_new_hero_sample_dentist">Tandarts</string>
+    <string name="whats_new_hero_sample_yoga">Yoga</string>
     <string name="whats_new_hero_sample_calendar">Werk</string>
+    <string name="whats_new_hero_sample_family">Gezin</string>
+    <string name="whats_new_hero_sample_garden">Tuin</string>
+    <string name="whats_new_hero_sample_folder">Agenda-back-ups</string>
     <string name="whats_new_hero_now">nu</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud verbinden</string>
     <string name="signin_caldav_title">CalDAV-account toevoegen</string>
+    <string name="signin_caldav_sign_in_again_title">Opnieuw inloggen</string>
     <string name="signin_connected_to">Verbonden met %1$s</string>
 
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Nieuwe afspraak</string>
     <string name="dialog_edit_event_title">Afspraak bewerken</string>
-    <string name="dialog_force_sync_title">Volledige synchronisatie?</string>
-    <string name="dialog_force_sync_message">Alle agendagegevens worden opnieuw gedownload van de server. Lokale wijzigingen blijven behouden.</string>
     <string name="dialog_enable_notifications">Meldingen inschakelen?</string>
     <string name="dialog_action_required">Deze actie is vereist om door te gaan.</string>
     <string name="dialog_add_to_calendar">Toevoegen aan agenda</string>
@@ -285,6 +346,7 @@
     <string name="status_no_events_week">Geen afspraken deze week</string>
     <string name="status_more_events">+%1$d meer</string>
     <string name="status_no_sync_sessions">Nog geen sync-sessies.\n\nVervers door op de agendaweergave naar beneden te trekken.</string>
+    <string name="status_no_sync_account">Geen synchronisatieaccount ingesteld. Offline agenda\'s blijven op dit apparaat; apparaatagenda\'s synchroniseren via hun eigen account.</string>
     <string name="status_no_writable_calendars">Geen beschrijfbare agenda\'s beschikbaar</string>
     <string name="status_events_count">%1$d afspraken</string>
     <string name="status_sync_history">Synchronisatiegeschiedenis</string>
@@ -333,6 +395,7 @@
     <string name="caldav_error_unexpected">Onverwachte fout. Probeer het opnieuw.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nAls dit een server op je lokale netwerk is, sta dan toegang tot het lokale netwerk toe om verbinding te maken.</string>
     <string name="caldav_error_connection_refused_insecure">De server stuurde de verbinding door naar een plek waar KashCal niet naartoe gaat (een onversleuteld adres of een doorstuurlus), dus KashCal is gestopt voordat je wachtwoord werd verzonden. Controleer het serveradres.</string>
+    <string name="caldav_error_sign_in_again_mismatch">Dit is een ander account. Log in met de gebruikersnaam en server die dit account gebruikt.</string>
     <string name="local_network_banner_title">Toegang tot lokaal netwerk nodig</string>
     <string name="local_network_banner_body">Deze server lijkt op je lokale netwerk te staan. Sta toegang tot het lokale netwerk toe zodat KashCal er verbinding mee kan maken.</string>
     <string name="local_network_banner_allow">Toegang toestaan</string>
@@ -374,7 +437,6 @@
     <string name="error_device_calendar_title">Agendafout</string>
     <string name="error_device_calendar_write_failed">Opslaan naar apparaatagenda mislukt. Probeer het opnieuw.</string>
     <string name="error_device_calendar_permission">Agendatoestemming vereist. Geef toestemming in Instellingen.</string>
-    <string name="error_device_calendar_permission_denied">Zet de agendatoestemming in Instellingen uit en weer aan om schrijftoegang te geven</string>
     <string name="error_device_calendar_not_found">Agenda niet gevonden. Deze is mogelijk verwijderd.</string>
     <string name="error_device_event_not_found">Afspraak niet gevonden. Deze is mogelijk verwijderd.</string>
     <string name="error_device_calendar_read_only">Deze agenda is alleen-lezen.</string>
@@ -401,12 +463,11 @@
     <string name="cd_recurring">Terugkerend</string>
     <string name="cd_enabled">Ingeschakeld</string>
     <string name="cd_sync_error">Synchronisatiefout</string>
-    <string name="cd_select_label">%1$s selecteren</string>
     <string name="cd_wheel_picker">Wielkiezer met %1$d opties</string>
     <string name="cd_time_entry_keyboard">Exacte tijd invoeren</string>
     <string name="time_entry_dialog_title">Tijd invoeren</string>
     <string name="time_entry_tap_to_edit">Tik om te bewerken</string>
-    <string name="cd_version_info">KashCal versie %1$s. Houd ingedrukt voor debug-opties.</string>
+    <string name="cd_version_info">KashCal versie %1$s</string>
     <string name="cd_about_setting">Over %1$s</string>
     <string name="cd_color_slider">Kleurschuif, momenteel %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d graden</string>
@@ -435,7 +496,6 @@
     <string name="label_recurrence_on_date">Op datum</string>
 
     <!-- ==================== Settings (Additional) ==================== -->
-    <string name="settings_visible_calendars">Zichtbare agenda\'s</string>
     <string name="settings_default_calendar">Standaardagenda</string>
     <string name="settings_default_event_length">Standaard afspraakduur</string>
     <string name="settings_default_event_length_hint">Standaardduur voor nieuwe afspraken</string>
@@ -454,7 +514,6 @@
     <string name="option_saturday">Zaterdag</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Geen afspraken gevonden</string>
     <string name="empty_no_upcoming_events">Geen komende afspraken</string>
     <string name="empty_no_calendars">Geen agenda\'s beschikbaar</string>
 
@@ -465,7 +524,15 @@
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Agenda ophalen</string>
     <string name="action_import_from_file">Afspraken uit bestand importeren</string>
-    <string name="action_export_local_calendar">Lokale agenda exporteren</string>
+    <string name="settings_export_calendars">Agenda\'s exporteren</string>
+    <string name="settings_export_calendars_subtitle">Agenda opslaan als ICS-bestand</string>
+    <string name="export_calendar_no_events">Geen afspraken</string>
+    <string name="export_calendar_preparing">Voorbereiden…</string>
+    <string name="cd_export_calendar">%1$s exporteren</string>
+    <string name="cd_export_calendar_preparing">%1$s voorbereiden</string>
+    <string name="export_calendar_chooser_title">Agenda exporteren</string>
+    <string name="export_event_chooser_title">Afspraak exporteren</string>
+    <string name="export_file_failed">Kon bestand niet aanmaken.</string>
 
     <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
@@ -503,12 +570,14 @@
     <string name="accounts_cd_back">Terug</string>
     <string name="accounts_sync_issue">Synchronisatieprobleem</string>
     <string name="accounts_cd_sync_warning">Synchronisatiewaarschuwing</string>
+    <string name="accounts_cd_sync_off">synchronisatie uit</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">Agendafeeds</string>
     <string name="subscriptions_section_add">Toevoegen</string>
     <string name="subscriptions_empty_ics">Geen ICS-abonnementen</string>
     <string name="subscriptions_empty_ics_hint">Voeg een agendafeed toe om afspraken te zien</string>
+    <string name="subscriptions_swipe_hint">Veeg over een feed om hem te verwijderen.</string>
     <string name="subscriptions_add_ics">ICS-agenda toevoegen</string>
     <string name="qs_tile_label">Afspraak</string>
     <string name="holiday_catalog_add">Feestdagenkalender toevoegen</string>
@@ -518,6 +587,11 @@
     <string name="holiday_catalog_empty_hint">Probeer een andere naam</string>
     <string name="holiday_catalog_validate_error">Deze kalender kon niet worden bereikt. Controleer je verbinding en probeer het opnieuw.</string>
     <string name="holiday_catalog_attribution">Feestdagenkalenders van Mozilla Thunderbird, gelicentieerd onder %1$s.</string>
+    <string name="account_feeds_add">Vanuit account toevoegen</string>
+    <string name="account_feeds_note">Toont de agendafeeds die in je iCloud- en CalDAV-accounts zijn opgeslagen. Zet de feed aan om hem aan Agendafeeds toe te voegen.</string>
+    <string name="account_feeds_checking">Controleren…</string>
+    <string name="account_feeds_none">Geen agendafeeds gevonden</string>
+    <string name="account_feeds_failed">Kan agendafeeds niet laden</string>
     <string name="subscriptions_row_label">Agendafeeds (ICS)</string>
     <string name="subscriptions_row_hint">bijv. feestdagen, sport, school</string>
 
@@ -563,6 +637,8 @@
     <string name="account_detail_discovering">Zoeken…</string>
     <string name="account_detail_discover_calendars">Nieuwe agenda\'s ontdekken</string>
     <string name="account_detail_change_password">Wachtwoord wijzigen</string>
+    <string name="account_detail_sign_in_again">Opnieuw inloggen</string>
+    <string name="account_detail_sign_in_again_subtitle">KashCal heeft het wachtwoord van dit account niet meer. Log in om weer te synchroniseren. Je agenda\'s en afspraken blijven bewaard.</string>
     <string name="account_detail_sign_out">Uitloggen</string>
     <string name="account_detail_never_synced">Nooit gesynchroniseerd</string>
     <string name="account_detail_last_success">Laatst geslaagd: %1$s</string>
@@ -586,6 +662,107 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Apparaatagenda\'s</string>
     <string name="settings_device_calendars_hint">Agenda\'s uit andere apps</string>
+    <string name="offline_calendars_row_label">Offline agenda\'s</string>
+    <string name="offline_calendars_row_hint">Agenda\'s die op dit apparaat blijven</string>
+    <string name="offline_calendars_manage_note">Veeg over een agenda om hem te verwijderen.</string>
+    <string name="offline_calendars_info">Op dit apparaat bewaard en nooit gesynchroniseerd.</string>
+    <string name="offline_calendars_info_cd">Over offline agenda\'s</string>
+    <string name="offline_calendar_default_state">Standaard</string>
+    <string name="offline_calendar_new">Nieuwe agenda</string>
+    <string name="offline_calendar_new_in_picker">Nieuwe offline agenda</string>
+    <string name="action_create">Maken</string>
+    <string name="offline_calendar_rename">Hernoemen</string>
+    <string name="offline_calendar_color">Kleur</string>
+    <string name="offline_calendar_export">Agenda exporteren</string>
+    <string name="offline_calendar_builtin_info">De ingebouwde agenda kan niet worden hernoemd of verwijderd. Nieuwe afspraken komen hier als er geen agenda is gekozen.</string>
+    <string name="offline_calendar_builtin_info_cd">Over de ingebouwde agenda</string>
+    <string name="offline_calendar_rename_cancel_cd">Hernoemen annuleren</string>
+    <string name="offline_calendar_rename_save_cd">Naam opslaan</string>
+    <string name="offline_calendar_delete_cd">%1$s verwijderen</string>
+    <plurals name="offline_calendar_delete_confirm">
+        <item quantity="one">\"%2$s\" en de %1$d afspraak definitief verwijderen? Dit kan niet ongedaan worden gemaakt.</item>
+        <item quantity="other">\"%2$s\" en de %1$d afspraken definitief verwijderen? Dit kan niet ongedaan worden gemaakt.</item>
+    </plurals>
+    <string name="offline_calendar_delete_empty">\"%1$s\" definitief verwijderen? Er staan geen afspraken in.</string>
+    <plurals name="offline_calendar_delete_also">
+        <item quantity="one">Ook %1$d afspraak verwijderen</item>
+        <item quantity="other">Ook %1$d afspraken verwijderen</item>
+    </plurals>
+    <string name="offline_calendar_deleted">%1$s verwijderd</string>
+    <string name="offline_calendar_duplicate_name">Er bestaat al een offline agenda met de naam \"%1$s\"</string>
+    <string name="offline_calendar_similar_name">Lijkt te veel op \"%1$s\". Kies een andere naam.</string>
+    <string name="calendar_backup_title">Automatische agenda-back-up</string>
+    <string name="calendar_backup_row_off">Uit</string>
+    <string name="calendar_backup_row_on">%1$s · %2$s</string>
+    <string name="calendar_backup_row_problem">Kan de back-upmap niet bereiken</string>
+    <string name="calendar_backup_intro">Slaat elke offline agenda op als ICS-bestand in een map die je kiest.</string>
+    <string name="calendar_backup_choose_folder">Map kiezen</string>
+    <string name="calendar_backup_choose_folder_hint">Kies of maak een map, bijvoorbeeld in Documents. Android staat het hoogste niveau van de opslag of de map Download zelf niet toe.</string>
+    <string name="calendar_backup_folder">Map</string>
+    <string name="calendar_backup_change">Wijzigen</string>
+    <string name="calendar_backup_frequency">Frequentie</string>
+    <string name="calendar_backup_frequency_info">Back-ups kunnen later plaatsvinden: Android houdt achtergrondtaken tegen als de telefoon inactief is of KashCal een tijd niet is geopend.</string>
+    <string name="calendar_backup_copies">Te bewaren kopieën</string>
+    <string name="calendar_backup_copies_explained">Bij elke back-up blijft het vorige bestand bewaard als kopie met datum. Zijn er meer dan dit aantal, dan worden de oudste verwijderd. Het nieuwste bestand heeft altijd de naam van de agenda.</string>
+    <string name="calendar_backup_copies_fewer">Minder kopieën bewaren</string>
+    <string name="calendar_backup_copies_more">Meer kopieën bewaren</string>
+    <plurals name="calendar_backup_copies_state">
+        <item quantity="one">%d kopie</item>
+        <item quantity="other">%d kopieën</item>
+    </plurals>
+    <plurals name="calendar_backup_deletes">
+        <item quantity="one">Verwijdert %d oudere kopie. Dit kan niet ongedaan worden gemaakt.</item>
+        <item quantity="other">Verwijdert %d oudere kopieën. Dit kan niet ongedaan worden gemaakt.</item>
+    </plurals>
+    <string name="calendar_backup_deletes_unknown">Verwijdert de oudere kopieën boven dit aantal. Dit kan niet ongedaan worden gemaakt.</string>
+    <string name="calendar_backup_calendars">Offline agenda\'s</string>
+    <string name="calendar_backup_calendar_nothing_saved">%1$s · Geen afspraken, niets opgeslagen</string>
+    <string name="calendar_backup_calendar_save_failed">%1$s · Opslaan mislukt. Wordt opnieuw geprobeerd bij de volgende back-up.</string>
+    <string name="calendar_backup_status">Laatste back-up %1$s</string>
+    <plurals name="calendar_backup_status_failed">
+        <item quantity="one">Laatste back-up %1$s · %2$d agenda mislukt</item>
+        <item quantity="other">Laatste back-up %1$s · %2$d agenda\'s mislukt</item>
+    </plurals>
+    <string name="calendar_backup_now">Nu back-uppen</string>
+    <string name="calendar_backup_running">Back-up maken…</string>
+    <string name="calendar_backup_footer_overwrites">KashCal overschrijft deze bestanden bij elke back-up, dus wijzigingen die je in andere apps maakt blijven niet behouden. Gebruik ‘Afspraken uit bestand importeren’ om een agenda te herstellen.</string>
+    <string name="calendar_backup_off_files_stay">Bestaande bestanden blijven in %1$s.</string>
+    <string name="calendar_backup_folder_unreachable">Kan %1$s niet bereiken. De map is mogelijk verplaatst, verwijderd of losgekoppeld.</string>
+    <string name="calendar_backup_error_unsupported">Kan geen bestanden opslaan in %1$s. Kies een andere map.</string>
+    <string name="calendar_backup_choose_again">Opnieuw kiezen</string>
+    <string name="calendar_backup_pick_refused">KashCal kan die map niet gebruiken. Kies een andere.</string>
+    <string name="calendar_backup_pick_cannot_create">KashCal kan geen bestanden maken in die map. Kies een andere.</string>
+    <string name="calendar_backup_failed_title">Agenda-back-up mislukt</string>
+    <string name="calendar_backup_folder_unnamed">de back-upmap</string>
+    <string name="calendar_backup_alert_unreachable">Kan %1$s niet bereiken. Tik om de map opnieuw te kiezen.</string>
+    <string name="calendar_backup_alert_unsupported">Kan geen bestanden opslaan in %1$s. Tik om een andere map te kiezen.</string>
+    <string name="calendar_backup_alert_file_retry">Kan %1$s niet opslaan. KashCal probeert het opnieuw bij de volgende back-up.</string>
+    <string name="calendar_backup_every_hour">Elk uur</string>
+    <string name="calendar_backup_every_day">Elke dag</string>
+    <plurals name="calendar_backup_every_hours">
+        <item quantity="one">Om de %d uur</item>
+        <item quantity="other">Om de %d uur</item>
+    </plurals>
+    <plurals name="calendar_backup_every_days">
+        <item quantity="one">Om de %d dag</item>
+        <item quantity="other">Om de %d dagen</item>
+    </plurals>
+    <string name="calendar_backup_every_day_hours">Om de 1 dag en %1$s</string>
+    <string name="calendar_backup_every_days_hours">Om de %1$s en %2$s</string>
+    <string name="calendar_backup_interval_too_short">Kies minstens 1 uur.</string>
+    <string name="calendar_backup_interval_too_long">Kies 30 dagen of minder.</string>
+    <plurals name="calendar_backup_alert_files_retry">
+        <item quantity="one">Kan %d agenda niet opslaan. KashCal probeert het opnieuw bij de volgende back-up.</item>
+        <item quantity="other">Kan %d agenda\'s niet opslaan. KashCal probeert het opnieuw bij de volgende back-up.</item>
+    </plurals>
+    <string name="calendar_backup_notifications_app_off">Meldingen staan uit voor KashCal, dus KashCal kan je niet laten weten als een back-up mislukt.</string>
+    <string name="calendar_backup_notifications_channel_off">Back-upmeldingen staan uit, dus KashCal kan je niet laten weten als een back-up mislukt.</string>
+    <string name="calendar_backup_open_settings">Instellingen openen</string>
+    <string name="calendar_backup_not_now">Niet nu</string>
+    <plurals name="calendar_backup_row_calendars_failed">
+        <item quantity="one">%d agenda mislukt</item>
+        <item quantity="other">%d agenda\'s mislukt</item>
+    </plurals>
     <string name="settings_quick_event_add">Slim afspraken toevoegen</string>
     <string name="settings_quick_event_add_info">Maak afspraken door natuurlijk te typen. \"Lunch met Sam vrijdag 13:00\" vult de titel, datum en tijd voor je in.</string>
     <string name="settings_suggest_titles">Titels van afspraken voorstellen</string>
@@ -645,6 +822,8 @@
     <string name="cd_pick_month_year">Maand en jaar kiezen</string>
     <string name="cd_previous_month">Vorige maand</string>
     <string name="cd_next_month">Volgende maand</string>
+    <string name="cd_previous_day">Vorige dag</string>
+    <string name="cd_next_day">Volgende dag</string>
     <string name="cd_month_year_picker">Maand- en jaarkiezer</string>
     <string name="cd_remove_alert">Herinnering verwijderen</string>
     <string name="cd_warning">Waarschuwing</string>
@@ -654,7 +833,25 @@
     <string name="label_on_days">Op dagen</string>
     <string name="label_pattern">Patroon</string>
     <string name="label_ends">Eindigt</string>
+    <string name="sheet_hint_change_end">Tik op een dag om het einde te wijzigen</string>
     <string name="label_timezone">Tijdzone</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Zoek stad, land of zone</string>
+    <string name="timezone_section_this_event">Deze afspraak</string>
+    <string name="timezone_section_device">Tijdzone van apparaat</string>
+    <string name="timezone_section_recent">Recent</string>
+    <string name="timezone_section_all">Alle tijdzones</string>
+    <string name="timezone_offsets_on">Tijdverschillen op %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Uit de agenda: %1$s</string>
+    <string name="timezone_shown_in_device_time">Getoond in apparaattijd</string>
+    <string name="timezone_loading">Tijdzones laden…</string>
+    <string name="timezone_no_match">Geen tijdzones gevonden</string>
+    <string name="timezone_no_match_hint">Probeer een stad, een land of een verschil zoals +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Herinneringen</string>
     <string name="label_add_alert">Herinnering toevoegen</string>
     <string name="label_recurrence_never">Nooit</string>
@@ -662,11 +859,8 @@
     <string name="label_yesterday">Gisteren</string>
     <string name="label_device_calendars">Apparaatagenda\'s</string>
     <string name="label_default_calendar_hint">Nieuwe afspraken worden in deze agenda gemaakt</string>
-    <string name="label_visible_count">%1$d / %2$d zichtbaar</string>
     <string name="label_reminders_truncated">%1$d niet getoond (%2$d totaal, max %3$d bewerkbaar)</string>
     <string name="label_found_events">Gevonden: %1$d afspraken</string>
-    <string name="label_open_debug_menu">Debug-menu openen</string>
-    <string name="placeholder_search">Zoeken…</string>
     <string name="settings_search_placeholder">Instellingen zoeken…</string>
     <string name="settings_search_no_results">Geen instellingen gevonden voor \"%1$s\"</string>
     <string name="cd_search_settings">Instellingen zoeken</string>
@@ -677,16 +871,13 @@
     <string name="status_hours_ago">%1$d u geleden</string>
 
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
-    <string name="device_calendars_description">Afspraken tonen van andere agenda-apps op je apparaat (sync-adapters, lokale agenda\'s).</string>
-    <string name="device_calendars_permission_required">Agendatoestemming vereist. Tik op Inschakelen om toegang te verlenen.</string>
-    <string name="device_calendars_read_only_access">Alleen-lezen toegang</string>
-    <string name="device_calendars_grant_write">Geef schrijftoestemming om afspraken te bewerken</string>
-    <string name="device_calendars_grant">Verlenen</string>
-    <string name="device_calendars_none_found">Geen apparaatagenda\'s gevonden.</string>
+    <string name="device_calendars_intro">Agenda\'s van Google, Outlook en sync-apps op dit apparaat tonen.</string>
+    <string name="device_calendars_show_switch">Apparaatagenda\'s tonen</string>
+    <string name="device_calendars_access_off">Agendatoegang staat uit voor KashCal.</string>
+    <string name="device_calendars_pick_hint">Kies agenda\'s om te tonen.</string>
+    <string name="device_calendars_empty">Geen agenda\'s gevonden.</string>
     <string name="device_calendars_local">Lokaal</string>
-    <string name="device_calendars_read_only_no_write">Alleen lezen (geen schrijftoestemming)</string>
     <string name="device_calendars_read_only_calendar">Alleen lezen (agenda is alleen-lezen)</string>
-    <string name="settings_developer_options">Ontwikkelaarsopties</string>
     <string name="settings_sync_frequency">Synchronisatiefrequentie</string>
     <string name="settings_sync_frequency_hint">Hoe vaak op de achtergrond wordt gesynchroniseerd</string>
 
@@ -816,6 +1007,9 @@
     <string name="ics_import_reason_this_and_future">wijzigingen aan deze en latere herhalingen worden niet ondersteund</string>
     <string name="ics_import_reason_own_cancel">jij organiseert deze afspraak, dus annuleer hem vanuit de afspraak</string>
     <string name="ics_import_reason_on_another_calendar">de afspraak staat al in een andere agenda van dit account</string>
+    <string name="ics_import_reason_calendar_keeps_copy">deze agenda bewaart een eigen kopie van de afspraak</string>
+    <string name="ics_import_reason_own_update">jij organiseert deze afspraak, dus wijzig hem vanuit de afspraak</string>
+    <string name="ics_import_reason_change_waiting">de afspraak heeft een wijziging die nog moet synchroniseren; importeer opnieuw zodra die gesynchroniseerd is</string>
     <string name="ics_import_notice_unverified">De afzender van een uitnodigingsbestand kan niet worden geverifieerd. Controleer of het van de organisator komt.</string>
     <string name="ics_import_notice_answer_notifies">Als je op deze uitnodiging reageert, krijgt de organisator mogelijk een melding.</string>
     <string name="ics_import_notice_guests_again">Jij bent de organisator, dus gasten kunnen deze uitnodiging opnieuw ontvangen.</string>
@@ -846,13 +1040,17 @@
     </plurals>
     <string name="ics_import_summary_separator">", "</string>
     <string name="ics_import_summary_nothing">Niets om te importeren</string>
-    <plurals name="exported_events">
-        <item quantity="one">%1$d afspraak geëxporteerd</item>
-        <item quantity="other">%1$d afspraken geëxporteerd</item>
-    </plurals>
     <plurals name="event_count">
         <item quantity="one">%1$d afspraak</item>
         <item quantity="other">%1$d afspraken</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d agenda</item>
+        <item quantity="other">%1$d agenda\'s</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d account</item>
+        <item quantity="other">%1$d accounts</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d agenda</item>
@@ -886,10 +1084,6 @@
         <item quantity="one">%1$d jaar</item>
         <item quantity="other">%1$d jaar</item>
     </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d sec</item>
-        <item quantity="other">%1$d sec</item>
-    </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d minuut van tevoren</item>
         <item quantity="other">%1$d minuten van tevoren</item>
@@ -913,8 +1107,13 @@
     <string name="dialog_move_recurring_title">Verplaatsen</string>
     <string name="snackbar_event_rescheduled">Afspraak verplaatst</string>
     <string name="snackbar_reschedule_failed">Kan afspraak niet verplaatsen</string>
+    <string name="snackbar_move_failed">Kan \"%1$s\" niet verplaatsen</string>
+    <string name="snackbar_move_changed_elsewhere">\"%1$s\" is elders gewijzigd en daarom niet verplaatst</string>
+    <string name="event_untitled">Afspraak zonder titel</string>
     <string name="recurring_this_event">Deze afspraak</string>
     <string name="recurring_all_events">Alle afspraken</string>
+    <string name="recurring_scope_move_not_expressible">De herhaalregel kan deze wijziging niet volgen</string>
+    <string name="event_form_move_not_expressible">De herhaalregel kan deze wijziging niet volgen. Er is niets opgeslagen.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Deelnemers</string>
@@ -978,8 +1177,67 @@
     <string name="empty_no_events_day_3">Een cadeautje: een lege dag.</string>
     <string name="empty_no_events_day_4">Agendastatus: heerlijk leeg.</string>
     <string name="empty_no_events_day_5">Niets gepland. Geniet van de rust.</string>
-    <string name="cd_empty_no_events_day">Rustige dag, niets gepland</string>
     <string name="filter_date">Datum</string>
+    <string name="search_tab_upcoming">Komend</string>
+    <string name="search_tab_past">Voorbij</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d afspraak</item>
+        <item quantity="other">%1$s, %2$d afspraken</item>
+    </plurals>
+    <string name="search_date_this_week">Deze week</string>
+    <string name="search_date_this_month">Deze maand</string>
+    <string name="search_date_pick">Datums kiezen…</string>
+    <string name="search_next">Volgende: %1$s</string>
+    <string name="search_last">Laatste: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Locatie:</string>
+    <string name="search_reason_notes">Notities:</string>
+    <string name="search_reason_guest">Gast:</string>
+    <string name="search_keep_typing">Typ verder om te zoeken</string>
+    <string name="search_no_matches">Geen afspraken gevonden voor ‘%1$s’</string>
+    <string name="search_no_events_tagged">Geen afspraken gelabeld met ‘%1$s’</string>
+    <string name="search_lookback_line">Sync-terugblik: %1$s</string>
+    <string name="search_sync_settings">Sync-instellingen</string>
+    <string name="cd_search_sync_settings">Instelling voor sync-terugblik openen</string>
+    <plurals name="search_show_past">
+        <item quantity="one">%d afgelopen afspraak tonen</item>
+        <item quantity="other">%d afgelopen afspraken tonen</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">Nog %d in een verborgen agenda</item>
+        <item quantity="other">Nog %d in verborgen agenda\'s</item>
+    </plurals>
+    <string name="search_show">Tonen</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">%d resultaat in een verborgen agenda tonen</item>
+        <item quantity="other">%d resultaten in verborgen agenda\'s tonen</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">%d in een verborgen agenda tonen</item>
+        <item quantity="other">%d in verborgen agenda\'s tonen</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Inclusief %d verborgen agenda</item>
+        <item quantity="other">Inclusief %d verborgen agenda\'s</item>
+    </plurals>
+    <string name="search_leave_out">Weglaten</string>
+    <string name="cd_search_leave_out">Verborgen agenda\'s weglaten</string>
+    <string name="search_hidden_calendar">%1$s · verborgen</string>
+    <string name="cd_search_date_this_week">Resultaten van deze week tonen</string>
+    <string name="cd_search_date_this_month">Resultaten van deze maand tonen</string>
+    <string name="cd_search_date_pick">Datums kiezen om te zoeken</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d komend</item>
+        <item quantity="other">%d komend</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d voorbij</item>
+        <item quantity="other">%d voorbij</item>
+    </plurals>
+    <string name="search_no_past_events">Geen afgelopen afspraken</string>
+    <string name="search_no_events_in_dates">Geen afspraken op deze datums</string>
     <string name="label_select_date">Selecteer een datum</string>
     <string name="hint_tap_date_range">Tik dezelfde datum voor één dag, of een andere datum voor een bereik</string>
     <string name="cd_clear">Wissen</string>
@@ -1071,7 +1329,6 @@
     <string name="reminder_none">Geen herinnering</string>
     <string name="reminder_at_time_of_event">Op het moment van de afspraak</string>
     <string name="reminder_time_before">%1$s van tevoren</string>
-    <string name="reminder_time_after">%1$s na</string>
     <string name="reminder_day_of_event_12h">9 AM op de dag van de afspraak</string>
     <string name="reminder_day_of_event_24h">09:00 op de dag van de afspraak</string>
     <string name="reminder_day_of_event">Op de dag van de afspraak</string>
@@ -1203,6 +1460,7 @@
     <!-- ==================== i18n: Round 2 audit gaps ==================== -->
     <string name="action_save_event">Afspraak opslaan</string>
     <string name="badge_beta">Bèta</string>
+    <string name="badge_sync_off">Synchr. uit</string>
     <string name="badge_new">Nieuw</string>
     <string name="color_red">Rood</string>
     <string name="color_orange">Oranje</string>
@@ -1231,6 +1489,19 @@
     <string name="ics_fetch_error_http">De server gaf een foutmelding (%1$d). Controleer de URL.</string>
     <string name="ics_fetch_error_empty">De agendafeed is leeg.</string>
     <string name="ics_fetch_error_not_calendar">Deze URL lijkt geen agendafeed te zijn.</string>
+    <string name="ics_feed_error_empty_response">De server heeft geen geldige feed gestuurd.</string>
+    <string name="ics_feed_error_access_denied">De server van deze feed weigerde toegang.</string>
+    <string name="ics_feed_error_too_large">Deze agendafeed is te groot om te downloaden.</string>
+    <string name="ics_feed_error_unreadable">De afspraken van deze feed konden niet worden weergegeven.</string>
+    <string name="ics_feed_error_event_not_saved">‘%1$s’ is niet opgeslagen.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d afspraak is niet opgeslagen.</item>
+        <item quantity="other">%1$d afspraken zijn niet opgeslagen.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d afspraak is niet opgeslagen, waaronder ‘%2$s’.</item>
+        <item quantity="other">%1$d afspraken zijn niet opgeslagen, waaronder ‘%2$s’.</item>
+    </plurals>
     <string name="insights_title">Inzichten</string>
     <string name="insights_period_this_week">Week</string>
     <string name="insights_period_last_week">Vorige week</string>
@@ -1358,7 +1629,7 @@
         <item quantity="other">Vrij op de volgende %1$d dagen (%2$s – %3$s):</item>
     </plurals>
     <string name="share_availability_day_line">%1$s: %2$s</string>
-    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_block_separator">", "</string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">Geen vrije blokken van ten minste een uur in het geselecteerde bereik.</string>
     <string name="share_from_kashcal_footer">Gedeeld vanuit KashCal</string>
@@ -1380,5 +1651,31 @@
     <string name="share_as_card_all_day">Hele dag</string>
     <string name="share_as_card_chooser_title">Afspraak delen</string>
     <string name="share_as_card_share_failed">Kan kaart niet delen</string>
+    <string name="print_your_week">Je week afdrukken</string>
+    <string name="print_options_title">Afdrukopties kiezen</string>
+    <string name="print_pages_header">Pagina\'s</string>
+    <string name="print_page_week">Weekagenda</string>
+    <string name="print_page_week_detail">De week als raster</string>
+    <string name="print_page_details">Details</string>
+    <string name="print_page_details_detail">Elke afspraak volledig</string>
+    <string name="print_action">Afdrukken</string>
+    <string name="cd_print_previous_week">Vorige week</string>
+    <string name="cd_print_next_week">Volgende week</string>
+    <plurals name="print_summary_pages">
+        <item quantity="one">%d pagina</item>
+        <item quantity="other">%d pagina\'s</item>
+    </plurals>
+    <plurals name="print_summary_calendars">
+        <item quantity="one">%1$d van %2$d agenda</item>
+        <item quantity="other">%1$d van %2$d agenda\'s</item>
+    </plurals>
+    <string name="print_summary">%1$s · %2$s</string>
+    <string name="print_job_name">%1$s – Week van %2$s</string>
+    <string name="print_failed">Kan niet afdrukken. Probeer het opnieuw.</string>
+    <string name="print_doc_week">Week</string>
+    <string name="print_doc_printed">Afgedrukt op %1$s</string>
+    <string name="print_doc_page_of">Pagina %1$s van %2$s</string>
+    <string name="print_doc_numbers_note">De nummers komen overeen met de details, waarin elke afspraak volledig staat.</string>
+    <string name="print_doc_times_in">Tijden in %1$s</string>
 
 </resources>

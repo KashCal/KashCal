@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.every
@@ -19,6 +19,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.icaldav.parser.ICalParser
 import org.onekash.kashcal.data.db.KashCalDatabase
+import org.onekash.kashcal.data.db.PendingOperationTriggers
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.preferences.KashCalDataStore
@@ -33,6 +34,7 @@ import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -93,7 +95,8 @@ class PushStrategyServerChangeMergeTest {
             Credentials(username = "u", password = "p", serverUrl = base), DefaultQuirks(base)
         )
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
+            .addCallback(PendingOperationTriggers.callback())
             .allowMainThreadQueries().build()
         occurrenceGenerator = OccurrenceGenerator(
             database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault()
@@ -115,7 +118,8 @@ class PushStrategyServerChangeMergeTest {
             pendingOperationsDao = database.pendingOperationsDao(),
             accountRepository = accountRepository,
             attendeesDao = database.attendeesDao(),
-            pendingCancelsDao = database.pendingCancelsDao()
+            pendingCancelsDao = database.pendingCancelsDao(),
+            icsSource = EventIcsStore(database),
         )
         val dataStore = mockk<KashCalDataStore>(relaxed = true)
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
@@ -131,7 +135,8 @@ class PushStrategyServerChangeMergeTest {
             dataStore = dataStore,
             inviteNotifier = mockk(relaxed = true),
             accountRepository = accountRepository,
-            reminderScheduler = mockk(relaxed = true)
+            reminderScheduler = mockk(relaxed = true),
+            icsSource = EventIcsStore(database),
         )
     }
 
@@ -142,9 +147,9 @@ class PushStrategyServerChangeMergeTest {
     }
 
     /**
-     * The server holds [ics]; KashCal stored it as pull does (every row carries the whole body,
-     * the URL and the etag) and has the calendar's current ctag and token. Returns the changed
-     * occurrences' row ids by instance time.
+     * The server holds [ics]; KashCal stored it as pull does (every row carries the URL and the
+     * etag, the series row the body) and has the calendar's current ctag and token. Returns the
+     * changed occurrences' row ids by instance time.
      */
     private suspend fun seedPulled(ics: String = meeting): Map<Long, Long> {
         dav.put(path, ics)
@@ -152,6 +157,7 @@ class PushStrategyServerChangeMergeTest {
         val seriesParsed = parsed.single { it.recurrenceId == null }
         val mapped = ICalEventMapper.toEntity(seriesParsed, ics, calendarId, url, dav.etag(path))
         eventId = database.eventsDao().insert(mapped.event)
+        EventIcsStore(database).write(eventId, mapped.ics)
         database.attendeesDao().replaceForEvent(eventId, mapped.attendees.map { it.copy(eventId = eventId) })
         occurrenceGenerator.regenerateOccurrences(database.eventsDao().getById(eventId)!!)
         val occurrences = parsed.filter { it.recurrenceId != null }.associate { change ->
@@ -250,7 +256,7 @@ class PushStrategyServerChangeMergeTest {
         assertEquals("ACCEPTED", localGuestPartstat())
         assertEquals(dav.etag(path), row.etag)
         // The multiget's XML carries the body with its CRLFs read as LFs and its end trimmed.
-        assertEquals(dav.body(path).replace("\r\n", "\n").trim(), row.rawIcal!!.replace("\r\n", "\n").trim())
+        assertEquals(dav.body(path).replace("\r\n", "\n").trim(), EventIcsStore(database).read(row)!!.replace("\r\n", "\n").trim())
     }
 
     @Test

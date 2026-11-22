@@ -202,7 +202,7 @@ class ICalDateTimeTest {
 
     @Test
     fun `timezoneAliases map loads entries from classpath`() {
-        // ical4j 4.3.0's msTimezoneNames has 99 entries, and ZoneId.of accepts every target.
+        // ical4j's msTimezoneNames has 99 entries, and ZoneId.of accepts every target.
         assertTrue(ICalDateTime.timezoneAliases.size > 90,
             "Expected >90 valid timezone aliases, got ${ICalDateTime.timezoneAliases.size}")
     }
@@ -217,7 +217,7 @@ class ICalDateTimeTest {
 
     @Test
     fun `timezoneAliases excludes entries with invalid IANA targets`() {
-        // Targets ZoneId.of rejects are skipped. ical4j 4.3.0's file has neither of these typos,
+        // Targets ZoneId.of rejects are skipped. ical4j's file has neither of these typos,
         // so this test can't fail there.
         assertFalse(ICalDateTime.timezoneAliases.containsValue("US/Hwaii"),
             "US/Hwaii is an invalid IANA ID and should be excluded")

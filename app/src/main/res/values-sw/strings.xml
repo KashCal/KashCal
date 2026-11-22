@@ -43,6 +43,8 @@
     <string name="channel_event_invitations">Mialiko ya Tukio</string>
     <string name="channel_event_invitations_desc">Arifa unapopokea mwaliko mpya wa kalenda</string>
     <string name="channel_calendar_updates">Mabadiliko ya kalenda</string>
+    <string name="channel_calendar_backup">Nakala rudufu ya kalenda kiotomatiki</string>
+    <string name="channel_calendar_backup_description">Hukujulisha nakala rudufu ya kalenda inaposhindwa</string>
     <string name="invite_notification_body">Kutoka kwa %1$s · Gusa ili kujibu</string>
 
     <!-- ==================== App Shortcuts ==================== -->
@@ -88,7 +90,6 @@
     <string name="action_discard">Tupa</string>
     <string name="action_discard_confirm">Utupe?</string>
     <string name="action_dismiss">Ondoa</string>
-    <string name="action_show_all">Onyesha Zote</string>
     <string name="action_connect">Unganisha</string>
     <string name="action_duplicate">Nakili</string>
     <string name="action_share">Shiriki</string>
@@ -119,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d zaidi</string>
     <string name="tags_autocomplete_create_new">Unda \"%1$s\"</string>
     <string name="cd_tag">Lebo: %1$s</string>
+    <string name="tags_show_events_click_label">Onyesha matukio yenye lebo hii</string>
+    <string name="tags_show_events">Onyesha matukio</string>
     <string name="cd_tags_move_menu">Hamisha lebo</string>
     <string name="tags_move_above_notes">Hamisha juu ya madokezo</string>
     <string name="tags_move_below_notes">Hamisha chini ya madokezo</string>
@@ -148,7 +151,6 @@
     <string name="label_enter_hex">Ingiza herufi 6 za hex (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Zote</string>
     <string name="view_week">Wiki</string>
     <string name="view_month">Mwezi</string>
     <string name="label_all_day">Siku nzima</string>
@@ -188,19 +190,40 @@
     <string name="settings_start_week_on">Anza Wiki Siku ya</string>
     <string name="settings_event_emojis">Emoji za Matukio</string>
     <string name="settings_event_emojis_info">Huongeza emoji kwenye matukio kulingana na kichwa, kama 🎂 kwa \"Siku ya kuzaliwa\".</string>
-    <string name="settings_force_sync">Sawazisha Kamili kwa Nguvu</string>
+    <string name="settings_force_sync">Sawazisha kamili kwa nguvu</string>
     <string name="settings_force_sync_subtitle">Pakua upya data yote ya kalenda</string>
-    <string name="settings_sync_history">Historia ya Kusawazisha</string>
+    <string name="settings_force_sync_no_account">Hakuna akaunti ya usawazishaji iliyosanidiwa</string>
+    <string name="force_sync_confirm">Pakua upya %1$s kutoka %2$s. Mabadiliko ambayo hayajasawazishwa yanawekwa.</string>
+    <string name="action_start">Anza</string>
+    <string name="settings_sync_history">Historia ya kusawazisha</string>
     <string name="settings_sync_history_subtitle">Tazama vipindi vya kusawazisha (saa 48 zilizopita)</string>
     <string name="settings_import_subtitle">Ongeza matukio kutoka faili ya ICS kwenye kalenda yoyote</string>
-    <string name="settings_export_subtitle">Hifadhi matukio kwenye faili ya ICS</string>
     <string name="settings_birthday_reminder">Ukumbusho wa Siku ya Kuzaliwa</string>
-    <string name="settings_use_device_timezone">Tumia eneo la saa la kifaa</string>
     <string name="settings_section_calendars">Kalenda &amp; akaunti</string>
     <string name="settings_section_appearance">Mwonekano</string>
     <string name="settings_section_creating_events">Mapendeleo ya tukio</string>
     <string name="settings_section_sync">Kusawazisha</string>
     <string name="settings_section_data">Nakala Rudufu &amp; Rejesha</string>
+    <string name="settings_section_troubleshooting">Utatuzi wa matatizo</string>
+
+    <!-- ==================== Debug report (Settings > Troubleshooting) ==================== -->
+    <string name="debug_report_row_label">Hamisha ripoti ya utatuzi</string>
+    <string name="debug_report_row_subtitle">Maelezo ya kuacha kufanya kazi, usawazishaji na usanidi ya kutuma pamoja na ripoti ya hitilafu</string>
+    <string name="debug_report_sheet_title">Ripoti ya utatuzi</string>
+    <string name="debug_report_sheet_body">Faili ya maandishi ya kutuma pamoja na ripoti ya hitilafu. Itume mapema baada ya tatizo: kumbukumbu za programu huhifadhi shughuli za hivi karibuni pekee.</string>
+    <string name="debug_report_item_exits">Kwa nini programu ilifungwa hivi karibuni</string>
+    <string name="debug_report_item_exits_detail">Kuacha kufanya kazi, kukwama, upungufu wa RAM</string>
+    <string name="debug_report_item_log">Kumbukumbu za programu</string>
+    <string name="debug_report_item_log_detail">Ujumbe wa KashCal wenyewe, ikijumuisha maelezo ya kuacha kufanya kazi</string>
+    <string name="debug_report_item_sync_detail">Usawazishaji wa hivi karibuni, hadi saa 48 zilizopita</string>
+    <string name="debug_report_item_pending">Mabadiliko yanayosubiri</string>
+    <string name="debug_report_item_pending_detail">Marekebisho ambayo bado hayajatumwa kwenye seva yako</string>
+    <string name="debug_report_item_setup">Usanidi</string>
+    <string name="debug_report_item_setup_detail">Toleo la programu na Android, ruhusa, mipangilio ya betri, aina za akaunti</string>
+    <string name="debug_report_privacy_note">Anwani za barua pepe, anwani za wavuti na tokeni zimefichwa. Vichwa vya matukio, majina ya kalenda na majina ya anwani hayajafichwa. Itume kwa barua pepe, si kwenye chapisho la umma.</string>
+    <string name="debug_report_share">Shiriki ripoti</string>
+    <string name="debug_report_chooser_title">Shiriki ripoti ya utatuzi</string>
+    <string name="debug_report_failed">Imeshindwa kuunda ripoti ya utatuzi</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Kufuli ya programu</string>
@@ -236,9 +259,37 @@
     <string name="backup_error_read_failed">Haikuweza kusoma faili</string>
 
     <!-- ==================== Onboarding ==================== -->
-    <string name="onboarding_apple_calendar">Apple Calendar?</string>
-    <string name="onboarding_got_you">Tumekushughulikia.</string>
-    <string name="onboarding_connect_prompt">Unganisha iCloud ili uone matukio yako hapa</string>
+    <string name="onboarding_title">Kalenda zako ziko wapi?</string>
+    <string name="onboarding_subtitle">Chagua moja ili uunganishe.</string>
+    <string name="onboarding_icloud_detail">Apple ID na nenosiri la programu</string>
+    <string name="onboarding_caldav_title">Seva ya CalDAV</string>
+    <string name="onboarding_caldav_detail">Nextcloud, Fastmail, Radicale na nyinginezo</string>
+    <string name="onboarding_device_title">Kwenye kifaa hiki</string>
+    <string name="onboarding_phone_detail">Google, Outlook na programu za kusawazisha</string>
+    <string name="onboarding_use_offline">Tumia kalenda ya nje ya mtandao</string>
+    <string name="onboarding_trust">Chanzo huria. Hakuna matangazo. Hakuna ufuatiliaji.</string>
+
+    <!-- ==================== Reminders are off ==================== -->
+    <string name="reminders_off_title">Vikumbusho vimezimwa</string>
+    <plurals name="reminders_off_body">
+        <item quantity="one">Tukio %d wiki hii lina kikumbusho.</item>
+        <item quantity="other">Matukio %d wiki hii yana vikumbusho.</item>
+    </plurals>
+    <string name="reminders_off_not_now">Si Sasa</string>
+    <string name="reminders_off_turn_on">Washa</string>
+    <string name="reminders_on_snackbar">Vikumbusho vimewashwa</string>
+
+    <!-- ==================== About ==================== -->
+    <string name="about_tagline">Kalenda zako zote katika programu moja ya faragha.</string>
+    <string name="about_help_title">Usaidizi na miongozo</string>
+    <string name="about_help_detail">Usanidi, kusawazisha na maswali</string>
+    <string name="about_source_title">Msimbo chanzo</string>
+    <string name="about_source_detail">Apache 2.0, kwenye GitHub</string>
+    <string name="about_support_title">Saidia KashCal</string>
+    <string name="about_support_detail">Asante kwa wote ambao tayari wanasaidia</string>
+    <string name="about_link_failed">Hakuna programu inayoweza kufungua kiungo hiki.</string>
+    <string name="about_built_in_austin">Imejengwa kwa ❤️ huko Austin</string>
+    <string name="about_version">Toleo %1$s</string>
 
     <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Ruka</string>
@@ -257,22 +308,32 @@
     <string name="whats_new_v772_changes_title">Ona kilichobadilika</string>
     <string name="whats_new_v772_changes_body">Matukio mapya, yaliyohaririwa na yaliyoondolewa kutoka kalenda zako za iCloud na CalDAV hukusanywa katika Mabadiliko ya hivi karibuni kwa siku 7. Gusa moja ili kulifungua.</string>
     <string name="whats_new_v772_notifications_body">Pata arifa usawazishaji wa chinichini unapopata mabadiliko kwenye matukio yako ya iCloud au CalDAV. Hubaki imezimwa hadi utakapoiwasha.</string>
+    <string name="whats_new_v803_offline_title">Kalenda zinazobaki kwenye simu yako</string>
+    <string name="whats_new_v803_offline_body">Mipango mingine haifai kuwa kwenye seva. Ipe kalenda zake za nje ya mtandao, nyingi kadiri unavyotaka.</string>
+    <string name="whats_new_v803_backup_title">Nakala rudufu usizohitaji kukumbuka</string>
+    <string name="whats_new_v803_backup_body">Chagua folda mara moja, na KashCal itaweka humo nakala mpya ya kalenda zako za nje ya mtandao.</string>
+    <string name="whats_new_v803_print_title">Wiki yako, kwenye karatasi</string>
+    <string name="whats_new_v803_print_body">Chapisha wiki unayoitazama. Ibandike kwenye friji ipi, uamuzi ni wako.</string>
     <string name="whats_new_hero_sample_lunch">Chakula cha mchana cha timu</string>
     <string name="whats_new_hero_sample_review">Tathmini ya muundo</string>
     <string name="whats_new_hero_sample_book_club">Klabu ya vitabu</string>
+    <string name="whats_new_hero_sample_dentist">Daktari wa meno</string>
+    <string name="whats_new_hero_sample_yoga">Yoga</string>
     <string name="whats_new_hero_sample_calendar">Kazi</string>
+    <string name="whats_new_hero_sample_family">Familia</string>
+    <string name="whats_new_hero_sample_garden">Bustani</string>
+    <string name="whats_new_hero_sample_folder">Nakala rudufu za kalenda</string>
     <string name="whats_new_hero_now">sasa</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Unganisha iCloud</string>
     <string name="signin_caldav_title">Ongeza Akaunti ya CalDAV</string>
+    <string name="signin_caldav_sign_in_again_title">Ingia Tena</string>
     <string name="signin_connected_to">Imeunganishwa na %1$s</string>
 
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Tukio Jipya</string>
     <string name="dialog_edit_event_title">Hariri Tukio</string>
-    <string name="dialog_force_sync_title">Sawazisha Kamili kwa Nguvu?</string>
-    <string name="dialog_force_sync_message">Hii itapakua upya data yote ya kalenda kutoka kwa seva. Mabadiliko ya ndani yatahifadhiwa.</string>
     <string name="dialog_enable_notifications">Washa Arifa?</string>
     <string name="dialog_action_required">Kitendo hiki kinahitajika kuendelea.</string>
     <string name="dialog_add_to_calendar">Ongeza kwenye kalenda</string>
@@ -285,6 +346,7 @@
     <string name="status_no_events_week">Hakuna matukio wiki hii</string>
     <string name="status_more_events">+%1$d zaidi</string>
     <string name="status_no_sync_sessions">Hakuna vipindi vya kusawazisha bado.\n\nVuta chini ili kusawazisha kwenye mtazamo wa kalenda.</string>
+    <string name="status_no_sync_account">Hakuna akaunti ya usawazishaji iliyosanidiwa. Kalenda za nje ya mtandao zinabaki kwenye kifaa hiki; kalenda za kifaa zinasawazishwa kupitia akaunti zao wenyewe.</string>
     <string name="status_no_writable_calendars">Hakuna kalenda zinazoweza kuandikwa</string>
     <string name="status_events_count">Matukio %1$d</string>
     <string name="status_sync_history">Historia ya Kusawazisha</string>
@@ -333,6 +395,7 @@
     <string name="caldav_error_unexpected">Hitilafu isiyotarajiwa. Jaribu tena.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nKama hii ni seva iliyo kwenye mtandao wako wa ndani, ruhusu ufikiaji wa mtandao wa ndani ili kuunganisha.</string>
     <string name="caldav_error_connection_refused_insecure">Seva ilielekeza muunganisho mahali ambapo KashCal haiendi (anwani isiyosimbwa, au mzunguko wa kuelekeza upya), kwa hivyo KashCal ilisimama kabla ya kutuma nenosiri lako. Kagua anwani ya seva.</string>
+    <string name="caldav_error_sign_in_again_mismatch">Hii ni akaunti tofauti. Ingia kwa jina la mtumiaji na seva ambayo akaunti hii inatumia.</string>
     <string name="local_network_banner_title">Ufikiaji wa mtandao wa ndani unahitajika</string>
     <string name="local_network_banner_body">Seva hii inaonekana iko kwenye mtandao wako wa ndani. Ruhusu ufikiaji wa mtandao wa ndani ili KashCal iweze kuiunganisha.</string>
     <string name="local_network_banner_allow">Ruhusu ufikiaji</string>
@@ -374,7 +437,6 @@
     <string name="error_device_calendar_title">Hitilafu ya Kalenda</string>
     <string name="error_device_calendar_write_failed">Imeshindwa kuhifadhi kwenye kalenda ya kifaa. Tafadhali jaribu tena.</string>
     <string name="error_device_calendar_permission">Ruhusa ya kuandika kalenda inahitajika. Tafadhali ruhusa katika Mipangilio.</string>
-    <string name="error_device_calendar_permission_denied">Zima kisha uwashe tena ruhusa ya Kalenda katika Mipangilio ili kutoa ufikiaji wa kuandika</string>
     <string name="error_device_calendar_not_found">Kalenda haijapatikana. Inaweza kuwa imeondolewa.</string>
     <string name="error_device_event_not_found">Tukio halijapatikana. Linaweza kuwa limefutwa.</string>
     <string name="error_device_calendar_read_only">Kalenda hii ni ya kusoma tu.</string>
@@ -401,12 +463,11 @@
     <string name="cd_recurring">Inarudia</string>
     <string name="cd_enabled">Imewashwa</string>
     <string name="cd_sync_error">Hitilafu ya kusawazisha</string>
-    <string name="cd_select_label">Chagua %1$s</string>
     <string name="cd_wheel_picker">Kichagua gurudumu chenye chaguo %1$d</string>
     <string name="cd_time_entry_keyboard">Weka saa kamili</string>
     <string name="time_entry_dialog_title">Weka saa</string>
     <string name="time_entry_tap_to_edit">Gusa ili kuhariri</string>
-    <string name="cd_version_info">KashCal toleo %1$s. Bonyeza kwa muda mrefu kwa chaguo za utatuzi.</string>
+    <string name="cd_version_info">KashCal toleo %1$s</string>
     <string name="cd_about_setting">Kuhusu %1$s</string>
     <string name="cd_color_slider">Kitelezi cha rangi, sasa hivi %1$s</string>
     <string name="cd_color_slider_state">%1$s, digrii %2$d</string>
@@ -435,7 +496,6 @@
     <string name="label_recurrence_on_date">Tarehe</string>
 
     <!-- ==================== Settings (Additional) ==================== -->
-    <string name="settings_visible_calendars">Kalenda Zinazoonekana</string>
     <string name="settings_default_calendar">Kalenda Chaguomsingi</string>
     <string name="settings_default_event_length">Urefu wa Tukio Chaguomsingi</string>
     <string name="settings_default_event_length_hint">Muda chaguo-msingi kwa matukio mapya</string>
@@ -455,7 +515,6 @@
     <string name="option_saturday">Jumamosi</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Hakuna matukio yaliyopatikana</string>
     <string name="empty_no_upcoming_events">Hakuna matukio yanayokuja</string>
     <string name="empty_no_calendars">Hakuna kalenda zinazopatikana</string>
 
@@ -466,7 +525,15 @@
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Pakua Kalenda</string>
     <string name="action_import_from_file">Ingiza matukio kutoka faili</string>
-    <string name="action_export_local_calendar">Hamisha kalenda ya Ndani</string>
+    <string name="settings_export_calendars">Hamisha kalenda</string>
+    <string name="settings_export_calendars_subtitle">Hifadhi kalenda kama faili la ICS</string>
+    <string name="export_calendar_no_events">Hakuna matukio</string>
+    <string name="export_calendar_preparing">Inaandaa…</string>
+    <string name="cd_export_calendar">Hamisha %1$s</string>
+    <string name="cd_export_calendar_preparing">Inaandaa %1$s</string>
+    <string name="export_calendar_chooser_title">Hamisha kalenda</string>
+    <string name="export_event_chooser_title">Hamisha tukio</string>
+    <string name="export_file_failed">Haikuweza kuunda faili.</string>
 
     <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
@@ -504,12 +571,14 @@
     <string name="accounts_cd_back">Rudi nyuma</string>
     <string name="accounts_sync_issue">Tatizo la kusawazisha</string>
     <string name="accounts_cd_sync_warning">Onyo la kusawazisha</string>
+    <string name="accounts_cd_sync_off">usawazishaji umezimwa</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">Milisho ya Kalenda</string>
     <string name="subscriptions_section_add">Ongeza</string>
     <string name="subscriptions_empty_ics">Hakuna usajili wa ICS</string>
     <string name="subscriptions_empty_ics_hint">Ongeza mlisho wa kalenda ili kuona matukio</string>
+    <string name="subscriptions_swipe_hint">Telezesha mlisho ili kuufuta.</string>
     <string name="subscriptions_add_ics">Ongeza Kalenda ya ICS</string>
     <string name="qs_tile_label">Ongeza tukio</string>
     <string name="holiday_catalog_add">Ongeza kalenda ya likizo</string>
@@ -519,6 +588,11 @@
     <string name="holiday_catalog_empty_hint">Jaribu jina lingine</string>
     <string name="holiday_catalog_validate_error">Imeshindwa kufikia kalenda hii. Angalia muunganisho wako kisha ujaribu tena.</string>
     <string name="holiday_catalog_attribution">Kalenda za likizo kutoka Mozilla Thunderbird, zenye leseni chini ya %1$s.</string>
+    <string name="account_feeds_add">Ongeza kutoka kwa akaunti</string>
+    <string name="account_feeds_note">Huorodhesha milisho ya kalenda iliyohifadhiwa kwenye akaunti zako za iCloud na CalDAV. Washa ili kuuongeza kwenye Milisho ya Kalenda.</string>
+    <string name="account_feeds_checking">Inakagua…</string>
+    <string name="account_feeds_none">Hakuna milisho ya kalenda iliyopatikana</string>
+    <string name="account_feeds_failed">Imeshindwa kupakia milisho ya kalenda</string>
     <string name="subscriptions_row_label">Milisho ya Kalenda (ICS)</string>
     <string name="subscriptions_row_hint">mfano sikukuu, michezo, shule</string>
 
@@ -564,6 +638,8 @@
     <string name="account_detail_discovering">Inagundua…</string>
     <string name="account_detail_discover_calendars">Gundua Kalenda Mpya</string>
     <string name="account_detail_change_password">Badilisha Nenosiri</string>
+    <string name="account_detail_sign_in_again">Ingia Tena</string>
+    <string name="account_detail_sign_in_again_subtitle">KashCal haina tena nenosiri la akaunti hii. Ingia ili kusawazisha tena. Kalenda na matukio yako yatabaki.</string>
     <string name="account_detail_sign_out">Ondoka</string>
     <string name="account_detail_never_synced">Haijawahi kusawazishwa</string>
     <string name="account_detail_last_success">Mafanikio ya mwisho: %1$s</string>
@@ -587,6 +663,107 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Kalenda za Kifaa</string>
     <string name="settings_device_calendars_hint">Kalenda kutoka kwa programu zingine</string>
+    <string name="offline_calendars_row_label">Kalenda za nje ya mtandao</string>
+    <string name="offline_calendars_row_hint">Kalenda zinazobaki kwenye kifaa hiki</string>
+    <string name="offline_calendars_manage_note">Telezesha kalenda ili kuifuta.</string>
+    <string name="offline_calendars_info">Huhifadhiwa kwenye kifaa hiki na hazisawazishwi kamwe.</string>
+    <string name="offline_calendars_info_cd">Kuhusu kalenda za nje ya mtandao</string>
+    <string name="offline_calendar_default_state">Chaguomsingi</string>
+    <string name="offline_calendar_new">Kalenda mpya</string>
+    <string name="offline_calendar_new_in_picker">Kalenda mpya ya nje ya mtandao</string>
+    <string name="action_create">Unda</string>
+    <string name="offline_calendar_rename">Badilisha jina</string>
+    <string name="offline_calendar_color">Rangi</string>
+    <string name="offline_calendar_export">Hamisha kalenda</string>
+    <string name="offline_calendar_builtin_info">Kalenda iliyojengewa ndani haiwezi kubadilishwa jina wala kufutwa. Matukio mapya huenda hapa kalenda isipochaguliwa.</string>
+    <string name="offline_calendar_builtin_info_cd">Kuhusu kalenda iliyojengewa ndani</string>
+    <string name="offline_calendar_rename_cancel_cd">Ghairi kubadilisha jina</string>
+    <string name="offline_calendar_rename_save_cd">Hifadhi jina</string>
+    <string name="offline_calendar_delete_cd">Futa %1$s</string>
+    <plurals name="offline_calendar_delete_confirm">
+        <item quantity="one">Futa \"%2$s\" na tukio lake %1$d milele? Haiwezi kutenduliwa.</item>
+        <item quantity="other">Futa \"%2$s\" na matukio yake %1$d milele? Haiwezi kutenduliwa.</item>
+    </plurals>
+    <string name="offline_calendar_delete_empty">Futa \"%1$s\" milele? Haina matukio.</string>
+    <plurals name="offline_calendar_delete_also">
+        <item quantity="one">Futa pia tukio %1$d</item>
+        <item quantity="other">Futa pia matukio %1$d</item>
+    </plurals>
+    <string name="offline_calendar_deleted">%1$s imefutwa</string>
+    <string name="offline_calendar_duplicate_name">Kalenda ya nje ya mtandao inayoitwa \"%1$s\" tayari ipo</string>
+    <string name="offline_calendar_similar_name">Inafanana sana na \"%1$s\". Chagua jina tofauti.</string>
+    <string name="calendar_backup_title">Nakala rudufu ya kalenda kiotomatiki</string>
+    <string name="calendar_backup_row_off">Imezimwa</string>
+    <string name="calendar_backup_row_on">%1$s · %2$s</string>
+    <string name="calendar_backup_row_problem">Haiwezi kufikia folda ya nakala rudufu</string>
+    <string name="calendar_backup_intro">Huhifadhi kila kalenda ya nje ya mtandao kama faili ya ICS katika folda unayochagua.</string>
+    <string name="calendar_backup_choose_folder">Chagua folda</string>
+    <string name="calendar_backup_choose_folder_hint">Chagua au unda folda, kwa mfano katika Documents. Android hairuhusu sehemu ya juu kabisa ya hifadhi wala folda ya Download yenyewe.</string>
+    <string name="calendar_backup_folder">Folda</string>
+    <string name="calendar_backup_change">Badilisha</string>
+    <string name="calendar_backup_frequency">Marudio</string>
+    <string name="calendar_backup_frequency_info">Nakala rudufu zinaweza kuchelewa: Android huzuia kazi za chinichini simu isipotumika au KashCal isipofunguliwa kwa muda.</string>
+    <string name="calendar_backup_copies">Nakala za kubakiza</string>
+    <string name="calendar_backup_copies_explained">Kila nakala rudufu huhifadhi faili iliyotangulia kama nakala yenye tarehe. Zinapozidi idadi hii, za zamani zaidi hufutwa. Faili mpya zaidi huwa na jina la kalenda kila wakati.</string>
+    <string name="calendar_backup_copies_fewer">Bakiza nakala chache</string>
+    <string name="calendar_backup_copies_more">Bakiza nakala zaidi</string>
+    <plurals name="calendar_backup_copies_state">
+        <item quantity="one">nakala %d</item>
+        <item quantity="other">nakala %d</item>
+    </plurals>
+    <plurals name="calendar_backup_deletes">
+        <item quantity="one">Hufuta nakala %d ya zamani. Haiwezi kutenduliwa.</item>
+        <item quantity="other">Hufuta nakala %d za zamani. Haiwezi kutenduliwa.</item>
+    </plurals>
+    <string name="calendar_backup_deletes_unknown">Hufuta nakala za zamani zinazozidi idadi hii. Haiwezi kutenduliwa.</string>
+    <string name="calendar_backup_calendars">Kalenda za nje ya mtandao</string>
+    <string name="calendar_backup_calendar_nothing_saved">%1$s · Hakuna matukio, hakuna kilichohifadhiwa</string>
+    <string name="calendar_backup_calendar_save_failed">%1$s · Imeshindwa kuhifadhi. Itajaribu tena kwenye nakala rudufu inayofuata.</string>
+    <string name="calendar_backup_status">Nakala rudufu ya mwisho %1$s</string>
+    <plurals name="calendar_backup_status_failed">
+        <item quantity="one">Nakala rudufu ya mwisho %1$s · kalenda %2$d imeshindwa</item>
+        <item quantity="other">Nakala rudufu ya mwisho %1$s · kalenda %2$d zimeshindwa</item>
+    </plurals>
+    <string name="calendar_backup_now">Hifadhi nakala sasa</string>
+    <string name="calendar_backup_running">Inahifadhi nakala…</string>
+    <string name="calendar_backup_footer_overwrites">KashCal huandika upya faili hizi kila inapohifadhi nakala rudufu, kwa hivyo mabadiliko yanayofanywa kwenye programu nyingine hayadumu. Ili kurejesha kalenda, tumia Ingiza matukio kutoka faili.</string>
+    <string name="calendar_backup_off_files_stay">Faili zilizopo zinabaki katika %1$s.</string>
+    <string name="calendar_backup_folder_unreachable">Haiwezi kufikia %1$s. Huenda imehamishwa, imefutwa au imetenganishwa.</string>
+    <string name="calendar_backup_error_unsupported">Haiwezi kuhifadhi faili katika %1$s. Chagua folda nyingine.</string>
+    <string name="calendar_backup_choose_again">Chagua tena</string>
+    <string name="calendar_backup_pick_refused">KashCal haiwezi kutumia folda hiyo. Chagua nyingine.</string>
+    <string name="calendar_backup_pick_cannot_create">KashCal haiwezi kuunda faili katika folda hiyo. Chagua nyingine.</string>
+    <string name="calendar_backup_failed_title">Nakala rudufu ya kalenda imeshindwa</string>
+    <string name="calendar_backup_folder_unnamed">folda ya nakala rudufu</string>
+    <string name="calendar_backup_alert_unreachable">Haiwezi kufikia %1$s. Gusa ili uichague tena.</string>
+    <string name="calendar_backup_alert_unsupported">Haiwezi kuhifadhi faili katika %1$s. Gusa ili uchague folda nyingine.</string>
+    <string name="calendar_backup_alert_file_retry">Imeshindwa kuhifadhi %1$s. KashCal itajaribu tena kwenye nakala rudufu inayofuata.</string>
+    <string name="calendar_backup_every_hour">Kila saa</string>
+    <string name="calendar_backup_every_day">Kila siku</string>
+    <plurals name="calendar_backup_every_hours">
+        <item quantity="one">Kila saa %d</item>
+        <item quantity="other">Kila saa %d</item>
+    </plurals>
+    <plurals name="calendar_backup_every_days">
+        <item quantity="one">Kila siku %d</item>
+        <item quantity="other">Kila siku %d</item>
+    </plurals>
+    <string name="calendar_backup_every_day_hours">Kila siku 1 %1$s</string>
+    <string name="calendar_backup_every_days_hours">Kila %1$s %2$s</string>
+    <string name="calendar_backup_interval_too_short">Chagua angalau saa 1.</string>
+    <string name="calendar_backup_interval_too_long">Chagua siku 30 au chini.</string>
+    <plurals name="calendar_backup_alert_files_retry">
+        <item quantity="one">Imeshindwa kuhifadhi kalenda %d. KashCal itajaribu tena kwenye nakala rudufu inayofuata.</item>
+        <item quantity="other">Imeshindwa kuhifadhi kalenda %d. KashCal itajaribu tena kwenye nakala rudufu inayofuata.</item>
+    </plurals>
+    <string name="calendar_backup_notifications_app_off">Arifa za KashCal zimezimwa, kwa hivyo haiwezi kukujulisha nakala rudufu ikishindwa.</string>
+    <string name="calendar_backup_notifications_channel_off">Arifa za nakala rudufu zimezimwa, kwa hivyo KashCal haiwezi kukujulisha nakala rudufu ikishindwa.</string>
+    <string name="calendar_backup_open_settings">Fungua mipangilio</string>
+    <string name="calendar_backup_not_now">Si sasa</string>
+    <plurals name="calendar_backup_row_calendars_failed">
+        <item quantity="one">Kalenda %d imeshindwa</item>
+        <item quantity="other">Kalenda %d zimeshindwa</item>
+    </plurals>
     <string name="settings_quick_event_add">Ongeza tukio kwa ubunifu</string>
     <string name="settings_quick_event_add_info">Unda matukio kwa kuandika kwa njia ya kawaida. \"Chakula cha mchana na Sam Ijumaa saa 7 mchana\" hujaza kichwa, tarehe, na muda kwa ajili yako.</string>
     <string name="settings_suggest_titles">Pendekeza vichwa vya matukio</string>
@@ -646,6 +823,8 @@
     <string name="cd_pick_month_year">Chagua mwezi na mwaka</string>
     <string name="cd_previous_month">Mwezi uliopita</string>
     <string name="cd_next_month">Mwezi ujao</string>
+    <string name="cd_previous_day">Siku iliyopita</string>
+    <string name="cd_next_day">Siku inayofuata</string>
     <string name="cd_month_year_picker">Kichagua mwezi na mwaka</string>
     <string name="cd_remove_alert">Ondoa tahadhari</string>
     <string name="cd_warning">Onyo</string>
@@ -655,7 +834,25 @@
     <string name="label_on_days">Siku</string>
     <string name="label_pattern">Muundo</string>
     <string name="label_ends">Inaisha</string>
+    <string name="sheet_hint_change_end">Gusa siku ili kubadilisha mwisho</string>
     <string name="label_timezone">Eneo la saa</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Tafuta jiji, nchi au eneo</string>
+    <string name="timezone_section_this_event">Tukio hili</string>
+    <string name="timezone_section_device">Eneo la saa la kifaa</string>
+    <string name="timezone_section_recent">Za hivi karibuni</string>
+    <string name="timezone_section_all">Maeneo yote ya saa</string>
+    <string name="timezone_offsets_on">Tofauti za saa tarehe %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Kutoka kwa kalenda: %1$s</string>
+    <string name="timezone_shown_in_device_time">Inaonyeshwa kwa saa ya kifaa</string>
+    <string name="timezone_loading">Inapakia maeneo ya saa…</string>
+    <string name="timezone_no_match">Hakuna eneo la saa linalolingana</string>
+    <string name="timezone_no_match_hint">Jaribu jiji, nchi au tofauti ya saa kama +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Tahadhari</string>
     <string name="label_add_alert">Ongeza Tahadhari</string>
     <string name="label_recurrence_never">Kamwe</string>
@@ -663,11 +860,8 @@
     <string name="label_yesterday">Jana</string>
     <string name="label_device_calendars">Kalenda za Kifaa</string>
     <string name="label_default_calendar_hint">Matukio mapya yataundwa katika kalenda hii</string>
-    <string name="label_visible_count">%1$d / %2$d zinaonekana</string>
     <string name="label_reminders_truncated">%1$d hazikuonyeshwa (jumla %2$d, upeo %3$d zinazoweza kuhaririwa)</string>
     <string name="label_found_events">Zimepatikana: matukio %1$d</string>
-    <string name="label_open_debug_menu">Fungua menyu ya utatuzi</string>
-    <string name="placeholder_search">Tafuta…</string>
     <string name="settings_search_placeholder">Tafuta mipangilio…</string>
     <string name="settings_search_no_results">Hakuna mipangilio iliyopatikana kwa \"%1$s\"</string>
     <string name="cd_search_settings">Tafuta mipangilio</string>
@@ -678,16 +872,13 @@
     <string name="status_hours_ago">saa %1$d zilizopita</string>
 
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
-    <string name="device_calendars_description">Onyesha matukio kutoka kwa programu nyingine za kalenda kwenye kifaa chako (adapta za kusawazisha, kalenda za ndani).</string>
-    <string name="device_calendars_permission_required">Ruhusa ya kalenda inahitajika. Gusa Washa kutoa ufikiaji.</string>
-    <string name="device_calendars_read_only_access">Ufikiaji wa kusoma tu</string>
-    <string name="device_calendars_grant_write">Toa ruhusa ya kuandika ili kuhariri matukio ya kalenda ya kifaa</string>
-    <string name="device_calendars_grant">Ruhusu</string>
-    <string name="device_calendars_none_found">Hakuna kalenda za kifaa zilizopatikana.</string>
+    <string name="device_calendars_intro">Onyesha kalenda kutoka Google, Outlook na programu za kusawazisha kwenye kifaa hiki.</string>
+    <string name="device_calendars_show_switch">Onyesha kalenda za kifaa</string>
+    <string name="device_calendars_access_off">Ufikiaji wa kalenda umezimwa kwa KashCal.</string>
+    <string name="device_calendars_pick_hint">Chagua kalenda za kuonyesha.</string>
+    <string name="device_calendars_empty">Hakuna kalenda zilizopatikana.</string>
     <string name="device_calendars_local">Ndani</string>
-    <string name="device_calendars_read_only_no_write">Kusoma tu (hakuna ruhusa ya kuandika)</string>
     <string name="device_calendars_read_only_calendar">Kusoma tu (kalenda ya kusoma tu)</string>
-    <string name="settings_developer_options">Chaguo za Msanidi</string>
     <string name="settings_sync_frequency">Mzunguko wa Kusawazisha</string>
     <string name="settings_sync_frequency_hint">Mara ngapi kusawazisha chinichini</string>
 
@@ -817,6 +1008,9 @@
     <string name="ics_import_reason_this_and_future">mabadiliko ya tukio hili na yanayofuata hayatumiki</string>
     <string name="ics_import_reason_own_cancel">wewe ndiye mratibu wa mkutano huu, kwa hivyo ughairi kutoka kwenye tukio</string>
     <string name="ics_import_reason_on_another_calendar">tayari liko kwenye kalenda nyingine ya akaunti hii</string>
+    <string name="ics_import_reason_calendar_keeps_copy">kalenda hii huhifadhi nakala yake ya tukio</string>
+    <string name="ics_import_reason_own_update">wewe ndiye mratibu wa mkutano huu, kwa hivyo ubadilishe kutoka kwenye tukio</string>
+    <string name="ics_import_reason_change_waiting">tukio lina badiliko linalosubiri kusawazishwa; ingiza tena baada ya kusawazishwa</string>
     <string name="ics_import_notice_unverified">Mtumaji wa faili ya mwaliko hawezi kuthibitishwa. Hakikisha imetoka kwa mratibu.</string>
     <string name="ics_import_notice_answer_notifies">Kujibu mwaliko huu kunaweza kumjulisha mratibu.</string>
     <string name="ics_import_notice_guests_again">Wewe ndiye mratibu, kwa hivyo washiriki wanaweza kupokea mwaliko huu tena.</string>
@@ -847,13 +1041,17 @@
     </plurals>
     <string name="ics_import_summary_separator">", "</string>
     <string name="ics_import_summary_nothing">Hakuna cha kuingiza</string>
-    <plurals name="exported_events">
-        <item quantity="one">Tukio %1$d limehamishwa</item>
-        <item quantity="other">Matukio %1$d yamehamishwa</item>
-    </plurals>
     <plurals name="event_count">
         <item quantity="one">Tukio %1$d</item>
         <item quantity="other">Matukio %1$d</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">kalenda %1$d</item>
+        <item quantity="other">kalenda %1$d</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">akaunti %1$d</item>
+        <item quantity="other">akaunti %1$d</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">Kalenda %1$d</item>
@@ -887,10 +1085,6 @@
         <item quantity="one">Mwaka %1$d</item>
         <item quantity="other">Miaka %1$d</item>
     </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">Sek %1$d</item>
-        <item quantity="other">Sek %1$d</item>
-    </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">Dakika %1$d kabla</item>
         <item quantity="other">Dakika %1$d kabla</item>
@@ -914,8 +1108,13 @@
     <string name="dialog_move_recurring_title">Sogeza</string>
     <string name="snackbar_event_rescheduled">Tukio limepangwa upya</string>
     <string name="snackbar_reschedule_failed">Imeshindwa kupanga upya tukio</string>
+    <string name="snackbar_move_failed">Imeshindwa kusogeza \"%1$s\"</string>
+    <string name="snackbar_move_changed_elsewhere">\"%1$s\" lilibadilishwa mahali pengine, kwa hivyo halikusogezwa</string>
+    <string name="event_untitled">Tukio lisilo na kichwa</string>
     <string name="recurring_this_event">Tukio hili</string>
     <string name="recurring_all_events">Matukio yote</string>
+    <string name="recurring_scope_move_not_expressible">Kanuni ya kurudia haiwezi kufuata mabadiliko haya</string>
+    <string name="event_form_move_not_expressible">Kanuni ya kurudia haiwezi kufuata mabadiliko haya. Hakuna kilichohifadhiwa.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Washiriki</string>
@@ -979,8 +1178,67 @@
     <string name="empty_no_events_day_3">Zawadi: siku tupu.</string>
     <string name="empty_no_events_day_4">Hali ya kalenda: tupu kwa fahari.</string>
     <string name="empty_no_events_day_5">Hakuna kilichopangwa. Furahia utulivu.</string>
-    <string name="cd_empty_no_events_day">Siku tulivu, hakuna kilichoratibiwa</string>
     <string name="filter_date">Tarehe</string>
+    <string name="search_tab_upcoming">Yajayo</string>
+    <string name="search_tab_past">Yaliyopita</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, tukio %2$d</item>
+        <item quantity="other">%1$s, matukio %2$d</item>
+    </plurals>
+    <string name="search_date_this_week">Wiki hii</string>
+    <string name="search_date_this_month">Mwezi huu</string>
+    <string name="search_date_pick">Chagua tarehe…</string>
+    <string name="search_next">Lijalo: %1$s</string>
+    <string name="search_last">La mwisho: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Mahali:</string>
+    <string name="search_reason_notes">Maelezo:</string>
+    <string name="search_reason_guest">Mgeni:</string>
+    <string name="search_keep_typing">Endelea kuandika ili kutafuta</string>
+    <string name="search_no_matches">Hakuna matukio yanayolingana na “%1$s”</string>
+    <string name="search_no_events_tagged">Hakuna matukio yaliyowekwa lebo “%1$s”</string>
+    <string name="search_lookback_line">Muda wa Kusawazisha Nyuma: %1$s</string>
+    <string name="search_sync_settings">Mipangilio ya kusawazisha</string>
+    <string name="cd_search_sync_settings">Fungua mpangilio wa muda wa kusawazisha nyuma</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Onyesha tukio %d lililopita</item>
+        <item quantity="other">Onyesha matukio %d yaliyopita</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">%d zaidi katika kalenda iliyofichwa</item>
+        <item quantity="other">%d zaidi katika kalenda zilizofichwa</item>
+    </plurals>
+    <string name="search_show">Onyesha</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Onyesha tokeo %d katika kalenda iliyofichwa</item>
+        <item quantity="other">Onyesha matokeo %d katika kalenda zilizofichwa</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Onyesha %d katika kalenda iliyofichwa</item>
+        <item quantity="other">Onyesha %d katika kalenda zilizofichwa</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Ikijumuisha kalenda %d iliyofichwa</item>
+        <item quantity="other">Ikijumuisha kalenda %d zilizofichwa</item>
+    </plurals>
+    <string name="search_leave_out">Ondoa</string>
+    <string name="cd_search_leave_out">Ondoa kalenda zilizofichwa</string>
+    <string name="search_hidden_calendar">%1$s · imefichwa</string>
+    <string name="cd_search_date_this_week">Onyesha matokeo ya wiki hii</string>
+    <string name="cd_search_date_this_month">Onyesha matokeo ya mwezi huu</string>
+    <string name="cd_search_date_pick">Chagua tarehe za kutafuta</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d yajayo</item>
+        <item quantity="other">%d yajayo</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d lililopita</item>
+        <item quantity="other">%d yaliyopita</item>
+    </plurals>
+    <string name="search_no_past_events">Hakuna matukio yaliyopita</string>
+    <string name="search_no_events_in_dates">Hakuna matukio katika tarehe hizi</string>
     <string name="label_select_date">Chagua tarehe</string>
     <string name="hint_tap_date_range">Gusa tarehe hiyo hiyo kwa siku moja, au tarehe nyingine kwa kipindi</string>
     <string name="cd_clear">Futa</string>
@@ -1072,7 +1330,6 @@
     <string name="reminder_none">Hakuna kikumbusho</string>
     <string name="reminder_at_time_of_event">Wakati wa tukio</string>
     <string name="reminder_time_before">%1$s kabla</string>
-    <string name="reminder_time_after">%1$s baadaye</string>
     <string name="reminder_day_of_event_12h">Saa 3 asubuhi siku ya tukio</string>
     <string name="reminder_day_of_event_24h">09:00 siku ya tukio</string>
     <string name="reminder_day_of_event">Siku ya tukio</string>
@@ -1204,6 +1461,7 @@
     <!-- ==================== i18n: Round 2 audit gaps ==================== -->
     <string name="action_save_event">Hifadhi Tukio</string>
     <string name="badge_beta">Beta</string>
+    <string name="badge_sync_off">Usawaz. umezimwa</string>
     <string name="badge_new">Mpya</string>
     <string name="color_red">Nyekundu</string>
     <string name="color_orange">Machungwa</string>
@@ -1232,6 +1490,19 @@
     <string name="ics_fetch_error_http">Seva imerejesha hitilafu (%1$d). Tafadhali angalia URL.</string>
     <string name="ics_fetch_error_empty">Mlisho wa kalenda hauna maudhui.</string>
     <string name="ics_fetch_error_not_calendar">URL hiyo haionekani kama mlisho wa kalenda.</string>
+    <string name="ics_feed_error_empty_response">Seva haikutuma mlisho sahihi.</string>
+    <string name="ics_feed_error_access_denied">Seva ya mlisho huu imekataa ufikiaji.</string>
+    <string name="ics_feed_error_too_large">Mlisho huu wa kalenda ni mkubwa mno kupakuliwa.</string>
+    <string name="ics_feed_error_unreadable">Matukio ya mlisho huu hayakuweza kuonyeshwa.</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s” haikuhifadhiwa.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">Tukio %1$d halikuhifadhiwa.</item>
+        <item quantity="other">Matukio %1$d hayakuhifadhiwa.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">Tukio %1$d halikuhifadhiwa, likiwemo “%2$s”.</item>
+        <item quantity="other">Matukio %1$d hayakuhifadhiwa, likiwemo “%2$s”.</item>
+    </plurals>
     <string name="insights_title">Maarifa</string>
     <string name="insights_period_this_week">Wiki</string>
     <string name="insights_period_last_week">Wiki iliyopita</string>
@@ -1359,7 +1630,7 @@
         <item quantity="other">Bure katika siku %1$d zijazo (%2$s – %3$s):</item>
     </plurals>
     <string name="share_availability_day_line">%1$s: %2$s</string>
-    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_block_separator">", "</string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">Hakuna vizuizi vya bure vya angalau saa moja katika kipindi kilichochaguliwa.</string>
     <string name="share_from_kashcal_footer">Imeshirikiwa kutoka KashCal</string>
@@ -1381,5 +1652,31 @@
     <string name="share_as_card_all_day">Siku nzima</string>
     <string name="share_as_card_chooser_title">Shiriki tukio</string>
     <string name="share_as_card_share_failed">Imeshindwa kushiriki kadi</string>
+    <string name="print_your_week">Chapisha wiki yako</string>
+    <string name="print_options_title">Chagua chaguo za kuchapisha</string>
+    <string name="print_pages_header">Kurasa</string>
+    <string name="print_page_week">Kalenda ya wiki</string>
+    <string name="print_page_week_detail">Wiki kama gridi</string>
+    <string name="print_page_details">Maelezo</string>
+    <string name="print_page_details_detail">Kila tukio kikamilifu</string>
+    <string name="print_action">Chapisha</string>
+    <string name="cd_print_previous_week">Wiki iliyopita</string>
+    <string name="cd_print_next_week">Wiki ijayo</string>
+    <plurals name="print_summary_pages">
+        <item quantity="one">Ukurasa %d</item>
+        <item quantity="other">Kurasa %d</item>
+    </plurals>
+    <plurals name="print_summary_calendars">
+        <item quantity="one">%1$d kati ya kalenda %2$d</item>
+        <item quantity="other">%1$d kati ya kalenda %2$d</item>
+    </plurals>
+    <string name="print_summary">%1$s · %2$s</string>
+    <string name="print_job_name">%1$s – Wiki ya %2$s</string>
+    <string name="print_failed">Imeshindwa kuchapisha. Jaribu tena.</string>
+    <string name="print_doc_week">Wiki</string>
+    <string name="print_doc_printed">Imechapishwa %1$s</string>
+    <string name="print_doc_page_of">Ukurasa %1$s kati ya %2$s</string>
+    <string name="print_doc_numbers_note">Nambari zinalingana na maelezo, yanayoorodhesha kila tukio kikamilifu.</string>
+    <string name="print_doc_times_in">Saa zimeonyeshwa kwa %1$s</string>
 
 </resources>

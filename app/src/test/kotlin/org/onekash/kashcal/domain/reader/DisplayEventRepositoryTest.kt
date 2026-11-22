@@ -9,16 +9,16 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.domain.model.DisplayEvent
-import org.onekash.kashcal.domain.model.SearchResult
+import java.time.ZoneOffset
 
 /**
  * Tests the day-code helpers of [DisplayEventRepository], [generateDayCodesInRange] and
  * [spannedDayCodesWithinWindow], and the instance, search and SecurityException behavior of
  * [FakeCalendarProviderRepository].
  *
- * The merge, grouping, multi-day expansion and search-merge tests run inline `sortedBy`,
- * `groupBy` and unclamped expansion code modeled on the repository and don't call it; the
- * repository expands through [spannedDayCodesWithinWindow].
+ * The merge, grouping and multi-day expansion tests run inline `sortedBy`, `groupBy` and
+ * unclamped expansion code modeled on the repository and don't call it; the repository expands
+ * through [spannedDayCodesWithinWindow].
  * [DisplayEventRepositoryDeviceRealProviderTest] drives its Flow and one-shot reads.
  */
 class DisplayEventRepositoryTest {
@@ -393,47 +393,6 @@ class DisplayEventRepositoryTest {
         }
     }
 
-    // ========== Search Merge (Room + Device) ==========
-
-    @Test
-    fun `search merge sorts by displayTs`() {
-        val roomResult = SearchResult(
-            displayEvent = roomEvent(startTs = 2000L, title = "Room Result"),
-            displayTs = 2000L
-        )
-        val deviceResult = SearchResult(
-            displayEvent = deviceEvent(startTs = 1000L, title = "Device Result"),
-            displayTs = 1000L
-        )
-
-        val merged = listOf(roomResult, deviceResult).sortedBy { it.displayTs }
-        assertEquals("Device Result", merged[0].displayEvent.title)
-        assertEquals("Room Result", merged[1].displayEvent.title)
-    }
-
-    @Test
-    fun `search merge with Room recurring uses nextOccurrenceTs`() {
-        // A recurring Room event with startTs=1000 whose next occurrence is at 5000.
-        val roomResult = SearchResult(
-            displayEvent = roomEvent(startTs = 1000L, title = "Recurring Room"),
-            displayTs = 5000L // nextOccurrenceTs
-        )
-        val deviceResult = SearchResult(
-            displayEvent = deviceEvent(startTs = 3000L, title = "Device Event"),
-            displayTs = 3000L
-        )
-
-        val merged = listOf(roomResult, deviceResult).sortedBy { it.displayTs }
-        assertEquals("Device Event", merged[0].displayEvent.title)
-        assertEquals("Recurring Room", merged[1].displayEvent.title)
-    }
-
-    @Test
-    fun `search merge with both empty returns empty`() {
-        val merged = emptyList<SearchResult>().sortedBy { it.displayTs }
-        assertTrue(merged.isEmpty())
-    }
-
     // ========== Test Helpers ==========
 
     private fun roomEvent(
@@ -442,20 +401,24 @@ class DisplayEventRepositoryTest {
         endDay: Int = startDay,
         title: String = "Room Event"
     ): DisplayEvent.Room {
+        // A timed event's days come from its instants: [startTs] is an offset on [startDay] in
+        // UTC, as in [deviceEvent], so the two sort the same way.
+        val start = utcMidnight(startDay) + startTs
+        val end = if (endDay > startDay) utcMidnight(endDay) + startTs else start + 3600000L
         val event = Event(
             id = 1L,
             uid = "test-uid",
             calendarId = 1L,
             title = title,
-            startTs = startTs,
-            endTs = startTs + 3600000L,
-            dtstamp = startTs
+            startTs = start,
+            endTs = end,
+            dtstamp = start
         )
         val occurrence = Occurrence(
             eventId = 1L,
             calendarId = 1L,
-            startTs = startTs,
-            endTs = startTs + 3600000L,
+            startTs = start,
+            endTs = end,
             startDay = startDay,
             endDay = endDay
         )
@@ -466,8 +429,12 @@ class DisplayEventRepositoryTest {
             displayName = "Test Calendar",
             color = 0xFF0000.toInt()
         )
-        return DisplayEvent.Room(event, occurrence, calendar)
+        return DisplayEvent.Room(event, occurrence, calendar, zone = ZoneOffset.UTC)
     }
+
+    private fun utcMidnight(dayCode: Int): Long =
+        java.time.LocalDate.of(dayCode / 10000, dayCode / 100 % 100, dayCode % 100)
+            .atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 
     private fun deviceEvent(
         startTs: Long = 1000L,
@@ -476,7 +443,7 @@ class DisplayEventRepositoryTest {
         title: String = "Device Event"
     ): DisplayEvent.Device {
         return DisplayEvent.Device(testDeviceInstance(
-            startTs = startTs,
+            startTs = utcMidnight(startDay) + startTs,
             startDay = startDay,
             endDay = endDay,
             title = title

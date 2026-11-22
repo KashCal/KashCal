@@ -131,6 +131,15 @@ class DeviceOneOffRoundTripTest {
     }
 
     @Test
+    fun `a custom reminder of days, hours and minutes reads back unchanged`() = runTest {
+        // The form's custom wheel can set 5 days 1 hour 10 minutes; the form reads it back from
+        // these minutes, so they must come back as written.
+        create(f.draft(reminders = listOf(7270)))
+
+        assertEquals(listOf(7270), f.occurrences(DAY_CODE).single().reminders)
+    }
+
+    @Test
     fun `a tentative event keeps tentative availability`() = runTest {
         val id = create(f.draft(availability = Events.AVAILABILITY_TENTATIVE))
 
@@ -417,6 +426,14 @@ class DeviceOneOffRoundTripTest {
 
         assertNotNull(next)
         assertEquals(DAY0 + 8 * HOUR, next!!.triggerTime)
+    }
+
+    @Test
+    fun `an all-day event's preset reminders read back unclamped`() = runTest {
+        // The form labels -540 as 9 AM on the day, so it must not come back as 0.
+        create(allDayDraft(days = 1).copy(reminders = listOf(-540, 900)))
+
+        assertEquals(listOf(-540, 900), f.occurrences(DAY_CODE).single().reminders)
     }
 
     @Test

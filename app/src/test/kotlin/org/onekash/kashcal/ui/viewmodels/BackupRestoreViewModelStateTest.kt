@@ -43,6 +43,7 @@ import org.onekash.kashcal.domain.backup.ImportResult
 import org.onekash.kashcal.domain.backup.SettingsBackupExporter
 import org.onekash.kashcal.domain.backup.SettingsBackupImporter
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
+import org.onekash.kashcal.domain.feeds.noFeedAccountsServerCalendarFeeds
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.reader.SyncLogReader
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
@@ -105,6 +106,7 @@ class BackupRestoreViewModelStateTest {
         every { eventCoordinator.getICloudCalendarCount() } returns MutableStateFlow(0)
         every { eventCoordinator.getCalDavAccountCount() } returns MutableStateFlow(0)
         every { eventCoordinator.getCalDavAccounts() } returns flowOf(emptyList())
+        every { accountRepository.getAccountsByProviderFlow(AccountProvider.ICLOUD) } returns flowOf(emptyList())
         every { eventCoordinator.getAllIcsSubscriptions() } returns flowOf(emptyList())
         every { userPreferences.defaultCalendarId } returns MutableStateFlow<Long?>(null)
         every { userPreferences.defaultCalendar } returns MutableStateFlow<DefaultCalendar?>(null)
@@ -151,6 +153,7 @@ class BackupRestoreViewModelStateTest {
         discoveryService = discoveryService,
         calDavDiscoveryService = calDavDiscoveryService,
         eventCoordinator = eventCoordinator,
+        serverCalendarFeeds = noFeedAccountsServerCalendarFeeds(),
         syncLogReader = syncLogReader,
         contactEventManager = contactEventManager,
         calendarProviderManager = calendarProviderManager,

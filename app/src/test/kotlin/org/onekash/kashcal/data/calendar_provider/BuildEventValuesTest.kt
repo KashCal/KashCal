@@ -574,4 +574,22 @@ class BuildEventValuesTest {
 
         assertEquals("P3D", values.getAsString(Events.DURATION))
     }
+
+    @Test
+    fun `recurring timed event with neither end nor duration gets a zero duration`() {
+        val values = buildEventValues(
+            title = "No End",
+            description = null,
+            location = null,
+            startTs = 1704067200000L,
+            endTs = null,
+            isAllDay = false,
+            rrule = "FREQ=DAILY",
+            duration = null,
+            timezone = "UTC"
+        )
+
+        assertEquals("PT0M", values.getAsString(Events.DURATION))
+        assertNull(values.getAsLong(Events.DTEND))
+    }
 }

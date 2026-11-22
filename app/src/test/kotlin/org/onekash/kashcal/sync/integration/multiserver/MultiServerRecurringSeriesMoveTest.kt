@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.integration.multiserver
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.every
 import io.mockk.mockk
@@ -44,14 +44,19 @@ import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.sync.strategy.PushResult
 import org.onekash.kashcal.sync.strategy.PushStrategy
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.onekash.kashcal.ui.components.EventFormState
 import org.onekash.kashcal.ui.components.parseIso8601DurationToMinutes
 import org.onekash.kashcal.ui.components.toFormDateFields
 import org.onekash.kashcal.ui.components.withDateFields
 import org.onekash.kashcal.ui.components.withTimedStart
+import org.onekash.kashcal.ui.components.withZonePick
+import org.onekash.kashcal.ui.components.pickers.ZonePick
 import org.onekash.kashcal.ui.viewmodels.DeviceHomeViewModelTestFactory
 import org.onekash.kashcal.ui.viewmodels.EditScope
 import org.onekash.kashcal.ui.viewmodels.HomeViewModel
+import org.onekash.kashcal.ui.viewmodels.dragSaveSettled
+import org.onekash.kashcal.ui.viewmodels.endDragUndoWindow
 import org.onekash.kashcal.util.TimezoneUtils
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -80,6 +85,13 @@ import java.util.UUID
  * occurrence and rewrites the repeat rule to the new weekday (RFC 5545 section
  * 3.8.5.3); a move the rule can't express is refused and nothing is pushed; an
  * "All events" form save from a later occurrence keeps the series' own dates.
+ * A series with a renamed, a retimed and a cancelled occurrence and an end date
+ * keeps them through each kind of move: the renamed one moves and stays linked
+ * (RECURRENCE-ID re-keyed, RFC 5545 section 3.8.4.4), the retimed one keeps its
+ * time, the cancelled one stays cancelled (EXDATE moved) and the last day stays
+ * (UNTIL re-expressed, section 3.3.10). A split ends the old series' changed
+ * occurrences after it, so in the "This and future" cases those take the new
+ * series' slots while the cancelled one stays cancelled.
  *
  * The weekly series start on a Monday at 10:00 America/New_York and cross the
  * next US switch to standard time, so every weekly case also crosses daylight
@@ -104,6 +116,10 @@ class MultiServerRecurringSeriesMoveTest(private val config: CalDavServerConfig)
         private const val NEW_YORK = "America/New_York"
         private val UID_PREFIX = "series-move-${System.currentTimeMillis()}-"
         private const val HOUR_MS = 3_600_000L
+        private const val DAY_MS = 86_400_000L
+        private const val CHICAGO = "America/Chicago"
+        private const val TITLE = "Series move"
+        private const val RENAMED = "Renamed occurrence"
     }
 
     private val savedZone: TimeZone = TimeZone.getDefault()
@@ -138,7 +154,7 @@ class MultiServerRecurringSeriesMoveTest(private val config: CalDavServerConfig)
         TimeZone.setDefault(TimeZone.getTimeZone(NEW_YORK))
         Dispatchers.setMain(UnconfinedTestDispatcher())
         val context: Context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java).allowMainThreadQueries().build()
+        db = TestDatabases.inMemory(context).allowMainThreadQueries().build()
         generator = OccurrenceGenerator(db, db.occurrencesDao(), db.eventsDao(), TestDataStoreFactory.createDefault())
         reader = EventReader(db)
         coordinator = EventCoordinator(
@@ -166,6 +182,7 @@ class MultiServerRecurringSeriesMoveTest(private val config: CalDavServerConfig)
             accountRepository = accountRepository(db),
             attendeesDao = db.attendeesDao(),
             pendingCancelsDao = db.pendingCancelsDao(),
+            icsSource = EventIcsStore(db),
         )
         val device = FakeCalendarProviderRepository()
         val factory = DeviceHomeViewModelTestFactory(eventCoordinator = coordinator, eventReader = reader)
@@ -294,6 +311,175 @@ class MultiServerRecurringSeriesMoveTest(private val config: CalDavServerConfig)
         assertEquals("${config.name}: same four occurrences", (1..4).map { occurrence(it) }, freshOccurrences(id))
     }
 
+    // ---- a series with changed occurrences keeps them through a move ----
+
+    @Test
+    fun `an all events form time change keeps the changed occurrences`() = runBlocking<Unit> {
+        val (calendar, id) = seedChangedSeries("form-time")
+        val opened = openForm(id, occurrence(2))
+
+        saveForm(opened.withTimedStart(opened.dateMillis, 11, 0, defaultDurationMinutes = 60), EditScope.ALL_EVENTS)
+        pushClean(calendar)
+
+        assertSchedule(id, allEventsMoved(days = 0, hour = 11))
+    }
+
+    @Test
+    fun `an all events same-day drag keeps the changed occurrences`() = runBlocking<Unit> {
+        val (calendar, id) = seedChangedSeries("drag-time-all")
+
+        drag(id, occurrence(2), day(2), 11, 0, EditScope.ALL_EVENTS)
+        pushClean(calendar)
+
+        assertSchedule(id, allEventsMoved(days = 0, hour = 11))
+    }
+
+    @Test
+    fun `a this and future same-day drag keeps the cancelled occurrence`() = runBlocking<Unit> {
+        val (calendar, id) = seedChangedSeries("drag-time-future")
+
+        drag(id, occurrence(2), day(2), 11, 0, EditScope.THIS_AND_FUTURE)
+        pushClean(calendar)
+
+        assertSchedule(id, futureMoved(from = 2, days = 0, hour = 11))
+    }
+
+    @Test
+    fun `an all events form date change from the first occurrence keeps the changed occurrences`() = runBlocking<Unit> {
+        val (calendar, id) = seedChangedSeries("form-date-all")
+        val opened = openForm(id, occurrence(1))
+
+        saveForm(opened.withTimedStart(opened.dateMillis + DAY_MS, 10, 0, defaultDurationMinutes = 60), EditScope.ALL_EVENTS)
+        pushClean(calendar)
+
+        assertSchedule(id, allEventsMoved(days = 1, hour = 10))
+    }
+
+    @Test
+    fun `a this and future form date change keeps the opened occurrence and the cancelled one`() = runBlocking<Unit> {
+        val (calendar, id) = seedChangedSeries("form-date-future")
+        val opened = openForm(id, occurrence(2))
+
+        saveForm(opened.withTimedStart(opened.dateMillis + DAY_MS, 10, 0, defaultDurationMinutes = 60), EditScope.THIS_AND_FUTURE)
+        pushClean(calendar)
+
+        assertSchedule(id, futureMoved(from = 2, days = 1, hour = 10))
+    }
+
+    @Test
+    fun `an all events zone change keeps the clock time and the changed occurrences`() = runBlocking<Unit> {
+        val (calendar, id) = seedChangedSeries("form-zone")
+        val opened = openForm(id, occurrence(1))
+
+        saveForm(opened.withZonePick(ZonePick.Set(CHICAGO), NEW_YORK), EditScope.ALL_EVENTS)
+        pushClean(calendar)
+
+        assertSchedule(id, allEventsMoved(days = 0, hour = 10, zone = CHICAGO))
+    }
+
+    /**
+     * Seeds a six-week Monday series ending with an UNTIL (a COUNT on Xandikos, which leaves a
+     * zoned series with a UTC UNTIL out of range queries), renames occurrence 3, moves
+     * occurrence 4 to 14:00 and cancels occurrence 5, pushes, and pulls the server's copy back.
+     */
+    private suspend fun seedChangedSeries(name: String): Pair<Calendar, Long> {
+        val until = Instant.ofEpochMilli(occurrence(6)).atZone(ZoneId.of("UTC"))
+        val rule = if (config.name == "Xandikos") {
+            "FREQ=WEEKLY;BYDAY=MO;COUNT=6"
+        } else {
+            "FREQ=WEEKLY;BYDAY=MO;UNTIL=%04d%02d%02dT%02d%02d00Z".format(until.year, until.monthValue, until.dayOfMonth, until.hour, until.minute)
+        }
+        val (calendar, id) = seedSeries(rule, name)
+        coordinator.editSingleOccurrence(id, occurrence(3)) { it.copy(title = RENAMED) }
+        coordinator.editSingleOccurrence(id, occurrence(4)) { it.copy(startTs = at(day(4), 14, 0), endTs = at(day(4), 15, 0)) }
+        coordinator.deleteSingleOccurrence(id, occurrence(5))
+        pushClean(calendar)
+        pull.pull(calendar, forceFullSync = true, client = client!!)
+        val uid = db.eventsDao().getById(id)!!.uid
+        return calendar to db.eventsDao().getByUid(uid).single { it.originalEventId == null }.id
+    }
+
+    /**
+     * The schedule after the whole series moved by [days] to [hour]:00 in [zone]: the renamed
+     * occurrence moves with it, the retimed one keeps 14:00 New York, the cancelled one stays
+     * out, and the sixth (last) week stays.
+     */
+    private fun allEventsMoved(days: Long, hour: Int, zone: String = NEW_YORK): List<Pair<Long, String>> =
+        (1..6).filter { it != 5 }.map { n ->
+            when (n) {
+                4 -> at(day(4), 14, 0) to TITLE
+                3 -> at(day(3).plusDays(days), hour, 0, zone) to RENAMED
+                else -> at(day(n).plusDays(days), hour, 0, zone) to TITLE
+            }
+        }.sortedBy { it.first }
+
+    /**
+     * The schedule after a split from occurrence [from] moved the rest by [days] to [hour]:00:
+     * earlier ones as they were, the old series' changed occurrences after the split gone with
+     * it (their slots now the new series'), the cancelled one still out. Zoho drops EXDATE from
+     * a resource it creates, and the new series is a create, so there it shows again.
+     */
+    private fun futureMoved(from: Int, days: Long, hour: Int): List<Pair<Long, String>> =
+        (1..6).filter { it != 5 || (config.name == "Zoho" && it >= from) }.map { n ->
+            if (n < from) {
+                occurrence(n) to (if (n == 3) RENAMED else TITLE)
+            } else {
+                at(day(n).plusDays(days), hour, 0) to TITLE
+            }
+        }.sortedBy { it.first }
+
+    /**
+     * Checks the server's copy of every series this case made, as a new client pulling the
+     * calendar sees it: each occurrence's start and title, a changed occurrence shown at its
+     * own time with its own title only when its RECURRENCE-ID matches an occurrence. Also
+     * checks the series' SEQUENCE was raised where the server keeps one.
+     */
+    private suspend fun assertSchedule(id: Long, expected: List<Pair<Long, String>>) {
+        val got = settledSchedule(expected)
+        if (got != expected) {
+            val bodies = createdUids.flatMap { db.eventsDao().getByUid(it) }.filter { it.originalEventId == null }
+                .mapNotNull { it.caldavUrl }.distinct()
+                .map { url -> client!!.fetchEvent(url).getOrNull()?.icalData?.let { FixtureRedactor.redact(it) } ?: "missing $url" }
+                .joinToString("\n----\n")
+            assertEquals("${config.name}: schedule after the move; server copies:\n$bodies", expected.describe(), got.describe())
+        }
+        val body = serverBody(id)
+        val sequence = sequenceOf(body)
+        if (sequence != null) assertTrue("${config.name}: SEQUENCE raised: ${FixtureRedactor.redact(body)}", sequence > 0)
+    }
+
+    private fun List<Pair<Long, String>>.describe(): String =
+        joinToString("\n") { (ts, title) -> "${Instant.ofEpochMilli(ts).atZone(ZoneId.of(NEW_YORK))} $title" }
+
+    private suspend fun settledSchedule(expected: List<Pair<Long, String>>): List<Pair<Long, String>> {
+        val deadline = System.currentTimeMillis() + 60_000
+        var got = freshSchedule()
+        while (got != expected && System.currentTimeMillis() < deadline) {
+            Thread.sleep(5_000)
+            got = freshSchedule()
+        }
+        return got
+    }
+
+    /** Every occurrence of the series this case made, from a fresh pull, with its shown title. */
+    private suspend fun freshSchedule(): List<Pair<Long, String>> {
+        val uids = createdUids.toSet()
+        val context: Context = ApplicationProvider.getApplicationContext()
+        val fresh = TestDatabases.inMemory(context).allowMainThreadQueries().build()
+        try {
+            val calendar = localCalendarFor(calendarUrl!!, fresh)
+            pullStrategyFor(fresh).pull(calendar, forceFullSync = true, client = client!!)
+            val masters = uids.flatMap { u -> fresh.eventsDao().getByUid(u).filter { it.originalEventId == null } }
+            return masters.flatMap { m ->
+                fresh.occurrencesDao().getForEvent(m.id).filter { !it.isCancelled }.map { o ->
+                    o.startTs to (o.exceptionEventId?.let { fresh.eventsDao().getById(it)?.title } ?: m.title)
+                }
+            }.sortedBy { it.first }
+        } finally {
+            fresh.close()
+        }
+    }
+
     // ---- helpers ----
 
     private fun assumeReady() {
@@ -302,8 +488,8 @@ class MultiServerRecurringSeriesMoveTest(private val config: CalDavServerConfig)
     }
 
     private fun day(n: Int): LocalDate = firstMonday.plusWeeks(n - 1L)
-    private fun at(date: LocalDate, hour: Int, minute: Int): Long =
-        ZonedDateTime.of(date, LocalTime.of(hour, minute), ZoneId.of(NEW_YORK)).toInstant().toEpochMilli()
+    private fun at(date: LocalDate, hour: Int, minute: Int, zone: String = NEW_YORK): Long =
+        ZonedDateTime.of(date, LocalTime.of(hour, minute), ZoneId.of(zone)).toInstant().toEpochMilli()
     private fun occurrence(n: Int): Long = at(day(n), 10, 0)
 
     /** Creates the series through KashCal, pushes it, and pulls the server's copy back. */
@@ -349,9 +535,20 @@ class MultiServerRecurringSeriesMoveTest(private val config: CalDavServerConfig)
         viewModel.rescheduleEvent(DisplayEvent.Room(e, occurrence, null), date, hour * 60 + minute)
         waitFor("the drop's check") { viewModel.uiState.value.pendingDragReschedule?.blockedScopes != null }
         viewModel.confirmReschedule(scope)
-        waitFor("the reschedule") { viewModel.uiState.value.pendingSnackbarMessage != null }
+        waitFor("the Undo snackbar") { viewModel.uiState.value.pendingSnackbarMessage != null }
+        // Ends the Undo window so the move saves, then waits for the write itself: nothing
+        // here collects the grid, so the drawn copy is never released by a refresh.
+        viewModel.endDragUndoWindow()
+        waitFor("the save") { viewModel.dragSaveSettled }
         // A split creates the future series under a new UID: track it for the checks and the
         // cleanup.
+        createdUids += masterUids() - before
+    }
+
+    /** Saves the form with a scope and tracks a split's new series for the checks and cleanup. */
+    private suspend fun saveForm(form: EventFormState, scope: EditScope) {
+        val before = masterUids()
+        assertTrue("${config.name}: form save", viewModel.saveEvent(form, scope).isSuccess)
         createdUids += masterUids() - before
     }
 
@@ -458,7 +655,7 @@ class MultiServerRecurringSeriesMoveTest(private val config: CalDavServerConfig)
 
     private suspend fun freshPull(masters: suspend (KashCalDatabase) -> List<Event>): List<Long> {
         val context: Context = ApplicationProvider.getApplicationContext()
-        val fresh = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java).allowMainThreadQueries().build()
+        val fresh = TestDatabases.inMemory(context).allowMainThreadQueries().build()
         try {
             val calendar = localCalendarFor(calendarUrl!!, fresh)
             pullStrategyFor(fresh).pull(calendar, forceFullSync = true, client = client!!)
@@ -485,6 +682,7 @@ class MultiServerRecurringSeriesMoveTest(private val config: CalDavServerConfig)
             inviteNotifier = mockk(relaxed = true),
             accountRepository = mockk(relaxed = true),
             reminderScheduler = mockk(relaxed = true),
+            icsSource = EventIcsStore(database),
         )
     }
 

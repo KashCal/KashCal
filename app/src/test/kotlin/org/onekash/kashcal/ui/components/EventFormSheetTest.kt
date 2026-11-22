@@ -13,19 +13,19 @@ import org.onekash.kashcal.ui.components.pickers.DateSelectionMode
 /**
  * Tests the event form's pure logic.
  *
- * Production functions called: [withTimedStart], [withTimedEnd], [withTimezone], [withAllDay],
- * [toStartEndTs], [endsBeforeStart], [toFormDateFields], [parseIso8601DurationToMinutes],
- * [canEditAttendees], [showSchedulingUnavailable], [eventFormHasUnsavedChanges],
- * [resolveFormDismiss] and [shouldRebaselineOnCalendarResolve].
+ * Production functions called: [withTimedStart], [withTimedEnd], [withAllDayStart],
+ * [withTimezone], [withAllDay], [toStartEndTs], [endsBeforeStart], [toFormDateFields],
+ * [parseIso8601DurationToMinutes], [canEditAttendees], [showSchedulingUnavailable],
+ * [eventFormHasUnsavedChanges], [resolveFormDismiss] and [shouldRebaselineOnCalendarResolve].
  *
  * Other sections run inline copies and don't call production. Copies of form code: the
- * delete-confirmation predicate, the save-button gate, the all-day start-date move and the
- * calendar-intent start and end in [EventFormContent], and the occurrence start in
- * [toFormDateFields]. The separate-pickers, midnight-crossing, end-time, date-range
- * selection, range-highlight and cross-month, date-label and multi-day end-time sections
- * model picker logic with no production counterpart in the form. The DateSelectionMode
- * tests assert only enum values, the date-format tests only a multi-day check, and the
- * edit-mode and all-day date-range sections build an [EventFormState] and read it back.
+ * delete-confirmation predicate, the save-button gate and the calendar-intent start and end in
+ * [EventFormContent], and the occurrence start in [toFormDateFields]. The separate-pickers,
+ * midnight-crossing, end-time, date-range selection, range-highlight and cross-month, date-label
+ * and multi-day end-time sections model picker logic with no production counterpart in the form.
+ * The DateSelectionMode tests assert only enum values, the date-format tests only a multi-day
+ * check, and the edit-mode and all-day date-range sections build an [EventFormState] and read it
+ * back.
  */
 class EventFormSheetTest {
 
@@ -1126,23 +1126,34 @@ class EventFormSheetTest {
         }
 
     @Test
-    fun `picking a new timezone keeps the event at the same moment inside a repeated hour`() =
+    fun `picking a new timezone keeps the date and clock time`() =
         withDeviceTimeZone("America/Los_Angeles") {
-            val start = 1_730_619_000_000L // 02:30 EST Nov 3 = 01:30 CST, Chicago's second 01:30
+            val start = 1_709_650_800_000L // 2024-03-05 10:00 New York
             val moved = loadedForm(start, start + oneHourMs).withTimezone("America/Chicago")
-            assertEquals(start to start + oneHourMs, moved.toStartEndTs())
-            assertEquals(1, moved.startHour)
-            assertEquals(30, moved.startMinute)
+            assertEquals(10, moved.startHour)
+            assertEquals(0, moved.startMinute)
+            // 10:00 Chicago, an hour after 10:00 New York.
+            assertEquals(start + oneHourMs to start + 2 * oneHourMs, moved.toStartEndTs())
         }
 
     @Test
-    fun `picking a new timezone keeps the event at the same moment when the phone is ahead of the event`() =
+    fun `picking a new timezone keeps the date when the phone is ahead of the event`() =
         withDeviceTimeZone("Asia/Tokyo") {
             val start = 1_709_647_200_000L // 2024-03-05 09:00 New York (23:00 in Tokyo)
             val moved = loadedForm(start, start + oneHourMs).withTimezone("America/Chicago")
-            assertEquals(start to start + oneHourMs, moved.toStartEndTs())
-            assertEquals(8, moved.startHour)
+            assertEquals(9, moved.startHour)
             assertEquals(day(2024, 3, 5), phoneLocalDate(moved.dateMillis))
+            assertEquals(start + oneHourMs to start + 2 * oneHourMs, moved.toStartEndTs())
+        }
+
+    @Test
+    fun `picking a zone and then the event's own zone keeps the second repeated clock time`() =
+        withDeviceTimeZone("America/New_York") {
+            val second130 = 1_730_615_400_000L // 2024-11-03 06:30Z = the second 01:30 in New York (EST)
+            val loaded = loadedForm(second130, second130 + oneHourMs)
+            val back = loaded.withZonePick(org.onekash.kashcal.ui.components.pickers.ZonePick.Set("Asia/Tokyo"), newYork)
+                .withZonePick(org.onekash.kashcal.ui.components.pickers.ZonePick.Device, newYork)
+            assertEquals(second130 to second130 + oneHourMs, back.toStartEndTs())
         }
 
     @Test
@@ -1632,20 +1643,16 @@ class EventFormSheetTest {
         return cal.timeInMillis
     }
 
-    /**
-     * Copies the all-day branch of the Start sheet's onConfirm in [EventFormContent]: the old
-     * day span is applied to the new start date. Returns newEndDateMillis.
-     */
+    /** Moves an all-day form's start with [withAllDayStart]. Returns the new endDateMillis. */
     private fun simulateAllDayStartChangePreservingDaySpan(
         oldStartDateMillis: Long,
         oldEndDateMillis: Long,
         newStartDateMillis: Long
-    ): Long {
-        val normalizedOldStart = normalizeToLocalMidnightTest(oldStartDateMillis)
-        val normalizedOldEnd = normalizeToLocalMidnightTest(oldEndDateMillis)
-        val daySpanMs = (normalizedOldEnd - normalizedOldStart).coerceAtLeast(0)
-        return normalizeToLocalMidnightTest(newStartDateMillis) + daySpanMs
-    }
+    ): Long = EventFormState(
+        isAllDay = true,
+        dateMillis = oldStartDateMillis,
+        endDateMillis = oldEndDateMillis,
+    ).withAllDayStart(newStartDateMillis).endDateMillis
 
     @Test
     fun `start time change preserves actual 2h duration`() {

@@ -6,14 +6,25 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.collections.immutable.toPersistentMap
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.launch
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderManager
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
+import org.onekash.kashcal.data.calendar_provider.DeviceCalendarInstance
 import org.onekash.kashcal.data.calendar_provider.dayCodeToEndOfDayMs
 import org.onekash.kashcal.data.calendar_provider.dayCodeToStartOfDayMs
 import org.onekash.kashcal.data.db.dao.AccountsDao
@@ -21,10 +32,22 @@ import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.TitleSuggestion
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.model.DisplayEvent
-import org.onekash.kashcal.domain.model.SearchResult
+import org.onekash.kashcal.domain.model.overlapsWindow
+import org.onekash.kashcal.domain.search.RoomSearchMatch
+import org.onekash.kashcal.domain.search.SearchFold
+import org.onekash.kashcal.domain.search.SearchHit
+import org.onekash.kashcal.domain.search.SearchMatchExplainer
+import org.onekash.kashcal.domain.search.SearchOutcome
+import org.onekash.kashcal.domain.search.SearchQuery
+import org.onekash.kashcal.domain.search.SearchSplitter
+import org.onekash.kashcal.domain.search.SearchTiming
 import org.onekash.kashcal.ui.util.DayPagerUtils
+import org.onekash.kashcal.util.DateTimeUtils
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -32,6 +55,10 @@ import javax.inject.Singleton
 /**
  * Merges Room events ([EventReader]) and device-calendar events so ViewModels and widgets
  * only see [DisplayEvent].
+ *
+ * Each range read first has the repeating series expanded to its range
+ * ([OccurrenceGenerator.ensureCovered]), which writes occurrence rows; [observeSearch] expands
+ * only the series it matched.
  *
  * A CalendarProvider [SecurityException] is caught and falls back to Room-only results.
  */
@@ -42,10 +69,16 @@ class DisplayEventRepository @Inject constructor(
     private val calendarProviderManager: CalendarProviderManager,
     private val dataStore: KashCalDataStore,
     private val attendeesDao: AttendeesDao,
-    private val accountsDao: AccountsDao
+    private val accountsDao: AccountsDao,
+    private val occurrenceGenerator: OccurrenceGenerator,
 ) {
     companion object {
         private const val TAG = "DisplayEventRepo"
+
+        private const val DEVICE_SEARCH_MAX_YEARS_BACK = 10L
+
+        /** How far ahead search looks: the device window and the expansion of matched series. */
+        private const val SEARCH_YEARS_AHEAD = 2L
     }
 
     /**
@@ -54,6 +87,20 @@ class DisplayEventRepository @Inject constructor(
      * CalendarProviderManager.
      */
     val deviceCalendarChangeSignal: StateFlow<Int> get() = calendarProviderManager.changeSignal
+
+    /**
+     * Emits the visible Room occurrences in [startMs]..[endMs] at once and, on each emission,
+     * expands the repeating series to that range alongside ([OccurrenceGenerator.ensureCovered],
+     * in memory when nothing changed), so a series rewritten while the view is open is expanded
+     * again; Room emits again when the new rows land.
+     */
+    private fun coveredRoomRange(startMs: Long, endMs: Long): Flow<List<EventReader.OccurrenceWithEvent>> = channelFlow {
+        launch { occurrenceGenerator.ensureCovered(startMs, endMs) }
+        eventReader.getVisibleOccurrencesWithEventsInRangeFlow(startMs, endMs).collect { rows ->
+            send(rows)
+            launch { occurrenceGenerator.ensureCovered(startMs, endMs) }
+        }
+    }
 
     /**
      * Emits the day pager's events, from 3 days before [centerDateMs] to 4 days after, grouped
@@ -74,7 +121,7 @@ class DisplayEventRepository @Inject constructor(
         val endDayCode = DayPagerUtils.msToDayCode(rangeEnd)
 
         return combine(
-            eventReader.getVisibleOccurrencesWithEventsInRangeFlow(rangeStart, rangeEnd),
+            coveredRoomRange(rangeStart, rangeEnd),
             calendarProviderManager.changeSignal,
             dataStore.showDeclinedEvents,
             attendeesDao.attendeesChangeSignal(),
@@ -99,7 +146,7 @@ class DisplayEventRepository @Inject constructor(
         val endDayCode = DayPagerUtils.msToDayCode(endMs)
 
         return combine(
-            eventReader.getVisibleOccurrencesWithEventsInRangeFlow(startMs, endMs),
+            coveredRoomRange(startMs, endMs),
             calendarProviderManager.changeSignal,
             dataStore.showDeclinedEvents,
             attendeesDao.attendeesChangeSignal(),
@@ -126,7 +173,7 @@ class DisplayEventRepository @Inject constructor(
         val endMs = dayCodeToEndOfDayMs(endDayCode)
 
         return combine(
-            eventReader.getVisibleOccurrencesWithEventsInRangeFlow(startMs, endMs),
+            coveredRoomRange(startMs, endMs),
             calendarProviderManager.changeSignal,
             dataStore.showDeclinedEvents,
             attendeesDao.attendeesChangeSignal(),
@@ -139,41 +186,205 @@ class DisplayEventRepository @Inject constructor(
     }
 
     /**
-     * Returns the Room and CalendarProvider matches for [query], sorted by `displayTs`; empty
-     * for a blank query.
-     *
-     * @param startDayCode first day (YYYYMMDD, inclusive) of the device search; the Room search
-     *   gets only [query].
-     * @param endDayCode last day (YYYYMMDD, inclusive) of the device search.
-     * @param roomSearcher runs the Room FTS search.
+     * Holds the device instances a search found, in the default window and in the range, how
+     * long it took, and the sync lookback the phone holds events for.
      */
-    suspend fun searchDisplayEvents(
-        query: String,
-        startDayCode: Int,
-        endDayCode: Int,
-        roomSearcher: suspend (String) -> List<SearchResult>
-    ): List<SearchResult> {
-        if (query.isBlank()) return emptyList()
+    private class DeviceSearch(
+        val all: List<DeviceCalendarInstance>,
+        val inRange: List<DeviceCalendarInstance>?,
+        val ms: Long,
+        val lookbackDays: Int,
+    )
 
-        val roomResults = roomSearcher(query)
+    /**
+     * Emits one search's results, split by [SearchSplitter] into Upcoming, Past, hidden
+     * calendars and, with [range] (inclusive, in ms), the matches in it.
+     *
+     * Room is searched once per call and emits again when events, occurrences or attendees
+     * change ([EventReader.observeSearchMatches]); for a query that [SearchQuery.expandsSeries],
+     * each emission also covers the matched repeating series whose stored rows lack a date
+     * ([seriesToCover], [OccurrenceGenerator.ensureCoveredFor], not awaited), so such a series is
+     * dated once its rows land.
+     * With [range] the range is covered first ([OccurrenceGenerator.ensureCovered]), so the
+     * first range list is whole. Device calendars are searched with the query's tags and
+     * [SearchQuery.toProviderQuery] ([CalendarProviderRepository.searchTaggedInstances]) over every
+     * enabled calendar, hidden ones included, from the sync lookback (10 years back at most) to 2
+     * years ahead, and again over [range]'s days; only the device change signal, the
+     * hidden-calendar set and the sync lookback (which moves the window and the empty state's
+     * lookback line) run that search again. A calendar
+     * visibility change splits again without searching. A device [SecurityException]
+     * leaves the Room results. [now] and [zone] decide which occurrences have ended. Nothing
+     * here touches the network.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun observeSearch(query: SearchQuery, now: Long, zone: ZoneId, range: LongRange? = null): Flow<SearchOutcome> {
+        if (query.isEmpty) return flowOf(SearchOutcome())
+        val started = System.nanoTime()
+        val today = Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
+        val todayCode = DayPagerUtils.localDateToDayCode(today)
+        val coverTo = today.plusYears(SEARCH_YEARS_AHEAD).atStartOfDay(zone).toInstant().toEpochMilli()
+        val coverageMs = MutableStateFlow<Long?>(null)
 
-        val deviceResults = try {
-            val visibleIds = getVisibleDeviceCalendarIds()
-            if (visibleIds.isNotEmpty()) {
-                val hideDeclined = !dataStore.getShowDeclinedEvents()
-                calendarProviderRepository.searchInstances(
-                    query, startDayCode, endDayCode, visibleIds, hideDeclined
-                ).map { SearchResult(DisplayEvent.Device(it), it.startTs) }
-            } else {
-                emptyList()
+        val room = channelFlow {
+            // Covered before the first read, so the first range list is whole.
+            if (range != null) occurrenceGenerator.ensureCovered(range.first, range.last)
+            var firstMs: Long? = null
+            eventReader.observeSearchMatches(query, now, todayCode, range).collect { matches ->
+                val ms = firstMs ?: elapsedMs(started).also { firstMs = it }
+                send(matches to ms)
+                val toCover = if (query.expandsSeries) seriesToCover(matches, now) else null
+                if (toCover != null && !toCover.isEmpty) {
+                    launch {
+                        val coverStart = System.nanoTime()
+                        if (occurrenceGenerator.ensureCoveredFor(toCover.fromStart, coverTo, toCover.forwardOnly) > 0) {
+                            coverageMs.value = elapsedMs(coverStart)
+                        }
+                    }
+                }
             }
+        }.distinctUntilChanged()
+
+        val device = combine(
+            calendarProviderManager.changeSignal,
+            dataStore.hiddenDeviceCalendarIds,
+            dataStore.syncPastDays,
+        ) { _, _, _ -> }
+            .mapLatest { searchDevice(query, today, range, zone) }
+
+        return combine(room, device, eventReader.getAllCalendars(), dataStore.hiddenDeviceCalendarIds, coverageMs) {
+                (matches, roomMs), deviceSearch, calendars, hiddenDeviceIds, coverage ->
+            val outcome = SearchSplitter.split(
+                room = matches,
+                calendars = calendars.associateBy { it.id },
+                device = deviceSearch.all,
+                deviceInRange = deviceSearch.inRange,
+                hiddenDeviceCalendarIds = hiddenDeviceIds,
+                now = now,
+                todayDayCode = todayCode,
+                zone = zone,
+                range = range,
+                timing = SearchTiming(roomMs, deviceSearch.ms, elapsedMs(started), coverage),
+            )
+            withReasons(outcome.copy(lookbackDays = deviceSearch.lookbackDays), query.words)
+        }.flowOn(Dispatchers.IO)
+    }
+
+    /** The series a search covers: [fromStart] back to their DTSTART, [forwardOnly] ahead only. */
+    private class SeriesToCover(val fromStart: List<Long>, val forwardOnly: List<Long>) {
+        val isEmpty: Boolean get() = fromStart.isEmpty() && forwardOnly.isEmpty()
+    }
+
+    /**
+     * Picks the matched repeating series whose stored rows lack a date. A series is filled back
+     * to its DTSTART when it has no ended row though it started before [now] (its last
+     * occurrence is missing), or when it has no ended row and its earliest stored row comes
+     * after its DTSTART (rows that began at a view's floor, so its first occurrence is missing).
+     * Otherwise a series with no row not yet ended is extended forward only (its next occurrence
+     * is missing). A series with both is left alone: rows are stored without gaps from their
+     * earliest ([OccurrenceGenerator.ensureCoveredFor]), so its latest ended row is its last
+     * occurrence. A changed occurrence never asks for expansion, since the master row linked to
+     * it dates it.
+     */
+    private fun seriesToCover(matches: List<RoomSearchMatch>, now: Long): SeriesToCover {
+        val fromStart = mutableListOf<Long>()
+        val forwardOnly = mutableListOf<Long>()
+        for (m in matches) {
+            val event = m.event
+            if (event.originalEventId != null || event.rrule.isNullOrBlank()) continue
+            // Rule rows are whole seconds, so DTSTART is compared at whole seconds too.
+            val firstInstance = event.startTs / 1000 * 1000
+            when {
+                m.last == null && event.startTs < now -> fromStart += event.id
+                m.last == null && m.next != null && m.next.startTs > firstInstance -> fromStart += event.id
+                m.next == null -> forwardOnly += event.id
+            }
+        }
+        return SeriesToCover(fromStart, forwardOnly)
+    }
+
+    /**
+     * Adds each hit's reason line ([SearchMatchExplainer]). Guests are read, in one batch per
+     * source, only for hits that title, location and notes don't explain. A failed guest read
+     * leaves those hits without a reason rather than ending the search.
+     */
+    private suspend fun withReasons(outcome: SearchOutcome, words: List<String>): SearchOutcome {
+        fun explain(hit: SearchHit, guests: List<SearchMatchExplainer.Guest>) = hit.displayEvent.let {
+            SearchMatchExplainer.explain(words, it.title, it.location, it.description, guests)
+        }
+        val lists = listOfNotNull(
+            outcome.upcoming, outcome.past, outcome.hiddenUpcoming, outcome.hiddenPast, outcome.range, outcome.hiddenRange,
+        )
+        val withoutGuests = lists.flatten().associateWith { explain(it, emptyList()) }
+        val needGuests = withoutGuests.filter { (hit, reason) ->
+            reason == null && words.any { !SearchFold.contains(hit.displayEvent.title, it) }
+        }.keys
+        val roomIds = needGuests.mapNotNull { (it.displayEvent as? DisplayEvent.Room)?.event?.id }.distinct()
+        val deviceIds = needGuests.mapNotNull { (it.displayEvent as? DisplayEvent.Device)?.instance?.eventId }.distinct()
+        val (roomGuests, deviceGuests) = try {
+            eventReader.getAttendeesForEventsOnce(roomIds)
+                .mapValues { (_, rows) -> rows.map { SearchMatchExplainer.Guest(it.displayName, it.address) } } to
+                if (deviceIds.isEmpty()) {
+                    emptyMap()
+                } else {
+                    calendarProviderRepository.getAttendeesForEvents(deviceIds)
+                        .mapValues { (_, rows) -> rows.map { SearchMatchExplainer.Guest(it.name, it.email) } }
+                }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "Reading guests for search reasons failed", e)
+            emptyMap<Long, List<SearchMatchExplainer.Guest>>() to emptyMap()
+        }
+        fun withReason(hits: ImmutableList<SearchHit>): ImmutableList<SearchHit> = hits.map { hit ->
+            val reason = if (hit in needGuests) {
+                val guests = when (val e = hit.displayEvent) {
+                    is DisplayEvent.Room -> roomGuests[e.event.id]
+                    is DisplayEvent.Device -> deviceGuests[e.instance.eventId]
+                }.orEmpty()
+                if (guests.isEmpty()) null else explain(hit, guests)
+            } else {
+                withoutGuests[hit]
+            }
+            hit.copy(reason = reason)
+        }.toPersistentList()
+        return outcome.copy(
+            upcoming = withReason(outcome.upcoming),
+            past = withReason(outcome.past),
+            hiddenUpcoming = withReason(outcome.hiddenUpcoming),
+            hiddenPast = withReason(outcome.hiddenPast),
+            range = outcome.range?.let(::withReason),
+            hiddenRange = outcome.hiddenRange?.let(::withReason),
+        )
+    }
+
+    private suspend fun searchDevice(query: SearchQuery, today: LocalDate, range: LongRange?, zone: ZoneId): DeviceSearch {
+        val emptyRange = if (range != null) emptyList<DeviceCalendarInstance>() else null
+        val pastDays = dataStore.syncPastDays.first()
+        return try {
+            val calendarIds = if (dataStore.getDeviceCalendarsEnabled()) dataStore.getEnabledDeviceCalendarIds() else emptySet()
+            if (calendarIds.isEmpty()) return DeviceSearch(emptyList(), emptyRange, 0, pastDays)
+            val from = if (pastDays == Int.MAX_VALUE) today.minusYears(DEVICE_SEARCH_MAX_YEARS_BACK) else today.minusDays(pastDays.toLong())
+            val to = today.plusYears(SEARCH_YEARS_AHEAD)
+            val hideDeclined = !dataStore.getShowDeclinedEvents()
+            val text = query.toProviderQuery()
+            suspend fun search(startDay: Int, endDay: Int) =
+                calendarProviderRepository.searchTaggedInstances(query.tags, text, startDay, endDay, calendarIds, hideDeclined)
+            val start = System.nanoTime()
+            val all = search(DayPagerUtils.localDateToDayCode(from), DayPagerUtils.localDateToDayCode(to))
+            val inRange = range?.let {
+                search(
+                    DateTimeUtils.eventTsToDayCode(it.first, isAllDay = false, localZone = zone),
+                    DateTimeUtils.eventTsToDayCode(it.last, isAllDay = false, localZone = zone),
+                )
+            }
+            DeviceSearch(all, inRange, elapsedMs(start), pastDays)
         } catch (e: SecurityException) {
             Log.w(TAG, "Calendar permission revoked during search, falling back to Room-only", e)
-            emptyList()
+            DeviceSearch(emptyList(), emptyRange, 0, pastDays)
         }
-
-        return (roomResults + deviceResults).sortedBy { it.displayTs }
     }
+
+    private fun elapsedMs(startNanos: Long): Long = (System.nanoTime() - startNanos) / 1_000_000
 
     /**
      * Returns the events from [startDayCode] to [endDayCode] (YYYYMMDD, inclusive) grouped by
@@ -190,6 +401,7 @@ class DisplayEventRepository @Inject constructor(
         val startMs = dayCodeToStartOfDayMs(startDayCode)
         val endMs = dayCodeToEndOfDayMs(endDayCode)
 
+        occurrenceGenerator.ensureCovered(startMs, endMs)
         val roomOccurrences = eventReader
             .getVisibleOccurrencesWithEventsInRangeFlow(startMs, endMs)
             .first()
@@ -198,6 +410,54 @@ class DisplayEventRepository @Inject constructor(
         val deviceEvents = queryDeviceEvents(startDayCode, endDayCode)
 
         return mergeAndGroupByDay(roomEvents, deviceEvents, startDayCode, endDayCode)
+    }
+
+    /**
+     * Returns the events of the calendars ticked for printing, once, sorted by start: the Room
+     * calendars in [roomCalendarIds] whether visible or hidden, and the device calendars in
+     * [deviceCalendarIds] that are enabled while device calendars are on, hidden or not. The
+     * show-declined setting applies as on screen ([applyDeclinedPolicy]); cancelled occurrences
+     * are left out as [EventReader.getOccurrencesWithEventsInRange] leaves them out.
+     *
+     * Only events with time in the half-open window [startMs]..[endMs] are returned
+     * ([overlapsWindow]). The Room range query includes events that only touch the window and
+     * the device query widens it by a day on each side, so both are trimmed here.
+     */
+    suspend fun getDisplayEventsForPrint(
+        startMs: Long,
+        endMs: Long,
+        roomCalendarIds: Set<Long>,
+        deviceCalendarIds: Set<Long>,
+    ): List<DisplayEvent> {
+        val firstDayCode = DayPagerUtils.msToDayCode(startMs)
+        val lastDayCode = DayPagerUtils.msToDayCode(endMs - 1)
+        val showDeclined = dataStore.getShowDeclinedEvents()
+
+        val roomEvents = if (roomCalendarIds.isEmpty()) {
+            emptyList()
+        } else {
+            occurrenceGenerator.ensureCovered(startMs, endMs)
+            val rows = eventReader.getOccurrencesWithEventsInRange(startMs, endMs)
+                .filter { it.occurrence.calendarId in roomCalendarIds }
+            applyDeclinedPolicy(rows, showDeclined)
+        }
+        // Ticked device calendars count only while device calendars are on and they are enabled.
+        val deviceEvents = deviceInstances(
+            firstDayCode,
+            lastDayCode,
+            calendarIds = {
+                if (deviceCalendarIds.isEmpty() || !dataStore.getDeviceCalendarsEnabled()) {
+                    emptySet()
+                } else {
+                    deviceCalendarIds intersect dataStore.getEnabledDeviceCalendarIds()
+                }
+            },
+            hideDeclined = { !showDeclined },
+        )
+
+        return (roomEvents + deviceEvents)
+            .filter { it.overlapsWindow(startMs, endMs, firstDayCode, lastDayCode) }
+            .sortedBy { it.startTs }
     }
 
     /**
@@ -298,21 +558,34 @@ class DisplayEventRepository @Inject constructor(
     private suspend fun queryDeviceEvents(
         startDayCode: Int,
         endDayCode: Int
-    ): List<DisplayEvent> {
-        return try {
-            val visibleIds = getVisibleDeviceCalendarIds()
-            if (visibleIds.isNotEmpty()) {
-                val hideDeclined = !dataStore.getShowDeclinedEvents()
-                calendarProviderRepository.getInstancesForDayRange(
-                    startDayCode, endDayCode, visibleIds, hideDeclined
-                ).map { DisplayEvent.Device(it) }
-            } else {
-                emptyList()
-            }
-        } catch (e: SecurityException) {
-            Log.w(TAG, "Calendar permission revoked, falling back to Room-only", e)
+    ): List<DisplayEvent> = deviceInstances(
+        startDayCode,
+        endDayCode,
+        calendarIds = { getVisibleDeviceCalendarIds() },
+        hideDeclined = { !dataStore.getShowDeclinedEvents() },
+    )
+
+    /**
+     * Returns the instances of [calendarIds] for a day code range, asking [hideDeclined] only
+     * when there is a calendar to read; empty when there is none or on a [SecurityException],
+     * so the Room events still show.
+     */
+    private suspend fun deviceInstances(
+        startDayCode: Int,
+        endDayCode: Int,
+        calendarIds: suspend () -> Set<Long>,
+        hideDeclined: suspend () -> Boolean,
+    ): List<DisplayEvent> = try {
+        val ids = calendarIds()
+        if (ids.isEmpty()) {
             emptyList()
+        } else {
+            calendarProviderRepository.getInstancesForDayRange(startDayCode, endDayCode, ids, hideDeclined())
+                .map { DisplayEvent.Device(it) }
         }
+    } catch (e: SecurityException) {
+        Log.w(TAG, "Calendar permission revoked, falling back to Room-only", e)
+        emptyList()
     }
 
     /** Returns the enabled, not hidden device calendar IDs; empty when the feature is off. */

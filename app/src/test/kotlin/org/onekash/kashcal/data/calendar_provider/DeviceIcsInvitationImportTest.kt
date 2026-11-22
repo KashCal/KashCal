@@ -169,7 +169,9 @@ class DeviceIcsInvitationImportTest {
     fun `a REQUEST for a meeting already synced adds no row`() = runTest {
         seedSyncedCopy()
 
-        importFile("nextcloud_request.ics", nextcloudCal)
+        val result = importFile("nextcloud_request.ics", nextcloudCal)
+
+        assertEquals("the device calendar keeps its copy", listOf(IgnoreReason.CALENDAR_KEEPS_COPY), result.ignored)
 
         val rows = events(nextcloudCal)
         assertEquals(

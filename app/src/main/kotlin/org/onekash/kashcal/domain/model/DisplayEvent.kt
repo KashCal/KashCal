@@ -12,6 +12,7 @@ import org.onekash.kashcal.domain.mapper.availabilityIntToTransp
 import org.onekash.kashcal.domain.mapper.statusIntToString
 import org.onekash.kashcal.util.DateTimeUtils
 import java.text.SimpleDateFormat
+import java.time.ZoneId
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -71,13 +72,21 @@ sealed interface DisplayEvent {
      */
     val stableKey: String
 
-    /** An occurrence of a Room event. */
+    /**
+     * An occurrence of a Room event.
+     *
+     * [startDay] and [endDay] are computed once, in [zone], by
+     * [DateTimeUtils.occurrenceStartDay] and [DateTimeUtils.occurrenceEndDay] (#422). [zone]
+     * takes part in equality, so a list rebuilt after a zone change differs from the old one
+     * and a StateFlow re-emits it.
+     */
     @Immutable
     data class Room(
         val event: Event,
         val occurrence: Occurrence,
         val calendar: Calendar?,
-        override val isDeclinedByMe: Boolean = false
+        override val isDeclinedByMe: Boolean = false,
+        val zone: ZoneId = ZoneId.systemDefault(),
     ) : DisplayEvent {
         override val title get() = event.title
         override val description get() = event.description
@@ -85,8 +94,12 @@ sealed interface DisplayEvent {
         override val categories get() = event.categories.orEmpty()
         override val startTs get() = occurrence.startTs
         override val endTs get() = occurrence.endTs
-        override val startDay get() = occurrence.startDay
-        override val endDay get() = occurrence.endDay
+        override val startDay: Int = DateTimeUtils.occurrenceStartDay(
+            occurrence.startTs, occurrence.startDay, event.isAllDay, zone
+        )
+        override val endDay: Int = DateTimeUtils.occurrenceEndDay(
+            occurrence.startTs, occurrence.endTs, occurrence.endDay, event.isAllDay, zone
+        )
         override val isAllDay get() = event.isAllDay
         override val hasRrule get() = event.rrule != null
         override val calendarColor get() = calendar?.color ?: 0
@@ -123,13 +136,14 @@ sealed interface DisplayEvent {
         /** RFC 5545 RRULE, or null for an event that doesn't repeat. */
         val rrule: String? get() = instance.rrule
 
-        /** Reminder offsets in minutes before the start, e.g. [15, 60]. */
-        val reminders: List<Int> get() = instance.reminders
-
         /** True for any occurrence of a recurring series, including an exception. */
         val isPartOfRecurringSeries: Boolean get() = instance.isPartOfRecurringSeries
     }
 }
+
+/** Returns the instance's reminder minutes as ISO trigger durations, or null when it has none. */
+private fun DisplayEvent.Device.isoReminders(): List<String>? =
+    instance.reminders.takeIf { it.isNotEmpty() }?.map { ContactEventUtils.minutesToIsoDuration(it) }
 
 /**
  * Builds an unsaved [Event] copy of this device event for the duplicate form.
@@ -140,6 +154,10 @@ sealed interface DisplayEvent {
  * and this is the only place that drops the rule. An instance can't tell whether it exists
  * only through RDATE, so such an occurrence copies the rule too, unlike the Room
  * [Event.toEventForDuplicate].
+ *
+ * It carries the alerts and the event colour too, as [toEventForShareCard] does: every reminder
+ * row's minutes become an alert whatever its method (a form save writes alerts only), and the
+ * form keeps the first 5 after sorting.
  *
  * `calendarId` is 0 because device calendar ids aren't Room ids; the form picks the calendar
  * from the source device calendar id, falling back to the default if it isn't writable.
@@ -157,7 +175,9 @@ fun DisplayEvent.Device.toEventForDuplicate(): Event = Event(
     rrule = rrule.takeIf { instance.originalId == null },
     dtstamp = System.currentTimeMillis(),
     transp = availabilityIntToTransp(instance.availability),
-    categories = categories
+    categories = categories,
+    color = eventColor,
+    reminders = isoReminders(),
 )
 
 /**
@@ -191,8 +211,7 @@ fun DisplayEvent.Device.toEventForShareCard(): Event = Event(
     status = statusIntToString(instance.status),
     transp = availabilityIntToTransp(instance.availability),
     color = eventColor,
-    reminders = instance.reminders.takeIf { it.isNotEmpty() }
-        ?.map { ContactEventUtils.minutesToIsoDuration(it) },
+    reminders = isoReminders(),
     dtstamp = System.currentTimeMillis(),
 )
 

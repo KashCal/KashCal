@@ -25,6 +25,7 @@ object ExportablePreferences {
         PreferencesKeys.DAY_WEEK_BAR_EXPANDED.name to PrefKind.BOOL,
         PreferencesKeys.ALL_DAY_ROWS_EXPANDED.name to PrefKind.BOOL,
         PreferencesKeys.TAGS_ABOVE_NOTES.name to PrefKind.BOOL,
+        PreferencesKeys.RECENT_TIME_ZONES.name to PrefKind.STRING,
         PreferencesKeys.SHOW_DECLINED_EVENTS.name to PrefKind.BOOL,
         PreferencesKeys.SHOW_MULTIDAY_TIMED_IN_ALLDAY_STRIP.name to PrefKind.BOOL,
         PreferencesKeys.DEFAULT_EVENT_DURATION.name to PrefKind.INT,
@@ -75,6 +76,8 @@ object ExportablePreferences {
         // All-day strip expanded/collapsed in the time-grid views: a persistent display choice.
         PreferencesKeys.ALL_DAY_ROWS_EXPANDED,
         PreferencesKeys.TAGS_ABOVE_NOTES,
+        // Zone ids are portable across devices; unreadable ones are dropped on read.
+        PreferencesKeys.RECENT_TIME_ZONES,
         PreferencesKeys.SHOW_DECLINED_EVENTS,
         // Whether multi-day timed events show in the all-day strip: a persistent display choice.
         PreferencesKeys.SHOW_MULTIDAY_TIMED_IN_ALLDAY_STRIP,
@@ -125,8 +128,8 @@ object ExportablePreferences {
     ).also {
         // Bump this and the matching ExportablePreferencesTest assertion together
         // whenever a key is added to or removed from KEYS above.
-        require(it.size == 43) {
-            "KEYS size drifted; expected 43 allowed keys but got ${it.size}. Update ExportablePreferencesTest expectations too."
+        require(it.size == 44) {
+            "KEYS size drifted; expected 44 allowed keys but got ${it.size}. Update ExportablePreferencesTest expectations too."
         }
     }
 
@@ -139,9 +142,12 @@ object ExportablePreferences {
         PreferencesKeys.WEEK_VIEW_HOUR_HEIGHT.name,
         // The Planner's last pinch-to-zoom scale: per-device view state, not a setting
         PreferencesKeys.PLANNER_ZOOM.name,
+        // The full-height month view's last pinch-to-zoom scale: per-device view state
+        PreferencesKeys.MONTH_FULL_ZOOM.name,
         PreferencesKeys.CONTACT_BIRTHDAYS_LAST_SYNC.name,
         PreferencesKeys.CONTACT_ANNIVERSARIES_LAST_SYNC.name,
         PreferencesKeys.NOTIFICATION_PERMISSION_DENIED_COUNT.name,
+        PreferencesKeys.NOTIFICATION_ASK_DONE.name,
         // Set when a background contact sync hit a revoked WRITE_CONTACTS; drives a re-grant
         // banner on this device
         PreferencesKeys.CONTACT_SYNC_PERMISSION_NEEDED.name,
@@ -153,11 +159,12 @@ object ExportablePreferences {
         PreferencesKeys.REMINDER_MIGRATION_VERSION.name,
         PreferencesKeys.PARSER_VERSION.name,
         PreferencesKeys.ICLOUD_URL_MIGRATION_COMPLETED.name,
+        PreferencesKeys.UTC_SERIES_ZONE_REPAIRED.name,
+        PreferencesKeys.FEED_VALIDATORS_CLEARED_FOR_UTC_SERIES.name,
         // Onboarding flags
         PreferencesKeys.ONBOARDING_COMPLETED.name,
         PreferencesKeys.SHOWN_LOCAL_CALENDAR_INTRO.name,
         PreferencesKeys.SHOWN_SHARE_CARD_TOOLTIP.name,
-        PreferencesKeys.ONBOARDING_DISMISSED.name,
         PreferencesKeys.LAST_WHATSNEW_VERSION_SHOWN.name,
         // Permission-banner dismissal, tied to this device's contacts permission
         PreferencesKeys.CONTACT_SUGGESTIONS_DECLINED.name,

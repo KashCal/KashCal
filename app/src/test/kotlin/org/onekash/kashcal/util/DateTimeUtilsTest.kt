@@ -764,14 +764,14 @@ class DateTimeUtilsTest {
         assertEquals("5m", formatReminderShort(5, resources = resources))
         assertEquals("15m", formatReminderShort(15, resources = resources))
         assertEquals("1h", formatReminderShort(60, resources = resources))
-        assertEquals("9AM", formatReminderShort(540, resources = resources))
+        assertEquals("9h", formatReminderShort(540, resources = resources))
         assertEquals("1d", formatReminderShort(1440, resources = resources))
         assertEquals("1w", formatReminderShort(10080, resources = resources))
     }
 
     @Test
-    fun `formatReminderShort unknown value shows minutes`() {
-        assertEquals("999m", formatReminderShort(999, resources = resources))
+    fun `formatReminderShort unknown value shows hours and minutes`() {
+        assertEquals("16h 39m", formatReminderShort(999, resources = resources))
     }
 
     @Test
@@ -787,13 +787,13 @@ class DateTimeUtilsTest {
     }
 
     @Test
-    fun `formatReminderShort 540 use24Hour true returns 09 colon 00`() {
-        assertEquals("09:00", formatReminderShort(540, use24Hour = true, resources = resources))
+    fun `formatReminderShort timed 540 use24Hour true returns 9h`() {
+        assertEquals("9h", formatReminderShort(540, use24Hour = true, resources = resources))
     }
 
     @Test
-    fun `formatReminderShort 540 use24Hour false returns 9AM`() {
-        assertEquals("9AM", formatReminderShort(540, use24Hour = false, resources = resources))
+    fun `formatReminderShort timed 540 use24Hour false returns 9h`() {
+        assertEquals("9h", formatReminderShort(540, use24Hour = false, resources = resources))
     }
 
     // ==================== Format Sync Interval Tests ====================

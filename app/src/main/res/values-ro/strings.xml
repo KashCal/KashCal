@@ -43,6 +43,8 @@
     <string name="channel_event_invitations">Invitații la evenimente</string>
     <string name="channel_event_invitations_desc">Notificări la primirea unei noi invitații în calendar</string>
     <string name="channel_calendar_updates">Modificări în calendar</string>
+    <string name="channel_calendar_backup">Copie de rezervă automată a calendarelor</string>
+    <string name="channel_calendar_backup_description">Te anunță când o copie de rezervă a calendarelor eșuează</string>
     <string name="invite_notification_body">De la %1$s · Atinge pentru a răspunde</string>
 
     <!-- ==================== App Shortcuts ==================== -->
@@ -88,7 +90,6 @@
     <string name="action_discard">Renunță</string>
     <string name="action_discard_confirm">Renunți?</string>
     <string name="action_dismiss">Respinge</string>
-    <string name="action_show_all">Arată tot</string>
     <string name="action_connect">Conectează</string>
     <string name="action_duplicate">Duplică</string>
     <string name="action_share">Partajează</string>
@@ -119,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d mai multe</string>
     <string name="tags_autocomplete_create_new">Creează „%1$s”</string>
     <string name="cd_tag">Etichetă: %1$s</string>
+    <string name="tags_show_events_click_label">Afișează evenimentele cu această etichetă</string>
+    <string name="tags_show_events">Afișează evenimentele</string>
     <string name="cd_tags_move_menu">Mută etichetele</string>
     <string name="tags_move_above_notes">Mută deasupra notițelor</string>
     <string name="tags_move_below_notes">Mută sub notițe</string>
@@ -148,7 +151,6 @@
     <string name="label_enter_hex">Introdu 6 caractere hex (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Toate</string>
     <string name="view_week">Săptămână</string>
     <string name="view_month">Lună</string>
     <string name="label_all_day">Toată ziua</string>
@@ -190,17 +192,38 @@
     <string name="settings_event_emojis_info">Adaugă un emoji la evenimente pe baza titlului, de exemplu 🎂 pentru \"Zi de naștere\".</string>
     <string name="settings_force_sync">Sincronizare completă forțată</string>
     <string name="settings_force_sync_subtitle">Redescarcă toate datele calendarului</string>
+    <string name="settings_force_sync_no_account">Niciun cont de sincronizare configurat</string>
+    <string name="force_sync_confirm">Redescarcă %1$s de la %2$s. Modificările nesincronizate încă sunt păstrate.</string>
+    <string name="action_start">Începe</string>
     <string name="settings_sync_history">Istoric sincronizări</string>
     <string name="settings_sync_history_subtitle">Vizualizează sesiunile de sincronizare (ultimele 48 de ore)</string>
     <string name="settings_import_subtitle">Adaugă evenimente dintr-un fișier ICS în orice calendar</string>
-    <string name="settings_export_subtitle">Salvează evenimentele într-un fișier ICS</string>
     <string name="settings_birthday_reminder">Memento zi de naștere</string>
-    <string name="settings_use_device_timezone">Folosește fusul orar al dispozitivului</string>
     <string name="settings_section_calendars">Calendare și conturi</string>
     <string name="settings_section_appearance">Aspect</string>
     <string name="settings_section_creating_events">Preferințe eveniment</string>
     <string name="settings_section_sync">Sincronizare</string>
     <string name="settings_section_data">Copie de rezervă &amp; restaurare</string>
+    <string name="settings_section_troubleshooting">Depanare</string>
+
+    <!-- ==================== Debug report (Settings > Troubleshooting) ==================== -->
+    <string name="debug_report_row_label">Exportă raportul de depanare</string>
+    <string name="debug_report_row_subtitle">Detalii despre blocări, sincronizare și configurare de trimis cu un raport de eroare</string>
+    <string name="debug_report_sheet_title">Raport de depanare</string>
+    <string name="debug_report_sheet_body">Un fișier text de trimis cu un raport de eroare. Trimite-l la scurt timp după problemă: jurnalul aplicației păstrează doar activitatea recentă.</string>
+    <string name="debug_report_item_exits">De ce s-a închis recent aplicația</string>
+    <string name="debug_report_item_exits_detail">Blocări, înghețări, memorie insuficientă</string>
+    <string name="debug_report_item_log">Jurnalul aplicației</string>
+    <string name="debug_report_item_log_detail">Mesajele proprii ale KashCal, inclusiv detaliile blocărilor</string>
+    <string name="debug_report_item_sync_detail">Sincronizări recente, până la 48 de ore în urmă</string>
+    <string name="debug_report_item_pending">Modificări în așteptare</string>
+    <string name="debug_report_item_pending_detail">Modificări care nu au fost încă trimise la serverul tău</string>
+    <string name="debug_report_item_setup">Configurare</string>
+    <string name="debug_report_item_setup_detail">Versiunea aplicației și Android, permisiuni, setări pentru baterie, tipuri de conturi</string>
+    <string name="debug_report_privacy_note">Adresele de e-mail, adresele web și tokenurile de acces sunt mascate. Titlurile evenimentelor, numele calendarelor și numele contactelor nu sunt. Trimite-l prin e-mail, nu într-o postare publică.</string>
+    <string name="debug_report_share">Partajează raportul</string>
+    <string name="debug_report_chooser_title">Partajează raportul de depanare</string>
+    <string name="debug_report_failed">Raportul de depanare nu a putut fi creat</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Blocare aplicație</string>
@@ -236,9 +259,38 @@
     <string name="backup_error_read_failed">Fișierul nu a putut fi citit</string>
 
     <!-- ==================== Onboarding ==================== -->
-    <string name="onboarding_apple_calendar">Apple Calendar?</string>
-    <string name="onboarding_got_you">Te ajutăm.</string>
-    <string name="onboarding_connect_prompt">Conectează iCloud pentru a vedea evenimentele tale aici</string>
+    <string name="onboarding_title">Unde sunt calendarele tale?</string>
+    <string name="onboarding_subtitle">Alege unul pentru conectare.</string>
+    <string name="onboarding_icloud_detail">Apple ID și parolă de aplicație</string>
+    <string name="onboarding_caldav_title">Server CalDAV</string>
+    <string name="onboarding_caldav_detail">Nextcloud, Fastmail, Radicale și altele</string>
+    <string name="onboarding_device_title">Pe acest dispozitiv</string>
+    <string name="onboarding_phone_detail">Google, Outlook și aplicații de sincronizare</string>
+    <string name="onboarding_use_offline">Folosește calendarul offline</string>
+    <string name="onboarding_trust">Cod sursă deschis. Fără reclame. Fără urmărire.</string>
+
+    <!-- ==================== Reminders are off ==================== -->
+    <string name="reminders_off_title">Mementourile sunt oprite</string>
+    <plurals name="reminders_off_body">
+        <item quantity="one">%d eveniment din această săptămână are un memento.</item>
+        <item quantity="few">%d evenimente din această săptămână au mementouri.</item>
+        <item quantity="other">%d de evenimente din această săptămână au mementouri.</item>
+    </plurals>
+    <string name="reminders_off_not_now">Nu acum</string>
+    <string name="reminders_off_turn_on">Activează</string>
+    <string name="reminders_on_snackbar">Mementouri activate</string>
+
+    <!-- ==================== About ==================== -->
+    <string name="about_tagline">Toate calendarele tale într-o singură aplicație privată.</string>
+    <string name="about_help_title">Ajutor și ghiduri</string>
+    <string name="about_help_detail">Configurare, sincronizare și întrebări</string>
+    <string name="about_source_title">Cod sursă</string>
+    <string name="about_source_detail">Apache 2.0, pe GitHub</string>
+    <string name="about_support_title">Susține KashCal</string>
+    <string name="about_support_detail">Mulțumim tuturor celor care o fac deja</string>
+    <string name="about_link_failed">Nicio aplicație nu poate deschide acest link.</string>
+    <string name="about_built_in_austin">Făcut cu ❤️ în Austin</string>
+    <string name="about_version">Versiunea %1$s</string>
 
     <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Omite</string>
@@ -257,22 +309,32 @@
     <string name="whats_new_v772_changes_title">Vezi ce s-a schimbat</string>
     <string name="whats_new_v772_changes_body">Evenimentele noi, editate și șterse din calendarele tale iCloud și CalDAV se adună în Modificări recente timp de 7 zile. Atinge unul ca să-l deschizi.</string>
     <string name="whats_new_v772_notifications_body">Primește o notificare când sincronizarea din fundal găsește modificări la evenimentele tale iCloud sau CalDAV. Rămâne dezactivată până când o activezi.</string>
+    <string name="whats_new_v803_offline_title">Calendare care nu pleacă de pe telefon</string>
+    <string name="whats_new_v803_offline_body">Unele planuri nu au ce căuta pe un server. Creează-le calendare offline proprii, câte vrei.</string>
+    <string name="whats_new_v803_backup_title">Copii de rezervă fără bătăi de cap</string>
+    <string name="whats_new_v803_backup_body">Alegi o dată un dosar, iar KashCal păstrează acolo o copie proaspătă a calendarelor tale offline.</string>
+    <string name="whats_new_v803_print_title">Săptămâna ta, pe hârtie</string>
+    <string name="whats_new_v803_print_body">Tipărește săptămâna pe care o vezi. Pe ce frigider ajunge, alegi tu.</string>
     <string name="whats_new_hero_sample_lunch">Prânz cu echipa</string>
     <string name="whats_new_hero_sample_review">Revizuire design</string>
     <string name="whats_new_hero_sample_book_club">Club de carte</string>
+    <string name="whats_new_hero_sample_dentist">Dentist</string>
+    <string name="whats_new_hero_sample_yoga">Yoga</string>
     <string name="whats_new_hero_sample_calendar">Serviciu</string>
+    <string name="whats_new_hero_sample_family">Familie</string>
+    <string name="whats_new_hero_sample_garden">Grădină</string>
+    <string name="whats_new_hero_sample_folder">Copii de rezervă calendare</string>
     <string name="whats_new_hero_now">acum</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Conectare iCloud</string>
     <string name="signin_caldav_title">Adaugă cont CalDAV</string>
+    <string name="signin_caldav_sign_in_again_title">Conectează-te din nou</string>
     <string name="signin_connected_to">Conectat la %1$s</string>
 
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Eveniment nou</string>
     <string name="dialog_edit_event_title">Editează eveniment</string>
-    <string name="dialog_force_sync_title">Sincronizare completă forțată?</string>
-    <string name="dialog_force_sync_message">Aceasta va redescărca toate datele calendarului de pe server. Modificările locale vor fi păstrate.</string>
     <string name="dialog_enable_notifications">Activezi notificările?</string>
     <string name="dialog_action_required">Această acțiune este necesară pentru a continua.</string>
     <string name="dialog_add_to_calendar">Adaugă în calendar</string>
@@ -285,6 +347,7 @@
     <string name="status_no_events_week">Niciun eveniment săptămâna aceasta</string>
     <string name="status_more_events">+%1$d mai multe</string>
     <string name="status_no_sync_sessions">Nicio sesiune de sincronizare încă.\n\nDeclanșează o sincronizare trăgând în jos pe vizualizarea calendarului.</string>
+    <string name="status_no_sync_account">Niciun cont de sincronizare configurat. Calendarele offline rămân pe acest dispozitiv; calendarele dispozitivului se sincronizează prin contul lor.</string>
     <string name="status_no_writable_calendars">Niciun calendar editabil disponibil</string>
     <string name="status_events_count">%1$d evenimente</string>
     <string name="status_sync_history">Istoric sincronizări</string>
@@ -333,6 +396,7 @@
     <string name="caldav_error_unexpected">Eroare neașteptată. Încercați din nou.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nDacă acesta este un server din rețeaua ta locală, permite accesul la rețeaua locală pentru a te conecta.</string>
     <string name="caldav_error_connection_refused_insecure">Serverul a redirecționat conexiunea către un loc unde KashCal nu merge (o adresă necriptată sau o buclă de redirecționări), așa că KashCal s-a oprit înainte să îți trimită parola. Verifică adresa serverului.</string>
+    <string name="caldav_error_sign_in_again_mismatch">Acesta este alt cont. Conectează-te cu numele de utilizator și serverul pe care le folosește acest cont.</string>
     <string name="local_network_banner_title">Este necesar accesul la rețeaua locală</string>
     <string name="local_network_banner_body">Se pare că acest server este în rețeaua ta locală. Permite accesul la rețeaua locală pentru ca KashCal să se poată conecta la el.</string>
     <string name="local_network_banner_allow">Permite accesul</string>
@@ -374,7 +438,6 @@
     <string name="error_device_calendar_title">Eroare calendar</string>
     <string name="error_device_calendar_write_failed">Nu s-a putut salva în calendarul dispozitivului. Încearcă din nou.</string>
     <string name="error_device_calendar_permission">Permisiune de scriere calendar necesară. Acordă permisiunea din Setări.</string>
-    <string name="error_device_calendar_permission_denied">Dezactivează și reactivează permisiunea Calendar din Setări pentru a acorda acces de scriere</string>
     <string name="error_device_calendar_not_found">Calendar negăsit. Poate a fost eliminat.</string>
     <string name="error_device_event_not_found">Eveniment negăsit. Poate a fost șters.</string>
     <string name="error_device_calendar_read_only">Acest calendar este doar pentru citire.</string>
@@ -401,12 +464,11 @@
     <string name="cd_recurring">Recurent</string>
     <string name="cd_enabled">Activat</string>
     <string name="cd_sync_error">Eroare de sincronizare</string>
-    <string name="cd_select_label">Selectează %1$s</string>
     <string name="cd_wheel_picker">Selector rotativ cu %1$d opțiuni</string>
     <string name="cd_time_entry_keyboard">Introdu ora exactă</string>
     <string name="time_entry_dialog_title">Introdu ora</string>
     <string name="time_entry_tap_to_edit">Atinge pentru editare</string>
-    <string name="cd_version_info">KashCal versiunea %1$s. Apasă lung pentru opțiuni de depanare.</string>
+    <string name="cd_version_info">KashCal versiunea %1$s</string>
     <string name="cd_about_setting">Despre %1$s</string>
     <string name="cd_color_slider">Cursor culoare, acum %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d grade</string>
@@ -435,7 +497,6 @@
     <string name="label_recurrence_on_date">La data</string>
 
     <!-- ==================== Settings (Additional) ==================== -->
-    <string name="settings_visible_calendars">Calendare vizibile</string>
     <string name="settings_default_calendar">Calendar implicit</string>
     <string name="settings_default_event_length">Durata implicită a evenimentului</string>
     <string name="settings_default_event_length_hint">Durata implicită pentru evenimente noi</string>
@@ -455,7 +516,6 @@
     <string name="option_saturday">Sâmbătă</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Niciun eveniment găsit</string>
     <string name="empty_no_upcoming_events">Niciun eveniment viitor</string>
     <string name="empty_no_calendars">Niciun calendar disponibil</string>
 
@@ -466,7 +526,15 @@
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Descarcă calendarul</string>
     <string name="action_import_from_file">Importă evenimente din fișier</string>
-    <string name="action_export_local_calendar">Exportă calendarul local</string>
+    <string name="settings_export_calendars">Exportă calendarele</string>
+    <string name="settings_export_calendars_subtitle">Salvează un calendar ca fișier ICS</string>
+    <string name="export_calendar_no_events">Niciun eveniment</string>
+    <string name="export_calendar_preparing">Se pregătește…</string>
+    <string name="cd_export_calendar">Exportă %1$s</string>
+    <string name="cd_export_calendar_preparing">Se pregătește %1$s</string>
+    <string name="export_calendar_chooser_title">Exportă calendarul</string>
+    <string name="export_event_chooser_title">Exportă evenimentul</string>
+    <string name="export_file_failed">Nu s-a putut crea fișierul.</string>
 
     <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
@@ -504,12 +572,14 @@
     <string name="accounts_cd_back">Înapoi</string>
     <string name="accounts_sync_issue">Problemă de sincronizare</string>
     <string name="accounts_cd_sync_warning">Avertisment sincronizare</string>
+    <string name="accounts_cd_sync_off">sincronizare oprită</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">Fluxuri de calendar</string>
     <string name="subscriptions_section_add">Adaugă</string>
     <string name="subscriptions_empty_ics">Niciun abonament ICS</string>
     <string name="subscriptions_empty_ics_hint">Adaugă un flux de calendar pentru a vedea evenimente</string>
+    <string name="subscriptions_swipe_hint">Glisează un flux pentru a-l șterge.</string>
     <string name="subscriptions_add_ics">Adaugă calendar ICS</string>
     <string name="qs_tile_label">Adaugă eveniment</string>
     <string name="holiday_catalog_add">Adaugă calendar de sărbători</string>
@@ -519,6 +589,11 @@
     <string name="holiday_catalog_empty_hint">Încearcă un alt nume</string>
     <string name="holiday_catalog_validate_error">Nu s-a putut accesa acest calendar. Verifică conexiunea și încearcă din nou.</string>
     <string name="holiday_catalog_attribution">Calendare de sărbători de la Mozilla Thunderbird, sub licența %1$s.</string>
+    <string name="account_feeds_add">Adaugă din cont</string>
+    <string name="account_feeds_note">Listează fluxurile de calendar salvate în conturile tale iCloud și CalDAV. Activează-l pentru a-l adăuga în „Fluxuri de calendar”.</string>
+    <string name="account_feeds_checking">Se verifică…</string>
+    <string name="account_feeds_none">Nu s-au găsit fluxuri de calendar</string>
+    <string name="account_feeds_failed">Nu s-au putut încărca fluxurile de calendar</string>
     <string name="subscriptions_row_label">Fluxuri de calendar (ICS)</string>
     <string name="subscriptions_row_hint">ex. sărbători, sport, școală</string>
 
@@ -564,6 +639,8 @@
     <string name="account_detail_discovering">Se descoperă…</string>
     <string name="account_detail_discover_calendars">Descoperă calendare noi</string>
     <string name="account_detail_change_password">Schimbă parola</string>
+    <string name="account_detail_sign_in_again">Conectează-te din nou</string>
+    <string name="account_detail_sign_in_again_subtitle">KashCal nu mai are parola acestui cont. Conectează-te pentru a sincroniza din nou. Calendarele și evenimentele tale se păstrează.</string>
     <string name="account_detail_sign_out">Deconectare</string>
     <string name="account_detail_never_synced">Niciodată sincronizat</string>
     <string name="account_detail_last_success">Ultima reușită: %1$s</string>
@@ -587,6 +664,116 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Calendare dispozitiv</string>
     <string name="settings_device_calendars_hint">Calendare din alte aplicații</string>
+    <string name="offline_calendars_row_label">Calendare offline</string>
+    <string name="offline_calendars_row_hint">Calendare care rămân pe acest dispozitiv</string>
+    <string name="offline_calendars_manage_note">Glisează un calendar pentru a-l șterge.</string>
+    <string name="offline_calendars_info">Păstrate pe acest dispozitiv și niciodată sincronizate.</string>
+    <string name="offline_calendars_info_cd">Despre calendarele offline</string>
+    <string name="offline_calendar_default_state">Implicit</string>
+    <string name="offline_calendar_new">Calendar nou</string>
+    <string name="offline_calendar_new_in_picker">Calendar offline nou</string>
+    <string name="action_create">Creează</string>
+    <string name="offline_calendar_rename">Redenumește</string>
+    <string name="offline_calendar_color">Culoare</string>
+    <string name="offline_calendar_export">Exportă calendarul</string>
+    <string name="offline_calendar_builtin_info">Calendarul încorporat nu poate fi redenumit sau șters. Evenimentele noi ajung aici când nu alegi niciun calendar.</string>
+    <string name="offline_calendar_builtin_info_cd">Despre calendarul încorporat</string>
+    <string name="offline_calendar_rename_cancel_cd">Anulează redenumirea</string>
+    <string name="offline_calendar_rename_save_cd">Salvează numele</string>
+    <string name="offline_calendar_delete_cd">Șterge %1$s</string>
+    <plurals name="offline_calendar_delete_confirm">
+        <item quantity="one">Ștergi definitiv \"%2$s\" împreună cu %1$d eveniment? Nu poate fi anulat.</item>
+        <item quantity="few">Ștergi definitiv \"%2$s\" împreună cu %1$d evenimente? Nu poate fi anulat.</item>
+        <item quantity="other">Ștergi definitiv \"%2$s\" împreună cu %1$d de evenimente? Nu poate fi anulat.</item>
+    </plurals>
+    <string name="offline_calendar_delete_empty">Ștergi definitiv \"%1$s\"? Nu are evenimente.</string>
+    <plurals name="offline_calendar_delete_also">
+        <item quantity="one">Șterge și %1$d eveniment</item>
+        <item quantity="few">Șterge și %1$d evenimente</item>
+        <item quantity="other">Șterge și %1$d de evenimente</item>
+    </plurals>
+    <string name="offline_calendar_deleted">%1$s a fost șters</string>
+    <string name="offline_calendar_duplicate_name">Există deja un calendar offline numit \"%1$s\"</string>
+    <string name="offline_calendar_similar_name">Prea asemănător cu „%1$s”. Alege alt nume.</string>
+    <string name="calendar_backup_title">Copie de rezervă automată a calendarelor</string>
+    <string name="calendar_backup_row_off">Dezactivat</string>
+    <string name="calendar_backup_row_on">%1$s · %2$s</string>
+    <string name="calendar_backup_row_problem">Dosarul copiilor de rezervă nu poate fi accesat</string>
+    <string name="calendar_backup_intro">Salvează fiecare calendar offline ca fișier ICS într-un dosar ales de tine.</string>
+    <string name="calendar_backup_choose_folder">Alege dosarul</string>
+    <string name="calendar_backup_choose_folder_hint">Alege sau creează un dosar, de exemplu în Documents. Android nu permite rădăcina spațiului de stocare sau chiar dosarul Download.</string>
+    <string name="calendar_backup_folder">Dosar</string>
+    <string name="calendar_backup_change">Schimbă</string>
+    <string name="calendar_backup_frequency">Frecvență</string>
+    <string name="calendar_backup_frequency_info">Copiile de rezervă pot întârzia: Android amână activitatea din fundal când telefonul nu este folosit sau când KashCal nu a fost deschis de ceva timp.</string>
+    <string name="calendar_backup_copies">Copii păstrate</string>
+    <string name="calendar_backup_copies_explained">Fiecare copie de rezervă păstrează fișierul anterior ca o copie datată. Când sunt mai multe decât acest număr, cele mai vechi sunt șterse. Cel mai nou fișier are mereu numele calendarului.</string>
+    <string name="calendar_backup_copies_fewer">Păstrează mai puține copii</string>
+    <string name="calendar_backup_copies_more">Păstrează mai multe copii</string>
+    <plurals name="calendar_backup_copies_state">
+        <item quantity="one">%d copie</item>
+        <item quantity="few">%d copii</item>
+        <item quantity="other">%d de copii</item>
+    </plurals>
+    <plurals name="calendar_backup_deletes">
+        <item quantity="one">Șterge %d copie mai veche. Acțiunea nu poate fi anulată.</item>
+        <item quantity="few">Șterge %d copii mai vechi. Acțiunea nu poate fi anulată.</item>
+        <item quantity="other">Șterge %d de copii mai vechi. Acțiunea nu poate fi anulată.</item>
+    </plurals>
+    <string name="calendar_backup_deletes_unknown">Șterge copiile mai vechi care depășesc acest număr. Acțiunea nu poate fi anulată.</string>
+    <string name="calendar_backup_calendars">Calendare offline</string>
+    <string name="calendar_backup_calendar_nothing_saved">%1$s · Niciun eveniment, nu s-a salvat nimic</string>
+    <string name="calendar_backup_calendar_save_failed">%1$s · Nu s-a putut salva. Se va reîncerca la următoarea copie de rezervă.</string>
+    <string name="calendar_backup_status">Ultima copie de rezervă %1$s</string>
+    <plurals name="calendar_backup_status_failed">
+        <item quantity="one">Ultima copie de rezervă %1$s · %2$d calendar nereușit</item>
+        <item quantity="few">Ultima copie de rezervă %1$s · %2$d calendare nereușite</item>
+        <item quantity="other">Ultima copie de rezervă %1$s · %2$d de calendare nereușite</item>
+    </plurals>
+    <string name="calendar_backup_now">Fă copia de rezervă acum</string>
+    <string name="calendar_backup_running">Se face copia de rezervă…</string>
+    <string name="calendar_backup_footer_overwrites">KashCal suprascrie aceste fișiere la fiecare copie de rezervă, așa că modificările făcute în alte aplicații nu se păstrează. Pentru a restaura un calendar, folosește „Importă evenimente din fișier”.</string>
+    <string name="calendar_backup_off_files_stay">Fișierele existente rămân în %1$s.</string>
+    <string name="calendar_backup_folder_unreachable">Nu se poate accesa %1$s. Este posibil să fi fost mutat, șters sau deconectat.</string>
+    <string name="calendar_backup_error_unsupported">Nu se pot salva fișiere în %1$s. Alege alt dosar.</string>
+    <string name="calendar_backup_choose_again">Alege din nou</string>
+    <string name="calendar_backup_pick_refused">KashCal nu poate folosi acest dosar. Alege altul.</string>
+    <string name="calendar_backup_pick_cannot_create">KashCal nu poate crea fișiere în acel dosar. Alege altul.</string>
+    <string name="calendar_backup_failed_title">Copia de rezervă a calendarelor a eșuat</string>
+    <string name="calendar_backup_folder_unnamed">dosarul copiilor de rezervă</string>
+    <string name="calendar_backup_alert_unreachable">Nu se poate accesa %1$s. Atinge pentru a-l alege din nou.</string>
+    <string name="calendar_backup_alert_unsupported">Nu se pot salva fișiere în %1$s. Atinge pentru a alege alt dosar.</string>
+    <string name="calendar_backup_alert_file_retry">Nu s-a putut salva %1$s. KashCal va reîncerca la următoarea copie de rezervă.</string>
+    <string name="calendar_backup_every_hour">La fiecare oră</string>
+    <string name="calendar_backup_every_day">Zilnic</string>
+    <plurals name="calendar_backup_every_hours">
+        <item quantity="one">La fiecare %d oră</item>
+        <item quantity="few">La fiecare %d ore</item>
+        <item quantity="other">La fiecare %d de ore</item>
+    </plurals>
+    <plurals name="calendar_backup_every_days">
+        <item quantity="one">La fiecare %d zi</item>
+        <item quantity="few">La fiecare %d zile</item>
+        <item quantity="other">La fiecare %d de zile</item>
+    </plurals>
+    <string name="calendar_backup_every_day_hours">La fiecare 1 zi și %1$s</string>
+    <string name="calendar_backup_every_days_hours">La fiecare %1$s și %2$s</string>
+    <string name="calendar_backup_interval_too_short">Alege cel puțin 1 oră.</string>
+    <string name="calendar_backup_interval_too_long">Alege cel mult 30 de zile.</string>
+    <plurals name="calendar_backup_alert_files_retry">
+        <item quantity="one">Nu s-a putut salva %d calendar. KashCal va reîncerca la următoarea copie de rezervă.</item>
+        <item quantity="few">Nu s-au putut salva %d calendare. KashCal va reîncerca la următoarea copie de rezervă.</item>
+        <item quantity="other">Nu s-au putut salva %d de calendare. KashCal va reîncerca la următoarea copie de rezervă.</item>
+    </plurals>
+    <string name="calendar_backup_notifications_app_off">Notificările sunt dezactivate pentru KashCal, așa că nu te poate anunța dacă o copie de rezervă eșuează.</string>
+    <string name="calendar_backup_notifications_channel_off">Notificările pentru copiile de rezervă sunt dezactivate, așa că KashCal nu te poate anunța dacă o copie de rezervă eșuează.</string>
+    <string name="calendar_backup_open_settings">Deschide setările</string>
+    <string name="calendar_backup_not_now">Nu acum</string>
+    <plurals name="calendar_backup_row_calendars_failed">
+        <item quantity="one">%d calendar nereușit</item>
+        <item quantity="few">%d calendare nereușite</item>
+        <item quantity="other">%d de calendare nereușite</item>
+    </plurals>
     <string name="settings_quick_event_add">Adăugare inteligentă a evenimentelor</string>
     <string name="settings_quick_event_add_info">Creează evenimente scriind natural. \"Prânz cu Sam vineri la 13:00\" completează pentru tine titlul, data și ora.</string>
     <string name="settings_suggest_titles">Sugerează titluri de evenimente</string>
@@ -647,6 +834,8 @@
     <string name="cd_pick_month_year">Alege luna și anul</string>
     <string name="cd_previous_month">Luna anterioară</string>
     <string name="cd_next_month">Luna viitoare</string>
+    <string name="cd_previous_day">Ziua anterioară</string>
+    <string name="cd_next_day">Ziua următoare</string>
     <string name="cd_month_year_picker">Selector lună și an</string>
     <string name="cd_remove_alert">Elimină alerta</string>
     <string name="cd_warning">Avertisment</string>
@@ -656,7 +845,25 @@
     <string name="label_on_days">În zilele</string>
     <string name="label_pattern">Model</string>
     <string name="label_ends">Sfârșit</string>
+    <string name="sheet_hint_change_end">Atinge o zi pentru a schimba sfârșitul</string>
     <string name="label_timezone">Fus orar</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Caută oraș, țară sau fus</string>
+    <string name="timezone_section_this_event">Acest eveniment</string>
+    <string name="timezone_section_device">Fusul orar al dispozitivului</string>
+    <string name="timezone_section_recent">Recente</string>
+    <string name="timezone_section_all">Toate fusurile orare</string>
+    <string name="timezone_offsets_on">Decalaje la %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Din calendar: %1$s</string>
+    <string name="timezone_shown_in_device_time">Afișat în ora dispozitivului</string>
+    <string name="timezone_loading">Se încarcă fusurile orare…</string>
+    <string name="timezone_no_match">Niciun fus orar nu corespunde</string>
+    <string name="timezone_no_match_hint">Încearcă un oraș, o țară sau un decalaj ca +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Alerte</string>
     <string name="label_add_alert">Adaugă alertă</string>
     <string name="label_recurrence_never">Niciodată</string>
@@ -664,11 +871,8 @@
     <string name="label_yesterday">Ieri</string>
     <string name="label_device_calendars">Calendare dispozitiv</string>
     <string name="label_default_calendar_hint">Evenimentele noi vor fi create în acest calendar</string>
-    <string name="label_visible_count">%1$d / %2$d vizibile</string>
     <string name="label_reminders_truncated">%1$d neafișate (%2$d total, max %3$d editabile)</string>
     <string name="label_found_events">Găsite: %1$d evenimente</string>
-    <string name="label_open_debug_menu">Deschide meniul de depanare</string>
-    <string name="placeholder_search">Caută…</string>
     <string name="settings_search_placeholder">Caută în setări…</string>
     <string name="settings_search_no_results">Nu s-au găsit setări pentru \"%1$s\"</string>
     <string name="cd_search_settings">Caută în setări</string>
@@ -679,16 +883,13 @@
     <string name="status_hours_ago">acum %1$d h</string>
 
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
-    <string name="device_calendars_description">Afișează evenimente din alte aplicații de calendar de pe dispozitiv (adaptoare de sincronizare, calendare locale).</string>
-    <string name="device_calendars_permission_required">Permisiune calendar necesară. Apasă Activează pentru a acorda acces.</string>
-    <string name="device_calendars_read_only_access">Acces doar citire</string>
-    <string name="device_calendars_grant_write">Acordă permisiunea de scriere pentru a edita evenimentele calendarului dispozitivului</string>
-    <string name="device_calendars_grant">Acordă</string>
-    <string name="device_calendars_none_found">Niciun calendar de dispozitiv găsit.</string>
+    <string name="device_calendars_intro">Afișează calendarele din Google, Outlook și aplicațiile de sincronizare de pe acest dispozitiv.</string>
+    <string name="device_calendars_show_switch">Afișează calendarele dispozitivului</string>
+    <string name="device_calendars_access_off">Accesul la calendar este oprit pentru KashCal.</string>
+    <string name="device_calendars_pick_hint">Alege calendarele de afișat.</string>
+    <string name="device_calendars_empty">Nu s-au găsit calendare.</string>
     <string name="device_calendars_local">Local</string>
-    <string name="device_calendars_read_only_no_write">Doar citire (fără permisiune de scriere)</string>
     <string name="device_calendars_read_only_calendar">Doar citire (calendar doar pentru citire)</string>
-    <string name="settings_developer_options">Opțiuni dezvoltator</string>
     <string name="settings_sync_frequency">Frecvență sincronizare</string>
     <string name="settings_sync_frequency_hint">Cât de des să se sincronizeze în fundal</string>
 
@@ -837,6 +1038,9 @@
     <string name="ics_import_reason_this_and_future">modificările pentru această apariție și cele ulterioare nu sunt acceptate</string>
     <string name="ics_import_reason_own_cancel">tu organizezi această întâlnire, așa că anuleaz-o din eveniment</string>
     <string name="ics_import_reason_on_another_calendar">este deja în alt calendar al acestui cont</string>
+    <string name="ics_import_reason_calendar_keeps_copy">acest calendar păstrează propria copie a evenimentului</string>
+    <string name="ics_import_reason_own_update">tu organizezi această întâlnire, așa că modific-o din eveniment</string>
+    <string name="ics_import_reason_change_waiting">evenimentul are o modificare care așteaptă sincronizarea; importă din nou după sincronizare</string>
     <string name="ics_import_notice_unverified">Expeditorul unui fișier de invitație nu poate fi verificat. Verifică dacă provine de la organizator.</string>
     <string name="ics_import_notice_answer_notifies">Răspunsul la această invitație poate notifica organizatorul.</string>
     <string name="ics_import_notice_guests_again">Tu ești organizatorul, așa că invitații pot primi din nou această invitație.</string>
@@ -873,15 +1077,20 @@
     </plurals>
     <string name="ics_import_summary_separator">", "</string>
     <string name="ics_import_summary_nothing">Nimic de importat</string>
-    <plurals name="exported_events">
-        <item quantity="one">%1$d eveniment exportat</item>
-        <item quantity="few">%1$d evenimente exportate</item>
-        <item quantity="other">%1$d de evenimente exportate</item>
-    </plurals>
     <plurals name="event_count">
         <item quantity="one">%1$d eveniment</item>
         <item quantity="few">%1$d evenimente</item>
         <item quantity="other">%1$d de evenimente</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d calendar</item>
+        <item quantity="few">%1$d calendare</item>
+        <item quantity="other">%1$d de calendare</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d cont</item>
+        <item quantity="few">%1$d conturi</item>
+        <item quantity="other">%1$d de conturi</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d calendar</item>
@@ -923,11 +1132,6 @@
         <item quantity="few">%1$d ani</item>
         <item quantity="other">%1$d de ani</item>
     </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d sec</item>
-        <item quantity="few">%1$d sec</item>
-        <item quantity="other">%1$d sec</item>
-    </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d minut înainte</item>
         <item quantity="few">%1$d minute înainte</item>
@@ -955,8 +1159,13 @@
     <string name="dialog_move_recurring_title">Mută</string>
     <string name="snackbar_event_rescheduled">Eveniment reprogramat</string>
     <string name="snackbar_reschedule_failed">Nu s-a putut reprograma evenimentul</string>
+    <string name="snackbar_move_failed">Nu s-a putut muta „%1$s”</string>
+    <string name="snackbar_move_changed_elsewhere">„%1$s” a fost modificat în altă parte, așa că nu a fost mutat</string>
+    <string name="event_untitled">Eveniment fără titlu</string>
     <string name="recurring_this_event">Acest eveniment</string>
     <string name="recurring_all_events">Toate evenimentele</string>
+    <string name="recurring_scope_move_not_expressible">Regula de repetare nu poate urma această modificare</string>
+    <string name="event_form_move_not_expressible">Regula de repetare nu poate urma această modificare. Nu s-a salvat nimic.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Participanți</string>
@@ -1026,8 +1235,75 @@
     <string name="empty_no_events_day_3">Un cadou: o zi goală.</string>
     <string name="empty_no_events_day_4">Starea calendarului: minunat de gol.</string>
     <string name="empty_no_events_day_5">Nimic planificat. Bucură-te de liniște.</string>
-    <string name="cd_empty_no_events_day">Zi liniștită, nimic programat</string>
     <string name="filter_date">Dată</string>
+    <string name="search_tab_upcoming">Viitoare</string>
+    <string name="search_tab_past">Trecute</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d eveniment</item>
+        <item quantity="few">%1$s, %2$d evenimente</item>
+        <item quantity="other">%1$s, %2$d de evenimente</item>
+    </plurals>
+    <string name="search_date_this_week">Săptămâna asta</string>
+    <string name="search_date_this_month">Luna asta</string>
+    <string name="search_date_pick">Alege datele…</string>
+    <string name="search_next">Următorul: %1$s</string>
+    <string name="search_last">Ultimul: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Locație:</string>
+    <string name="search_reason_notes">Notițe:</string>
+    <string name="search_reason_guest">Invitat:</string>
+    <string name="search_keep_typing">Continuă să scrii pentru a căuta</string>
+    <string name="search_no_matches">Niciun eveniment nu corespunde cu „%1$s”</string>
+    <string name="search_no_events_tagged">Niciun eveniment etichetat „%1$s”</string>
+    <string name="search_lookback_line">Perioada de retrospectivă sincronizare: %1$s</string>
+    <string name="search_sync_settings">Setări sincronizare</string>
+    <string name="cd_search_sync_settings">Deschide setarea perioadei de retrospectivă sincronizare</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Arată %d eveniment trecut</item>
+        <item quantity="few">Arată %d evenimente trecute</item>
+        <item quantity="other">Arată %d de evenimente trecute</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">Încă %d într-un calendar ascuns</item>
+        <item quantity="few">Încă %d în calendare ascunse</item>
+        <item quantity="other">Încă %d în calendare ascunse</item>
+    </plurals>
+    <string name="search_show">Arată</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Arată %d rezultat dintr-un calendar ascuns</item>
+        <item quantity="few">Arată %d rezultate din calendare ascunse</item>
+        <item quantity="other">Arată %d de rezultate din calendare ascunse</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Arată %d dintr-un calendar ascuns</item>
+        <item quantity="few">Arată %d din calendare ascunse</item>
+        <item quantity="other">Arată %d din calendare ascunse</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Inclusiv %d calendar ascuns</item>
+        <item quantity="few">Inclusiv %d calendare ascunse</item>
+        <item quantity="other">Inclusiv %d de calendare ascunse</item>
+    </plurals>
+    <string name="search_leave_out">Exclude</string>
+    <string name="cd_search_leave_out">Exclude calendarele ascunse</string>
+    <string name="search_hidden_calendar">%1$s · ascuns</string>
+    <string name="cd_search_date_this_week">Arată rezultatele din săptămâna asta</string>
+    <string name="cd_search_date_this_month">Arată rezultatele din luna asta</string>
+    <string name="cd_search_date_pick">Alege datele pentru căutare</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d viitor</item>
+        <item quantity="few">%d viitoare</item>
+        <item quantity="other">%d de viitoare</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d trecut</item>
+        <item quantity="few">%d trecute</item>
+        <item quantity="other">%d de trecute</item>
+    </plurals>
+    <string name="search_no_past_events">Niciun eveniment trecut</string>
+    <string name="search_no_events_in_dates">Niciun eveniment în aceste date</string>
     <string name="label_select_date">Selectează o dată</string>
     <string name="hint_tap_date_range">Apasă aceeași dată pentru o singură zi, sau altă dată pentru interval</string>
     <string name="cd_clear">Șterge</string>
@@ -1120,7 +1396,6 @@
     <string name="reminder_none">Fără memento</string>
     <string name="reminder_at_time_of_event">La ora evenimentului</string>
     <string name="reminder_time_before">Cu %1$s înainte</string>
-    <string name="reminder_time_after">Cu %1$s după</string>
     <string name="reminder_day_of_event_12h">9 AM în ziua evenimentului</string>
     <string name="reminder_day_of_event_24h">09:00 în ziua evenimentului</string>
     <string name="reminder_day_of_event">În ziua evenimentului</string>
@@ -1262,6 +1537,7 @@
     <!-- ==================== i18n: Round 2 audit gaps ==================== -->
     <string name="action_save_event">Salvare eveniment</string>
     <string name="badge_beta">Beta</string>
+    <string name="badge_sync_off">Sincr. oprită</string>
     <string name="badge_new">Nou</string>
     <string name="color_red">Roșu</string>
     <string name="color_orange">Portocaliu</string>
@@ -1290,6 +1566,21 @@
     <string name="ics_fetch_error_http">Serverul a returnat o eroare (%1$d). Verifică URL-ul.</string>
     <string name="ics_fetch_error_empty">Fluxul de calendar este gol.</string>
     <string name="ics_fetch_error_not_calendar">Acest URL nu pare a fi un flux de calendar.</string>
+    <string name="ics_feed_error_empty_response">Serverul nu a trimis un flux valid.</string>
+    <string name="ics_feed_error_access_denied">Serverul acestui flux a refuzat accesul.</string>
+    <string name="ics_feed_error_too_large">Acest flux de calendar este prea mare pentru a fi descărcat.</string>
+    <string name="ics_feed_error_unreadable">Evenimentele acestui flux nu au putut fi afișate.</string>
+    <string name="ics_feed_error_event_not_saved">„%1$s” nu a fost salvat.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d eveniment nu a fost salvat.</item>
+        <item quantity="few">%1$d evenimente nu au fost salvate.</item>
+        <item quantity="other">%1$d de evenimente nu au fost salvate.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d eveniment nu a fost salvat, inclusiv „%2$s”.</item>
+        <item quantity="few">%1$d evenimente nu au fost salvate, inclusiv „%2$s”.</item>
+        <item quantity="other">%1$d de evenimente nu au fost salvate, inclusiv „%2$s”.</item>
+    </plurals>
     <string name="insights_title">Statistici</string>
     <string name="insights_period_this_week">Săptămâna</string>
     <string name="insights_period_last_week">Săpt. trecută</string>
@@ -1420,7 +1711,7 @@
         <item quantity="other">Liber în următoarele %1$d de zile (%2$s – %3$s):</item>
     </plurals>
     <string name="share_availability_day_line">%1$s: %2$s</string>
-    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_block_separator">", "</string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">Nu există blocuri libere de cel puțin o oră în intervalul selectat.</string>
     <string name="share_from_kashcal_footer">Distribuit din KashCal</string>
@@ -1443,5 +1734,33 @@
     <string name="share_as_card_all_day">Toată ziua</string>
     <string name="share_as_card_chooser_title">Partajează evenimentul</string>
     <string name="share_as_card_share_failed">Cardul nu a putut fi partajat</string>
+    <string name="print_your_week">Tipărește-ți săptămâna</string>
+    <string name="print_options_title">Alege opțiunile de tipărire</string>
+    <string name="print_pages_header">Pagini</string>
+    <string name="print_page_week">Calendar săptămânal</string>
+    <string name="print_page_week_detail">Săptămâna sub formă de grilă</string>
+    <string name="print_page_details">Detalii</string>
+    <string name="print_page_details_detail">Fiecare eveniment complet</string>
+    <string name="print_action">Tipărește</string>
+    <string name="cd_print_previous_week">Săptămâna anterioară</string>
+    <string name="cd_print_next_week">Săptămâna viitoare</string>
+    <plurals name="print_summary_pages">
+        <item quantity="one">%d pagină</item>
+        <item quantity="few">%d pagini</item>
+        <item quantity="other">%d de pagini</item>
+    </plurals>
+    <plurals name="print_summary_calendars">
+        <item quantity="one">%1$d din %2$d calendar</item>
+        <item quantity="few">%1$d din %2$d calendare</item>
+        <item quantity="other">%1$d din %2$d de calendare</item>
+    </plurals>
+    <string name="print_summary">%1$s · %2$s</string>
+    <string name="print_job_name">%1$s – Săptămâna din %2$s</string>
+    <string name="print_failed">Tipărirea nu a reușit. Încearcă din nou.</string>
+    <string name="print_doc_week">Săptămâna</string>
+    <string name="print_doc_printed">Tipărit la %1$s</string>
+    <string name="print_doc_page_of">Pagina %1$s din %2$s</string>
+    <string name="print_doc_numbers_note">Numerele corespund detaliilor, care listează complet fiecare eveniment.</string>
+    <string name="print_doc_times_in">Ore afișate în %1$s</string>
 
 </resources>

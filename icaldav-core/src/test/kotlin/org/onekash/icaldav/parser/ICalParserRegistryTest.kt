@@ -212,14 +212,13 @@ class ICalParserRegistryTest {
         fun `parser accepts mock registry for testing`() {
             // A stub registry that resolves IDs with ZoneId.of and has no TimeZone objects
             val mockRegistry = object : TimeZoneRegistry {
-                override fun getTimeZone(id: String?): TimeZone? = null
-                override fun register(timezone: TimeZone?) {}
-                override fun register(timezone: TimeZone?, update: Boolean) {}
+                override fun getTimeZone(id: String): TimeZone? = null
+                override fun register(timezone: TimeZone) {}
+                override fun register(timezone: TimeZone, update: Boolean) {}
                 override fun clear() {}
                 override fun getZoneRules(): Map<String, ZoneRules> = emptyMap()
-                override fun getZoneId(tzId: String?): ZoneId? =
-                    if (tzId != null) ZoneId.of(tzId) else null
-                override fun getTzId(zoneId: String?): String? = zoneId
+                override fun getZoneId(tzId: String): ZoneId = ZoneId.of(tzId)
+                override fun getTzId(zoneId: String): String = zoneId
             }
 
             // Build the parser over the stub and parse TZID-only data

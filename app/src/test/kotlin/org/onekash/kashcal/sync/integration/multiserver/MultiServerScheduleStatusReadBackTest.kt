@@ -58,8 +58,9 @@ class MultiServerScheduleStatusReadBackTest(
 
         /**
          * Invitee [DeliveryState] each server must give, recorded live 2026-06-08/09:
-         *  - Servers that stamp SCHEDULE-STATUS (1.x, 2.x or 5.x) give ServerOwnsDelivery. iCloud
-         *    delivers implicitly and stamps 5.x for the undeliverable `@example.test` invitee.
+         *  - Servers that stamp any SCHEDULE-STATUS give ServerOwnsDelivery. iCloud delivers
+         *    implicitly and stamps 5.x for the undeliverable `@example.test` invitee; DAViCal
+         *    stamps 3.7 there (see [ServerSideSchedulingProbeTest]).
          *  - Zoho stamps SCHEDULE-AGENT=CLIENT: ClientMustDeliver.
          *  - Stalwart, SOGo and Mailbox store the attendee with no receipt: NoReceipt. A plain PUT
          *    sends nothing there.
@@ -79,12 +80,14 @@ class MultiServerScheduleStatusReadBackTest(
             "Stalwart" to DeliveryState.NoReceipt,
             "SOGo" to DeliveryState.NoReceipt,
             "Mailbox" to DeliveryState.NoReceipt,
+            "DAViCal" to DeliveryState.ServerOwnsDelivery,
         )
 
         /**
          * [DeliveryAction] each server's live [DeliveryState] must map to through [routeDelivery],
          * given whether the account advertises an outbox URL. Catches a change in the routing rule:
-         *  - ServerOwnsDelivery gives ServerHandles (iCloud, Baikal, BaikalDigest, Fastmail).
+         *  - ServerOwnsDelivery gives ServerHandles (iCloud, Baikal, BaikalDigest, Fastmail,
+         *    DAViCal).
          *  - ClientMustDeliver with an advertised outbox gives ClientOutboxPost (Zoho).
          *  - NoReceipt gives NoRemedy with or without an outbox (Stalwart, SOGo, Mailbox). SOGo
          *    advertises an outbox yet a plain PUT delivered nothing: routing follows the NoReceipt
@@ -99,6 +102,7 @@ class MultiServerScheduleStatusReadBackTest(
             "Stalwart" to DeliveryAction.NoRemedy,
             "SOGo" to DeliveryAction.NoRemedy,
             "Mailbox" to DeliveryAction.NoRemedy,
+            "DAViCal" to DeliveryAction.ServerHandles,
         )
 
         /** Re-fetches allowed for a server that stamps SCHEDULE-STATUS asynchronously. */

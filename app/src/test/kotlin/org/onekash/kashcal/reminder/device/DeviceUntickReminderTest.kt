@@ -43,6 +43,7 @@ import org.onekash.kashcal.data.preferences.UserPreferencesRepository
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.backup.SettingsBackupImporter
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
+import org.onekash.kashcal.domain.feeds.noFeedAccountsServerCalendarFeeds
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.reader.SyncLogReader
 import org.onekash.kashcal.ui.permission.FakePermissionChecker
@@ -106,7 +107,7 @@ class DeviceUntickReminderTest {
         alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         shadowOf(alarmManager).scheduledAlarms.mapNotNull { it.operation }.forEach { alarmManager.cancel(it) }
         scheduler = DeviceCalendarReminderScheduler(context, repository, dataStore)
-        manager = CalendarProviderManager(context, dataStore, scheduler, mockk(relaxed = true))
+        manager = CalendarProviderManager(context, dataStore, scheduler, mockk(relaxed = true), DeviceCalendarChangeWatcher(context, dataStore))
     }
 
     @After
@@ -155,9 +156,11 @@ class DeviceUntickReminderTest {
         // Data-bearing collaborators are strict: only what the ViewModel's init reads is stubbed.
         val accountRepository = mockk<AccountRepository> {
             coEvery { getAccountsByProvider(AccountProvider.ICLOUD) } returns emptyList()
+            every { getAccountsByProviderFlow(AccountProvider.ICLOUD) } returns flowOf(emptyList())
         }
         val eventCoordinator = mockk<EventCoordinator> {
             every { getAllCalendars() } returns MutableStateFlow(emptyList<Calendar>())
+            every { getLocalCalendarSummaries(any()) } returns flowOf(emptyList())
             every { getAllAccounts() } returns flowOf(emptyList())
             every { getICloudCalendarCount() } returns MutableStateFlow(0)
             every { getCalDavAccountCount() } returns MutableStateFlow(0)
@@ -188,6 +191,7 @@ class DeviceUntickReminderTest {
             discoveryService = mockk(),
             calDavDiscoveryService = mockk(),
             eventCoordinator = eventCoordinator,
+            serverCalendarFeeds = noFeedAccountsServerCalendarFeeds(),
             syncLogReader = syncLogReader,
             contactEventManager = mockk<ContactEventManager>(),
             calendarProviderManager = manager,
@@ -237,6 +241,22 @@ class DeviceUntickReminderTest {
 
     private fun recordingNotifications() = mockk<DeviceCalendarReminderNotificationManager> {
         coEvery { showNotification(any(), any(), any(), any(), any(), any(), any(), any()) } returns 1
+    }
+
+    @Test
+    fun `switching device calendars off and back on re-arms the next reminder`() = runTest(testDispatcher) {
+        // Off cancels the armed alarm. Nothing else changes in the provider, so only the switch
+        // turning back on can arm the reminder again before it is due.
+        val event = eventWithReminder(CAL_A, start = now + 2 * HOUR)
+        scheduler.scheduleNextReminder()
+        assertEquals(listOf(event to now + HOUR), deviceAlarms())
+        val viewModel = createViewModel()
+
+        viewModel.onToggleDeviceCalendars(false)
+        awaitUntil("the switch-off to cancel the alarm") { deviceAlarms().isEmpty() }
+        viewModel.onToggleDeviceCalendars(true)
+
+        awaitUntil("the switch-on to re-arm the reminder") { deviceAlarms() == listOf(event to now + HOUR) }
     }
 
     @Test

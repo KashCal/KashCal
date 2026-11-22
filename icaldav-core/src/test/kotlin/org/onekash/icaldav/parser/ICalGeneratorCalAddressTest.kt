@@ -122,18 +122,18 @@ class ICalGeneratorCalAddressTest {
         val ics = generator.generate(
             eventWith(
                 organizer = Organizer(email = "boss@example.test", name = "Boss", sentBy = null),
-                attendees = listOf(attendee("/646691839/principal/"))
+                attendees = listOf(attendee("/123456789/principal/"))
             ),
             method = null
         )
         val unfolded = ics.replace(Regex("""\r?\n[ \t]"""), "")
         val attendeeLine = unfolded.lines().first { it.startsWith("ATTENDEE") }
         assertTrue(
-            attendeeLine.endsWith(":/646691839/principal/"),
+            attendeeLine.endsWith(":/123456789/principal/"),
             "principal href must be emitted verbatim, got: $attendeeLine"
         )
         assertFalse(
-            attendeeLine.contains("mailto:/646691839"),
+            attendeeLine.contains("mailto:/123456789"),
             "must not prefix a principal href with mailto:, got: $attendeeLine"
         )
     }

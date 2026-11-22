@@ -21,3 +21,15 @@ fun Calendar.localizedDisplayName(resources: Resources): String = when (caldavUr
         ?.calendarDisplayName(resources)
         ?: displayName
 }
+
+/**
+ * Returns true for the built-in offline calendar, which can be recolored but not renamed or
+ * deleted ([org.onekash.kashcal.domain.initializer.LocalCalendarRefusal.BUILT_IN]).
+ */
+fun Calendar.isBuiltInLocal(): Boolean = caldavUrl == LocalCalendarInitializer.LOCAL_CALENDAR_URL
+
+/**
+ * Returns the name an exported .ics file and its calendar header use: the user-facing name
+ * ([localizedDisplayName]), so the built-in calendar exports under its translated name.
+ */
+fun Calendar.exportCalendarName(resources: Resources): String = localizedDisplayName(resources)

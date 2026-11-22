@@ -60,12 +60,12 @@ import org.onekash.kashcal.domain.rrule.MonthlyPattern
 import org.onekash.kashcal.domain.rrule.RruleBuilder
 import org.onekash.kashcal.domain.rrule.RruleDisplayStrings
 import org.onekash.kashcal.ui.components.LocalTextFieldGestureMarker
+import org.onekash.kashcal.ui.util.SelectedDay
 import org.onekash.kashcal.util.DateTimeUtils
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.TextStyle
-import java.util.Calendar as JavaCalendar
 
 @Composable
 fun rememberRruleDisplayStrings(): RruleDisplayStrings {
@@ -844,7 +844,7 @@ fun EndConditionSelector(
 
     // Month the date picker shows.
     var displayedMonth by remember(untilDisplay) {
-        mutableStateOf(JavaCalendar.getInstance().apply { timeInMillis = untilDisplay })
+        mutableStateOf(SelectedDay.yearMonth(untilDisplay))
     }
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {

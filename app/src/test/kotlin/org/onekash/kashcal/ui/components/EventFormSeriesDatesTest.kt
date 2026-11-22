@@ -40,7 +40,7 @@ class EventFormSeriesDatesTest {
         LocalDate.parse(date).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 
     /** The form as it opens on a timed occurrence at [occurrenceTs] lasting an hour. */
-    private fun timedForm(occurrenceTs: Long) = EventFormState(timezone = EVENT_ZONE, isAllDay = false)
+    private fun timedForm(occurrenceTs: Long) = EventFormState(timezone = EVENT_ZONE, isAllDay = false, editingZone = EVENT_ZONE)
         .withDateFields(timedFormDateFields(occurrenceTs, occurrenceTs + HOUR, EVENT_ZONE))
 
     /** The form as it opens on a one-day all-day occurrence at [utcMidnight]. */
@@ -129,7 +129,7 @@ class EventFormSeriesDatesTest {
 
     @Test
     fun `an untouched start keeps the series start exactly`() {
-        val (start, end) = timedForm(occurrence).startEndAnchoredToSeries(occurrence, seriesStart, seriesIsAllDay = false)
+        val (start, end) = timedForm(occurrence).startEndAnchoredToSeries(occurrence, seriesStart, seriesIsAllDay = false, seriesZone = EVENT_ZONE)
 
         assertEquals(seriesStart, start)
         assertEquals(seriesStart + HOUR, end)
@@ -140,7 +140,7 @@ class EventFormSeriesDatesTest {
         val withSeconds = seriesStart + 17_000L
         val occ = occurrence + 17_000L
 
-        val (start, _) = timedForm(occ).startEndAnchoredToSeries(occ, withSeconds, seriesIsAllDay = false)
+        val (start, _) = timedForm(occ).startEndAnchoredToSeries(occ, withSeconds, seriesIsAllDay = false, seriesZone = EVENT_ZONE)
 
         assertEquals(withSeconds, start)
     }
@@ -149,19 +149,20 @@ class EventFormSeriesDatesTest {
     fun `a new clock time moves the series to that time on its own first date, across a DST change`() {
         val form = timedForm(occurrence).copy(startHour = 10, startMinute = 30, endHour = 11, endMinute = 30)
 
-        val (start, end) = form.startEndAnchoredToSeries(occurrence, seriesStart, seriesIsAllDay = false)
+        val (start, end) = form.startEndAnchoredToSeries(occurrence, seriesStart, seriesIsAllDay = false, seriesZone = EVENT_ZONE)
 
         assertEquals(at("2024-03-05", "10:30"), start)
         assertEquals(at("2024-03-05", "11:30"), end)
     }
 
     @Test
-    fun `a timezone change keeps the series start when the instant is unchanged`() {
+    fun `a timezone change keeps the series' first date and clock time in the new zone`() {
         val form = timedForm(occurrence).withTimezone("Asia/Tokyo")
 
-        val (start, _) = form.startEndAnchoredToSeries(occurrence, seriesStart, seriesIsAllDay = false)
+        val (start, _) = form.startEndAnchoredToSeries(occurrence, seriesStart, seriesIsAllDay = false, seriesZone = EVENT_ZONE)
 
-        assertEquals(seriesStart, start)
+        // Tue 5 Mar 10:00 New York becomes Tue 5 Mar 10:00 Tokyo, not the Wednesday it is there.
+        assertEquals(at("2024-03-05", "10:00", ZoneId.of("Asia/Tokyo")), start)
     }
 
     @Test
@@ -171,7 +172,7 @@ class EventFormSeriesDatesTest {
         val form = allDayForm(occ)
         val (formStart, formEnd) = form.toStartEndTs()
 
-        val (start, end) = form.startEndAnchoredToSeries(occ, first, seriesIsAllDay = true)
+        val (start, end) = form.startEndAnchoredToSeries(occ, first, seriesIsAllDay = true, seriesZone = EVENT_ZONE)
 
         assertEquals(first, start)
         assertEquals(formEnd - formStart, end - start)
@@ -180,7 +181,7 @@ class EventFormSeriesDatesTest {
     @Test
     fun `turning a timed series all-day from a later occurrence starts on the series' first date`() {
         val (start, _) = allDayForm(utcMidnight("2024-03-19"))
-            .startEndAnchoredToSeries(occurrence, seriesStart, seriesIsAllDay = false)
+            .startEndAnchoredToSeries(occurrence, seriesStart, seriesIsAllDay = false, seriesZone = EVENT_ZONE)
 
         assertEquals(utcMidnight("2024-03-05"), start)
     }
@@ -192,7 +193,7 @@ class EventFormSeriesDatesTest {
         val form = EventFormState(timezone = EVENT_ZONE, isAllDay = false)
             .withDateFields(timedFormDateFields(at("2024-03-19", "09:00"), at("2024-03-19", "10:00"), EVENT_ZONE))
 
-        val (start, end) = form.startEndAnchoredToSeries(occ, first, seriesIsAllDay = true)
+        val (start, end) = form.startEndAnchoredToSeries(occ, first, seriesIsAllDay = true, seriesZone = EVENT_ZONE)
 
         assertEquals(at("2024-03-05", "09:00"), start)
         assertEquals(at("2024-03-05", "10:00"), end)
@@ -210,7 +211,7 @@ class EventFormSeriesDatesTest {
         val nov4 = at("2024-11-04", "00:00", london)
         val form = allDayForm(utcMidnight("2024-11-04")).copy(timezone = "Europe/London")
 
-        val (start, _) = form.startEndAnchoredToSeries(nov4, first, seriesIsAllDay = false)
+        val (start, _) = form.startEndAnchoredToSeries(nov4, first, seriesIsAllDay = false, seriesZone = "Europe/London")
 
         assertEquals(utcMidnight("2024-10-21"), start)
     }
@@ -223,7 +224,7 @@ class EventFormSeriesDatesTest {
         val form = EventFormState(timezone = null, isAllDay = false)
             .withDateFields(timedFormDateFields(nov4, nov4 + HOUR, null))
 
-        val (start, _) = form.startEndAnchoredToSeries(nov4, first, seriesIsAllDay = true)
+        val (start, _) = form.startEndAnchoredToSeries(nov4, first, seriesIsAllDay = true, seriesZone = null)
 
         assertEquals("00:00 London on the series' first date", at("2024-10-21", "00:00", london), start)
     }

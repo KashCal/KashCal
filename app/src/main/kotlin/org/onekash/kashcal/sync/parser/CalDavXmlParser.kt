@@ -501,6 +501,127 @@ class CalDavXmlParser {
     }
 
     /**
+     * Returns the calendar feeds in a calendar-home PROPFIND reply, or null when it can't be
+     * parsed or ends before its closing `multistatus` tag.
+     *
+     * A response is a feed when the propstat holding its resourcetype is successful and the
+     * resourcetype has `subscribed` but not `calendar`, so nothing [extractCalendars] returns is
+     * ever a feed. The source is the text of the first `<href>` in `CS:source`, decoded once by
+     * the XML parser and no further: Nextcloud and Radicale return the stored value unchanged,
+     * including a literal `&amp;` a client stored.
+     */
+    fun extractWebcalFeeds(xml: String): List<CalDavQuirks.ParsedWebcalFeed>? {
+        if (xml.isBlank()) return null
+        return try {
+            val parser = createParser(xml)
+            val feeds = mutableListOf<CalDavQuirks.ParsedWebcalFeed>()
+
+            var inResponse = false
+            var inPropstat = false
+            var inResourceType = false
+            var inSource = false
+            var href: String? = null
+            var displayName: String? = null
+            var color: String? = null
+            var source: String? = null
+            var sourceHrefSeen = false
+            var isSubscribed = false
+            var isCalendar = false
+            var propstatHasResourceType = false
+            var propstatStatus: String? = null
+            var resourceTypeStatusOk = true
+            // The pull parser can reach the end of a cut-off reply without throwing, so a reply
+            // counts as read only once its closing multistatus tag was seen.
+            var multistatusClosed = false
+
+            while (parser.eventType != XmlPullParser.END_DOCUMENT) {
+                when (parser.eventType) {
+                    XmlPullParser.START_TAG -> {
+                        when (parser.name) {
+                            "response" -> {
+                                inResponse = true
+                                href = null
+                                displayName = null
+                                color = null
+                                source = null
+                                sourceHrefSeen = false
+                                isSubscribed = false
+                                isCalendar = false
+                                resourceTypeStatusOk = true
+                            }
+                            "propstat" -> {
+                                inPropstat = true
+                                propstatHasResourceType = false
+                                propstatStatus = null
+                            }
+                            "resourcetype" -> {
+                                inResourceType = true
+                                propstatHasResourceType = true
+                            }
+                            "subscribed" -> if (inResourceType) isSubscribed = true
+                            "calendar" -> if (inResourceType) isCalendar = true
+                            "source" -> inSource = true
+                            "href" -> when {
+                                inSource -> if (!sourceHrefSeen) {
+                                    sourceHrefSeen = true
+                                    source = readText(parser)?.takeIf { it.isNotEmpty() }
+                                }
+                                inResponse && !inPropstat && href == null -> href = readText(parser)
+                            }
+                            "displayname" -> {
+                                displayName = readText(parser)?.takeIf { it.isNotBlank() }
+                                    ?.let { decodeXmlEntities(it) }
+                            }
+                            "calendar-color" -> {
+                                color = readText(parser)?.takeIf { it.isNotBlank() }
+                            }
+                            "status" -> if (inPropstat) propstatStatus = readText(parser)
+                        }
+                    }
+                    XmlPullParser.END_TAG -> {
+                        when (parser.name) {
+                            "response" -> {
+                                val feedHref = href
+                                if (isSubscribed && !isCalendar && feedHref != null && resourceTypeStatusOk) {
+                                    feeds.add(
+                                        CalDavQuirks.ParsedWebcalFeed(
+                                            href = feedHref,
+                                            displayName = displayName,
+                                            color = color,
+                                            source = source
+                                        )
+                                    )
+                                }
+                                inResponse = false
+                            }
+                            "propstat" -> {
+                                if (propstatHasResourceType) {
+                                    val status = propstatStatus
+                                    // No status means OK.
+                                    resourceTypeStatusOk = status == null ||
+                                        (parseHttpStatusCode(status) ?: 0) in 200..299
+                                }
+                                inPropstat = false
+                            }
+                            "resourcetype" -> inResourceType = false
+                            "source" -> inSource = false
+                            "multistatus" -> multistatusClosed = true
+                        }
+                    }
+                }
+                parser.next()
+            }
+
+            if (multistatusClosed) feeds else null
+        } catch (e: Exception) {
+            // The class only: the parser's message can quote reply text, such as a source URL
+            // with a password in it.
+            Log.w(TAG, "Failed to parse calendar feeds: ${e.javaClass.simpleName}")
+            null
+        }
+    }
+
+    /**
      * Reads a Depth-0 PROPFIND reply about one collection.
      *
      * Only the `<response>` whose href names [requestedPath] counts (compared as

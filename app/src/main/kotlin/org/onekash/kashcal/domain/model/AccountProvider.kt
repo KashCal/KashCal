@@ -7,6 +7,8 @@ package org.onekash.kashcal.domain.model
  * @property requiresNetwork whether sync needs network connectivity.
  * @property supportsCalDAV whether the provider syncs calendars over CalDAV.
  * @property supportsCardDAV whether the provider can sync contacts over CardDAV.
+ * @property supportsCalendarFeeds whether the provider's calendar home can list calendar feeds
+ *   (`CS:subscribed` collections) for the Calendar Feeds "Add from account" sheet.
  * @property supportsIncrementalSync whether the provider supports sync-token or ctag.
  * @property supportsReminders whether the provider supports VALARM reminders.
  * @property supportsPush whether the provider supports push notifications.
@@ -17,6 +19,7 @@ enum class AccountProvider(
     val requiresNetwork: Boolean,
     val supportsCalDAV: Boolean,
     val supportsCardDAV: Boolean,
+    val supportsCalendarFeeds: Boolean,
     val supportsIncrementalSync: Boolean,
     val supportsReminders: Boolean,
     val supportsPush: Boolean,
@@ -27,6 +30,7 @@ enum class AccountProvider(
         requiresNetwork = false,
         supportsCalDAV = false,
         supportsCardDAV = false,
+        supportsCalendarFeeds = false,
         supportsIncrementalSync = false,
         supportsReminders = true,
         supportsPush = false,
@@ -37,6 +41,7 @@ enum class AccountProvider(
         requiresNetwork = true,
         supportsCalDAV = true,
         supportsCardDAV = true,
+        supportsCalendarFeeds = true,
         supportsIncrementalSync = true,
         supportsReminders = true,
         supportsPush = false,
@@ -47,6 +52,7 @@ enum class AccountProvider(
         requiresNetwork = true,
         supportsCalDAV = false,
         supportsCardDAV = false,
+        supportsCalendarFeeds = false,
         supportsIncrementalSync = false,
         supportsReminders = true,
         supportsPush = false,
@@ -57,6 +63,7 @@ enum class AccountProvider(
         requiresNetwork = false,
         supportsCalDAV = false,
         supportsCardDAV = false,
+        supportsCalendarFeeds = false,
         supportsIncrementalSync = false,
         supportsReminders = true,
         supportsPush = false,
@@ -67,14 +74,12 @@ enum class AccountProvider(
         requiresNetwork = true,
         supportsCalDAV = true,
         supportsCardDAV = true,
+        supportsCalendarFeeds = true,
         supportsIncrementalSync = true,
         supportsReminders = true,
         supportsPush = false,
         maxSyncRangeMonths = 0
     );
-
-    /** True for every provider except [LOCAL], including [CONTACTS], which has no server. */
-    val requiresSync: Boolean get() = this != LOCAL
 
     /** Whether this provider only pulls and never pushes. */
     val pullOnly: Boolean get() = this == ICS

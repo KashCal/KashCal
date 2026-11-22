@@ -1,9 +1,9 @@
 package org.onekash.kashcal.data.db.dao
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
+import androidx.room3.Dao
+import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
+import androidx.room3.Query
 import kotlinx.coroutines.flow.Flow
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.OccurrenceWithEventData
@@ -71,7 +71,7 @@ interface OccurrencesDao {
      * Room tracks both joined tables, so the Flow emits on an event edit (title, location) as
      * well as an occurrence change. The join picks the exception event when
      * `exception_event_id` is set, else the master. Event columns carry the `e_` prefix of
-     * [OccurrenceWithEventData]'s embedded Event; `raw_ical` is selected as NULL.
+     * [OccurrenceWithEventData]'s embedded Event.
      */
     @Query("""
         SELECT o.id, o.event_id, o.exception_event_id, o.calendar_id,
@@ -87,7 +87,7 @@ interface OccurrencesDao {
                e.organizer_email AS e_organizer_email, e.organizer_name AS e_organizer_name,
                e.organizer_sent_by AS e_organizer_sent_by, e.organizer_schedule_status AS e_organizer_schedule_status,
                e.duration AS e_duration, e.original_sync_id AS e_original_sync_id,
-               e.extra_properties AS e_extra_properties, NULL AS e_raw_ical, e.dtstamp AS e_dtstamp,
+               e.extra_properties AS e_extra_properties, e.dtstamp AS e_dtstamp,
                e.last_sync_error AS e_last_sync_error, e.sync_retry_count AS e_sync_retry_count,
                e.server_modified_at AS e_server_modified_at,
                e.import_source AS e_import_source, e.itip_dtstamp AS e_itip_dtstamp,
@@ -121,7 +121,7 @@ interface OccurrencesDao {
                e.organizer_email AS e_organizer_email, e.organizer_name AS e_organizer_name,
                e.organizer_sent_by AS e_organizer_sent_by, e.organizer_schedule_status AS e_organizer_schedule_status,
                e.duration AS e_duration, e.original_sync_id AS e_original_sync_id,
-               e.extra_properties AS e_extra_properties, NULL AS e_raw_ical, e.dtstamp AS e_dtstamp,
+               e.extra_properties AS e_extra_properties, e.dtstamp AS e_dtstamp,
                e.last_sync_error AS e_last_sync_error, e.sync_retry_count AS e_sync_retry_count,
                e.server_modified_at AS e_server_modified_at,
                e.import_source AS e_import_source, e.itip_dtstamp AS e_itip_dtstamp,
@@ -143,8 +143,8 @@ interface OccurrencesDao {
     /**
      * Observes the [getOccurrencesWithEventsInRange] rows that span [day] (YYYYMMDD).
      *
-     * Matches on the precomputed `start_day`/`end_day` codes, which already carry the
-     * all-day timezone handling, instead of timestamps.
+     * Matches on the stored `start_day`/`end_day` codes ([Occurrence.startDay]: UTC for an
+     * all-day row, the generating device zone for a timed one), not on timestamps.
      */
     @Query("""
         SELECT o.id, o.event_id, o.exception_event_id, o.calendar_id,
@@ -160,7 +160,7 @@ interface OccurrencesDao {
                e.organizer_email AS e_organizer_email, e.organizer_name AS e_organizer_name,
                e.organizer_sent_by AS e_organizer_sent_by, e.organizer_schedule_status AS e_organizer_schedule_status,
                e.duration AS e_duration, e.original_sync_id AS e_original_sync_id,
-               e.extra_properties AS e_extra_properties, NULL AS e_raw_ical, e.dtstamp AS e_dtstamp,
+               e.extra_properties AS e_extra_properties, e.dtstamp AS e_dtstamp,
                e.last_sync_error AS e_last_sync_error, e.sync_retry_count AS e_sync_retry_count,
                e.server_modified_at AS e_server_modified_at,
                e.import_source AS e_import_source, e.itip_dtstamp AS e_itip_dtstamp,
@@ -176,7 +176,10 @@ interface OccurrencesDao {
     """)
     fun getOccurrencesWithEventsForDay(day: Int): Flow<List<OccurrenceWithEventData>>
 
-    /** Observes the non-cancelled occurrences spanning [day] (YYYYMMDD). */
+    /**
+     * Observes the non-cancelled occurrences whose stored codes ([Occurrence.startDay]) span
+     * [day].
+     */
     @Query("""
         SELECT * FROM occurrences
         WHERE start_day <= :day AND end_day >= :day
@@ -185,7 +188,10 @@ interface OccurrencesDao {
     """)
     fun getForDay(day: Int): Flow<List<Occurrence>>
 
-    /** Returns the non-cancelled occurrences spanning [day] (YYYYMMDD). */
+    /**
+     * Returns the non-cancelled occurrences whose stored codes ([Occurrence.startDay]) span
+     * [day].
+     */
     @Query("""
         SELECT * FROM occurrences
         WHERE start_day <= :day AND end_day >= :day
@@ -194,7 +200,10 @@ interface OccurrencesDao {
     """)
     suspend fun getForDayOnce(day: Int): List<Occurrence>
 
-    /** Returns [calendarId]'s non-cancelled occurrences spanning [day] (YYYYMMDD). */
+    /**
+     * Returns [calendarId]'s non-cancelled occurrences whose stored codes span [day]; see
+     * [getForDayOnce].
+     */
     @Query("""
         SELECT * FROM occurrences
         WHERE calendar_id = :calendarId
@@ -210,53 +219,76 @@ interface OccurrencesDao {
     @Query("SELECT * FROM occurrences WHERE event_id = :eventId ORDER BY start_ts ASC")
     suspend fun getForEvent(eventId: Long): List<Occurrence>
 
-    /**
-     * Returns every occurrence of [eventIds] by start time, cancelled ones included, in one
-     * query; search loads its results' occurrences this way instead of one query per event.
-     */
+    /** Returns every occurrence of [eventIds] by start, cancelled ones included, in one query. */
     @Query("SELECT * FROM occurrences WHERE event_id IN (:eventIds) ORDER BY start_ts ASC")
     suspend fun getForEvents(eventIds: List<Long>): List<Occurrence>
+
+    /** Returns the occurrence rows with [ids], in no particular order. */
+    @Query("SELECT * FROM occurrences WHERE id IN (:ids)")
+    suspend fun getByIds(ids: List<Long>): List<Occurrence>
 
     /** Returns how many occurrence rows [eventId] has. */
     @Query("SELECT COUNT(*) FROM occurrences WHERE event_id = :eventId")
     suspend fun getCountForEvent(eventId: Long): Int
 
-    /** Returns [eventId]'s latest occurrence start, the boundary for forward extension. */
-    @Query("SELECT MAX(start_ts) FROM occurrences WHERE event_id = :eventId")
-    suspend fun getMaxStartTs(eventId: Long): Long?
-
-    /** Returns [eventId]'s earliest occurrence start, the boundary for past extension. */
-    @Query("SELECT MIN(start_ts) FROM occurrences WHERE event_id = :eventId")
-    suspend fun getMinStartTs(eventId: Long): Long?
-
     /**
-     * Returns the recurring masters whose latest occurrence starts before [targetTs], for
-     * on-demand extension when the user navigates far into the future.
+     * Returns the start of [eventId]'s latest rule row, the boundary for forward extension.
+     *
+     * Rows linked to an exception are left out: one holds a moved occurrence's new time, which
+     * can lie far past the rule rows (an override linked beyond the materialized window), and
+     * extending from it would skip every instance in between. Cancelled rows are left out for
+     * the same reason: deleting a moved occurrence leaves its row cancelled and unlinked
+     * (EventWriter.deleteSingleOccurrence), and the series' EXDATE already removes the instance.
      */
     @Query("""
-        SELECT DISTINCT o.event_id FROM occurrences o
+        SELECT MAX(start_ts) FROM occurrences
+        WHERE event_id = :eventId AND exception_event_id IS NULL AND is_cancelled = 0
+    """)
+    suspend fun getLatestRuleStartTs(eventId: Long): Long?
+
+    /**
+     * Returns the start of [eventId]'s earliest rule row, the boundary for past extension; rows
+     * are left out as in [getLatestRuleStartTs].
+     */
+    @Query("""
+        SELECT MIN(start_ts) FROM occurrences
+        WHERE event_id = :eventId AND exception_event_id IS NULL AND is_cancelled = 0
+    """)
+    suspend fun getEarliestRuleStartTs(eventId: Long): Long?
+
+    /** Returns the starts of [eventId]'s rows in [fromMs] (inclusive) to [toMs] (exclusive). */
+    @Query("SELECT start_ts FROM occurrences WHERE event_id = :eventId AND start_ts >= :fromMs AND start_ts < :toMs")
+    suspend fun getStartTsInRange(eventId: Long, fromMs: Long, toMs: Long): List<Long>
+
+    /**
+     * Returns the recurring masters with rows whose latest rule row ([getLatestRuleStartTs])
+     * starts before [targetTs], or that hold only exception-linked rows (counted from DTSTART).
+     */
+    @Query("""
+        SELECT o.event_id FROM occurrences o
         INNER JOIN events e ON o.event_id = e.id
         WHERE e.rrule IS NOT NULL
         AND e.original_event_id IS NULL
         GROUP BY o.event_id
-        HAVING MAX(o.start_ts) < :targetTs
+        HAVING COALESCE(MAX(CASE WHEN o.exception_event_id IS NULL AND o.is_cancelled = 0 THEN o.start_ts END), e.start_ts - 1) < :targetTs
     """)
     suspend fun getRecurringEventsNeedingExtension(targetTs: Long): List<Long>
 
     /**
-     * Returns the recurring masters whose earliest occurrence starts after [targetTs] and
-     * after their DTSTART, for on-demand extension when the user navigates far into the past.
+     * Returns the recurring masters whose earliest rule row ([getEarliestRuleStartTs]) starts
+     * after both [targetTs] and their DTSTART.
      *
-     * A master whose DTSTART is already materialized has nothing earlier to expand.
+     * A master whose DTSTART is already materialized has nothing earlier to expand; one with
+     * only exception-linked rows is left to forward extension, which starts at DTSTART.
      */
     @Query("""
-        SELECT DISTINCT o.event_id FROM occurrences o
+        SELECT o.event_id FROM occurrences o
         INNER JOIN events e ON o.event_id = e.id
         WHERE e.rrule IS NOT NULL
         AND e.original_event_id IS NULL
         GROUP BY o.event_id
-        HAVING MIN(o.start_ts) > :targetTs
-        AND e.start_ts < MIN(o.start_ts)
+        HAVING MIN(CASE WHEN o.exception_event_id IS NULL AND o.is_cancelled = 0 THEN o.start_ts END) > :targetTs
+        AND e.start_ts < MIN(CASE WHEN o.exception_event_id IS NULL AND o.is_cancelled = 0 THEN o.start_ts END)
     """)
     suspend fun getRecurringEventsNeedingPastExtension(targetTs: Long): List<Long>
 

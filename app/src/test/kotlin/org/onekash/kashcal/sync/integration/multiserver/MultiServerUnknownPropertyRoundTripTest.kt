@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.integration.multiserver
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.every
 import io.mockk.mockk
@@ -33,6 +33,7 @@ import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.sync.strategy.PushResult
 import org.onekash.kashcal.sync.strategy.PushStrategy
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.text.SimpleDateFormat
@@ -61,8 +62,8 @@ import java.util.UUID
  *
  * Safety: only the resources this run created are ever pushed or deleted. Before every push the
  * test checks that each queued operation belongs to this run's own event, and cleanup deletes
- * only the URLs its own create calls returned. iCloud is the owner's real calendar, so there the
- * calendar is never pulled ([bringIntoRoom]). Fixture addresses are example.test only;
+ * only the URLs its own create calls returned. On iCloud only this run's own resource is fetched,
+ * never the calendar ([bringIntoRoom]). Fixture addresses are example.test only;
  * failure-message bodies go through [FixtureRedactor].
  *
  * Run:
@@ -141,7 +142,7 @@ class MultiServerUnknownPropertyRoundTripTest(
     @Before
     fun setup() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries().build()
 
         occurrenceGenerator = OccurrenceGenerator(
@@ -168,7 +169,8 @@ class MultiServerUnknownPropertyRoundTripTest(
             dataStore = dataStore,
             inviteNotifier = mockk(relaxed = true),
             accountRepository = mockk(relaxed = true),
-            reminderScheduler = mockk(relaxed = true)
+            reminderScheduler = mockk(relaxed = true),
+            icsSource = EventIcsStore(database),
         )
 
         pushStrategy = PushStrategy(
@@ -188,7 +190,8 @@ class MultiServerUnknownPropertyRoundTripTest(
                 contactsProviderRepository = mockk(relaxed = true)
             ),
             attendeesDao = database.attendeesDao(),
-            pendingCancelsDao = database.pendingCancelsDao()
+            pendingCancelsDao = database.pendingCancelsDao(),
+            icsSource = EventIcsStore(database),
         )
     }
 
@@ -359,9 +362,9 @@ class MultiServerUnknownPropertyRoundTripTest(
 
     /**
      * Gets this run's event into Room. Everywhere but iCloud that is the real
-     * PullStrategy over the whole calendar. On iCloud, the owner's real
-     * calendar, only this run's own resource is fetched, through the multiget
-     * REPORT pull uses for changed hrefs, and stored the way pull stores it.
+     * PullStrategy over the whole calendar. On iCloud only this run's own
+     * resource is fetched, through the multiget REPORT pull uses for changed
+     * hrefs, and stored the way pull stores it.
      */
     private suspend fun bringIntoRoom(calendar: Calendar, url: String, uid: String) {
         if (config.name == CalDavServerConfig.ICLOUD.name) {
@@ -390,7 +393,7 @@ class MultiServerUnknownPropertyRoundTripTest(
     }
 
     /**
-     * Store this run's own resource the way pull does: every VEVENT row carries
+     * Store this run's own resource the way pull does: the series row holds
      * the whole body, and changed occurrences are normalized against the series
      * DTSTART and linked to its occurrences.
      */
@@ -401,6 +404,7 @@ class MultiServerUnknownPropertyRoundTripTest(
         val seriesId = database.eventsDao().insert(
             ICalEventMapper.toEntity(seriesParsed, body, calendar.id, url, etag).event
         )
+        EventIcsStore(database).write(seriesId, body)
         val series = database.eventsDao().getById(seriesId)!!
         if (series.isRecurring) occurrenceGenerator.regenerateOccurrences(series)
         parsed.filter { it.recurrenceId != null }.forEach { occurrence ->
@@ -447,27 +451,10 @@ class MultiServerUnknownPropertyRoundTripTest(
         ) + extra + unknownLines + "END:VEVENT"
     }
 
-    private fun unfold(ics: String) = ics.replace(Regex("""\r?\n[ \t]"""), "")
+    private fun unfold(ics: String) = UnknownPropertyLineCompare.unfold(ics)
+    private fun veventBlocks(ics: String) = UnknownPropertyLineCompare.veventBlocks(ics)
 
-    /** Top-level property lines of each VEVENT (nested VALARMs skipped). */
-    private fun veventBlocks(ics: String): List<List<String>> {
-        val blocks = mutableListOf<List<String>>()
-        var current: MutableList<String>? = null
-        var depth = 0
-        for (line in unfold(ics).lines().map { it.trimEnd('\r') }) {
-            when {
-                current == null && line.equals("BEGIN:VEVENT", ignoreCase = true) -> { current = mutableListOf(); depth = 0 }
-                current == null -> Unit
-                line.equals("END:VEVENT", ignoreCase = true) && depth == 0 -> { blocks += current; current = null }
-                line.startsWith("BEGIN:", ignoreCase = true) -> depth++
-                line.startsWith("END:", ignoreCase = true) -> depth--
-                depth == 0 && line.isNotBlank() -> current += line
-            }
-        }
-        return blocks
-    }
-
-    private fun nameOf(line: String) = line.split(':', ';').first().uppercase()
+    private fun nameOf(line: String) = UnknownPropertyLineCompare.nameOf(line)
     private fun unknownLines(block: List<String>) = block.filter { nameOf(it) in UNKNOWN_NAMES }
     private fun summaryOf(block: List<String>) =
         block.firstOrNull { nameOf(it) == "SUMMARY" }?.substringAfter(':')
@@ -496,39 +483,8 @@ class MultiServerUnknownPropertyRoundTripTest(
         )
     }
 
-    /**
-     * SOGo rewrites parameters each time it stores an event, even when a client
-     * sends back SOGo's own bytes unchanged (checked with plain PUT/GET, no app
-     * involved): it doubles every backslash inside a quoted parameter value
-     * (`X-ADDRESS="a\\nb, c"` comes back as `"a\\\\nb, c"`, then
-     * `"a\\\\\\\\nb, c"`) and shuffles the parameter order between stores. So
-     * for SOGo only, backslash runs inside quoted parameter values compare
-     * equal and parameters compare as a set. Names, values and everything else
-     * still have to match exactly, on SOGo too.
-     */
-    private fun serverNormalized(line: String): String {
-        if (config.name != CalDavServerConfig.SOGO.name) return line
-        val colon = splitOutsideQuotes(line, ':').first().length
-        val head = line.substring(0, colon)
-            .replace(Regex("\"[^\"]*\"")) { quoted -> quoted.value.replace(Regex("""\\+"""), Regex.escapeReplacement("\\")) }
-        val parts = splitOutsideQuotes(head, ';')
-        return (listOf(parts.first()) + parts.drop(1).sorted()).joinToString(";") + line.substring(colon)
-    }
-
-    private fun splitOutsideQuotes(text: String, separator: Char): List<String> {
-        val parts = mutableListOf<String>()
-        val current = StringBuilder()
-        var quoted = false
-        for (c in text) {
-            when {
-                c == '"' -> { quoted = !quoted; current.append(c) }
-                c == separator && !quoted -> { parts += current.toString(); current.clear() }
-                else -> current.append(c)
-            }
-        }
-        parts += current.toString()
-        return parts
-    }
+    /** [UnknownPropertyLineCompare.serverNormalized] for this server. */
+    private fun serverNormalized(line: String) = UnknownPropertyLineCompare.serverNormalized(config, line)
 
     private fun assertPushAccepted(result: PushResult) {
         assertTrue("${config.name}: push must succeed, got $result", result is PushResult.Success)

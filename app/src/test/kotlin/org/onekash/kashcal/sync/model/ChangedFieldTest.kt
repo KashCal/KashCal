@@ -98,7 +98,7 @@ class ChangedFieldTest {
             base.copy(serverModifiedAt = 99),
             base.copy(organizerScheduleStatus = "1.2"),
             base.copy(organizerSentBy = "mailto:assistant@example.test"),
-            base.copy(etag = "e2", dtstamp = 5, rawIcal = "x", caldavUrl = "https://x/1.ics"),
+            base.copy(etag = "e2", dtstamp = 5, caldavUrl = "https://x/1.ics"),
         )) {
             assertEquals("$changed", emptySet<ChangedField>(), ChangedField.between(base, changed))
         }

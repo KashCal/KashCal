@@ -184,6 +184,27 @@ class AvailabilityFormatterTest {
         assertTrue("Expected second range: $mondayLine", mondayLine.contains("13:00"))
     }
 
+    @Test
+    fun `ranges on one day are separated by a comma and a space`() {
+        // Android trims unquoted leading and trailing spaces from a string resource, so the
+        // separator must be quoted in strings.xml or the space is lost.
+        val out = formatter.format(
+            blocks = listOf(
+                block(mon, 9, 0, 11, 0),
+                block(mon, 13, 0, 17, 0)
+            ),
+            startDay = mon,
+            days = 1,
+            workStartMin = 540,
+            workEndMin = 1020,
+            locale = Locale.US,
+            is24Hour = true,
+            context = context
+        )
+        val mondayLine = out.lines().first { it.contains("Mon") }
+        assertTrue("Expected \"11:00, 13:00\": $mondayLine", mondayLine.contains("11:00, 13:00"))
+    }
+
     // ========== Days with no blocks omitted from body ==========
 
     @Test

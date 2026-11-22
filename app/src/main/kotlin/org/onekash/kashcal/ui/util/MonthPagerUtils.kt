@@ -1,13 +1,13 @@
 package org.onekash.kashcal.ui.util
 
 import org.onekash.kashcal.ui.util.MonthPagerUtils.INITIAL_PAGE
-import java.util.Calendar
+import java.time.YearMonth
 
 /**
  * Holds the month pager's page range and page-to-month conversions.
  *
- * The range is centered on today's month and spans about 100 years in each direction. Pages are
- * composed lazily, so the range costs no memory.
+ * The range is centered on today's month and reaches every month of the [CalendarSpan]. Pages
+ * are composed lazily, so the range costs no memory.
  *
  * A page index is relative to the month passed as `todayYear`/`todayMonth`:
  * - Page [INITIAL_PAGE] = that month
@@ -16,10 +16,10 @@ import java.util.Calendar
  */
 object MonthPagerUtils {
     /** Page index of the reference month. */
-    const val INITIAL_PAGE = 1200
+    const val INITIAL_PAGE = CalendarSpan.MONTH_INITIAL_PAGE
 
-    /** Total page count, about 100 years in each direction. */
-    const val TOTAL_PAGES = 2400
+    /** Total page count, covering the [CalendarSpan]. */
+    const val TOTAL_PAGES = CalendarSpan.MONTH_TOTAL_PAGES
 
     /**
      * Returns the (year, month) shown on [page], month 0-based as in `Calendar.JANUARY`.
@@ -27,12 +27,8 @@ object MonthPagerUtils {
      * @param todayMonth reference month, 0-based
      */
     fun pageToYearMonth(page: Int, todayYear: Int, todayMonth: Int): Pair<Int, Int> {
-        val monthOffset = page - INITIAL_PAGE
-        val cal = Calendar.getInstance().apply {
-            set(todayYear, todayMonth, 1)
-            add(Calendar.MONTH, monthOffset)
-        }
-        return Pair(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH))
+        val month = YearMonth.of(todayYear, todayMonth + 1).plusMonths((page - INITIAL_PAGE).toLong())
+        return Pair(month.year, month.monthValue - 1)
     }
 
     /** Returns the page showing [targetYear]/[targetMonth]; both months are 0-based. */

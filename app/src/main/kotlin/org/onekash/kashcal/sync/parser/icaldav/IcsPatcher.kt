@@ -14,22 +14,26 @@ import org.onekash.icaldav.parser.ICalParser
 import org.onekash.icaldav.util.DurationUtils
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.identity.matchesAttendee
+import org.onekash.kashcal.domain.rrule.SeriesMove
 import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper.exclusiveEndTs
 import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper.formatGeo
 import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper.iCalColorFor
 import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper.parseTimestampCsv
 import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper.resolveZone
+import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper.writeZone
 
 /**
- * Patches a stored server body with an Event's fields, or generates fresh ICS when there is none.
+ * Patches an event's stored ICS (a server's body, or an imported file's text; the caller reads
+ * it from [org.onekash.kashcal.data.db.EventIcsSource]) with the event's fields, or generates
+ * fresh ICS when there is none.
  *
  * Patching keeps everything from the original that the user didn't change:
  * - alarms the form never showed: END-relative ones, and START-relative ones past
  *   [MAX_DISPLAYED_ALARMS] unless the user clears every reminder ([mergeAlarms])
  * - attendees and organizer, unless an organizer push passes its own set ([patchToICalEvent])
- * - unknown X-* properties and server-specific extensions
+ * - unknown X-* properties and server-specific extensions, as the original lines
  *
- * Fresh ICS (no rawIcal) carries only the fields KashCal models.
+ * Fresh ICS (no stored ICS) carries only the fields KashCal models.
  */
 object IcsPatcher {
 
@@ -207,15 +211,19 @@ object IcsPatcher {
      * properties, and returns null when there's no rawIcal or it fails to parse so the caller
      * falls back to fresh generation.
      *
-     * Attendees: a null [attendees] keeps the original's attendees as parsed, in the server's shape
-     * (mailto:/urn:uuid: addresses, server additions); the generator re-emits them, so they aren't
-     * byte-for-byte. Export and a push whose attendees table is empty rely on this. A non-null
-     * [attendees] is the set the user edited (organizer push) and replaces the block for an
-     * organized event; an empty list clears every ATTENDEE. Without it an attendee added to or
-     * removed from a synced event would never reach the server.
+     * Attendees: a null [attendees] keeps a server copy's attendees as parsed, in the server's
+     * shape (mailto:/urn:uuid: addresses, server additions); the generator re-emits them, so they
+     * aren't byte-for-byte. Push and export pass null for a row whose attendees table is empty (a
+     * row synced before the table existed keeps its guests only in the copy) and rely on this. A
+     * file's copy ([Event.holdsFileCopy]: the row is an unsynced import) gives none instead, as
+     * fresh generation does: its
+     * ATTENDEE block is the file's, not the user's current set. A non-null [attendees] is the row's
+     * current set (an organizer push, or an export) and replaces the block for an organized event;
+     * an empty list clears every ATTENDEE. Without it an attendee added to or removed from a synced
+     * event would never reach the server.
      *
-     * For a series row the VEVENT patched is the series one, even when the
-     * file lists a changed occurrence first ([seriesOrFirst]).
+     * For a series row the VEVENT patched is the series one, even when the file lists a changed
+     * occurrence first ([seriesOrFirst]). For a changed occurrence row see [originalFor].
      */
     private fun patchToICalEvent(
         rawIcal: String?,
@@ -233,21 +241,20 @@ object IcsPatcher {
         event: Event,
         attendees: List<org.onekash.kashcal.data.db.entity.Attendee>?
     ): ICalEvent? {
-        // A series row patches the series VEVENT. An exception row keeps the
-        // first VEVENT, as it always has: pull stores the whole resource on
-        // every row, and exception rows only reach this path through export.
-        val original = (if (event.originalEventId == null) parsed.seriesOrFirst() else parsed.firstOrNull())
-            ?: return null
-        val zone = resolveZone(event.timezone)
+        val original = originalFor(parsed, event) ?: return occurrenceFromSeries(parsed, event, attendees)
+        val zone = writeZone(event)
         val endZone = resolveZone(event.endTimezone) ?: zone
         val mergedAlarms = mergeAlarms(original.alarms, event.reminders)
         // Replace the ATTENDEE block with the caller's set only for an organized
         // event (an organizer on the row or the original), like the fresh path's
         // organizer guard, so a push without an organizer never rewrites the
-        // server's attendee list. A null set or no organizer keeps the original.
+        // server's attendee list. A null set or no organizer keeps the original,
+        // except that a file's copy keeps none (see the KDoc above).
         val isOrganized = !event.organizerEmail.isNullOrBlank() || original.organizer != null
         val mergedAttendees = if (attendees != null && isOrganized) {
             attendees.map { with(EventToICalEventMapper) { it.toICalAttendee() } }
+        } else if (event.isUnsyncedImport) {
+            emptyList()
         } else {
             original.attendees
         }
@@ -256,7 +263,7 @@ object IcsPatcher {
         // first synced without invitees), the row's organizer is added so an
         // attendee added later ships with an ORGANIZER the server can schedule
         // (RFC 6638 §3); without it no invite is delivered. Without an attendee
-        // set (export, or a push with an empty attendees table) the original is
+        // set (a push or export of a row with an empty attendees table) the original is
         // kept: never synthesize an ORGANIZER into a body that had none.
         val mergedOrganizer = if (attendees != null && isOrganized) {
             original.organizer
@@ -299,6 +306,42 @@ object IcsPatcher {
     }
 
     /**
+     * Returns the VEVENT of [parsed] that [event] patches. A series row takes the series VEVENT
+     * ([seriesOrFirst]). A changed occurrence row only reaches this path on its own (export of
+     * that occurrence): with a file's copy it takes the VEVENT for its own instance with its own
+     * UID, or none when the copy has no such VEVENT ([occurrenceFromSeries]); a split series
+     * keeps the old series' copy, whose occurrences have the old UID. With a server copy it keeps
+     * the first VEVENT: the copy is the whole resource, its own or its series'.
+     */
+    private fun originalFor(parsed: List<ICalEvent>, event: Event): ICalEvent? {
+        if (event.originalEventId == null) return parsed.seriesOrFirst()
+        if (!event.isUnsyncedImport) return parsed.firstOrNull()
+        val seriesStart = parsed.firstOrNull { !it.isModifiedInstance() && it.uid == event.uid }?.dtStart
+        return parsed.firstOrNull {
+            it.isModifiedInstance() && it.uid == event.uid && it.instanceKey(seriesStart) == event.originalInstanceTime
+        }
+    }
+
+    /**
+     * Builds a changed occurrence exported on its own whose file copy has no VEVENT for it (one the
+     * user changed in the form, whose row the form copied from the series row): from its row, with
+     * the lines of the copy's series VEVENT, which [unknownPropertySource] gives a form-changed
+     * occurrence inside its series too. After a split that VEVENT carries the old series' UID; its
+     * lines are still the ones the split copied. Null for any other row, which the caller then
+     * generates fresh.
+     */
+    private fun occurrenceFromSeries(
+        parsed: List<ICalEvent>,
+        event: Event,
+        attendees: List<org.onekash.kashcal.data.db.entity.Attendee>?
+    ): ICalEvent? {
+        if (event.originalEventId == null || !event.isUnsyncedImport) return null
+        val series = parsed.firstOrNull { !it.isModifiedInstance() } ?: return null
+        return EventToICalEventMapper.toICalEvent(event.uid, event, attendees ?: emptyList())
+            .copy(unknownPropertyLines = series.unknownPropertyLines, rawProperties = series.rawProperties)
+    }
+
+    /**
      * Generates ICS for an event with no stored body (created locally, or the body is missing
      * or unparseable).
      *
@@ -317,32 +360,37 @@ object IcsPatcher {
     }
 
     /**
-     * Serializes [event], patching its rawIcal when it has one and generating fresh otherwise.
+     * Serializes [event], patching [ics] (its stored ICS) when there is one and generating fresh
+     * otherwise.
      *
-     * @param attendees the edited ATTENDEE rows (organizer push), or null to keep the original's
-     *   attendees (export, or a push with an empty attendees table). A non-null list, empty
-     *   included, replaces the set on both paths for an organized event.
+     * @param attendees the row's ATTENDEE rows (organizer push or export), or null for none given
+     *   (a row with an empty attendees table, or a caller that writes no rows), which keeps a
+     *   server copy's attendees ([patchToICalEvent]). A non-null list, empty included, replaces the
+     *   set on both paths for an organized event.
      */
     fun serialize(
         event: Event,
+        ics: String?,
         attendees: List<org.onekash.kashcal.data.db.entity.Attendee>? = null
     ): String {
-        return patch(event.rawIcal, event, attendees)
+        return patch(ics, event, attendees)
     }
 
     /**
      * Serializes a recurring master and its exceptions into one VCALENDAR without attendee
-     * rows; the export path uses it.
+     * rows.
      *
      * RFC 5545 bundles exceptions with the master in the same VCALENDAR, sharing its UID and
-     * distinguished by RECURRENCE-ID. Passing null attendees keeps the master's original
-     * ATTENDEE block instead of clearing it; exceptions are regenerated with none.
+     * distinguished by RECURRENCE-ID. The master gets null attendees ([patchToICalEvent]);
+     * exceptions are regenerated with none. [masterIcs] is the series' stored ICS.
      */
-    fun serializeWithExceptions(master: Event, exceptions: List<Event>): String =
+    fun serializeWithExceptions(master: Event, masterIcs: String?, exceptions: List<Event>): String =
         serializeWithExceptions(
             master = master,
+            masterIcs = masterIcs,
             masterAttendees = null,
-            exceptionsWithAttendees = exceptions.map { it to null }
+            exceptionsWithAttendees = exceptions.map { it to null },
+            ownIcs = emptyMap()
         )
 
     /**
@@ -351,22 +399,46 @@ object IcsPatcher {
      * Each exception carries its own attendee list (RFC 5545 §3.8.4.1); the organizer push
      * path loads these from the attendees table and passes them here so they round-trip.
      *
+     * @param masterIcs the series' stored ICS, or null
      * @param masterAttendees ATTENDEE rows for the master VEVENT, as in [serialize]
      * @param exceptionsWithAttendees each exception paired with its ATTENDEE rows, or null
      *   to emit none for it
+     * @param ownIcs the exceptions' own stored ICS by row id ([ownCopySource])
      */
     fun serializeWithExceptions(
         master: Event,
+        masterIcs: String?,
         masterAttendees: List<org.onekash.kashcal.data.db.entity.Attendee>?,
-        exceptionsWithAttendees: List<Pair<Event, List<org.onekash.kashcal.data.db.entity.Attendee>?>>
+        exceptionsWithAttendees: List<Pair<Event, List<org.onekash.kashcal.data.db.entity.Attendee>?>>,
+        ownIcs: Map<Long, String>
     ): String {
         if (exceptionsWithAttendees.isEmpty()) {
-            return serialize(master, masterAttendees)
+            return serialize(master, masterIcs, masterAttendees)
         }
+        return generator.generate(
+            ICalCalendar(
+                prodId = null, // falls back to generator instance prodId
+                events = toICalEvents(master, masterIcs, masterAttendees, exceptionsWithAttendees, ownIcs)
+            ),
+            includeVTimezone = true
+        )
+    }
 
-        // The stored server body, parsed once for the series patch and for
-        // each changed occurrence's unknown properties.
-        val stored = master.rawIcal?.let { parser.parseAllEvents(it).getOrNull() }
+    /**
+     * Returns the VEVENTs [serializeWithExceptions] writes for [master] and its exceptions, the
+     * series first, for a caller that puts several series into one VCALENDAR (whole-calendar
+     * export). A master without exceptions is patched or generated as [serialize] does.
+     */
+    fun toICalEvents(
+        master: Event,
+        masterIcs: String?,
+        masterAttendees: List<org.onekash.kashcal.data.db.entity.Attendee>?,
+        exceptionsWithAttendees: List<Pair<Event, List<org.onekash.kashcal.data.db.entity.Attendee>?>>,
+        ownIcs: Map<Long, String>
+    ): List<ICalEvent> {
+        // The stored copy, parsed once for the series patch and for each
+        // changed occurrence's unknown properties.
+        val stored = masterIcs?.let { parser.parseAllEvents(it).getOrNull() }
 
         // Master: the patch path follows [patchToICalEvent]; the fresh fallback
         // emits the supplied set, or none.
@@ -374,32 +446,54 @@ object IcsPatcher {
             ?: EventToICalEventMapper.toICalEvent(master, masterAttendees ?: emptyList())
         // Stored changed occurrences keyed by instance time, normalized against
         // the stored series DTSTART the way pull did when it stored each row's
-        // originalInstanceTime (the series row's own start may have moved since).
+        // originalInstanceTime, then carried through a move of the series row since
+        // ([storedKeyMove]), which re-keyed the rows.
         val storedSeries = stored?.firstOrNull { !it.isModifiedInstance() }
         val storedSeriesStart = storedSeries?.dtStart ?: EventToICalEventMapper.dtStartOf(master)
+        val keyMove by lazy { storedSeries?.let { storedKeyMove(it, master) } }
         val storedOccurrences = buildMap<Long?, ICalEvent> {
             stored.orEmpty().filter { it.isModifiedInstance() }.forEach {
-                putIfAbsent(it.instanceKey(storedSeriesStart), it)
+                val key = it.instanceKey(storedSeriesStart)
+                val moved = key?.let { k -> (keyMove?.mapKey(k) as? SeriesMove.Key.Moved)?.ts }
+                putIfAbsent(moved ?: key, it)
             }
         }
 
         // Exceptions are regenerated from their rows; a null attendee set emits
-        // none. Their unknown properties come from the stored body when it holds
-        // their VEVENT ([unknownPropertySource]).
+        // none. Their unknown properties come from the row's own file copy when a
+        // newer file changed that occurrence alone ([ownCopySource]), else from the
+        // stored copy when it holds their VEVENT ([unknownPropertySource]).
         val exceptionICalEvents = exceptionsWithAttendees.map { (exception, attendees) ->
             val rebuilt = EventToICalEventMapper.toICalEvent(master, exception, attendees ?: emptyList())
-            val source = stored?.let { unknownPropertySource(storedOccurrences, storedSeries, master, exception) }
+            val source = ownCopySource(exception, ownIcs[exception.id], masterIcs, master, storedSeriesStart)
+                ?: stored?.let { unknownPropertySource(storedOccurrences, storedSeries, master, exception) }
             source?.let {
                 rebuilt.copy(unknownPropertyLines = it.unknownPropertyLines, rawProperties = it.rawProperties)
             } ?: rebuilt
         }
 
-        return generator.generate(
-            ICalCalendar(
-                prodId = null, // falls back to generator instance prodId
-                events = listOf(masterICalEvent) + exceptionICalEvents
-            ),
-            includeVTimezone = true
+        return listOf(masterICalEvent) + exceptionICalEvents
+    }
+
+    /**
+     * Returns the move from the stored [series] (its DTSTART, zone and rule) to [master]'s, which
+     * [SeriesMove.planSave] applied to the changed occurrences' keys when the series row moved, or
+     * null when the stored copy has no rule or the move can't be planned (keys are then used as
+     * stored). A series that hasn't moved maps every key to itself.
+     */
+    private fun storedKeyMove(series: ICalEvent, master: Event): SeriesMove? {
+        val rule = series.rrule?.toICalString() ?: return null
+        val masterRule = master.rrule ?: return null
+        val start = series.dtStart.timestamp
+        return SeriesMove.plan(
+            SeriesMove.Inputs(
+                rule = rule, dtstartTs = start, anchorTs = start,
+                zone = ICalEventMapper.storedZoneOf(series), isAllDay = series.dtStart.isDate,
+                newStartTs = master.startTs, newZone = master.timezone, newIsAllDay = master.isAllDay,
+                typedRule = masterRule.takeUnless {
+                    SeriesMove.sameRuleForMove(rule, ICalEventMapper.storedZoneOf(series), series.dtStart.isDate, it, master.timezone, master.isAllDay)
+                },
+            )
         )
     }
 
@@ -419,6 +513,9 @@ object IcsPatcher {
      * A stored changed occurrence only counts when it has the series' UID: a
      * series split off with "this and future" is a copy of the old row, stored
      * body included, and must not pick up the old series' occurrences.
+     *
+     * The stored body is the series row's copy, a server's or an imported file's;
+     * an occurrence row's own file copy is looked at first ([ownCopySource]).
      */
     private fun unknownPropertySource(
         storedOccurrences: Map<Long?, ICalEvent>,
@@ -430,7 +527,31 @@ object IcsPatcher {
             ?: series?.takeIf { exception.importId == master.importId }
 
     /**
-     * Merges the user's reminders ([Event.reminders]) with the original alarms from rawIcal.
+     * Returns the VEVENT for [exception]'s instance in [own], the exception row's own stored ICS,
+     * when that is an imported file's copy ([Event.holdsFileCopy]) other than [masterIcs]: a newer
+     * file that changed only this occurrence leaves the series row's copy as it was
+     * (`EventWriter.applyImportedUpdate`, `EventWriter.createImportedException`). Keyed as
+     * [unknownPropertySource] keys, against the own copy's series DTSTART or, when it holds none,
+     * [seriesStart]; only a VEVENT with the series' UID counts, as there.
+     */
+    private fun ownCopySource(
+        exception: Event,
+        own: String?,
+        masterIcs: String?,
+        master: Event,
+        seriesStart: ICalDateTime,
+    ): ICalEvent? {
+        val file = own?.takeIf { exception.holdsFileCopy(it) && it != masterIcs } ?: return null
+        val parsed = parser.parseAllEvents(file).getOrNull() ?: return null
+        val start = parsed.firstOrNull { !it.isModifiedInstance() }?.dtStart ?: seriesStart
+        return parsed.firstOrNull {
+            it.isModifiedInstance() && it.uid == master.uid &&
+                it.instanceKey(start) == exception.originalInstanceTime
+        }
+    }
+
+    /**
+     * Merges the user's reminders ([Event.reminders]) with the original alarms from the stored ICS.
      *
      * - ACTION:NONE sentinels (RFC 9074) are dropped first: they are never reminders and must
      *   never be re-emitted or turned into a DISPLAY alarm.

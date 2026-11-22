@@ -1,7 +1,6 @@
 package org.onekash.kashcal.domain.generator
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -17,6 +16,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.Instant
@@ -32,7 +32,7 @@ import java.util.TimeZone
  * - an RRULE with both COUNT and UNTIL (§3.3.10)
  * - EXDATE and RDATE as millisecond timestamps, the form `ICalEventMapper` stores
  * - the set algebra (RRULE union RDATE) minus EXDATE, including an EXDATE removing an RDATE
- * - EXDATE on an all-day series, and day-level EXDATE matching on a timed one
+ * - EXDATE on an all-day series, and instant EXDATE matching on a timed one
  * - YEARLY BYMONTH+BYDAY, BYDAY=-1FR, BYMONTHDAY=29 in leap and non-leap years, BYSETPOS
  *   with BYDAY, and a BYMONTHDAY list
  * - DATE and DATE-TIME UNTIL
@@ -54,7 +54,7 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
     fun setup() {
         savedTimeZone = TimeZone.getDefault()
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
         occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
@@ -371,14 +371,13 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
             !occDates.contains(LocalDate.of(2026, 2, 7)))
     }
 
-    // ==================== EXDATE Day-Level Precision Tests ====================
+    // ==================== EXDATE Instant Precision Tests ====================
 
     @Test
-    fun `EXDATE with different time than DTSTART still excludes the day`() = runTest {
-        // An EXDATE stored as ms may have a different time than DTSTART. The expander matches
-        // EXDATE by calendar day (`RRuleExpander.expand`), so any time on that day excludes it.
+    fun `EXDATE at another time than the series removes no occurrence`() = runTest {
+        // RFC 5545 §3.8.5.1 excludes start DATE-TIME values, so a stored EXDATE matches an
+        // occurrence by instant; one at midnight names no occurrence of a 10:00 series.
         val startTs = parseDate("2026-01-05 10:00") // 10 AM
-        // EXDATE at midnight: different time, same day
         val jan7Midnight = parseDate("2026-01-07 00:00")
 
         val event = createAndInsertEvent(
@@ -391,16 +390,14 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
         val rangeEnd = startTs + 30L * 24 * 3600000
         val count = occurrenceGenerator.generateOccurrences(event, startTs - 86400000, rangeEnd)
 
-        // Jan 7 is excluded although the time differs.
-        assertEquals("Should have 4 occurrences (day-level EXDATE match)", 4, count)
+        assertEquals("All 5 occurrences stay", 5, count)
 
         val occurrences = database.occurrencesDao().getForEvent(event.id)
         val occDates = occurrences.map {
             Instant.ofEpochMilli(it.startTs).atZone(defaultZone).toLocalDate()
         }
 
-        assertTrue("Jan 7 should be excluded despite different time",
-            !occDates.contains(LocalDate.of(2026, 1, 7)))
+        assertTrue("Jan 7 at 10:00 stays", occDates.contains(LocalDate.of(2026, 1, 7)))
     }
 
     // ==================== RRULE Edge Cases from RFC 5545 ====================

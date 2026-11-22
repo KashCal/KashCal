@@ -10,4 +10,13 @@ enum class WhatsNewHero {
 
     /** A change notification arriving on a lock screen. */
     CHANGE_NOTIFICATIONS,
+
+    /** A list of offline calendars filling in, then one of them changing color. */
+    OFFLINE_CALENDARS,
+
+    /** A backup folder getting a new dated copy while the oldest is deleted. */
+    CALENDAR_BACKUP,
+
+    /** A week calendar page and its details page sliding out of a printer. */
+    PRINT_WEEK,
 }

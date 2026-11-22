@@ -1,7 +1,6 @@
 package org.onekash.kashcal.ui.viewmodels
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -25,6 +24,7 @@ import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.entity.Category
 import org.onekash.kashcal.data.repository.CategoryRepository
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
+import org.onekash.kashcal.testutil.TestDatabases
 import org.onekash.kashcal.ui.components.category.colorForTag
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -50,7 +50,7 @@ class TagsViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
         repository = CategoryRepository(database.categoryDao())

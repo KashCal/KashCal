@@ -24,6 +24,7 @@ import org.onekash.kashcal.reminder.ReminderAlarmFixture
 import org.onekash.kashcal.reminder.ReminderAlarmFixture.Companion.DAY
 import org.onekash.kashcal.reminder.ReminderAlarmFixture.Companion.HOUR
 import org.onekash.kashcal.reminder.ReminderAlarmFixture.Companion.MINUTE
+import org.onekash.kashcal.reminder.device.DeviceCalendarChangeWatcher
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 import org.onekash.kashcal.reminder.receiver.BootRecoveryHandler
 import org.onekash.kashcal.util.DateTimeUtils
@@ -76,7 +77,7 @@ class ReminderArmingWindowTest {
     private suspend fun saveReminders(eventId: Long) {
         val event = fixture.eventReader.getEventById(eventId)!!
         val occurrences = fixture.eventReader.getOccurrencesForEventInScheduleWindow(
-            eventId, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS
+            eventId, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS, ReminderScheduler.STARTED_LOOKBACK_MS
         )
         scheduler.scheduleRemindersForEvent(event, occurrences, calendarColor = -1)
     }
@@ -302,7 +303,8 @@ class ReminderArmingWindowTest {
         BootRecoveryHandler(
             scheduler,
             mockk<DeviceCalendarReminderScheduler>(relaxed = true),
-            mockk<WidgetUpdateManager>(relaxed = true)
+            mockk<WidgetUpdateManager>(relaxed = true),
+            mockk<DeviceCalendarChangeWatcher>(relaxed = true),
         ).rescheduleReminders()
 
         assertEquals(

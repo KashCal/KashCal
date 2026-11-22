@@ -6,6 +6,8 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
+import org.onekash.kashcal.domain.planner.MovedCue
+import org.onekash.kashcal.ui.util.DayPagerUtils
 
 /**
  * Formats a Planner row's time range, shorter than the other views' "4:30 pm - 6:00 pm": in
@@ -33,6 +35,20 @@ internal fun plannerTimeRange(
     val sharedMarker = (start.hour < 12) == (end.hour < 12)
     val startPattern = endPattern(start, timePattern).let { if (sharedMarker) withoutMarker(it) else it }
     return join(format(start, startPattern, locale), format(end, endPattern(end, timePattern), locale))
+}
+
+/** Returns where a moved occurrence was: a time, a short weekday, or a short date. */
+internal fun movedCueLabel(
+    cue: MovedCue,
+    timePattern: String,
+    locale: Locale,
+    weekday: DateTimeFormatter,
+    shortDate: DateTimeFormatter,
+    zone: ZoneId,
+): String = when (cue) {
+    is MovedCue.Time -> plannerTime(cue.originalMs, timePattern, locale, zone)
+    is MovedCue.Day -> weekday.format(DayPagerUtils.dayCodeToLocalDate(cue.originalDayCode))
+    is MovedCue.Date -> shortDate.format(DayPagerUtils.dayCodeToLocalDate(cue.originalDayCode))
 }
 
 /** Formats one time as [plannerTimeRange] writes a range's end: "5 pm", "5:30 pm", "17:00". */

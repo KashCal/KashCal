@@ -1,5 +1,6 @@
 package org.onekash.kashcal.ui.components
 
+import android.content.res.Resources
 import android.text.format.DateFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -54,6 +55,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.paneTitle
@@ -69,12 +71,12 @@ import org.onekash.kashcal.data.contacts.ContactEventType
 import org.onekash.kashcal.data.contacts.ContactEventUtils
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.rrule.RruleBuilder
+import org.onekash.kashcal.domain.rrule.RruleDisplayStrings
 import org.onekash.kashcal.ui.components.pickers.rememberRruleDisplayStrings
 import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.util.location.openInMaps
 import org.onekash.kashcal.util.text.containsUrl
 import org.onekash.kashcal.util.text.extractUrls
-import org.onekash.kashcal.util.text.formatRemindersForDisplay
 import org.onekash.kashcal.util.text.isValidUrl
 import org.onekash.kashcal.util.text.shouldOpenExternally
 import java.time.LocalDate
@@ -94,6 +96,8 @@ import java.time.ZoneId
  *   persists its dismissal.
  * @param onShareCardTooltipDismissed called when the tooltip counts as shown: after its first
  *   display or the first tap on the Share icon.
+ * @param onTagClick called with a tag's name when its chip is tapped; null leaves the chips
+ *   as text.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -116,6 +120,7 @@ fun EventQuickViewSheet(
     onShareAsCard: () -> Unit = {},
     showShareCardTooltip: Boolean = false,
     onShareCardTooltipDismissed: () -> Unit = {},
+    onTagClick: ((String) -> Unit)? = null,
     onRsvp: (org.onekash.kashcal.ui.components.attendees.AttendeeStatus) -> Unit = {},
     timeFormat: String = "system"
 ) {
@@ -124,19 +129,11 @@ fun EventQuickViewSheet(
     val isCurrentUserOrganizer = you?.isOrganizer == true
     // A guest who isn't the organizer gets a read-only form, so Edit reads "Open".
     val canEditAsOrganizer = you == null || you.isOrganizer
-    // Decides whether the sheet opens expanded. Attendees count: an event with guests but no
-    // description or URL would otherwise stay at partial height under the guest section.
-    val hasAttendees = attendees.isNotEmpty()
-    val hasExpandableContent = remember(event.description, event.url, hasAttendees) {
-        !event.description.isNullOrBlank() ||
-            !event.url.isNullOrBlank() ||
-            hasAttendees
-    }
 
-    // Open expanded when there's content below the header.
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = hasExpandableContent
-    )
+    // Opens at its content height, up to the whole window, never at half height with the buttons
+    // below the screen (#418). Material only offers half height to a sheet taller than half the
+    // window, so a short event's sheet is unchanged.
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     var showMoreMenu by remember { mutableStateOf(false) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
@@ -148,6 +145,9 @@ fun EventQuickViewSheet(
     val timePattern = remember(timeFormat, is24HourDevice) {
         DateTimeUtils.getTimePattern(timeFormat, is24HourDevice)
     }
+    // Decides whether the link and notes section shows: notes or a link open it. Guests have
+    // their own block above it, and alerts are seen and set in the event form.
+    val hasExpandableContent = !event.description.isNullOrBlank() || !event.url.isNullOrBlank()
 
     // A master (RRULE) and an exception (originalEventId) both get the repeat line.
     val isRecurring = event.isRecurring || event.isException
@@ -163,10 +163,6 @@ fun EventQuickViewSheet(
     val validEventUrl = remember(event.url) {
         event.url?.takeIf { isValidUrl(it) }
     }
-    val formattedReminders = remember(event.reminders) {
-        formatRemindersForDisplay(event.reminders, resources)
-    }
-
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -181,204 +177,198 @@ fun EventQuickViewSheet(
                 // Announce the sheet (by the event title) when it opens.
                 .semantics { paneTitle = paneTitleText }
         ) {
-            // Header strip under the drag handle: calendar pill left, share-as-card icon right.
-            ShareAsCardTopRow(
-                calendarColor = calendarColor,
-                calendarName = calendarName,
-                onShareClick = {
-                    onShareCardTooltipDismissed()
-                    onShareAsCard()
-                },
-                showTooltip = showShareCardTooltip,
-                onTooltipDisplayed = onShareCardTooltipDismissed,
-            )
-
-            // Event details with color stripe
-            Row(
+            // The details scroll and the buttons below stay pinned: a long title or many guests
+            // fill the window rather than push Edit and Delete off it.
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .height(IntrinsicSize.Min)
+                    .weight(1f, fill = false)
+                    .verticalScroll(rememberScrollState())
             ) {
-                // Left color stripe
-                Box(
-                    modifier = Modifier
-                        .width(4.dp)
-                        .fillMaxHeight()
-                        .background(
-                            color = Color(calendarColor),
-                            shape = RoundedCornerShape(2.dp)
-                        )
+                // Header strip under the drag handle: calendar pill left, share-as-card icon right.
+                ShareAsCardTopRow(
+                    calendarColor = calendarColor,
+                    calendarName = calendarName,
+                    onShareClick = {
+                        onShareCardTooltipDismissed()
+                        onShareAsCard()
+                    },
+                    showTooltip = showShareCardTooltip,
+                    onTooltipDisplayed = onShareCardTooltipDismissed,
                 )
 
-                Spacer(modifier = Modifier.width(16.dp))
+                // Event details with color stripe
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .height(IntrinsicSize.Min)
+                ) {
+                    // Left color stripe
+                    Box(
+                        modifier = Modifier
+                            .width(4.dp)
+                            .fillMaxHeight()
+                            .background(
+                                color = Color(calendarColor),
+                                shape = RoundedCornerShape(2.dp)
+                            )
+                    )
 
-                // Event details
-                SelectionContainer {
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        // Title
-                        Text(
-                            text = displayTitle,
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.semantics { heading() }
-                        )
+                    Spacer(modifier = Modifier.width(16.dp))
 
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        // The tapped occurrence's date and time, not the master's first one.
-                        val displayStartTs = occurrenceTs ?: event.startTs
-                        val duration = event.endTs - event.startTs
-                        val displayEndTs = if (occurrenceTs != null) occurrenceTs + duration else event.endTs
-                        Text(
-                            text = formatEventDateTime(displayStartTs, displayEndTs, event.isAllDay, resources, timePattern),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        if (!event.location.isNullOrEmpty()) {
-                            val locationContext = LocalContext.current
-                            val uriHandler = LocalUriHandler.current
-                            val hasUrl = remember(event.location) { containsUrl(event.location) }
-
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = if (hasUrl) {
-                                    Modifier.clickable {
-                                        val urls = extractUrls(event.location, limit = 1)
-                                        urls.firstOrNull()?.let { detected ->
-                                            if (shouldOpenExternally(detected.url)) {
-                                                try { uriHandler.openUri(detected.url) } catch (_: Exception) {}
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    Modifier.clickable { openInMaps(locationContext, event.location) }
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = if (hasUrl) Icons.Default.Link else Icons.Default.Place,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp),
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = event.location,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    textDecoration = TextDecoration.Underline,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Icon(
-                                    Icons.AutoMirrored.Filled.Launch,
-                                    contentDescription = if (hasUrl) stringResource(R.string.cd_open_link) else stringResource(R.string.cd_open_maps),
-                                    modifier = Modifier.size(14.dp),
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-
-                        // Tags (read-only chips)
-                        if (event.categories.orEmpty().isNotEmpty()) {
-                            Row(verticalAlignment = Alignment.Top) {
-                                Icon(
-                                    imageVector = Icons.Default.LocalOffer,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp),
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                org.onekash.kashcal.ui.components.category.TagChipRow(
-                                    selected = event.categories.orEmpty().toSet(),
-                                    suggestions = emptyList(),
-                                    onToggle = {},
-                                    onAdd = {},
-                                    readOnly = true
-                                )
-                            }
-                        }
-
-                        // Repeat info
-                        if (isRecurring) {
-                            val rruleStrings = rememberRruleDisplayStrings()
-                            val repeatText = if (event.rrule != null) {
-                                val (freq, endSuffix) = RruleBuilder.formatForDisplayParts(
-                                    event.rrule,
-                                    rruleStrings,
-                                    RruleBuilder.untilZoneFor(event.isAllDay, event.timezone),
-                                )
-                                val isContactEvent = ContactEventType.fromCaldavUrl(event.caldavUrl) != null
-                                val hasSyntheticStart = isContactEvent && ContactEventUtils.decodeEventYear(event.description) == null
-                                val startDate = if (!hasSyntheticStart) formatSeriesStartDateStr(event.startTs, event.isAllDay) else null
-                                if (endSuffix != null && startDate != null) {
-                                    stringResource(R.string.rrule_starting, freq, startDate, endSuffix)
-                                } else if (endSuffix != null) {
-                                    "$freq$endSuffix"
-                                } else if (startDate != null) {
-                                    stringResource(R.string.rrule_since, freq, startDate)
-                                } else {
-                                    freq
-                                }
-                            } else {
-                                stringResource(R.string.cd_recurring)
-                            }
+                    // Event details
+                    SelectionContainer {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            // Title
                             Text(
-                                text = "\uD83D\uDD01 $repeatText",
-                                style = MaterialTheme.typography.bodyMedium,
+                                text = displayTitle,
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.semantics { heading() }
+                            )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            // The tapped occurrence's date and time, not the master's first one.
+                            val displayStartTs = occurrenceTs ?: event.startTs
+                            val duration = event.endTs - event.startTs
+                            val displayEndTs = if (occurrenceTs != null) occurrenceTs + duration else event.endTs
+                            Text(
+                                text = formatEventDateTime(displayStartTs, displayEndTs, event.isAllDay, resources, timePattern),
+                                style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+
+                            if (!event.location.isNullOrEmpty()) {
+                                val locationContext = LocalContext.current
+                                val uriHandler = LocalUriHandler.current
+                                val hasUrl = remember(event.location) { containsUrl(event.location) }
+
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = if (hasUrl) {
+                                        Modifier.clickable {
+                                            val urls = extractUrls(event.location, limit = 1)
+                                            urls.firstOrNull()?.let { detected ->
+                                                if (shouldOpenExternally(detected.url)) {
+                                                    try { uriHandler.openUri(detected.url) } catch (_: Exception) {}
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        Modifier.clickable { openInMaps(locationContext, event.location) }
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = if (hasUrl) Icons.Default.Link else Icons.Default.Place,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = event.location,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        textDecoration = TextDecoration.Underline,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.Launch,
+                                        contentDescription = if (hasUrl) stringResource(R.string.cd_open_link) else stringResource(R.string.cd_open_maps),
+                                        modifier = Modifier.size(14.dp),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+
+                            // Tags (read-only chips)
+                            if (event.categories.orEmpty().isNotEmpty()) {
+                                Row(verticalAlignment = Alignment.Top) {
+                                    Icon(
+                                        imageVector = Icons.Default.LocalOffer,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    org.onekash.kashcal.ui.components.category.TagChipRow(
+                                        selected = event.categories.orEmpty().toSet(),
+                                        suggestions = emptyList(),
+                                        onToggle = {},
+                                        onAdd = {},
+                                        readOnly = true,
+                                        onTagClick = onTagClick,
+                                    )
+                                }
+                            }
+
+                            if (isRecurring) {
+                                val rruleStrings = rememberRruleDisplayStrings()
+                                val repeatText = remember(event, rruleStrings, resources) {
+                                    recurrenceDisplayText(
+                                        rrule = event.rrule,
+                                        seriesStartDate = seriesStartDateFor(event),
+                                        rruleStrings = rruleStrings,
+                                        untilZone = RruleBuilder.untilZoneFor(event.isAllDay, event.timezone),
+                                        resources = resources,
+                                    )
+                                }
+                                Text(
+                                    text = "\uD83D\uDD01 $repeatText",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
-            }
 
-            if (attendees.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(12.dp))
-                val seriesDisclosure = if (
-                    org.onekash.kashcal.ui.components.attendees.shouldShowSeriesRsvpDisclosure(
-                        currentUserPartstat = currentUserPartstat,
-                        isOrganizer = isCurrentUserOrganizer,
-                        isRecurring = rsvpAppliesToSeries,
+                if (attendees.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    val seriesDisclosure = if (
+                        org.onekash.kashcal.ui.components.attendees.shouldShowSeriesRsvpDisclosure(
+                            currentUserPartstat = currentUserPartstat,
+                            isOrganizer = isCurrentUserOrganizer,
+                            isRecurring = rsvpAppliesToSeries,
+                        )
+                    ) stringResource(R.string.rsvp_series_disclosure) else null
+
+                    org.onekash.kashcal.ui.components.attendees.InviteesBlock(
+                        attendees = attendees,
+                        isCurrentUserOnList = isCurrentUserOnList,
+                        isCurrentUserOrganizer = isCurrentUserOrganizer,
+                        onRsvp = onRsvp,
+                        onDrillIntoAttendees = { showAttendeeSheet = true },
+                        seriesDisclosure = seriesDisclosure,
+                        alwaysExpanded = false,
+                        // Only an imported invitation reads the server's report on the user's own
+                        // reply; a synced invitation's organizer field holds the organizer's sends.
+                        replyReceipt = if (
+                            event.importSource == org.onekash.kashcal.data.db.entity.Event.IMPORT_SOURCE_ICS_FILE &&
+                            you != null && !isCurrentUserOrganizer
+                        ) {
+                            classifyReplyReceipt(event.organizerScheduleStatus)
+                        } else {
+                            null
+                        },
+                        modifier = Modifier.padding(horizontal = 16.dp),
                     )
-                ) stringResource(R.string.rsvp_series_disclosure) else null
+                }
 
-                org.onekash.kashcal.ui.components.attendees.InviteesBlock(
-                    attendees = attendees,
-                    isCurrentUserOnList = isCurrentUserOnList,
-                    isCurrentUserOrganizer = isCurrentUserOrganizer,
-                    onRsvp = onRsvp,
-                    onDrillIntoAttendees = { showAttendeeSheet = true },
-                    seriesDisclosure = seriesDisclosure,
-                    alwaysExpanded = false,
-                    // Only an imported invitation reads the server's report on the user's own
-                    // reply; a synced invitation's organizer field holds the organizer's sends.
-                    replyReceipt = if (
-                        event.importSource == org.onekash.kashcal.data.db.entity.Event.IMPORT_SOURCE_ICS_FILE &&
-                        you != null && !isCurrentUserOrganizer
-                    ) {
-                        classifyReplyReceipt(event.organizerScheduleStatus)
-                    } else {
-                        null
-                    },
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
-            }
-
-            // URL, notes and reminders.
-            if (hasExpandableContent) {
-                ExpandedContentSection(
-                    event = event,
-                    validEventUrl = validEventUrl,
-                    formattedReminders = formattedReminders,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
+                if (hasExpandableContent) {
+                    ExpandedContentSection(
+                        description = event.description,
+                        validEventUrl = validEventUrl,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -550,7 +540,7 @@ fun EventQuickViewSheet(
  * @see DateTimeUtils.formatEventDateShort
  * @see DateTimeUtils.formatEventTime
  */
-private fun formatEventDateTime(
+internal fun formatEventDateTime(
     startTs: Long,
     endTs: Long,
     isAllDay: Boolean,
@@ -580,6 +570,45 @@ private fun formatEventDateTime(
 }
 
 /**
+ * Returns the repeat line's text, shared by [EventQuickViewSheet] and [DeviceEventQuickViewSheet]:
+ * the rule with the series start when [seriesStartDate] is set ("Weekly on Mon · since Mar 6",
+ * "Daily starting Mar 6, 2023, 10 times"), or "Recurring" when there is no rule of its own (a
+ * changed occurrence) or it can't be read.
+ */
+internal fun recurrenceDisplayText(
+    rrule: String?,
+    seriesStartDate: String?,
+    rruleStrings: RruleDisplayStrings,
+    untilZone: ZoneId?,
+    resources: Resources,
+): String {
+    val recurring = resources.getString(R.string.cd_recurring)
+    if (rrule.isNullOrBlank()) return recurring
+    val (freq, endSuffix) = try {
+        RruleBuilder.formatForDisplayParts(rrule, rruleStrings, untilZone)
+    } catch (_: Exception) {
+        return recurring
+    }
+    return when {
+        endSuffix != null && seriesStartDate != null ->
+            resources.getString(R.string.rrule_starting, freq, seriesStartDate, endSuffix)
+        endSuffix != null -> "$freq$endSuffix"
+        seriesStartDate != null -> resources.getString(R.string.rrule_since, freq, seriesStartDate)
+        else -> freq
+    }
+}
+
+/**
+ * Returns a Room series' start date for the repeat line, or null for a contact birthday whose
+ * year is unknown, whose stored start is a placeholder.
+ */
+internal fun seriesStartDateFor(event: Event): String? {
+    val isContactEvent = ContactEventType.fromCaldavUrl(event.caldavUrl) != null
+    val hasSyntheticStart = isContactEvent && ContactEventUtils.decodeEventYear(event.description) == null
+    return if (hasSyntheticStart) null else formatSeriesStartDateStr(event.startTs, event.isAllDay)
+}
+
+/**
  * Formats a series' start date with no prefix: "Jan 15" in the current year, else
  * "Jan 15, 2023".
  */
@@ -594,12 +623,17 @@ internal fun formatSeriesStartDateStr(
     return DateTimeUtils.formatEventDate(seriesStartTs, isAllDay, pattern, localZone)
 }
 
-/** Shows the event's URL, notes and reminders in a scrolling section. */
+/** Test tag for [ExpandedContentSection]. */
+internal const val QUICK_VIEW_DETAILS_SECTION_TAG = "quick_view_details_section"
+
+/**
+ * Shows an event's link and notes in a scrolling section up to 300 dp tall, under a divider. Both
+ * quick views use it; [DeviceEventQuickViewSheet] passes no link (the platform calendar has none).
+ */
 @Composable
-private fun ExpandedContentSection(
-    event: Event,
+internal fun ExpandedContentSection(
+    description: String?,
     validEventUrl: String?,
-    formattedReminders: String?,
     modifier: Modifier = Modifier
 ) {
     val uriHandler = LocalUriHandler.current
@@ -610,7 +644,8 @@ private fun ExpandedContentSection(
             modifier = modifier
                 .fillMaxWidth()
                 .heightIn(max = 300.dp)
-                .verticalScroll(scrollState),
+                .verticalScroll(scrollState)
+                .testTag(QUICK_VIEW_DETAILS_SECTION_TAG),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             HorizontalDivider(
@@ -656,7 +691,7 @@ private fun ExpandedContentSection(
             }
 
             // Notes, with links made tappable.
-            if (!event.description.isNullOrBlank()) {
+            if (!description.isNullOrBlank()) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
@@ -666,27 +701,10 @@ private fun ExpandedContentSection(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     LinkifiedText(
-                        text = event.description,
+                        text = description,
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                    )
-                }
-            }
-
-            if (formattedReminders != null) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "\uD83D\uDD14",  // Bell emoji
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = formattedReminders,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }

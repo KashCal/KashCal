@@ -43,6 +43,8 @@
     <string name="channel_event_invitations">Gwahoddiadau digwyddiadau</string>
     <string name="channel_event_invitations_desc">Hysbysiadau pan fyddi\'n derbyn gwahoddiad calendr newydd</string>
     <string name="channel_calendar_updates">Newidiadau calendr</string>
+    <string name="channel_calendar_backup">Copi wrth gefn awtomatig o\'r calendrau</string>
+    <string name="channel_calendar_backup_description">Yn rhoi gwybod i chi pan fydd copi wrth gefn o\'r calendrau yn methu</string>
     <string name="invite_notification_body">Gan %1$s · Cyffwrdd i ymateb</string>
 
     <!-- ==================== App Shortcuts ==================== -->
@@ -88,7 +90,6 @@
     <string name="action_discard">Taflu</string>
     <string name="action_discard_confirm">Taflu\'r newidiadau?</string>
     <string name="action_dismiss">Diswyddo</string>
-    <string name="action_show_all">Dangos Popeth</string>
     <string name="action_connect">Cysylltu</string>
     <string name="action_duplicate">Dyblygu</string>
     <string name="action_share">Rhannu</string>
@@ -119,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d arall</string>
     <string name="tags_autocomplete_create_new">Creu «%1$s»</string>
     <string name="cd_tag">Tag: %1$s</string>
+    <string name="tags_show_events_click_label">Dangos digwyddiadau gyda\'r tag hwn</string>
+    <string name="tags_show_events">Dangos digwyddiadau</string>
     <string name="cd_tags_move_menu">Symud tagiau</string>
     <string name="tags_move_above_notes">Symud uwchben nodiadau</string>
     <string name="tags_move_below_notes">Symud islaw nodiadau</string>
@@ -148,7 +151,6 @@
     <string name="label_enter_hex">Rhowch 6 nod hex (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Popeth</string>
     <string name="view_week">Wythnos</string>
     <string name="view_month">Mis</string>
     <string name="label_all_day">Drwy\'r dydd</string>
@@ -188,19 +190,40 @@
     <string name="settings_start_week_on">Dechrau\'r Wythnos Ar</string>
     <string name="settings_event_emojis">Emojis Digwyddiadau</string>
     <string name="settings_event_emojis_info">Yn ychwanegu emoji at ddigwyddiadau yn ôl y teitl, fel 🎂 ar gyfer \"Pen-blwydd\".</string>
-    <string name="settings_force_sync">Gorfodi Cysoni Llawn</string>
+    <string name="settings_force_sync">Gorfodi cysoni llawn</string>
     <string name="settings_force_sync_subtitle">Ail-lwytho\'r holl ddata calendr</string>
-    <string name="settings_sync_history">Hanes Cysoni</string>
+    <string name="settings_force_sync_no_account">Dim cyfrif cysoni wedi\'i osod</string>
+    <string name="force_sync_confirm">Ail-lwytho %1$s o %2$s. Mae newidiadau heb eu cysoni\'n cael eu cadw.</string>
+    <string name="action_start">Dechrau</string>
+    <string name="settings_sync_history">Hanes cysoni</string>
     <string name="settings_sync_history_subtitle">Gweld sesiynau cysoni (48 awr diwethaf)</string>
     <string name="settings_import_subtitle">Ychwanegu digwyddiadau o ffeil ICS at unrhyw galendr</string>
-    <string name="settings_export_subtitle">Cadw digwyddiadau i ffeil ICS</string>
     <string name="settings_birthday_reminder">Atgoffa Pen-blwydd</string>
-    <string name="settings_use_device_timezone">Defnyddio cylchfa amser y ddyfais</string>
     <string name="settings_section_calendars">Calendrau a chyfrifon</string>
     <string name="settings_section_appearance">Golwg</string>
     <string name="settings_section_creating_events">Dewisiadau digwyddiadau</string>
     <string name="settings_section_sync">Cysoni</string>
     <string name="settings_section_data">Copi wrth gefn ac adfer</string>
+    <string name="settings_section_troubleshooting">Datrys problemau</string>
+
+    <!-- ==================== Debug report (Settings > Troubleshooting) ==================== -->
+    <string name="debug_report_row_label">Allforio adroddiad dadfygio</string>
+    <string name="debug_report_row_subtitle">Manylion chwalu, cysoni a gosod i\'w hanfon gydag adroddiad nam</string>
+    <string name="debug_report_sheet_title">Adroddiad dadfygio</string>
+    <string name="debug_report_sheet_body">Ffeil destun i\'w hanfon gydag adroddiad nam. Anfona hi\'n fuan ar ôl y broblem: dim ond gweithgarwch diweddar mae log yr ap yn ei gadw.</string>
+    <string name="debug_report_item_exits">Pam y caeodd yr ap yn ddiweddar</string>
+    <string name="debug_report_item_exits_detail">Chwalu, rhewi, cof isel</string>
+    <string name="debug_report_item_log">Log yr ap</string>
+    <string name="debug_report_item_log_detail">Negeseuon KashCal ei hun, gan gynnwys manylion chwalu</string>
+    <string name="debug_report_item_sync_detail">Cysoniadau diweddar, hyd at 48 awr yn ôl</string>
+    <string name="debug_report_item_pending">Newidiadau\'n aros</string>
+    <string name="debug_report_item_pending_detail">Golygiadau heb eu hanfon i dy weinydd eto</string>
+    <string name="debug_report_item_setup">Gosodiad</string>
+    <string name="debug_report_item_setup_detail">Fersiwn yr ap ac Android, caniatadau, gosodiadau batri, mathau o gyfrif</string>
+    <string name="debug_report_privacy_note">Mae cyfeiriadau e-bost, cyfeiriadau gwe a thocynnau wedi\'u cuddio. Dydy teitlau digwyddiadau, enwau calendrau ac enwau cysylltiadau ddim wedi\'u cuddio. Anfona hi drwy e-bost, nid mewn neges gyhoeddus.</string>
+    <string name="debug_report_share">Rhannu\'r adroddiad</string>
+    <string name="debug_report_chooser_title">Rhannu adroddiad dadfygio</string>
+    <string name="debug_report_failed">Methu creu\'r adroddiad dadfygio</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Clo\'r ap</string>
@@ -236,9 +259,41 @@
     <string name="backup_error_read_failed">Methwyd darllen y ffeil</string>
 
     <!-- ==================== Onboarding ==================== -->
-    <string name="onboarding_apple_calendar">Calendr Apple?</string>
-    <string name="onboarding_got_you">Rydyn ni yma i chi.</string>
-    <string name="onboarding_connect_prompt">Cysylltwch iCloud i weld eich digwyddiadau yma</string>
+    <string name="onboarding_title">Ble mae eich calendrau?</string>
+    <string name="onboarding_subtitle">Dewiswch un i gysylltu.</string>
+    <string name="onboarding_icloud_detail">Apple ID a chyfrinair ap</string>
+    <string name="onboarding_caldav_title">Gweinydd CalDAV</string>
+    <string name="onboarding_caldav_detail">Nextcloud, Fastmail, Radicale ac eraill</string>
+    <string name="onboarding_device_title">Ar y ddyfais hon</string>
+    <string name="onboarding_phone_detail">Google, Outlook ac apiau cysoni</string>
+    <string name="onboarding_use_offline">Defnyddio calendr all-lein</string>
+    <string name="onboarding_trust">Cod agored. Dim hysbysebion. Dim tracio.</string>
+
+    <!-- ==================== Reminders are off ==================== -->
+    <string name="reminders_off_title">Mae atgofion i ffwrdd</string>
+    <plurals name="reminders_off_body">
+        <item quantity="zero">Mae gan %d digwyddiad yr wythnos hon atgofion.</item>
+        <item quantity="one">Mae gan %d digwyddiad yr wythnos hon atgof.</item>
+        <item quantity="two">Mae gan %d ddigwyddiad yr wythnos hon atgofion.</item>
+        <item quantity="few">Mae gan %d digwyddiad yr wythnos hon atgofion.</item>
+        <item quantity="many">Mae gan %d digwyddiad yr wythnos hon atgofion.</item>
+        <item quantity="other">Mae gan %d digwyddiad yr wythnos hon atgofion.</item>
+    </plurals>
+    <string name="reminders_off_not_now">Dim nawr</string>
+    <string name="reminders_off_turn_on">Troi ymlaen</string>
+    <string name="reminders_on_snackbar">Atgofion ymlaen</string>
+
+    <!-- ==================== About ==================== -->
+    <string name="about_tagline">Eich holl galendrau mewn un ap preifat.</string>
+    <string name="about_help_title">Help a chanllawiau</string>
+    <string name="about_help_detail">Gosod, cydamseru a chwestiynau</string>
+    <string name="about_source_title">Cod ffynhonnell</string>
+    <string name="about_source_detail">Apache 2.0, ar GitHub</string>
+    <string name="about_support_title">Cefnogi KashCal</string>
+    <string name="about_support_detail">Diolch i bawb sydd eisoes yn cefnogi</string>
+    <string name="about_link_failed">Does dim ap a all agor y ddolen hon.</string>
+    <string name="about_built_in_austin">Wedi\'i adeiladu gyda ❤️ yn Austin</string>
+    <string name="about_version">Fersiwn %1$s</string>
 
     <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Hepgor</string>
@@ -257,22 +312,32 @@
     <string name="whats_new_v772_changes_title">Gweld beth sydd wedi newid</string>
     <string name="whats_new_v772_changes_body">Mae digwyddiadau newydd, wedi\'u golygu ac wedi\'u dileu o\'ch calendrau iCloud a CalDAV yn casglu yn Newidiadau diweddar am 7 diwrnod. Tapiwch un i\'w agor.</string>
     <string name="whats_new_v772_notifications_body">Cewch hysbysiad pan fydd cysoni yn y cefndir yn dod o hyd i newidiadau i\'ch digwyddiadau iCloud neu CalDAV. Mae\'n aros i ffwrdd nes i chi ei droi ymlaen.</string>
+    <string name="whats_new_v803_offline_title">Calendrau sy\'n aros ar eich ffôn</string>
+    <string name="whats_new_v803_offline_body">Dydy rhai cynlluniau ddim yn perthyn ar weinydd. Rhowch eu calendrau all-lein eu hunain iddyn nhw, cymaint ag y mynnwch.</string>
+    <string name="whats_new_v803_backup_title">Copïau wrth gefn sy\'n gofalu amdanyn nhw eu hunain</string>
+    <string name="whats_new_v803_backup_body">Dewiswch ffolder unwaith, a bydd KashCal yn cadw copi ffres o\'ch calendrau all-lein yno.</string>
+    <string name="whats_new_v803_print_title">Eich wythnos, ar bapur</string>
+    <string name="whats_new_v803_print_body">Argraffwch yr wythnos rydych chi\'n edrych arni. Chi sy\'n dewis pa oergell y bydd hi arni.</string>
     <string name="whats_new_hero_sample_lunch">Cinio tîm</string>
     <string name="whats_new_hero_sample_review">Adolygiad dylunio</string>
     <string name="whats_new_hero_sample_book_club">Clwb llyfrau</string>
+    <string name="whats_new_hero_sample_dentist">Deintydd</string>
+    <string name="whats_new_hero_sample_yoga">Ioga</string>
     <string name="whats_new_hero_sample_calendar">Gwaith</string>
+    <string name="whats_new_hero_sample_family">Teulu</string>
+    <string name="whats_new_hero_sample_garden">Gardd</string>
+    <string name="whats_new_hero_sample_folder">Copïau wrth gefn calendrau</string>
     <string name="whats_new_hero_now">nawr</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Cysylltu iCloud</string>
     <string name="signin_caldav_title">Ychwanegu Cyfrif CalDAV</string>
+    <string name="signin_caldav_sign_in_again_title">Mewngofnodi Eto</string>
     <string name="signin_connected_to">Wedi cysylltu â %1$s</string>
 
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Digwyddiad Newydd</string>
     <string name="dialog_edit_event_title">Golygu Digwyddiad</string>
-    <string name="dialog_force_sync_title">Gorfodi Cysoni Llawn?</string>
-    <string name="dialog_force_sync_message">Bydd hyn yn ail-lwytho\'r holl ddata calendr o\'r gweinydd. Bydd newidiadau lleol yn cael eu cadw.</string>
     <string name="dialog_enable_notifications">Galluogi Hysbysiadau?</string>
     <string name="dialog_action_required">Mae\'r weithred hon yn ofynnol i barhau.</string>
     <string name="dialog_add_to_calendar">Ychwanegu at galendr</string>
@@ -285,6 +350,7 @@
     <string name="status_no_events_week">Dim digwyddiadau yr wythnos hon</string>
     <string name="status_more_events">+%1$d mwy</string>
     <string name="status_no_sync_sessions">Dim sesiynau cysoni eto.\n\nDechreuwch gysoni trwy dynnu i lawr i adnewyddu ar y golwg calendr.</string>
+    <string name="status_no_sync_account">Dim cyfrif cysoni wedi\'i osod. Mae calendrau all-lein yn aros ar y ddyfais hon; mae calendrau\'r ddyfais yn cysoni trwy eu cyfrif eu hunain.</string>
     <string name="status_no_writable_calendars">Dim calendrau y gellir ysgrifennu iddynt ar gael</string>
     <string name="status_events_count">%1$d Digwyddiad</string>
     <string name="status_sync_history">Hanes Cysoni</string>
@@ -333,6 +399,7 @@
     <string name="caldav_error_unexpected">Gwall annisgwyl. Rhowch gynnig arall arni.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nOs yw hwn yn weinydd ar eich rhwydwaith lleol, caniatewch fynediad i\'r rhwydwaith lleol i gysylltu.</string>
     <string name="caldav_error_connection_refused_insecure">Ailgyfeiriodd y gweinydd y cysylltiad i rywle na fydd KashCal yn ei ddilyn (cyfeiriad heb ei amgryptio, neu ddolen ailgyfeirio), felly stopiodd KashCal cyn anfon dy gyfrinair. Gwiria gyfeiriad y gweinydd.</string>
+    <string name="caldav_error_sign_in_again_mismatch">Mae hwn yn gyfrif gwahanol. Mewngofnoda gyda\'r enw defnyddiwr a\'r gweinydd mae\'r cyfrif hwn yn eu defnyddio.</string>
     <string name="local_network_banner_title">Mae angen mynediad i\'r rhwydwaith lleol</string>
     <string name="local_network_banner_body">Mae\'n edrych fel bod y gweinydd hwn ar eich rhwydwaith lleol. Caniatewch fynediad i\'r rhwydwaith lleol fel y gall KashCal gysylltu ag ef.</string>
     <string name="local_network_banner_allow">Caniatáu mynediad</string>
@@ -374,7 +441,6 @@
     <string name="error_device_calendar_title">Gwall Calendr</string>
     <string name="error_device_calendar_write_failed">Wedi methu cadw i galendr y ddyfais. Ceisiwch eto.</string>
     <string name="error_device_calendar_permission">Mae angen caniatâd ysgrifennu calendr. Rhowch ganiatâd yn y Gosodiadau.</string>
-    <string name="error_device_calendar_permission_denied">Diffoddwch ac ailgychwyn y caniatâd Calendr yn y Gosodiadau i roi mynediad ysgrifennu</string>
     <string name="error_device_calendar_not_found">Calendr heb ei ganfod. Efallai ei fod wedi\'i ddileu.</string>
     <string name="error_device_event_not_found">Digwyddiad heb ei ganfod. Efallai ei fod wedi\'i ddileu.</string>
     <string name="error_device_calendar_read_only">Mae\'r calendr hwn yn ddarllen-yn-unig.</string>
@@ -401,12 +467,11 @@
     <string name="cd_recurring">Ailadroddol</string>
     <string name="cd_enabled">Wedi\'i alluogi</string>
     <string name="cd_sync_error">Gwall cysoni</string>
-    <string name="cd_select_label">Dewis %1$s</string>
     <string name="cd_wheel_picker">Dewisydd olwyn gyda %1$d opsiwn</string>
     <string name="cd_time_entry_keyboard">Nodi\'r union amser</string>
     <string name="time_entry_dialog_title">Nodi amser</string>
     <string name="time_entry_tap_to_edit">Tapiwch i olygu</string>
-    <string name="cd_version_info">KashCal fersiwn %1$s. Pwyswch yn hir am opsiynau dadfygio.</string>
+    <string name="cd_version_info">KashCal fersiwn %1$s</string>
     <string name="cd_about_setting">Ynghylch %1$s</string>
     <string name="cd_color_slider">Llithrydd lliw, %1$s ar hyn o bryd</string>
     <string name="cd_color_slider_state">%1$s, %2$d gradd</string>
@@ -435,7 +500,6 @@
     <string name="label_recurrence_on_date">Ar ddyddiad</string>
 
     <!-- ==================== Settings (Additional) ==================== -->
-    <string name="settings_visible_calendars">Calendrau Gweladwy</string>
     <string name="settings_default_calendar">Calendr Rhagosodedig</string>
     <string name="settings_default_event_length">Hyd Digwyddiad Rhagosodedig</string>
     <string name="settings_default_event_length_hint">Hyd rhagosodedig ar gyfer digwyddiadau newydd</string>
@@ -455,7 +519,6 @@
     <string name="option_saturday">Dydd Sadwrn</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Dim digwyddiadau wedi\'u canfod</string>
     <string name="empty_no_upcoming_events">Dim digwyddiadau ar y gweill</string>
     <string name="empty_no_calendars">Dim calendrau ar gael</string>
 
@@ -466,7 +529,15 @@
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Nol Calendr</string>
     <string name="action_import_from_file">Mewnforio digwyddiadau o ffeil</string>
-    <string name="action_export_local_calendar">Allforio calendr lleol</string>
+    <string name="settings_export_calendars">Allforio calendrau</string>
+    <string name="settings_export_calendars_subtitle">Cadw calendr fel ffeil ICS</string>
+    <string name="export_calendar_no_events">Dim digwyddiadau</string>
+    <string name="export_calendar_preparing">Yn paratoi…</string>
+    <string name="cd_export_calendar">Allforio %1$s</string>
+    <string name="cd_export_calendar_preparing">Yn paratoi %1$s</string>
+    <string name="export_calendar_chooser_title">Allforio calendr</string>
+    <string name="export_event_chooser_title">Allforio digwyddiad</string>
+    <string name="export_file_failed">Methu creu\'r ffeil.</string>
 
     <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
@@ -504,12 +575,14 @@
     <string name="accounts_cd_back">Mynd yn ôl</string>
     <string name="accounts_sync_issue">Problem cysoni</string>
     <string name="accounts_cd_sync_warning">Rhybudd cysoni</string>
+    <string name="accounts_cd_sync_off">cysoni i ffwrdd</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">Ffrydiau Calendr</string>
     <string name="subscriptions_section_add">Ychwanegu</string>
     <string name="subscriptions_empty_ics">Dim tanysgrifiadau ICS</string>
     <string name="subscriptions_empty_ics_hint">Ychwanegwch ffrwd calendr i weld digwyddiadau</string>
+    <string name="subscriptions_swipe_hint">Llithrwch ffrwd i\'w dileu.</string>
     <string name="subscriptions_add_ics">Ychwanegu Calendr ICS</string>
     <string name="qs_tile_label">Ychwanegu</string>
     <string name="holiday_catalog_add">Ychwanegu calendr gwyliau</string>
@@ -519,6 +592,11 @@
     <string name="holiday_catalog_empty_hint">Rhowch gynnig ar enw gwahanol</string>
     <string name="holiday_catalog_validate_error">Methwyd cyrraedd y calendr hwn. Gwiriwch eich cysylltiad a rhowch gynnig arall.</string>
     <string name="holiday_catalog_attribution">Calendrau gwyliau gan Mozilla Thunderbird, dan drwydded %1$s.</string>
+    <string name="account_feeds_add">Ychwanegu o gyfrif</string>
+    <string name="account_feeds_note">Dyma\'r ffrydiau calendr sydd wedi\'u cadw ar eich cyfrifon iCloud a CalDAV. Trowch ymlaen i\'w hychwanegu at Ffrydiau Calendr.</string>
+    <string name="account_feeds_checking">Yn gwirio…</string>
+    <string name="account_feeds_none">Heb ddod o hyd i unrhyw ffrydiau calendr</string>
+    <string name="account_feeds_failed">Methu llwytho ffrydiau calendr</string>
     <string name="subscriptions_row_label">Ffrydiau Calendr (ICS)</string>
     <string name="subscriptions_row_hint">e.e. gwyliau, chwaraeon, ysgol</string>
 
@@ -564,6 +642,8 @@
     <string name="account_detail_discovering">Yn darganfod…</string>
     <string name="account_detail_discover_calendars">Darganfod Calendrau Newydd</string>
     <string name="account_detail_change_password">Newid Cyfrinair</string>
+    <string name="account_detail_sign_in_again">Mewngofnodi Eto</string>
+    <string name="account_detail_sign_in_again_subtitle">Does gan KashCal ddim cyfrinair y cyfrif hwn bellach. Mewngofnoda i gysoni eto. Bydd dy galendrau a\'th ddigwyddiadau\'n aros.</string>
     <string name="account_detail_sign_out">Allgofnodi</string>
     <string name="account_detail_never_synced">Byth wedi cysoni</string>
     <string name="account_detail_last_success">Llwyddiant diwethaf: %1$s</string>
@@ -587,6 +667,143 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Calendrau\'r Ddyfais</string>
     <string name="settings_device_calendars_hint">Calendrau o apiau eraill</string>
+    <string name="offline_calendars_row_label">Calendrau all-lein</string>
+    <string name="offline_calendars_row_hint">Calendrau sy\'n aros ar y ddyfais hon</string>
+    <string name="offline_calendars_manage_note">Llithrwch galendr i\'w ddileu.</string>
+    <string name="offline_calendars_info">Yn cael eu cadw ar y ddyfais hon a byth yn cael eu cysoni.</string>
+    <string name="offline_calendars_info_cd">Am galendrau all-lein</string>
+    <string name="offline_calendar_default_state">Rhagosodedig</string>
+    <string name="offline_calendar_new">Calendr newydd</string>
+    <string name="offline_calendar_new_in_picker">Calendr all-lein newydd</string>
+    <string name="action_create">Creu</string>
+    <string name="offline_calendar_rename">Ailenwi</string>
+    <string name="offline_calendar_color">Lliw</string>
+    <string name="offline_calendar_export">Allforio calendr</string>
+    <string name="offline_calendar_builtin_info">Does dim modd ailenwi na dileu\'r calendr adeiledig. Mae digwyddiadau newydd yn mynd yma pan na ddewisir calendr.</string>
+    <string name="offline_calendar_builtin_info_cd">Am y calendr adeiledig</string>
+    <string name="offline_calendar_rename_cancel_cd">Canslo ailenwi</string>
+    <string name="offline_calendar_rename_save_cd">Cadw enw</string>
+    <string name="offline_calendar_delete_cd">Dileu %1$s</string>
+    <plurals name="offline_calendar_delete_confirm">
+        <item quantity="zero">Dileu \"%2$s\" a\'i %1$d digwyddiad am byth? Does dim modd dadwneud.</item>
+        <item quantity="one">Dileu \"%2$s\" a\'i %1$d digwyddiad am byth? Does dim modd dadwneud.</item>
+        <item quantity="two">Dileu \"%2$s\" a\'i %1$d ddigwyddiad am byth? Does dim modd dadwneud.</item>
+        <item quantity="few">Dileu \"%2$s\" a\'i %1$d digwyddiad am byth? Does dim modd dadwneud.</item>
+        <item quantity="many">Dileu \"%2$s\" a\'i %1$d digwyddiad am byth? Does dim modd dadwneud.</item>
+        <item quantity="other">Dileu \"%2$s\" a\'i %1$d digwyddiad am byth? Does dim modd dadwneud.</item>
+    </plurals>
+    <string name="offline_calendar_delete_empty">Dileu \"%1$s\" am byth? Does dim digwyddiadau ynddo.</string>
+    <plurals name="offline_calendar_delete_also">
+        <item quantity="zero">Dileu %1$d digwyddiad hefyd</item>
+        <item quantity="one">Dileu %1$d digwyddiad hefyd</item>
+        <item quantity="two">Dileu %1$d ddigwyddiad hefyd</item>
+        <item quantity="few">Dileu %1$d digwyddiad hefyd</item>
+        <item quantity="many">Dileu %1$d digwyddiad hefyd</item>
+        <item quantity="other">Dileu %1$d digwyddiad hefyd</item>
+    </plurals>
+    <string name="offline_calendar_deleted">Dilëwyd %1$s</string>
+    <string name="offline_calendar_duplicate_name">Mae calendr all-lein o\'r enw \"%1$s\" yn bodoli eisoes</string>
+    <string name="offline_calendar_similar_name">Rhy debyg i \"%1$s\". Dewiswch enw gwahanol.</string>
+    <string name="calendar_backup_title">Copi wrth gefn awtomatig o\'r calendrau</string>
+    <string name="calendar_backup_row_off">I ffwrdd</string>
+    <string name="calendar_backup_row_on">%1$s · %2$s</string>
+    <string name="calendar_backup_row_problem">Methu cyrraedd y ffolder copi wrth gefn</string>
+    <string name="calendar_backup_intro">Yn cadw pob calendr all-lein fel ffeil ICS mewn ffolder o\'ch dewis.</string>
+    <string name="calendar_backup_choose_folder">Dewis ffolder</string>
+    <string name="calendar_backup_choose_folder_hint">Dewiswch neu crëwch ffolder, er enghraifft yn Documents. Nid yw Android yn caniatáu brig y storfa na\'r ffolder Download ei hun.</string>
+    <string name="calendar_backup_folder">Ffolder</string>
+    <string name="calendar_backup_change">Newid</string>
+    <string name="calendar_backup_frequency">Amlder</string>
+    <string name="calendar_backup_frequency_info">Gall copïau wrth gefn redeg yn hwyr: mae Android yn dal gwaith cefndir yn ôl pan fydd y ffôn yn segur neu pan nad yw KashCal wedi\'i agor ers tro.</string>
+    <string name="calendar_backup_copies">Copïau i\'w cadw</string>
+    <string name="calendar_backup_copies_explained">Mae pob copi wrth gefn yn cadw\'r ffeil flaenorol fel copi â dyddiad. Pan fydd mwy na\'r nifer hwn, caiff y rhai hynaf eu dileu. Mae enw\'r calendr ar y ffeil fwyaf diweddar bob amser.</string>
+    <string name="calendar_backup_copies_fewer">Cadw llai o gopïau</string>
+    <string name="calendar_backup_copies_more">Cadw mwy o gopïau</string>
+    <plurals name="calendar_backup_copies_state">
+        <item quantity="zero">%d copi</item>
+        <item quantity="one">%d copi</item>
+        <item quantity="two">%d gopi</item>
+        <item quantity="few">%d chopi</item>
+        <item quantity="many">%d chopi</item>
+        <item quantity="other">%d copi</item>
+    </plurals>
+    <plurals name="calendar_backup_deletes">
+        <item quantity="zero">Yn dileu %d copi hŷn. Does dim modd dadwneud hyn.</item>
+        <item quantity="one">Yn dileu %d copi hŷn. Does dim modd dadwneud hyn.</item>
+        <item quantity="two">Yn dileu %d gopi hŷn. Does dim modd dadwneud hyn.</item>
+        <item quantity="few">Yn dileu %d chopi hŷn. Does dim modd dadwneud hyn.</item>
+        <item quantity="many">Yn dileu %d chopi hŷn. Does dim modd dadwneud hyn.</item>
+        <item quantity="other">Yn dileu %d copi hŷn. Does dim modd dadwneud hyn.</item>
+    </plurals>
+    <string name="calendar_backup_deletes_unknown">Yn dileu\'r copïau hŷn y tu hwnt i\'r nifer hwn. Does dim modd dadwneud hyn.</string>
+    <string name="calendar_backup_calendars">Calendrau all-lein</string>
+    <string name="calendar_backup_calendar_nothing_saved">%1$s · Dim digwyddiadau, dim wedi\'i gadw</string>
+    <string name="calendar_backup_calendar_save_failed">%1$s · Methu cadw. Bydd yn ceisio eto yn y copi wrth gefn nesaf.</string>
+    <string name="calendar_backup_status">Copi wrth gefn olaf %1$s</string>
+    <plurals name="calendar_backup_status_failed">
+        <item quantity="zero">Copi wrth gefn olaf %1$s · methodd %2$d calendr</item>
+        <item quantity="one">Copi wrth gefn olaf %1$s · methodd %2$d calendr</item>
+        <item quantity="two">Copi wrth gefn olaf %1$s · methodd %2$d galendr</item>
+        <item quantity="few">Copi wrth gefn olaf %1$s · methodd %2$d chalendr</item>
+        <item quantity="many">Copi wrth gefn olaf %1$s · methodd %2$d chalendr</item>
+        <item quantity="other">Copi wrth gefn olaf %1$s · methodd %2$d calendr</item>
+    </plurals>
+    <string name="calendar_backup_now">Gwneud copi nawr</string>
+    <string name="calendar_backup_running">Yn gwneud copi wrth gefn…</string>
+    <string name="calendar_backup_footer_overwrites">Mae KashCal yn trosysgrifo\'r ffeiliau hyn ym mhob copi wrth gefn, felly nid yw newidiadau a wnewch iddynt mewn apiau eraill yn para. I adfer calendr, defnyddiwch Mewnforio digwyddiadau o ffeil.</string>
+    <string name="calendar_backup_off_files_stay">Mae\'r ffeiliau presennol yn aros yn %1$s.</string>
+    <string name="calendar_backup_folder_unreachable">Methu cyrraedd %1$s. Efallai ei bod wedi\'i symud, ei dileu neu ei datgysylltu.</string>
+    <string name="calendar_backup_error_unsupported">Methu cadw ffeiliau yn %1$s. Dewiswch ffolder arall.</string>
+    <string name="calendar_backup_choose_again">Dewis eto</string>
+    <string name="calendar_backup_pick_refused">Ni all KashCal ddefnyddio\'r ffolder honno. Dewiswch un arall.</string>
+    <string name="calendar_backup_pick_cannot_create">Ni all KashCal greu ffeiliau yn y ffolder honno. Dewiswch un arall.</string>
+    <string name="calendar_backup_failed_title">Methodd y copi wrth gefn o\'r calendrau</string>
+    <string name="calendar_backup_folder_unnamed">y ffolder copi wrth gefn</string>
+    <string name="calendar_backup_alert_unreachable">Methu cyrraedd %1$s. Tapiwch i\'w ddewis eto.</string>
+    <string name="calendar_backup_alert_unsupported">Methu cadw ffeiliau yn %1$s. Tapiwch i ddewis ffolder arall.</string>
+    <string name="calendar_backup_alert_file_retry">Methu cadw %1$s. Bydd KashCal yn ceisio eto yn y copi wrth gefn nesaf.</string>
+    <string name="calendar_backup_every_hour">Bob awr</string>
+    <string name="calendar_backup_every_day">Bob dydd</string>
+    <plurals name="calendar_backup_every_hours">
+        <item quantity="zero">Bob %d awr</item>
+        <item quantity="one">Bob %d awr</item>
+        <item quantity="two">Bob %d awr</item>
+        <item quantity="few">Bob %d awr</item>
+        <item quantity="many">Bob %d awr</item>
+        <item quantity="other">Bob %d awr</item>
+    </plurals>
+    <plurals name="calendar_backup_every_days">
+        <item quantity="zero">Bob %d diwrnod</item>
+        <item quantity="one">Bob %d diwrnod</item>
+        <item quantity="two">Bob %d ddiwrnod</item>
+        <item quantity="few">Bob %d diwrnod</item>
+        <item quantity="many">Bob %d diwrnod</item>
+        <item quantity="other">Bob %d diwrnod</item>
+    </plurals>
+    <string name="calendar_backup_every_day_hours">Bob 1 diwrnod a %1$s</string>
+    <string name="calendar_backup_every_days_hours">Bob %1$s a %2$s</string>
+    <string name="calendar_backup_interval_too_short">Dewiswch o leiaf 1 awr.</string>
+    <string name="calendar_backup_interval_too_long">Dewiswch 30 diwrnod neu lai.</string>
+    <plurals name="calendar_backup_alert_files_retry">
+        <item quantity="zero">Methu cadw %d calendr. Bydd KashCal yn ceisio eto yn y copi wrth gefn nesaf.</item>
+        <item quantity="one">Methu cadw %d calendr. Bydd KashCal yn ceisio eto yn y copi wrth gefn nesaf.</item>
+        <item quantity="two">Methu cadw %d galendr. Bydd KashCal yn ceisio eto yn y copi wrth gefn nesaf.</item>
+        <item quantity="few">Methu cadw %d chalendr. Bydd KashCal yn ceisio eto yn y copi wrth gefn nesaf.</item>
+        <item quantity="many">Methu cadw %d chalendr. Bydd KashCal yn ceisio eto yn y copi wrth gefn nesaf.</item>
+        <item quantity="other">Methu cadw %d calendr. Bydd KashCal yn ceisio eto yn y copi wrth gefn nesaf.</item>
+    </plurals>
+    <string name="calendar_backup_notifications_app_off">Mae hysbysiadau wedi\'u diffodd ar gyfer KashCal, felly ni all roi gwybod i chi os bydd copi wrth gefn yn methu.</string>
+    <string name="calendar_backup_notifications_channel_off">Mae hysbysiadau copi wrth gefn wedi\'u diffodd, felly ni all KashCal roi gwybod i chi os bydd copi wrth gefn yn methu.</string>
+    <string name="calendar_backup_open_settings">Agor gosodiadau</string>
+    <string name="calendar_backup_not_now">Ddim nawr</string>
+    <plurals name="calendar_backup_row_calendars_failed">
+        <item quantity="zero">Methodd %d calendr</item>
+        <item quantity="one">Methodd %d calendr</item>
+        <item quantity="two">Methodd %d galendr</item>
+        <item quantity="few">Methodd %d chalendr</item>
+        <item quantity="many">Methodd %d chalendr</item>
+        <item quantity="other">Methodd %d calendr</item>
+    </plurals>
     <string name="settings_quick_event_add">Ychwanegu digwyddiad clyfar</string>
     <string name="settings_quick_event_add_info">Crëwch ddigwyddiadau drwy deipio\'n naturiol. Mae \"Cinio gyda Sam dydd Gwener 1yh\" yn llenwi\'r teitl, y dyddiad a\'r amser i chi.</string>
     <string name="settings_suggest_titles">Awgrymu teitlau digwyddiadau</string>
@@ -650,6 +867,8 @@
     <string name="cd_pick_month_year">Dewis mis a blwyddyn</string>
     <string name="cd_previous_month">Mis blaenorol</string>
     <string name="cd_next_month">Mis nesaf</string>
+    <string name="cd_previous_day">Diwrnod blaenorol</string>
+    <string name="cd_next_day">Diwrnod nesaf</string>
     <string name="cd_month_year_picker">Dewisydd mis a blwyddyn</string>
     <string name="cd_remove_alert">Tynnu rhybudd</string>
     <string name="cd_warning">Rhybudd</string>
@@ -659,7 +878,25 @@
     <string name="label_on_days">Ar ddyddiau</string>
     <string name="label_pattern">Patrwm</string>
     <string name="label_ends">Yn Gorffen</string>
+    <string name="sheet_hint_change_end">Tapiwch ddiwrnod i newid y diwedd</string>
     <string name="label_timezone">Cylchfa amser</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Chwilio am ddinas, gwlad neu gylchfa</string>
+    <string name="timezone_section_this_event">Y digwyddiad hwn</string>
+    <string name="timezone_section_device">Cylchfa amser y ddyfais</string>
+    <string name="timezone_section_recent">Diweddar</string>
+    <string name="timezone_section_all">Pob cylchfa amser</string>
+    <string name="timezone_offsets_on">Gwrthbwysau ar %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">O\'r calendr: %1$s</string>
+    <string name="timezone_shown_in_device_time">Wedi\'i ddangos yn amser y ddyfais</string>
+    <string name="timezone_loading">Yn llwytho cylchfaoedd amser…</string>
+    <string name="timezone_no_match">Dim cylchfa amser yn cyfateb</string>
+    <string name="timezone_no_match_hint">Rhowch gynnig ar ddinas, gwlad neu wrthbwysiad fel +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Rhybuddion</string>
     <string name="label_add_alert">Ychwanegu Rhybudd</string>
     <string name="label_recurrence_never">Byth</string>
@@ -667,11 +904,8 @@
     <string name="label_yesterday">Ddoe</string>
     <string name="label_device_calendars">Calendrau\'r Ddyfais</string>
     <string name="label_default_calendar_hint">Bydd digwyddiadau newydd yn cael eu creu yn y calendr hwn</string>
-    <string name="label_visible_count">%1$d / %2$d gweladwy</string>
     <string name="label_reminders_truncated">%1$d heb eu dangos (%2$d cyfanswm, uchafswm %3$d y gellir eu golygu)</string>
     <string name="label_found_events">Wedi canfod: %1$d digwyddiad</string>
-    <string name="label_open_debug_menu">Agor dewislen dadfygio</string>
-    <string name="placeholder_search">Chwilio…</string>
     <string name="settings_search_placeholder">Chwilio gosodiadau…</string>
     <string name="settings_search_no_results">Heb ganfod gosodiadau ar gyfer \"%1$s\"</string>
     <string name="cd_search_settings">Chwilio gosodiadau</string>
@@ -682,16 +916,13 @@
     <string name="status_hours_ago">%1$d awr yn ôl</string>
 
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
-    <string name="device_calendars_description">Dangos digwyddiadau o apiau calendr eraill ar eich dyfais (addaswyr cysoni, calendrau lleol).</string>
-    <string name="device_calendars_permission_required">Mae angen caniatâd calendr. Tapiwch Galluogi i roi mynediad.</string>
-    <string name="device_calendars_read_only_access">Mynediad darllen-yn-unig</string>
-    <string name="device_calendars_grant_write">Rhowch ganiatâd ysgrifennu i olygu digwyddiadau calendr y ddyfais</string>
-    <string name="device_calendars_grant">Rhoi</string>
-    <string name="device_calendars_none_found">Dim calendrau dyfais wedi\'u canfod.</string>
+    <string name="device_calendars_intro">Dangos calendrau o Google, Outlook ac apiau cysoni ar y ddyfais hon.</string>
+    <string name="device_calendars_show_switch">Dangos calendrau\'r ddyfais</string>
+    <string name="device_calendars_access_off">Mae mynediad at galendr i ffwrdd i KashCal.</string>
+    <string name="device_calendars_pick_hint">Dewiswch galendrau i\'w dangos.</string>
+    <string name="device_calendars_empty">Heb ddod o hyd i galendrau.</string>
     <string name="device_calendars_local">Lleol</string>
-    <string name="device_calendars_read_only_no_write">Darllen yn unig (dim caniatâd ysgrifennu)</string>
     <string name="device_calendars_read_only_calendar">Darllen yn unig (calendr darllen-yn-unig)</string>
-    <string name="settings_developer_options">Opsiynau Datblygwr</string>
     <string name="settings_sync_frequency">Amlder Cysoni</string>
     <string name="settings_sync_frequency_hint">Pa mor aml i gysoni yn y cefndir</string>
 
@@ -897,6 +1128,9 @@
     <string name="ics_import_reason_this_and_future">dyw newidiadau i\'r achlysur hwn a rhai diweddarach ddim yn cael eu cefnogi</string>
     <string name="ics_import_reason_own_cancel">ti sy\'n trefnu\'r cyfarfod hwn, felly cansla fe o\'r digwyddiad</string>
     <string name="ics_import_reason_on_another_calendar">mae eisoes mewn calendr arall yn y cyfrif hwn</string>
+    <string name="ics_import_reason_calendar_keeps_copy">mae\'r calendr hwn yn cadw ei gopi ei hun o\'r digwyddiad</string>
+    <string name="ics_import_reason_own_update">ti sy\'n trefnu\'r cyfarfod hwn, felly newidia fe o\'r digwyddiad</string>
+    <string name="ics_import_reason_change_waiting">mae gan y digwyddiad newid sy\'n aros i gysoni; mewnforia eto ar ôl iddo gysoni</string>
     <string name="ics_import_notice_unverified">Does dim modd gwirio pwy anfonodd ffeil gwahoddiad. Gwiria ei bod wedi dod gan y trefnydd.</string>
     <string name="ics_import_notice_answer_notifies">Gall ateb y gwahoddiad hwn roi gwybod i\'r trefnydd.</string>
     <string name="ics_import_notice_guests_again">Ti yw\'r trefnydd, felly gall mynychwyr gael y gwahoddiad hwn eto.</string>
@@ -951,14 +1185,6 @@
     </plurals>
     <string name="ics_import_summary_separator">", "</string>
     <string name="ics_import_summary_nothing">Dim byd i\'w fewnforio</string>
-    <plurals name="exported_events">
-        <item quantity="zero">Wedi allforio %1$d digwyddiad</item>
-        <item quantity="one">Wedi allforio %1$d digwyddiad</item>
-        <item quantity="two">Wedi allforio %1$d ddigwyddiad</item>
-        <item quantity="few">Wedi allforio %1$d digwyddiad</item>
-        <item quantity="many">Wedi allforio %1$d digwyddiad</item>
-        <item quantity="other">Wedi allforio %1$d digwyddiad</item>
-    </plurals>
     <plurals name="event_count">
         <item quantity="zero">%1$d digwyddiad</item>
         <item quantity="one">%1$d digwyddiad</item>
@@ -966,6 +1192,22 @@
         <item quantity="few">%1$d digwyddiad</item>
         <item quantity="many">%1$d digwyddiad</item>
         <item quantity="other">%1$d digwyddiad</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="zero">%1$d calendr</item>
+        <item quantity="one">%1$d calendr</item>
+        <item quantity="two">%1$d galendr</item>
+        <item quantity="few">%1$d chalendr</item>
+        <item quantity="many">%1$d chalendr</item>
+        <item quantity="other">%1$d calendr</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="zero">%1$d cyfrif</item>
+        <item quantity="one">%1$d cyfrif</item>
+        <item quantity="two">%1$d gyfrif</item>
+        <item quantity="few">%1$d chyfrif</item>
+        <item quantity="many">%1$d chyfrif</item>
+        <item quantity="other">%1$d cyfrif</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="zero">%1$d calendr</item>
@@ -1031,14 +1273,6 @@
         <item quantity="many">%1$d blynedd</item>
         <item quantity="other">%1$d mlynedd</item>
     </plurals>
-    <plurals name="time_seconds">
-        <item quantity="zero">%1$d eil</item>
-        <item quantity="one">%1$d eil</item>
-        <item quantity="two">%1$d eil</item>
-        <item quantity="few">%1$d eil</item>
-        <item quantity="many">%1$d eil</item>
-        <item quantity="other">%1$d eil</item>
-    </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="zero">%1$d munud cyn</item>
         <item quantity="one">%1$d funud cyn</item>
@@ -1078,8 +1312,13 @@
     <string name="dialog_move_recurring_title">Symud</string>
     <string name="snackbar_event_rescheduled">Digwyddiad wedi\'i aildrefnu</string>
     <string name="snackbar_reschedule_failed">Methu aildrefnu\'r digwyddiad</string>
+    <string name="snackbar_move_failed">Methu symud \"%1$s\"</string>
+    <string name="snackbar_move_changed_elsewhere">Newidiwyd \"%1$s\" yn rhywle arall, felly ni chafodd ei symud</string>
+    <string name="event_untitled">Digwyddiad heb deitl</string>
     <string name="recurring_this_event">Y digwyddiad hwn</string>
     <string name="recurring_all_events">Pob digwyddiad</string>
+    <string name="recurring_scope_move_not_expressible">Ni all y rheol ailadrodd ddilyn y newid hwn</string>
+    <string name="event_form_move_not_expressible">Ni all y rheol ailadrodd ddilyn y newid hwn. Ni chadwyd dim.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Mynychwyr</string>
@@ -1167,8 +1406,99 @@
     <string name="empty_no_events_day_3">Anrheg: diwrnod gwag.</string>
     <string name="empty_no_events_day_4">Statws y calendr: hyfryd o wag.</string>
     <string name="empty_no_events_day_5">Dim byd wedi\'i gynllunio. Mwynhewch y llonydd.</string>
-    <string name="cd_empty_no_events_day">Diwrnod tawel, dim byd wedi\'i drefnu</string>
     <string name="filter_date">Dyddiad</string>
+    <string name="search_tab_upcoming">I ddod</string>
+    <string name="search_tab_past">Blaenorol</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="zero">%1$s, %2$d digwyddiad</item>
+        <item quantity="one">%1$s, %2$d digwyddiad</item>
+        <item quantity="two">%1$s, %2$d ddigwyddiad</item>
+        <item quantity="few">%1$s, %2$d digwyddiad</item>
+        <item quantity="many">%1$s, %2$d digwyddiad</item>
+        <item quantity="other">%1$s, %2$d digwyddiad</item>
+    </plurals>
+    <string name="search_date_this_week">Yr wythnos hon</string>
+    <string name="search_date_this_month">Y mis hwn</string>
+    <string name="search_date_pick">Dewis dyddiadau…</string>
+    <string name="search_next">Nesaf: %1$s</string>
+    <string name="search_last">Diwethaf: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Lleoliad:</string>
+    <string name="search_reason_notes">Nodiadau:</string>
+    <string name="search_reason_guest">Gwestai:</string>
+    <string name="search_keep_typing">Dal ati i deipio i chwilio</string>
+    <string name="search_no_matches">Dim digwyddiadau\'n cyfateb i “%1$s”</string>
+    <string name="search_no_events_tagged">Dim digwyddiadau wedi\'u tagio gyda “%1$s”</string>
+    <string name="search_lookback_line">Edrych yn Ôl Cysoni: %1$s</string>
+    <string name="search_sync_settings">Gosodiadau cysoni</string>
+    <string name="cd_search_sync_settings">Agor y gosodiad edrych yn ôl cysoni</string>
+    <plurals name="search_show_past">
+        <item quantity="zero">Dangos %d digwyddiad blaenorol</item>
+        <item quantity="one">Dangos %d digwyddiad blaenorol</item>
+        <item quantity="two">Dangos %d ddigwyddiad blaenorol</item>
+        <item quantity="few">Dangos %d digwyddiad blaenorol</item>
+        <item quantity="many">Dangos %d digwyddiad blaenorol</item>
+        <item quantity="other">Dangos %d digwyddiad blaenorol</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="zero">%d arall mewn calendrau cudd</item>
+        <item quantity="one">%d arall mewn calendr cudd</item>
+        <item quantity="two">%d arall mewn calendrau cudd</item>
+        <item quantity="few">%d arall mewn calendrau cudd</item>
+        <item quantity="many">%d arall mewn calendrau cudd</item>
+        <item quantity="other">%d arall mewn calendrau cudd</item>
+    </plurals>
+    <string name="search_show">Dangos</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="zero">Dangos %d canlyniad mewn calendrau cudd</item>
+        <item quantity="one">Dangos %d canlyniad mewn calendr cudd</item>
+        <item quantity="two">Dangos %d ganlyniad mewn calendrau cudd</item>
+        <item quantity="few">Dangos %d chanlyniad mewn calendrau cudd</item>
+        <item quantity="many">Dangos %d chanlyniad mewn calendrau cudd</item>
+        <item quantity="other">Dangos %d canlyniad mewn calendrau cudd</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="zero">Dangos %d mewn calendrau cudd</item>
+        <item quantity="one">Dangos %d mewn calendr cudd</item>
+        <item quantity="two">Dangos %d mewn calendrau cudd</item>
+        <item quantity="few">Dangos %d mewn calendrau cudd</item>
+        <item quantity="many">Dangos %d mewn calendrau cudd</item>
+        <item quantity="other">Dangos %d mewn calendrau cudd</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="zero">Yn cynnwys %d calendr cudd</item>
+        <item quantity="one">Yn cynnwys %d calendr cudd</item>
+        <item quantity="two">Yn cynnwys %d galendr cudd</item>
+        <item quantity="few">Yn cynnwys %d chalendr cudd</item>
+        <item quantity="many">Yn cynnwys %d chalendr cudd</item>
+        <item quantity="other">Yn cynnwys %d calendr cudd</item>
+    </plurals>
+    <string name="search_leave_out">Gadael allan</string>
+    <string name="cd_search_leave_out">Gadael calendrau cudd allan</string>
+    <string name="search_hidden_calendar">%1$s · cudd</string>
+    <string name="cd_search_date_this_week">Dangos canlyniadau\'r wythnos hon</string>
+    <string name="cd_search_date_this_month">Dangos canlyniadau\'r mis hwn</string>
+    <string name="cd_search_date_pick">Dewis dyddiadau i chwilio</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="zero">%d i ddod</item>
+        <item quantity="one">%d i ddod</item>
+        <item quantity="two">%d i ddod</item>
+        <item quantity="few">%d i ddod</item>
+        <item quantity="many">%d i ddod</item>
+        <item quantity="other">%d i ddod</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="zero">%d blaenorol</item>
+        <item quantity="one">%d blaenorol</item>
+        <item quantity="two">%d blaenorol</item>
+        <item quantity="few">%d blaenorol</item>
+        <item quantity="many">%d blaenorol</item>
+        <item quantity="other">%d blaenorol</item>
+    </plurals>
+    <string name="search_no_past_events">Dim digwyddiadau blaenorol</string>
+    <string name="search_no_events_in_dates">Dim digwyddiadau ar y dyddiadau hyn</string>
     <string name="label_select_date">Dewiswch ddyddiad</string>
     <string name="hint_tap_date_range">Tapiwch yr un dyddiad am un diwrnod, neu ddyddiad arall am ystod</string>
     <string name="cd_clear">Clirio</string>
@@ -1264,7 +1594,6 @@
     <string name="reminder_none">Dim atgoffa</string>
     <string name="reminder_at_time_of_event">Ar amser y digwyddiad</string>
     <string name="reminder_time_before">%1$s cyn</string>
-    <string name="reminder_time_after">%1$s ar ôl</string>
     <string name="reminder_day_of_event_12h">9 AM diwrnod y digwyddiad</string>
     <string name="reminder_day_of_event_24h">09:00 diwrnod y digwyddiad</string>
     <string name="reminder_day_of_event">Diwrnod y digwyddiad</string>
@@ -1436,6 +1765,7 @@
     <!-- ==================== i18n: Round 2 audit gaps ==================== -->
     <string name="action_save_event">Cadw digwyddiad</string>
     <string name="badge_beta">Beta</string>
+    <string name="badge_sync_off">Cysoni i ffwrdd</string>
     <string name="badge_new">Newydd</string>
     <string name="color_red">Coch</string>
     <string name="color_orange">Oren</string>
@@ -1464,6 +1794,27 @@
     <string name="ics_fetch_error_http">Dychwelodd y gweinydd wall (%1$d). Gwiriwch yr URL.</string>
     <string name="ics_fetch_error_empty">Mae ffrwd y calendr yn wag.</string>
     <string name="ics_fetch_error_not_calendar">Nid yw\'r URL hwnnw\'n edrych fel ffrwd galendr.</string>
+    <string name="ics_feed_error_empty_response">Ni anfonodd y gweinydd ffrwd ddilys.</string>
+    <string name="ics_feed_error_access_denied">Gwrthododd gweinydd y ffrwd hon fynediad.</string>
+    <string name="ics_feed_error_too_large">Mae\'r ffrwd galendr hon yn rhy fawr i\'w llwytho i lawr.</string>
+    <string name="ics_feed_error_unreadable">Methu dangos digwyddiadau\'r ffrwd hon.</string>
+    <string name="ics_feed_error_event_not_saved">Ni chafodd “%1$s” ei gadw.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="zero">Ni chafodd %1$d digwyddiad eu cadw.</item>
+        <item quantity="one">Ni chafodd %1$d digwyddiad ei gadw.</item>
+        <item quantity="two">Ni chafodd %1$d ddigwyddiad eu cadw.</item>
+        <item quantity="few">Ni chafodd %1$d digwyddiad eu cadw.</item>
+        <item quantity="many">Ni chafodd %1$d digwyddiad eu cadw.</item>
+        <item quantity="other">Ni chafodd %1$d digwyddiad eu cadw.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="zero">Ni chafodd %1$d digwyddiad eu cadw, gan gynnwys “%2$s”.</item>
+        <item quantity="one">Ni chafodd %1$d digwyddiad ei gadw, gan gynnwys “%2$s”.</item>
+        <item quantity="two">Ni chafodd %1$d ddigwyddiad eu cadw, gan gynnwys “%2$s”.</item>
+        <item quantity="few">Ni chafodd %1$d digwyddiad eu cadw, gan gynnwys “%2$s”.</item>
+        <item quantity="many">Ni chafodd %1$d digwyddiad eu cadw, gan gynnwys “%2$s”.</item>
+        <item quantity="other">Ni chafodd %1$d digwyddiad eu cadw, gan gynnwys “%2$s”.</item>
+    </plurals>
     <string name="insights_title">Mewnwelediadau</string>
     <string name="insights_period_this_week">Wythnos</string>
     <string name="insights_period_last_week">Wythnos ddiwethaf</string>
@@ -1607,7 +1958,7 @@
         <item quantity="other">Rhydd dros y %1$d diwrnod nesaf (%2$s – %3$s):</item>
     </plurals>
     <string name="share_availability_day_line">%1$s: %2$s</string>
-    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_block_separator">", "</string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">Dim blociau rhydd o awr o leiaf yn yr ystod a ddewiswyd.</string>
     <string name="share_from_kashcal_footer">Wedi rhannu o KashCal</string>
@@ -1633,5 +1984,39 @@
     <string name="share_as_card_all_day">Trwy\'r dydd</string>
     <string name="share_as_card_chooser_title">Rhannu digwyddiad</string>
     <string name="share_as_card_share_failed">Methu rhannu\'r cerdyn</string>
+    <string name="print_your_week">Argraffa dy wythnos</string>
+    <string name="print_options_title">Dewis opsiynau argraffu</string>
+    <string name="print_pages_header">Tudalennau</string>
+    <string name="print_page_week">Calendr wythnos</string>
+    <string name="print_page_week_detail">Yr wythnos fel grid</string>
+    <string name="print_page_details">Manylion</string>
+    <string name="print_page_details_detail">Pob digwyddiad yn llawn</string>
+    <string name="print_action">Argraffu</string>
+    <string name="cd_print_previous_week">Wythnos flaenorol</string>
+    <string name="cd_print_next_week">Wythnos nesaf</string>
+    <plurals name="print_summary_pages">
+        <item quantity="zero">%d tudalen</item>
+        <item quantity="one">%d dudalen</item>
+        <item quantity="two">%d dudalen</item>
+        <item quantity="few">%d tudalen</item>
+        <item quantity="many">%d thudalen</item>
+        <item quantity="other">%d tudalen</item>
+    </plurals>
+    <plurals name="print_summary_calendars">
+        <item quantity="zero">%1$d o %2$d calendr</item>
+        <item quantity="one">%1$d o %2$d calendr</item>
+        <item quantity="two">%1$d o %2$d galendr</item>
+        <item quantity="few">%1$d o %2$d chalendr</item>
+        <item quantity="many">%1$d o %2$d chalendr</item>
+        <item quantity="other">%1$d o %2$d calendr</item>
+    </plurals>
+    <string name="print_summary">%1$s · %2$s</string>
+    <string name="print_job_name">%1$s – Wythnos %2$s</string>
+    <string name="print_failed">Methu argraffu. Rho gynnig arall.</string>
+    <string name="print_doc_week">Wythnos</string>
+    <string name="print_doc_printed">Argraffwyd %1$s</string>
+    <string name="print_doc_page_of">Tudalen %1$s o %2$s</string>
+    <string name="print_doc_numbers_note">Mae\'r rhifau\'n cyfateb i\'r manylion, sy\'n rhestru pob digwyddiad yn llawn.</string>
+    <string name="print_doc_times_in">Amseroedd yn ôl %1$s</string>
 
 </resources>

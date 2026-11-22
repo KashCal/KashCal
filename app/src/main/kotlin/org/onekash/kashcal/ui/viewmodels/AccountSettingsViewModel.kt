@@ -5,14 +5,17 @@ import org.onekash.kashcal.domain.ics.GroupPlan
 import org.onekash.kashcal.domain.ics.IcsImportResult
 import android.content.Context
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -40,6 +43,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.SyncLog
 import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
 import org.onekash.kashcal.data.preferences.DefaultCalendar
+import org.onekash.kashcal.domain.model.LocalCalendarSummary
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.preferences.PreferencesKeys
 import org.onekash.kashcal.data.preferences.UserPreferencesRepository
@@ -51,6 +55,10 @@ import org.onekash.kashcal.domain.backup.SettingsBackupExporter
 import org.onekash.kashcal.domain.backup.SettingsBackupImporter
 import org.onekash.kashcal.domain.backup.toSummary
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
+import org.onekash.kashcal.domain.feeds.CalendarFeedUrl
+import org.onekash.kashcal.domain.feeds.FeedAccount
+import org.onekash.kashcal.domain.feeds.FeedListing
+import org.onekash.kashcal.domain.feeds.ServerCalendarFeeds
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.reader.DeviceEventReader
 import org.onekash.kashcal.domain.reader.SyncLogReader
@@ -75,11 +83,16 @@ import org.onekash.kashcal.ui.permission.reconcileOnResume
 import org.onekash.kashcal.ui.permission.failureIndicatesBlockedLan
 import org.onekash.kashcal.ui.screens.AccountSettingsUiState
 import org.onekash.kashcal.ui.screens.BackupRestoreUiState
+import org.onekash.kashcal.ui.screens.settings.AccountFeedRow
+import org.onekash.kashcal.ui.screens.settings.AccountFeedsContent
+import org.onekash.kashcal.ui.screens.settings.AccountFeedsSection
+import org.onekash.kashcal.ui.screens.settings.AccountFeedsSheetState
 import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
 import org.onekash.kashcal.ui.screens.settings.AccountDetailSyncStatus
 import org.onekash.kashcal.ui.screens.settings.CalDavAccountUiModel
 import org.onekash.kashcal.ui.screens.settings.ContactSyncConfirmation
 import org.onekash.kashcal.ui.screens.settings.CalDavConnectionState
+import org.onekash.kashcal.ui.screens.settings.SettingsDestination
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.screens.settings.IcsSubscriptionUiModel
 import org.onekash.kashcal.ui.screens.settings.toDetailUiModel
@@ -95,6 +108,9 @@ import javax.inject.Inject
 
 private const val TAG = "AccountSettingsVM"
 
+/** How long an "Add from account" section waits for its listing before showing Failed. */
+private const val ACCOUNT_FEEDS_TIMEOUT_MS = 20_000L
+
 // Per-attempt limit for iCloud and CalDAV sign-in discovery, so a stalled network can't hang the
 // sign-in sheet.
 private const val DISCOVERY_TIMEOUT_MS = 30_000L
@@ -102,6 +118,12 @@ private const val DISCOVERY_TIMEOUT_MS = 30_000L
 // Retry configuration for discovery timeouts
 private const val MAX_DISCOVERY_RETRIES = 2
 private const val DISCOVERY_RETRY_DELAY_MS = 1000L
+
+// Saved-state key for [AccountSettingsViewModel.markDeviceCalendarsPendingSettings].
+private const val KEY_DEVICE_CALENDARS_PENDING_SETTINGS = "device_calendars_pending_settings"
+
+// Saved-state key: the user left the onboarding route to stay in Settings.
+private const val KEY_ONBOARDING_ROUTE_LEFT = "onboarding_route_left"
 
 /**
  * Runs [block] with a per-attempt timeout, trying again only after a timeout.
@@ -127,6 +149,9 @@ private suspend fun <T> withRetryOnTimeout(
     return null
 }
 
+/** Names the Settings screen the first-launch onboarding sheet sends the user to. */
+enum class OnboardingRoute { ICLOUD, CALDAV, DEVICE_CALENDARS }
+
 /**
  * Holds the state and actions of the settings screens that `SettingsActivity` hosts through
  * [org.onekash.kashcal.ui.screens.SettingsRoute]: iCloud and CalDAV sign-in and account detail,
@@ -141,6 +166,7 @@ class AccountSettingsViewModel @Inject constructor(
     private val discoveryService: AccountDiscoveryService,
     private val calDavDiscoveryService: CalDavAccountDiscoveryService,
     private val eventCoordinator: EventCoordinator,
+    private val serverCalendarFeeds: ServerCalendarFeeds,
     private val syncLogReader: SyncLogReader,
     private val contactEventManager: ContactEventManager,
     private val calendarProviderManager: CalendarProviderManager,
@@ -156,6 +182,8 @@ class AccountSettingsViewModel @Inject constructor(
     private val reminderNotificationChannels: ReminderNotificationChannels,
     @ApplicationContext private val context: Context,
     @ApplicationScope private val applicationScope: CoroutineScope,
+    // Hilt supplies the activity's handle; the default keeps direct constructions compiling.
+    private val savedStateHandle: SavedStateHandle = SavedStateHandle(),
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AccountSettingsUiState(isLoading = true))
@@ -166,9 +194,17 @@ class AccountSettingsViewModel @Inject constructor(
     private var passwordInput = ""
     private var showHelpState = false
 
-    // Set when launched from onboarding: a successful iCloud sign-in finishes the activity back to
-    // HomeScreen instead of showing the success sheet.
-    private var isInitialSetup = false
+    // Set by [applyOnboardingRoute]: closing the sign-in sheet finishes the activity back to
+    // HomeScreen (unless a sign-in is still connecting), and a successful iCloud sign-in skips
+    // the success sheet. Cleared when the user stays in Settings from the success sheet.
+    private var onOnboardingRoute = false
+
+    // Whether [applyOnboardingRoute] already ran for this view model. A plain field on purpose:
+    // it survives a rotation with the view model, so the route isn't re-applied, and dies with
+    // the process, so after a process death the route applies again and the sheet reopens. A
+    // route the user left ([hideAccountConnectedSheet]) is recorded in the saved state instead,
+    // so it stays left after a process death.
+    private var onboardingRouteApplied = false
 
     // CalDAV sign-in sheet input
     private var calDavServerUrl = ""
@@ -199,12 +235,29 @@ class AccountSettingsViewModel @Inject constructor(
     private val _defaultCalendar = MutableStateFlow<DefaultCalendar?>(null)
     val defaultCalendar: StateFlow<DefaultCalendar?> = _defaultCalendar.asStateFlow()
 
+    /**
+     * The offline calendars with their event counts, for the Offline calendars screen and the
+     * Settings row's subtitle. The screen sorts and names them again with its own resources, so
+     * a language change shows at once.
+     */
+    val offlineCalendars: StateFlow<List<LocalCalendarSummary>> =
+        eventCoordinator.getLocalCalendarSummaries { it.localizedDisplayName(context.resources) }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    /**
+     * The id of the Room calendar that is the default for new events, which the Offline calendars
+     * screen tints; null for a device default, whose ids are a separate space.
+     */
+    val offlineDefaultCalendarId: StateFlow<Long?> =
+        _defaultCalendar.map { (it as? DefaultCalendar.Room)?.calendarId }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
     // Writable device calendars for default calendar picker (requires WRITE_CALENDAR)
     private val _writableDeviceCalendarGroups = MutableStateFlow<List<CalendarGroup>>(emptyList())
     val writableDeviceCalendarGroups: StateFlow<List<CalendarGroup>> = _writableDeviceCalendarGroups.asStateFlow()
 
     // ICS subscriptions. [subscriptions] leaves out the row in its delete-with-undo window, so it
-    // disappears on swipe (issue #133).
+    // disappears on the Delete tap (issue #133).
     private val _subscriptionsRaw = MutableStateFlow<List<IcsSubscriptionUiModel>>(emptyList())
     private val _pendingSubscriptionDeletionId = MutableStateFlow<Long?>(null)
     val subscriptions: StateFlow<List<IcsSubscriptionUiModel>> =
@@ -218,6 +271,48 @@ class AccountSettingsViewModel @Inject constructor(
 
     private val _subscriptionSyncing = MutableStateFlow(false)
     val subscriptionSyncing: StateFlow<Boolean> = _subscriptionSyncing.asStateFlow()
+
+    // Calendar Feeds' "Add from account" sheet, one section per account whose provider has
+    // [AccountProvider.supportsCalendarFeeds]. The listing state is dropped when the sheet
+    // closes; the busy URLs are not, so a reopened sheet still disables a switch whose add or
+    // removal is running.
+    private val feedAccounts: StateFlow<List<FeedAccount>> =
+        serverCalendarFeeds.observeFeedAccounts()
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    /** Whether Calendar Feeds shows "Add from account": a feed account exists. */
+    val hasFeedAccounts: StateFlow<Boolean> = feedAccounts
+        .map { it.isNotEmpty() }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    private val _accountFeedsSheet = MutableStateFlow<AccountFeedsSheetState?>(null)
+    private val _feedBusyUrls = MutableStateFlow<Set<String>>(emptySet())
+
+    /** The running listing per account section; touched on the main thread only. */
+    private val accountFeedJobs = mutableMapOf<Long, Job>()
+
+    /**
+     * The "Add from account" sheet, or null while closed. A row's switch is on when a visible
+     * Calendar Feeds entry has the same URL after [CalendarFeedUrl.normalize], whoever added it.
+     */
+    val accountFeedsSheet: StateFlow<AccountFeedsSheetState?> =
+        combine(_accountFeedsSheet, subscriptions, _feedBusyUrls) { sheet, visible, busy ->
+            if (sheet == null) return@combine null
+            val onUrls = visible.mapTo(HashSet()) { cleanedFeedUrl(it.url) }
+            sheet.copy(
+                sections = sheet.sections.map { section ->
+                    val content = section.content
+                    if (content !is AccountFeedsContent.Feeds) return@map section
+                    section.copy(
+                        content = content.copy(
+                            rows = content.rows.map { row ->
+                                row.copy(isOn = row.url in onUrls, isBusy = row.url in busy)
+                            }
+                        )
+                    )
+                }
+            )
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     // Sync settings
     private val _syncIntervalMs = MutableStateFlow(24 * 60 * 60 * 1000L)
@@ -439,6 +534,7 @@ class AccountSettingsViewModel @Inject constructor(
         loadInitialState()
         observeCalendars()
         observeICloudCalendarCount()
+        observeICloudAccountEnabled()
         observeCalDavAccountCount()
         observeCalDavAccounts()
         observeIcsSubscriptions()
@@ -472,11 +568,15 @@ class AccountSettingsViewModel @Inject constructor(
                             appleId = account.email,
                             lastSyncTime = if (lastSync != null && lastSync > 0) lastSync else null,
                             calendarCount = calendarCount,
-                            consecutiveSyncFailures = account.consecutiveSyncFailures
+                            consecutiveSyncFailures = account.consecutiveSyncFailures,
+                            isEnabled = account.isEnabled
                         )
                     )
                 }
             } else {
+                // An account row without credentials signs in again with its Apple ID, which
+                // re-attaches it (same Apple ID) instead of adding a second account.
+                if (account != null && appleIdInput.isBlank()) appleIdInput = account.email
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -519,12 +619,32 @@ class AccountSettingsViewModel @Inject constructor(
     private fun observeICloudCalendarCount() {
         viewModelScope.launch {
             eventCoordinator.getICloudCalendarCount().collect { count ->
-                val currentState = _uiState.value
-                val iCloudState = currentState.iCloudState
-                if (iCloudState is ICloudConnectionState.Connected) {
-                    _uiState.update {
-                        it.copy(iCloudState = iCloudState.copy(calendarCount = count))
-                    }
+                // Decided on the state inside the update, so it can't write back an older
+                // Connected than [observeICloudAccountEnabled] just set.
+                _uiState.update { state ->
+                    val connected = state.iCloudState as? ICloudConnectionState.Connected
+                        ?: return@update state
+                    state.copy(iCloudState = connected.copy(calendarCount = count))
+                }
+            }
+        }
+    }
+
+    /**
+     * Keeps the Connected iCloud state's enabled flag in step with its account row, so the
+     * accounts list's Sync off badge follows the detail sheet's toggle. The decision is made on
+     * the state inside the update, with no upstream distinctUntilChanged: a row emitted while
+     * the state isn't Connected yet must not hide the same value from the Connected state later.
+     */
+    private fun observeICloudAccountEnabled() {
+        viewModelScope.launch {
+            accountRepository.getAccountsByProviderFlow(AccountProvider.ICLOUD).collect { rows ->
+                _uiState.update { state ->
+                    val connected = state.iCloudState as? ICloudConnectionState.Connected
+                        ?: return@update state
+                    val row = rows.firstOrNull { it.id == connected.accountId } ?: return@update state
+                    if (row.isEnabled == connected.isEnabled) state
+                    else state.copy(iCloudState = connected.copy(isEnabled = row.isEnabled))
                 }
             }
         }
@@ -553,7 +673,8 @@ class AccountSettingsViewModel @Inject constructor(
                         displayName = account.displayName ?: "CalDAV",
                         calendarCount = calendarCount,
                         consecutiveSyncFailures = account.consecutiveSyncFailures,
-                        lastSuccessfulSyncAt = account.lastSuccessfulSyncAt
+                        lastSuccessfulSyncAt = account.lastSuccessfulSyncAt,
+                        isEnabled = account.isEnabled
                     )
                 }
                 _uiState.update { it.copy(calDavAccounts = uiModels) }
@@ -883,7 +1004,10 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /** Records a POST_NOTIFICATIONS result in the denial count the permanent-denial check reads. */
+    /**
+     * Records a POST_NOTIFICATIONS result in the denial count the permanent-denial check reads,
+     * and that the app asked (which ends the "Reminders are off" banner).
+     */
     private fun recordNotificationPermissionResult(granted: Boolean) {
         viewModelScope.launch {
             if (granted) {
@@ -891,6 +1015,7 @@ class AccountSettingsViewModel @Inject constructor(
             } else {
                 userPreferences.incrementNotificationPermissionDeniedCount()
             }
+            userPreferences.setNotificationAskDone()
         }
     }
 
@@ -1022,16 +1147,53 @@ class AccountSettingsViewModel @Inject constructor(
         _uiState.update { it.copy(showICloudSignInSheet = true) }
     }
 
+    /**
+     * Hides the iCloud sign-in sheet; on an onboarding route this also returns to HomeScreen,
+     * except while a sign-in is connecting: finishing then would clear this view model and cancel
+     * the sign-in mid-write, so its own success path returns instead.
+     */
     fun hideICloudSignInSheet() {
-        _uiState.update { it.copy(showICloudSignInSheet = false) }
+        _uiState.update {
+            val returnHome = onOnboardingRoute && it.iCloudState !is ICloudConnectionState.Connecting
+            it.copy(
+                showICloudSignInSheet = false,
+                pendingFinishActivity = it.pendingFinishActivity || returnHome
+            )
+        }
+    }
+
+    private val _syncLookbackSheetRequested = MutableStateFlow(false)
+
+    /**
+     * True when search's Sync settings link asked for the Sync lookback sheet and the screen
+     * hasn't opened it yet ([consumeSyncLookbackSheetRequest]). Held here, not in the activity,
+     * so it survives until the screen has loaded and is gone once the sheet opened.
+     */
+    val syncLookbackSheetRequested: StateFlow<Boolean> = _syncLookbackSheetRequested.asStateFlow()
+
+    fun requestSyncLookbackSheet() {
+        _syncLookbackSheetRequested.value = true
+    }
+
+    fun consumeSyncLookbackSheetRequest() {
+        _syncLookbackSheetRequested.value = false
     }
 
     /**
-     * Makes a successful iCloud sign-in finish the activity back to HomeScreen instead of showing
-     * the success sheet. `SettingsActivity` sets it when onboarding launches it.
+     * Applies the route the onboarding sheet launched Settings with, once per view model: the
+     * sign-in routes open their sheet and make closing it return to HomeScreen. The Device
+     * calendars route's Back is decided by [SettingsDestination.closesActivity] instead.
      */
-    fun setInitialSetupMode(initial: Boolean) {
-        isInitialSetup = initial
+    fun applyOnboardingRoute(route: OnboardingRoute) {
+        val routeLeft = savedStateHandle.get<Boolean>(KEY_ONBOARDING_ROUTE_LEFT) == true
+        if (onboardingRouteApplied || routeLeft) return
+        onboardingRouteApplied = true
+        onOnboardingRoute = true
+        when (route) {
+            OnboardingRoute.ICLOUD -> showICloudSignInSheet()
+            OnboardingRoute.CALDAV -> showCalDavSignInSheet()
+            OnboardingRoute.DEVICE_CALENDARS -> Unit
+        }
     }
 
     fun onAppleIdChange(appleId: String) {
@@ -1137,16 +1299,17 @@ class AccountSettingsViewModel @Inject constructor(
                                 accountId = result.account.id,
                                 appleId = result.account.email,
                                 lastSyncTime = null,
-                                calendarCount = result.calendars.size
+                                calendarCount = result.calendars.size,
+                                isEnabled = result.account.isEnabled
                             ),
                             showICloudSignInSheet = false,
-                            // Initial setup finishes back to HomeScreen; otherwise the success
-                            // sheet shows.
-                            pendingFinishActivity = isInitialSetup,
-                            showAccountConnectedSheet = !isInitialSetup,
-                            connectedProviderName = if (!isInitialSetup) "iCloud" else "",
-                            connectedEmail = if (!isInitialSetup) result.account.email else "",
-                            connectedCalendarCount = if (!isInitialSetup) result.calendars.size else 0
+                            // An onboarding route finishes back to HomeScreen; otherwise
+                            // the success sheet shows.
+                            pendingFinishActivity = onOnboardingRoute,
+                            showAccountConnectedSheet = !onOnboardingRoute,
+                            connectedProviderName = if (!onOnboardingRoute) "iCloud" else "",
+                            connectedEmail = if (!onOnboardingRoute) result.account.email else "",
+                            connectedCalendarCount = if (!onOnboardingRoute) result.calendars.size else 0
                         )
                     }
 
@@ -1211,12 +1374,80 @@ class AccountSettingsViewModel @Inject constructor(
 
     // ==================== CalDAV Account Actions ====================
 
+    /** Shows the CalDAV sign-in sheet for a new account; any sign in again it was in ends. */
     fun showCalDavSignInSheet() {
-        _uiState.update { it.copy(showCalDavSignInSheet = true) }
+        _uiState.update { it.copy(showCalDavSignInSheet = true, calDavSignInAgainAccountId = null) }
     }
 
-    /** Hides the CalDAV sign-in sheet and resets its input, discovery and LAN-hint state. */
+    /**
+     * Opens the CalDAV sign-in sheet to sign in again to the CalDAV account [accountId], prefilled
+     * from its row: the server is the origin of its home set (editable, empty when the home set
+     * is missing or doesn't parse), the username its email and the display name its name, or the
+     * generated default when it has none.
+     * "Trust insecure connection" starts off, because only the lost credentials held it. The
+     * sign-in re-attaches to this account only (see
+     * [CalDavAccountDiscoveryService.createAccountWithSelectedCalendars]) and keeps its stored
+     * name, so a display-name edit made here isn't applied. Other providers are ignored.
+     */
+    fun startCalDavSignInAgain(accountId: Long) {
+        viewModelScope.launch {
+            val account = accountRepository.getAccountById(accountId)
+            if (account == null || account.provider != AccountProvider.CALDAV) return@launch
+
+            validateDisplayNameJob?.cancel()
+            validateDisplayNameJob = null
+            _localNetworkHintActive.value = false
+
+            calDavServerUrl = originOf(account.homeSetUrl)
+            calDavUsername = account.email
+            calDavDisplayName = account.displayName?.takeIf { it.isNotBlank() }
+                ?: generateDefaultDisplayName(calDavServerUrl, calDavUsername)
+            // A blank prefill keeps the auto-fill, so typing the server fills the name in.
+            calDavDisplayNameManuallyEdited = calDavDisplayName.isNotBlank()
+            calDavPassword = ""
+            calDavTrustInsecure = false
+            calDavDiscoveredPrincipalUrl = null
+            calDavDiscoveredCalendarHomeUrl = null
+            calDavDiscoveredCalendars = emptyList()
+
+            // One update, not showCalDavSignInSheet(), which would end the sign in again.
+            _uiState.update {
+                it.copy(
+                    calDavState = CalDavConnectionState.NotConnected(
+                        serverUrl = calDavServerUrl,
+                        displayName = calDavDisplayName,
+                        username = calDavUsername,
+                        password = calDavPassword,
+                        trustInsecure = calDavTrustInsecure
+                    ),
+                    calDavSignInAgainAccountId = account.id,
+                    showCalDavSignInSheet = true
+                )
+            }
+        }
+    }
+
+    /** Returns `scheme://host[:port]` of [url], or "" when it is null or doesn't parse. */
+    private fun originOf(url: String?): String {
+        if (url.isNullOrBlank()) return ""
+        return try {
+            val uri = java.net.URI(url)
+            val scheme = uri.scheme ?: return ""
+            val host = uri.host ?: return ""
+            if (uri.port == -1) "$scheme://$host" else "$scheme://$host:${uri.port}"
+        } catch (e: java.net.URISyntaxException) {
+            ""
+        }
+    }
+
+    /**
+     * Hides the CalDAV sign-in sheet and resets its input, discovery and LAN-hint state; on an
+     * onboarding route this also returns to HomeScreen, except while discovery runs (it would be
+     * cancelled; its success shows the connected sheet instead).
+     */
     fun hideCalDavSignInSheet() {
+        val returnHome = onOnboardingRoute &&
+            _uiState.value.calDavState !is CalDavConnectionState.Discovering
         validateDisplayNameJob?.cancel()
         validateDisplayNameJob = null
 
@@ -1234,7 +1465,9 @@ class AccountSettingsViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 showCalDavSignInSheet = false,
-                calDavState = CalDavConnectionState.NotConnected()
+                calDavState = CalDavConnectionState.NotConnected(),
+                calDavSignInAgainAccountId = null,
+                pendingFinishActivity = it.pendingFinishActivity || returnHome
             )
         }
     }
@@ -1264,7 +1497,8 @@ class AccountSettingsViewModel @Inject constructor(
         validateDisplayNameJob?.cancel()
         validateDisplayNameJob = viewModelScope.launch {
             delay(300)
-            if (displayName.isNotBlank() && !calDavDiscoveryService.isDisplayNameAvailable(displayName)) {
+            val excludeAccountId = _uiState.value.calDavSignInAgainAccountId
+            if (displayName.isNotBlank() && !calDavDiscoveryService.isDisplayNameAvailable(displayName, excludeAccountId)) {
                 _uiState.update {
                     val current = it.calDavState as? CalDavConnectionState.NotConnected ?: return@launch
                     it.copy(calDavState = current.copy(
@@ -1392,6 +1626,8 @@ class AccountSettingsViewModel @Inject constructor(
             val snappedUsername = calDavUsername
             val snappedPassword = calDavPassword
             val snappedTrustInsecure = calDavTrustInsecure
+            // Snapped too: dismissing the sheet mid-discovery must not make this a new sign-in.
+            val signInAgainAccountId = _uiState.value.calDavSignInAgainAccountId
 
             // Rebuilds the NotConnected state from the snapshot with the given error. Service
             // messages wrap as UiMessage.Literal and are English-only; DiscoveryResult should
@@ -1429,7 +1665,7 @@ class AccountSettingsViewModel @Inject constructor(
                 generateDefaultDisplayName(calDavServerUrl, calDavUsername)
             }
 
-            if (!calDavDiscoveryService.isDisplayNameAvailable(effectiveDisplayName)) {
+            if (!calDavDiscoveryService.isDisplayNameAvailable(effectiveDisplayName, signInAgainAccountId)) {
                 _uiState.update {
                     it.copy(
                         calDavState = calDavNotConnectedWith(
@@ -1454,11 +1690,12 @@ class AccountSettingsViewModel @Inject constructor(
             }
 
             val discoveryResult = withRetryOnTimeout {
+                // The snapshot, not the fields: reopening the sheet mid-discovery rewrites them.
                 calDavDiscoveryService.discoverCalendars(
-                    serverUrl = calDavServerUrl,
-                    username = calDavUsername,
-                    password = calDavPassword,
-                    trustInsecure = calDavTrustInsecure
+                    serverUrl = snappedServerUrl,
+                    username = snappedUsername,
+                    password = snappedPassword,
+                    trustInsecure = snappedTrustInsecure
                 )
             }
 
@@ -1497,13 +1734,14 @@ class AccountSettingsViewModel @Inject constructor(
 
                     val createResult = calDavDiscoveryService.createAccountWithSelectedCalendars(
                         serverUrl = discoveryResult.serverUrl,
-                        username = calDavUsername,
-                        password = calDavPassword,
-                        trustInsecure = calDavTrustInsecure,
+                        username = snappedUsername,
+                        password = snappedPassword,
+                        trustInsecure = snappedTrustInsecure,
                         principalUrl = discoveryResult.principalUrl,
                         calendarHomeUrl = discoveryResult.calendarHomeUrl,
                         selectedCalendars = discoveryResult.calendars,  // every calendar
-                        displayName = calDavDisplayName.takeIf { it.isNotBlank() }
+                        displayName = snappedDisplayName.takeIf { it.isNotBlank() },
+                        expectedAccountId = signInAgainAccountId
                     )
 
                     when (createResult) {
@@ -1521,6 +1759,7 @@ class AccountSettingsViewModel @Inject constructor(
                                 it.copy(
                                     calDavState = CalDavConnectionState.NotConnected(),
                                     showCalDavSignInSheet = false,
+                                    calDavSignInAgainAccountId = null,
                                     showAccountConnectedSheet = true,
                                     connectedProviderName = providerName,
                                     connectedEmail = calDavUsername,
@@ -1636,33 +1875,6 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    // ==================== Calendar Actions ====================
-
-    fun onToggleCalendar(calendarId: Long, visible: Boolean) {
-        viewModelScope.launch {
-            // The calendar's visible flag is the source of truth for which calendars show
-            eventCoordinator.setCalendarVisibility(calendarId, visible)
-        }
-    }
-
-    fun onShowAllCalendars() {
-        viewModelScope.launch {
-            _calendars.value.forEach { calendar ->
-                eventCoordinator.setCalendarVisibility(calendar.id, true)
-            }
-        }
-    }
-
-    fun onHideAllCalendars() {
-        viewModelScope.launch {
-            // At least one calendar stays visible: the first one
-            val firstCalendarId = _calendars.value.firstOrNull()?.id
-            _calendars.value.forEach { calendar ->
-                eventCoordinator.setCalendarVisibility(calendar.id, calendar.id == firstCalendarId)
-            }
-        }
-    }
-
     // ==================== Subscription Actions ====================
 
     /**
@@ -1762,11 +1974,8 @@ class AccountSettingsViewModel @Inject constructor(
      * no-op when no deletion is pending.
      */
     fun onUndoSubscriptionDeletion() {
-        val pending = _pendingSubscriptionDeletionId.value ?: return
+        val pending = clearPendingSubscriptionDeletion() ?: return
         Log.i(TAG, "Undo pending subscription deletion: $pending")
-        _pendingSubscriptionDeletionId.value = null
-        _uiState.update { it.copy(pendingSubscriptionDeletionId = null) }
-        clearSnackbar()
     }
 
     /**
@@ -1778,12 +1987,21 @@ class AccountSettingsViewModel @Inject constructor(
      * `ActionPerformed`; the guard means a deletion the user undid is never committed.
      */
     fun onSubscriptionDeletionSettled() {
-        val pending = _pendingSubscriptionDeletionId.value ?: return
+        val pending = clearPendingSubscriptionDeletion() ?: return
         Log.i(TAG, "Committing pending subscription deletion: $pending")
+        commitSubscriptionDeletion(pending)
+    }
+
+    /**
+     * Ends the pending deletion's Undo window without deleting anything: clears the pending id
+     * and its snackbar. Returns the id that was pending, or null when none was.
+     */
+    private fun clearPendingSubscriptionDeletion(): Long? {
+        val pending = _pendingSubscriptionDeletionId.value ?: return null
         _pendingSubscriptionDeletionId.value = null
         _uiState.update { it.copy(pendingSubscriptionDeletionId = null) }
         clearSnackbar()
-        commitSubscriptionDeletion(pending)
+        return pending
     }
 
     /**
@@ -1809,12 +2027,171 @@ class AccountSettingsViewModel @Inject constructor(
 
     /**
      * Deletes the subscription on [applicationScope] so the delete survives the Activity being
-     * destroyed inside the undo window (issue #133). Every commit path calls this, so the scope
-     * choice can't drift.
+     * destroyed inside the undo window (issue #133). The snackbar, [onCleared] and staging a new
+     * deletion commit through this; [onAccountFeedSwitch] removes a matching staged entry in its
+     * own tracked launch, also on [applicationScope].
      */
     private fun commitSubscriptionDeletion(subscriptionId: Long) {
         applicationScope.launch { eventCoordinator.removeIcsSubscription(subscriptionId) }
     }
+
+    // ==================== Add from account ====================
+
+    /**
+     * Opens the "Add from account" sheet with one Checking section per feed account and lists
+     * them all in parallel. Every open lists fresh.
+     */
+    fun onOpenAccountFeeds() {
+        cancelAccountFeedListings()
+        val accounts = feedAccounts.value
+        _accountFeedsSheet.value = AccountFeedsSheetState(
+            sections = accounts.map { account ->
+                AccountFeedsSection(
+                    accountId = account.id,
+                    displayName = account.displayName,
+                    maskedEmail = maskEmail(account.email),
+                    content = AccountFeedsContent.Checking,
+                )
+            }
+        )
+        accounts.forEach { startAccountFeedListing(it.id) }
+    }
+
+    /** Lists one open section's account again, replacing a listing still running for it. */
+    fun onRetryAccountFeeds(accountId: Long) {
+        if (_accountFeedsSheet.value?.sections?.any { it.accountId == accountId } != true) return
+        startAccountFeedListing(accountId)
+    }
+
+    /** Closes the sheet: cancels running listings and drops what they found. */
+    fun onCloseAccountFeeds() {
+        cancelAccountFeedListings()
+        _accountFeedsSheet.value = null
+    }
+
+    /**
+     * Adds the feed with [url], as listed in account [accountId]'s section (its name and color),
+     * to Calendar Feeds ([on]), or removes every visible entry with that URL. Both run on
+     * [applicationScope], so closing the sheet doesn't cancel them, and keep the switch busy
+     * until they finish. Removal has no Undo: switching back on adds the feed again from the
+     * server's listing.
+     *
+     * A matching entry waiting in its delete-with-undo window is undone by switching on, and
+     * deleted by switching off.
+     */
+    fun onAccountFeedSwitch(accountId: Long, url: String, on: Boolean) {
+        if (url in _feedBusyUrls.value) return
+        val pendingMatchId = _pendingSubscriptionDeletionId.value?.takeIf { pending ->
+            _subscriptionsRaw.value.any { it.id == pending && cleanedFeedUrl(it.url) == url }
+        }
+
+        if (on) {
+            if (pendingMatchId != null) {
+                onUndoSubscriptionDeletion()
+                return
+            }
+            val row = accountFeedRow(accountId, url) ?: return
+            runFeedChange(url) {
+                val result = eventCoordinator.addIcsSubscription(row.url, row.name, row.color)
+                if (result is IcsSubscriptionRepository.SubscriptionResult.Error && !result.isDuplicate) {
+                    Log.e(TAG, "Couldn't add calendar feed $url: ${result.message}")
+                }
+            }
+        } else {
+            val ids = subscriptions.value
+                .filter { cleanedFeedUrl(it.url) == url }
+                .mapNotNull { it.id }
+                .toMutableList()
+            if (pendingMatchId != null) {
+                // Removed with the others in the tracked launch, not through
+                // commitSubscriptionDeletion, so the switch stays disabled until it lands.
+                clearPendingSubscriptionDeletion()
+                ids += pendingMatchId
+            }
+            if (ids.isEmpty()) return
+            runFeedChange(url) { ids.forEach { eventCoordinator.removeIcsSubscription(it) } }
+        }
+    }
+
+    private fun cancelAccountFeedListings() {
+        accountFeedJobs.values.forEach { it.cancel() }
+        accountFeedJobs.clear()
+    }
+
+    /**
+     * Starts [accountId]'s listing, cancelling one still running. The section waits at most
+     * [ACCOUNT_FEEDS_TIMEOUT_MS] and then shows Failed.
+     */
+    private fun startAccountFeedListing(accountId: Long) {
+        accountFeedJobs.remove(accountId)?.cancel()
+        setAccountFeedsContent(accountId, AccountFeedsContent.Checking)
+        val job = viewModelScope.launch(start = CoroutineStart.LAZY) {
+            // On viewModelScope, not as a child of this job, so a failed listing can't cancel the
+            // section's job; cancelled in finally on every way out.
+            val listing = viewModelScope.async { serverCalendarFeeds.listFeeds(accountId) }
+            val result = try {
+                withTimeoutOrNull(ACCOUNT_FEEDS_TIMEOUT_MS) { listing.await() } ?: FeedListing.Failed
+            } finally {
+                listing.cancel()
+            }
+            if (accountFeedJobs[accountId] !== coroutineContext[Job]) return@launch
+            accountFeedJobs.remove(accountId)
+            setAccountFeedsContent(accountId, result.toAccountFeedsContent())
+        }
+        accountFeedJobs[accountId] = job
+        job.start()
+    }
+
+    private fun setAccountFeedsContent(accountId: Long, content: AccountFeedsContent) {
+        _accountFeedsSheet.update { sheet ->
+            sheet?.copy(
+                sections = sheet.sections.map {
+                    if (it.accountId == accountId) it.copy(content = content) else it
+                }
+            )
+        }
+    }
+
+    /** Rows get the server's color, or a palette color picked here once per listing. */
+    private fun FeedListing.toAccountFeedsContent(): AccountFeedsContent = when (this) {
+        FeedListing.Failed -> AccountFeedsContent.Failed
+        is FeedListing.Feeds -> if (feeds.isEmpty()) {
+            AccountFeedsContent.NoFeeds
+        } else {
+            AccountFeedsContent.Feeds(
+                feeds.map { feed ->
+                    AccountFeedRow(
+                        url = feed.url,
+                        name = feed.name,
+                        host = CalendarFeedUrl.hostOf(feed.url),
+                        color = feed.color ?: EventColorPalette.randomArgb(),
+                    )
+                }
+            )
+        }
+    }
+
+    private fun accountFeedRow(accountId: Long, url: String): AccountFeedRow? =
+        (_accountFeedsSheet.value?.sections?.firstOrNull { it.accountId == accountId }?.content
+            as? AccountFeedsContent.Feeds)?.rows?.firstOrNull { it.url == url }
+
+    /** Runs a feed add or removal on [applicationScope] with [url] busy; a throw is logged. */
+    private fun runFeedChange(url: String, change: suspend () -> Unit) {
+        _feedBusyUrls.update { it + url }
+        applicationScope.launch {
+            try {
+                change()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Calendar feed change failed for $url", e)
+            } finally {
+                _feedBusyUrls.update { it - url }
+            }
+        }
+    }
+
+    private fun cleanedFeedUrl(raw: String): String = CalendarFeedUrl.normalize(raw) ?: raw
 
     /**
      * Enables or disables an ICS subscription on [applicationScope], so the change and the
@@ -1993,14 +2370,18 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /** Turns device calendar reminders on (schedules the next one) or off (cancels its alarm). */
+    /**
+     * Turns device calendar reminders on (schedules the next one and the calendar-change job) or
+     * off (cancels both), through [CalendarProviderManager.onRemindersEnabled] and
+     * [CalendarProviderManager.onRemindersDisabled].
+     */
     fun onToggleDeviceCalendarReminders(enabled: Boolean) {
         viewModelScope.launch {
             dataStore.setDeviceCalendarRemindersEnabled(enabled)
             if (enabled) {
-                deviceCalendarReminderScheduler.scheduleNextReminder()
+                calendarProviderManager.onRemindersEnabled()
             } else {
-                deviceCalendarReminderScheduler.cancelPendingAlarm()
+                calendarProviderManager.onRemindersDisabled()
             }
         }
     }
@@ -2009,8 +2390,9 @@ class AccountSettingsViewModel @Inject constructor(
      * Ticks or unticks one device calendar. Ticking makes it visible in the provider; unticking
      * also drops it from the hidden and muted sets, so it comes back visible and notifying if
      * ticked again, and re-picks the device reminder, whose one alarm may belong to this
-     * calendar. If leaving Settings cancels the re-pick, that alarm is dropped when it fires
-     * ([DeviceCalendarReminderScheduler.shouldFireReminder]) and the next one is armed.
+     * calendar (here, and through [CalendarProviderManager.onDeviceCalendarSettingsChanged] when
+     * device calendars are on). An alarm still armed for an unticked calendar is dropped when it
+     * fires ([DeviceCalendarReminderScheduler.shouldFireReminder]) and the next one is armed.
      */
     fun onToggleDeviceCalendar(calendarId: Long, enabled: Boolean) {
         viewModelScope.launch {
@@ -2030,11 +2412,28 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Re-reads the calendar permissions and reloads the device calendar lists that depend on them.
+     * Records that a Device calendars request (its switch or its access note's Allow) sent the
+     * user to Android's app settings, so the first [refreshCalendarPermission] that sees calendar
+     * read access turns device calendars on.
+     * Kept in the saved state, so it outlasts a process death while the user is in settings.
+     */
+    fun markDeviceCalendarsPendingSettings() {
+        savedStateHandle[KEY_DEVICE_CALENDARS_PENDING_SETTINGS] = true
+    }
+
+    /**
+     * Re-reads the calendar permissions and reloads the device calendar lists that depend on them,
+     * and finishes a pending [markDeviceCalendarsPendingSettings] once read access is there.
      * Called on resume and after a calendar permission request returns.
      */
     fun refreshCalendarPermission() {
         checkCalendarPermission()
+        if (_hasReadCalendarPermission.value &&
+            savedStateHandle.get<Boolean>(KEY_DEVICE_CALENDARS_PENDING_SETTINGS) == true
+        ) {
+            savedStateHandle[KEY_DEVICE_CALENDARS_PENDING_SETTINGS] = false
+            onToggleDeviceCalendars(true)
+        }
         if (_hasReadCalendarPermission.value && _deviceCalendarsEnabled.value) {
             viewModelScope.launch { loadDeviceCalendars() }
         }
@@ -2072,6 +2471,39 @@ class AccountSettingsViewModel @Inject constructor(
             _writableDeviceCalendarGroups.value = groups
         }
     }
+
+    // ==================== Offline calendars ====================
+
+    /**
+     * Adds an offline calendar ([EventCoordinator.createLocalCalendar]) and returns its id. Runs on
+     * [applicationScope], like [deleteOfflineCalendar], so a rotation or a closed sheet can't drop
+     * the result of a create Room already saved.
+     */
+    suspend fun createOfflineCalendar(name: String, color: Int): Result<Long> {
+        val builtInName = builtInCalendarName()
+        return applicationScope.async { eventCoordinator.createLocalCalendar(name, color, builtInName) }.await()
+    }
+
+    /** Renames an offline calendar ([EventCoordinator.renameLocalCalendar]), as create does. */
+    suspend fun renameOfflineCalendar(calendarId: Long, name: String): Result<Unit> {
+        val builtInName = builtInCalendarName()
+        return applicationScope.async { eventCoordinator.renameLocalCalendar(calendarId, name, builtInName) }.await()
+    }
+
+    /** Recolors an offline calendar ([EventCoordinator.recolorLocalCalendar]). */
+    suspend fun recolorOfflineCalendar(calendarId: Long, color: Int): Result<Unit> =
+        eventCoordinator.recolorLocalCalendar(calendarId, color)
+
+    /**
+     * Deletes an offline calendar with its events ([EventCoordinator.deleteLocalCalendar]) and
+     * returns how many it had. Runs on [applicationScope], so a caller that goes away, such as the
+     * screen closing, doesn't stop it.
+     */
+    suspend fun deleteOfflineCalendar(calendarId: Long): Result<Int> =
+        applicationScope.async { eventCoordinator.deleteLocalCalendar(calendarId) }.await()
+
+    /** Returns the built-in calendar's translated label, read per call to follow the language. */
+    private fun builtInCalendarName(): String = context.getString(R.string.calendar_local)
 
     /** Sets the default calendar for new events, a Room or a device calendar. */
     fun onDefaultCalendarSelect(calendar: DefaultCalendar) {
@@ -2199,6 +2631,8 @@ class AccountSettingsViewModel @Inject constructor(
     private fun discoveryErrorMessage(error: DiscoveryResult.Error): UiMessage = when (error.reason) {
         DiscoveryErrorReason.INSECURE_CONNECTION_REFUSED ->
             UiMessage.ResId(R.string.caldav_error_connection_refused_insecure)
+        DiscoveryErrorReason.ACCOUNT_MISMATCH ->
+            UiMessage.ResId(R.string.caldav_error_sign_in_again_mismatch)
         null -> UiMessage.Literal(error.message)
     }
 
@@ -2369,8 +2803,13 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /** Hides the success sheet without leaving settings. */
+    /**
+     * Hides the success sheet without leaving settings. Staying in Settings ends an onboarding
+     * route, so later sign-ins behave as they do from Settings.
+     */
     fun hideAccountConnectedSheet() {
+        if (onOnboardingRoute) savedStateHandle[KEY_ONBOARDING_ROUTE_LEFT] = true
+        onOnboardingRoute = false
         _uiState.update {
             it.copy(
                 showAccountConnectedSheet = false,
@@ -2417,7 +2856,16 @@ class AccountSettingsViewModel @Inject constructor(
                         return@collect
                     }
                     val calendarCount = eventCoordinator.getCalendarCountForAccount(accountId)
-                    _uiState.update { it.copy(accountDetail = account.toDetailUiModel(calendarCount)) }
+                    val needsSignIn = account.provider == AccountProvider.CALDAV && try {
+                        accountRepository.getCredentials(accountId) == null
+                    } catch (e: IllegalArgumentException) {
+                        // A stored value that isn't valid Base64 throws this; signing in
+                        // rewrites it.
+                        true
+                    }
+                    _uiState.update {
+                        it.copy(accountDetail = account.toDetailUiModel(calendarCount, needsSignIn = needsSignIn))
+                    }
                 }
         }
     }
@@ -2739,7 +3187,8 @@ class AccountSettingsViewModel @Inject constructor(
                 displayName = account.displayName ?: account.provider.displayName,
                 calendarCount = count,
                 consecutiveSyncFailures = account.consecutiveSyncFailures,
-                lastSuccessfulSyncAt = account.lastSuccessfulSyncAt
+                lastSuccessfulSyncAt = account.lastSuccessfulSyncAt,
+                isEnabled = account.isEnabled
             )
         }
         _uiState.update { it.copy(calDavAccounts = uiModels) }

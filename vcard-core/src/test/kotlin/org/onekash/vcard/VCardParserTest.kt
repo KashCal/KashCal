@@ -2,6 +2,7 @@ package org.onekash.vcard
 
 import org.junit.jupiter.api.Test
 import org.onekash.vcard.model.Contact
+import org.onekash.vcard.model.ContactDate
 import java.time.LocalDate
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -368,5 +369,70 @@ class VCardParserTest {
         assertTrue(parser.parse("").isEmpty())
         assertTrue(parser.parse(ByteArray(0)).isEmpty())
         assertTrue(parser.parse("not a vcard at all").isEmpty())
+    }
+
+    // ========== Dates with no year ==========
+
+    private fun card(vararg lines: String) = parser.parse(
+        (listOf("BEGIN:VCARD", "VERSION:3.0", "UID:yearless-parser", "FN:Jane Doe", "N:Doe;Jane;;;") +
+            lines + "END:VCARD").joinToString("\r\n", postfix = "\r\n"),
+    ).single()
+
+    @Test
+    fun `a 1604 birthday reads as a date without a year`() {
+        for (line in listOf(
+            "BDAY;X-APPLE-OMIT-YEAR=1604:1604-03-15",
+            "BDAY;X-APPLE-OMIT-YEAR=1604;VALUE=date:1604-03-15",
+            "BDAY:1604-03-15",
+        )) {
+            assertEquals(ContactDate(text = "--03-15"), card(line).birthday, line)
+        }
+    }
+
+    @Test
+    fun `a 4-0 1604 anniversary reads as a date without a year`() {
+        val c = parser.parse(
+            "BEGIN:VCARD\r\nVERSION:4.0\r\nUID:yearless-v4\r\nFN:Jane Doe\r\nANNIVERSARY:16040922\r\nEND:VCARD\r\n",
+        ).single()
+        assertEquals(ContactDate(text = "--09-22"), c.anniversary)
+    }
+
+    @Test
+    fun `the omit-year parameter drops the year it names and no other`() {
+        assertEquals(ContactDate(text = "--03-15"), card("BDAY;X-APPLE-OMIT-YEAR=1900:1900-03-15").birthday)
+        assertEquals(
+            ContactDate(date = LocalDate.of(1985, 3, 15)),
+            card("BDAY;X-APPLE-OMIT-YEAR=1604:1985-03-15").birthday,
+        )
+    }
+
+    @Test
+    fun `a malformed omit-year parameter keeps the date`() {
+        for (line in listOf(
+            "BDAY;X-APPLE-OMIT-YEAR=abc:1985-03-15",
+            "BDAY;X-APPLE-OMIT-YEAR=:1985-03-15",
+            "BDAY;X-APPLE-OMIT-YEAR=1604;X-APPLE-OMIT-YEAR=abc:1985-03-15",
+        )) {
+            assertEquals(ContactDate(date = LocalDate.of(1985, 3, 15)), card(line).birthday, line)
+        }
+        assertEquals(
+            ContactDate(text = "--03-15"),
+            card("BDAY;X-APPLE-OMIT-YEAR=abc;X-APPLE-OMIT-YEAR=1985:1985-03-15").birthday,
+            "a repeated parameter matches when any of its values is the year",
+        )
+    }
+
+    @Test
+    fun `a 1604 Apple anniversary reads as a date without a year`() {
+        for (line in listOf("item1.X-ABDATE;X-APPLE-OMIT-YEAR=1604:1604-09-22", "item1.X-ABDATE:1604-09-22")) {
+            val c = card(line, "item1.X-ABLabel:_\$!<Anniversary>!\$_")
+            assertEquals(ContactDate(text = "--09-22"), c.anniversary, line)
+        }
+    }
+
+    @Test
+    fun `a dated Apple anniversary keeps its date and raw text`() {
+        val c = card("item1.X-ABDATE:2015-06-20", "item1.X-ABLabel:_\$!<Anniversary>!\$_")
+        assertEquals(ContactDate(date = LocalDate.of(2015, 6, 20), text = "2015-06-20"), c.anniversary)
     }
 }

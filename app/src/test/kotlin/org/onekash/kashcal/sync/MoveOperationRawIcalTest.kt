@@ -1,7 +1,6 @@
 package org.onekash.kashcal.sync
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -13,7 +12,9 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.icaldav.parser.ICalParser
+import org.onekash.kashcal.data.db.EventIcsStore
 import org.onekash.kashcal.data.db.KashCalDatabase
+import org.onekash.kashcal.data.db.PendingOperationTriggers
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
@@ -24,16 +25,18 @@ import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests what happens to rawIcal when [EventWriter.moveEventToCalendar] moves an event.
+ * Tests what happens to the stored ICS ([EventIcsStore]) when [EventWriter.moveEventToCalendar]
+ * moves an event.
  *
- * The move keeps rawIcal and extraProperties, so the body pushed to the new calendar still
- * carries the source's attendees and X-properties, the old calendar's included. Also covers
- * serialization with rawIcal kept versus cleared, the ops queued, a corrupted or null rawIcal,
- * a move to a local calendar, and a large rawIcal.
+ * The move keeps the row id, so its stored ICS, and its extraProperties: the body pushed to the
+ * new calendar still carries the source's attendees and X-properties, the old calendar's
+ * included. Also covers serialization with the stored ICS kept versus cleared, the ops queued, a
+ * corrupted or missing stored ICS, a move to a local calendar, and a large stored ICS.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -43,6 +46,7 @@ class MoveOperationRawIcalTest {
     private lateinit var eventWriter: EventWriter
     private lateinit var occurrenceGenerator: OccurrenceGenerator
     private lateinit var parser: ICalParser
+    private lateinit var icsStore: EventIcsStore
 
     private var calendarAId: Long = 0
     private var calendarBId: Long = 0
@@ -100,13 +104,15 @@ class MoveOperationRawIcalTest {
     @Before
     fun setup() = runTest {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
+            .addCallback(PendingOperationTriggers.callback())
             .allowMainThreadQueries()
             .build()
 
         occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
         eventWriter = EventWriter(database, occurrenceGenerator)
         parser = ICalParser()
+        icsStore = EventIcsStore(database)
 
         testAccountId = database.accountsDao().insert(
             Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")
@@ -152,15 +158,15 @@ class MoveOperationRawIcalTest {
         database.close()
     }
 
-    // ==================== rawIcal Preservation Tests ====================
+    // ==================== Stored ICS Preservation Tests ====================
 
     @Test
-    fun `MOVE preserves rawIcal in current implementation`() = runTest {
-        // An event with rawIcal, as a server sync leaves it
+    fun `MOVE preserves the stored ICS`() = runTest {
+        // An event with a stored ICS, as a server sync leaves it
         val event = createEventWithRawIcal(richServerIcs, calendarAId)
 
-        // Verify rawIcal is set before move
-        assertNotNull("rawIcal should be set before move", event.rawIcal)
+        // Verify the stored ICS is set before move
+        assertNotNull("stored ICS should be set before move", icsStore.read(event))
 
         // Perform move
         eventWriter.moveEventToCalendar(event.id, calendarBId)
@@ -168,16 +174,16 @@ class MoveOperationRawIcalTest {
         // Get moved event
         val movedEvent = database.eventsDao().getById(event.id)!!
 
-        // rawIcal is kept
+        // The stored ICS is kept with the row id
         assertNotNull(
-            "rawIcal should be preserved after MOVE (current behavior)",
-            movedEvent.rawIcal
+            "stored ICS should be preserved after MOVE",
+            icsStore.read(movedEvent)
         )
-        assertEquals(richServerIcs, movedEvent.rawIcal)
+        assertEquals(richServerIcs, icsStore.read(movedEvent))
     }
 
     @Test
-    fun `MOVE clears caldavUrl and etag but preserves rawIcal`() = runTest {
+    fun `MOVE clears caldavUrl and etag but preserves the stored ICS`() = runTest {
         val event = createEventWithRawIcal(richServerIcs, calendarAId).let {
             // Simulate synced state
             val synced = it.copy(
@@ -197,8 +203,8 @@ class MoveOperationRawIcalTest {
         assertNull("caldavUrl should be cleared", movedEvent.caldavUrl)
         assertNull("etag should be cleared", movedEvent.etag)
 
-        // rawIcal preserved
-        assertNotNull("rawIcal should be preserved", movedEvent.rawIcal)
+        // stored ICS preserved
+        assertNotNull("stored ICS should be preserved", icsStore.read(movedEvent))
     }
 
     @Test
@@ -232,12 +238,12 @@ class MoveOperationRawIcalTest {
         val movedEvent = database.eventsDao().getById(event.id)!!
 
         // Serialize for push to new calendar
-        val pushIcs = IcsPatcher.serialize(movedEvent)
+        val pushIcs = IcsPatcher.serialize(movedEvent, icsStore.read(movedEvent))
         val parsed = parser.parseAllEvents(pushIcs).getOrNull()!!.first()
 
         // richServerIcs has 4 alarms, all in the displayed window (the first 5). The entity
         // stores 2 reminders, so the other 2 were deleted and the move must not bring them
-        // back. rawIcal still supplies the attendees and X-properties.
+        // back. The stored ICS still supplies the attendees and X-properties.
         assertEquals(
             "Displayed alarms beyond the stored 2 are dropped after MOVE",
             2,
@@ -246,13 +252,13 @@ class MoveOperationRawIcalTest {
     }
 
     @Test
-    fun `serialization after MOVE preserves attendees from rawIcal`() = runTest {
+    fun `serialization after MOVE preserves attendees from the stored ICS`() = runTest {
         val event = createEventWithRawIcal(richServerIcs, calendarAId)
 
         eventWriter.moveEventToCalendar(event.id, calendarBId)
 
         val movedEvent = database.eventsDao().getById(event.id)!!
-        val pushIcs = IcsPatcher.serialize(movedEvent)
+        val pushIcs = IcsPatcher.serialize(movedEvent, icsStore.read(movedEvent))
         val parsed = parser.parseAllEvents(pushIcs).getOrNull()!!.first()
 
         assertEquals("Should preserve 2 attendees", 2, parsed.attendees.size)
@@ -260,16 +266,16 @@ class MoveOperationRawIcalTest {
     }
 
     @Test
-    fun `serialization after MOVE preserves X-properties from rawIcal`() = runTest {
+    fun `serialization after MOVE preserves X-properties from the stored ICS`() = runTest {
         val event = createEventWithRawIcal(richServerIcs, calendarAId)
 
         eventWriter.moveEventToCalendar(event.id, calendarBId)
 
         val movedEvent = database.eventsDao().getById(event.id)!!
-        val pushIcs = IcsPatcher.serialize(movedEvent)
+        val pushIcs = IcsPatcher.serialize(movedEvent, icsStore.read(movedEvent))
         val parsed = parser.parseAllEvents(pushIcs).getOrNull()!!.first()
 
-        // X-properties from Calendar A's rawIcal still present
+        // X-properties from Calendar A's stored ICS still present
         assertTrue(
             "X-APPLE property should be preserved",
             parsed.rawProperties.keys.any { it.contains("X-APPLE") }
@@ -281,18 +287,18 @@ class MoveOperationRawIcalTest {
     }
 
     @Test
-    fun `serialization after MOVE with null rawIcal uses generateFresh`() = runTest {
-        // Create local event (no rawIcal)
+    fun `serialization after MOVE without a stored ICS uses generateFresh`() = runTest {
+        // Create local event (no stored ICS)
         val event = createLocalEvent(calendarAId)
 
         eventWriter.moveEventToCalendar(event.id, calendarBId)
 
         val movedEvent = database.eventsDao().getById(event.id)!!
 
-        assertNull("Local event should have no rawIcal", movedEvent.rawIcal)
+        assertNull("Local event should have no stored ICS", icsStore.read(movedEvent))
 
         // Serialize - should use generateFresh
-        val pushIcs = IcsPatcher.serialize(movedEvent)
+        val pushIcs = IcsPatcher.serialize(movedEvent, icsStore.read(movedEvent))
         val parsed = parser.parseAllEvents(pushIcs).getOrNull()!!.first()
 
         // Only entity's reminders (2) should be present
@@ -347,28 +353,26 @@ class MoveOperationRawIcalTest {
         assertEquals("Should have CREATE operation", 1, createOps.size)
     }
 
-    // ==================== Comparison: rawIcal Preserved vs Cleared ====================
+    // ==================== Comparison: Stored ICS Preserved vs Cleared ====================
 
     @Test
-    fun `comparison - preserved rawIcal vs cleared rawIcal on MOVE`() = runTest {
+    fun `comparison - preserved vs cleared stored ICS on MOVE`() = runTest {
         val event = createEventWithRawIcal(richServerIcs, calendarAId)
 
         eventWriter.moveEventToCalendar(event.id, calendarBId)
 
         val movedEvent = database.eventsDao().getById(event.id)!!
 
-        // Scenario A: rawIcal kept, as the move does
-        val withPreservedRawIcal = movedEvent
-        val pushIcsPreserved = IcsPatcher.serialize(withPreservedRawIcal)
+        // Scenario A: stored ICS kept, as the move does
+        val pushIcsPreserved = IcsPatcher.serialize(movedEvent, icsStore.read(movedEvent))
         val parsedPreserved = parser.parseAllEvents(pushIcsPreserved).getOrNull()!!.first()
 
-        // Scenario B: rawIcal cleared
-        val withClearedRawIcal = movedEvent.copy(rawIcal = null)
-        val pushIcsCleared = IcsPatcher.serialize(withClearedRawIcal)
+        // Scenario B: stored ICS cleared
+        val pushIcsCleared = IcsPatcher.serialize(movedEvent, null)
         val parsedCleared = parser.parseAllEvents(pushIcsCleared).getOrNull()!!.first()
 
         // Compare
-        println("=== COMPARISON: rawIcal Preserved vs Cleared ===")
+        println("=== COMPARISON: stored ICS Preserved vs Cleared ===")
         println("Preserved: ${parsedPreserved.alarms.size} alarms, ${parsedPreserved.attendees.size} attendees")
         println("Cleared:   ${parsedCleared.alarms.size} alarms, ${parsedCleared.attendees.size} attendees")
         println("Preserved X-props: ${parsedPreserved.rawProperties.keys.filter { it.startsWith("X-") }}")
@@ -376,7 +380,7 @@ class MoveOperationRawIcalTest {
 
         // The kept version has at least as many alarms
         assertTrue(
-            "Preserved rawIcal should have more alarms",
+            "Preserved stored ICS should have more alarms",
             parsedPreserved.alarms.size >= parsedCleared.alarms.size
         )
 
@@ -398,7 +402,7 @@ class MoveOperationRawIcalTest {
     // ==================== Edge Cases ====================
 
     @Test
-    fun `MOVE with corrupted rawIcal still succeeds`() = runTest {
+    fun `MOVE with a corrupted stored ICS still succeeds`() = runTest {
         val corruptedIcs = "NOT VALID ICS DATA"
 
         val event = createEventWithRawIcal(corruptedIcs, calendarAId)
@@ -410,7 +414,7 @@ class MoveOperationRawIcalTest {
         assertEquals("Should be in Calendar B", calendarBId, movedEvent.calendarId)
 
         // Serialization should fall back to generateFresh
-        val pushIcs = IcsPatcher.serialize(movedEvent)
+        val pushIcs = IcsPatcher.serialize(movedEvent, icsStore.read(movedEvent))
         val parsed = parser.parseAllEvents(pushIcs).getOrNull()
 
         assertNotNull("Should produce valid ICS via fallback", parsed)
@@ -445,19 +449,19 @@ class MoveOperationRawIcalTest {
     }
 
     @Test
-    fun `multiple MOVE operations - rawIcal accumulates old calendar X-props`() = runTest {
-        // Documents a side effect of keeping rawIcal: the old calendar's X-properties follow
+    fun `multiple MOVE operations - stored ICS accumulates old calendar X-props`() = runTest {
+        // Documents a side effect of keeping the stored ICS: the old calendar's X-properties follow
 
         val event = createEventWithRawIcal(richServerIcs, calendarAId)
 
         // Move to Calendar B
         eventWriter.moveEventToCalendar(event.id, calendarBId)
 
-        // Until a pull from Calendar B replaces it, rawIcal holds Calendar A's data
+        // Until a pull from Calendar B replaces it, the stored ICS holds Calendar A's data
         var currentEvent = database.eventsDao().getById(event.id)!!
 
-        // The rawIcal still has X-CALENDAR-A-SYNC-ID
-        val pushIcs = IcsPatcher.serialize(currentEvent)
+        // The stored ICS still has X-CALENDAR-A-SYNC-ID
+        val pushIcs = IcsPatcher.serialize(currentEvent, icsStore.read(currentEvent))
         assertTrue(
             "After move to B, still has Calendar A X-prop",
             pushIcs.contains("X-CALENDAR-A")
@@ -467,8 +471,8 @@ class MoveOperationRawIcalTest {
     // ==================== Performance Test ====================
 
     @Test
-    fun `MOVE event with large rawIcal performs within limits`() = runTest {
-        // Create event with large rawIcal (many attendees, alarms)
+    fun `MOVE event with a large stored ICS performs within limits`() = runTest {
+        // Create event with a large stored ICS (many attendees, alarms)
         val largeIcs = buildLargeIcs(
             attendeeCount = 50,
             alarmCount = 10,
@@ -482,18 +486,19 @@ class MoveOperationRawIcalTest {
         val moveTime = System.currentTimeMillis() - startTime
 
         assertTrue(
-            "MOVE with large rawIcal should complete within 100ms, took ${moveTime}ms",
+            "MOVE with a large stored ICS should complete within 100ms, took ${moveTime}ms",
             moveTime < 100
         )
 
         // Serialization time
         val movedEvent = database.eventsDao().getById(event.id)!!
+        val stored = icsStore.read(movedEvent)
         val serializeStart = System.currentTimeMillis()
-        val pushIcs = IcsPatcher.serialize(movedEvent)
+        val pushIcs = IcsPatcher.serialize(movedEvent, stored)
         val serializeTime = System.currentTimeMillis() - serializeStart
 
         assertTrue(
-            "Serialization with large rawIcal should complete within 500ms, took ${serializeTime}ms",
+            "Serialization with a large stored ICS should complete within 500ms, took ${serializeTime}ms",
             serializeTime < 500
         )
 
@@ -520,13 +525,13 @@ class MoveOperationRawIcalTest {
             startTs = 1735120800000L,
             endTs = 1735128000000L,
             reminders = listOf("-PT15M", "-PT1H"),  // Only 2 stored
-            rawIcal = rawIcal,
             syncStatus = SyncStatus.SYNCED,
             dtstamp = now,
             createdAt = now,
             updatedAt = now
         )
         val id = database.eventsDao().insert(event)
+        icsStore.write(id, rawIcal)
         return event.copy(id = id)
     }
 
@@ -557,7 +562,6 @@ class MoveOperationRawIcalTest {
             startTs = 1735120800000L,
             endTs = 1735128000000L,
             reminders = listOf("-PT15M", "-PT30M"),
-            rawIcal = null,  // Local event - no rawIcal
             syncStatus = SyncStatus.PENDING_CREATE,
             dtstamp = now,
             createdAt = now,

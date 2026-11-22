@@ -59,28 +59,6 @@ class AccountProviderTest {
         AccountProvider.fromString("")
     }
 
-    // ========== requiresSync Tests ==========
-
-    @Test
-    fun `requiresSync is false for LOCAL`() {
-        assertFalse(AccountProvider.LOCAL.requiresSync)
-    }
-
-    @Test
-    fun `requiresSync is true for ICLOUD`() {
-        assertTrue(AccountProvider.ICLOUD.requiresSync)
-    }
-
-    @Test
-    fun `requiresSync is true for ICS`() {
-        assertTrue(AccountProvider.ICS.requiresSync)
-    }
-
-    @Test
-    fun `requiresSync is true for CALDAV`() {
-        assertTrue(AccountProvider.CALDAV.requiresSync)
-    }
-
     // ========== pullOnly Tests ==========
 
     @Test
@@ -147,6 +125,15 @@ class AccountProviderTest {
         AccountProvider.entries.forEach { provider ->
             assertTrue("${provider.name} should support reminders", provider.supportsReminders)
         }
+    }
+
+    @Test
+    fun `only iCloud and CalDAV support calendar feeds`() {
+        assertTrue(AccountProvider.ICLOUD.supportsCalendarFeeds)
+        assertTrue(AccountProvider.CALDAV.supportsCalendarFeeds)
+        assertFalse(AccountProvider.LOCAL.supportsCalendarFeeds)
+        assertFalse(AccountProvider.ICS.supportsCalendarFeeds)
+        assertFalse(AccountProvider.CONTACTS.supportsCalendarFeeds)
     }
 
     // ========== displayName Tests ==========

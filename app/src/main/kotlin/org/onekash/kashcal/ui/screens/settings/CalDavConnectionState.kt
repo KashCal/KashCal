@@ -49,5 +49,10 @@ data class CalDavAccountUiModel(
     val displayName: String,
     val calendarCount: Int,
     val consecutiveSyncFailures: Int = 0,
-    val lastSuccessfulSyncAt: Long? = null
+    val lastSuccessfulSyncAt: Long? = null,
+    /**
+     * Mirrors [org.onekash.kashcal.data.db.entity.Account.isEnabled]; false shows a
+     * [SyncOffBadge].
+     */
+    val isEnabled: Boolean = true
 )

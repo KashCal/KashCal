@@ -1,6 +1,8 @@
 package org.onekash.kashcal.domain.quickadd
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNull
 import org.junit.Test
 import org.onekash.kashcal.domain.quickadd.normalizer.NormalizerChain
@@ -291,44 +293,18 @@ class TimeRuleTest {
         assertNull(ctx.resolveTime())
     }
 
-    // ==================== Timezone recognition ====================
+    // ==================== Zone abbreviations ====================
 
     @Test
-    fun `3pm EST sets timezone to America New York`() {
-        val ctx = parse("meeting at 3pm est")
-        assertEquals(LocalTime.of(15, 0), ctx.resolveTime())
-        assertEquals("America/New_York", ctx.timezone)
-    }
-
-    @Test
-    fun `10am PST sets timezone to America Los Angeles`() {
-        val ctx = parse("call 10am pst")
-        assertEquals(LocalTime.of(10, 0), ctx.resolveTime())
-        assertEquals("America/Los_Angeles", ctx.timezone)
-    }
-
-    @Test
-    fun `9am UTC sets timezone to UTC`() {
-        val ctx = parse("standup 9am utc")
-        assertEquals(LocalTime.of(9, 0), ctx.resolveTime())
-        assertEquals("UTC", ctx.timezone)
-    }
-
-    @Test
-    fun `3pm without timezone has null timezone`() {
-        val ctx = parse("meeting at 3pm")
-        assertEquals(LocalTime.of(15, 0), ctx.resolveTime())
-        assertNull(ctx.timezone)
-    }
-
-    @Test
-    fun `timezone consumed from tokens`() {
-        val normalized = NormalizerChain().normalize("meeting 3pm est")
-        val tokens = WordTokenizer.tokenize(normalized)
-        val context = ParseContext(reference)
-        TimeRule.apply(tokens, context)
-        // "est" should be consumed (index 2)
-        assert(context.isConsumed(2))
+    fun `a zone abbreviation after a time is not read`() {
+        for (input in listOf("meeting at 3pm est", "call 10am pst", "standup 9am utc")) {
+            val tokens = WordTokenizer.tokenize(NormalizerChain().normalize(input))
+            val context = ParseContext(reference)
+            TimeRule.apply(tokens, context)
+            // The zone word is the last token and stays unconsumed.
+            assertFalse(input, context.isConsumed(tokens.lastIndex))
+        }
+        assertEquals(LocalTime.of(10, 0), parse("call 10am pst").resolveTime())
     }
 
     // ==================== Compact 24-hour "at HHMM" ====================
@@ -386,5 +362,25 @@ class TimeRuleTest {
     fun `lunchtime resolves to noon`() {
         val ctx = parse("meet at lunchtime")
         assertEquals(LocalTime.of(12, 0), ctx.resolveTime())
+    }
+
+    @Test
+    fun `a bare at-hour resolves as typed`() {
+        assertEquals(LocalTime.of(8, 0), parse("dinner at 8").resolveTime())
+        assertEquals(LocalTime.of(15, 0), parse("call at 15").resolveTime())
+    }
+
+    @Test
+    fun `an anchored day-half word adds 12 hours to a bare hour`() {
+        assertEquals(LocalTime.of(21, 0), parse("this evening at 9").resolveTime())
+        assertEquals(LocalTime.of(20, 0), parse("at 8 tonight").resolveTime())
+        assertEquals(LocalTime.of(22, 0), parse("at 10 at night").resolveTime())
+    }
+
+    @Test
+    fun `an h-notation token after for is not a time of day`() {
+        assertEquals(null, parse("gym for 2h").resolveTime())
+        assertEquals(LocalTime.of(11, 0), parse("at 11 for 2h").resolveTime())
+        assertEquals(LocalTime.of(9, 0), parse("at 9 2h").resolveTime())
     }
 }

@@ -35,6 +35,12 @@
             Restoring it would suppress publishing on a device that has none.
         -->
         <exclude domain="sharedpref" path="widget_previews.xml" />
+        <!--
+            EXCLUDE: automatic calendar backup settings and status
+            The chosen folder's access grant belongs to this device; restored, the setting
+            would point at a folder the new install can't open, so backup starts off instead.
+        -->
+        <exclude domain="sharedpref" path="calendar_backup.xml" />
 
         <!-- Note: cache/ is automatically excluded by Android backup system -->
     </cloud-backup>
@@ -52,6 +58,7 @@
         <exclude domain="sharedpref" path="caldav_credentials.xml" />
         <exclude domain="sharedpref" path="unified_credentials.xml" />
         <exclude domain="sharedpref" path="widget_previews.xml" />
+        <exclude domain="sharedpref" path="calendar_backup.xml" />
         <!-- Note: cache/ is automatically excluded by Android backup system -->
     </device-transfer>
 </data-extraction-rules>

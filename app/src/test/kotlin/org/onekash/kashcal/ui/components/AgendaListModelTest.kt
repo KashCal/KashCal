@@ -10,6 +10,8 @@ import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.time.LocalDate
+import java.time.ZoneOffset
 
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -24,11 +26,19 @@ class AgendaListModelTest {
         title: String = "Event"
     ): DisplayEvent.Room {
         val id = nextId++
-        val event = Event(id = id, uid = "uid-$id", calendarId = 1L, title = title, startTs = startTs, endTs = startTs + 3_600_000L, dtstamp = startTs)
-        val occ = Occurrence(eventId = id, calendarId = 1L, startTs = startTs, endTs = startTs + 3_600_000L, startDay = startDay, endDay = endDay)
+        // A timed event's days come from its instants, so place [startTs] (an offset that orders
+        // events within a day) on [startDay] in UTC and end it on [endDay].
+        val start = utcMidnight(startDay) + startTs
+        val end = if (endDay > startDay) utcMidnight(endDay) + startTs else start + 3_600_000L
+        val event = Event(id = id, uid = "uid-$id", calendarId = 1L, title = title, startTs = start, endTs = end, dtstamp = start)
+        val occ = Occurrence(eventId = id, calendarId = 1L, startTs = start, endTs = end, startDay = startDay, endDay = endDay)
         val cal = Calendar(id = 1L, accountId = 1L, caldavUrl = "https://example.com/cal/", displayName = "Cal", color = 0xFF0000.toInt())
-        return DisplayEvent.Room(event, occ, cal)
+        return DisplayEvent.Room(event, occ, cal, zone = ZoneOffset.UTC)
     }
+
+    private fun utcMidnight(dayCode: Int): Long =
+        LocalDate.of(dayCode / 10000, dayCode / 100 % 100, dayCode % 100)
+            .atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 
     @Test
     fun `single-day event yields one item with total day count 1`() {

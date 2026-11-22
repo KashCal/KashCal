@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -18,6 +18,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.icaldav.parser.ICalParser
 import org.onekash.kashcal.data.db.KashCalDatabase
+import org.onekash.kashcal.data.db.PendingOperationTriggers
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
@@ -32,6 +33,7 @@ import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.util.Collections
@@ -97,7 +99,8 @@ class PushStrategyUnknownPropertyLinesTest {
         )
 
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
+            .addCallback(PendingOperationTriggers.callback())
             .allowMainThreadQueries().build()
         occurrenceGenerator = OccurrenceGenerator(
             database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault()
@@ -118,7 +121,8 @@ class PushStrategyUnknownPropertyLinesTest {
             pendingOperationsDao = database.pendingOperationsDao(),
             accountRepository = accountRepository,
             attendeesDao = database.attendeesDao(),
-            pendingCancelsDao = database.pendingCancelsDao()
+            pendingCancelsDao = database.pendingCancelsDao(),
+            icsSource = EventIcsStore(database),
         )
 
         server.dispatcher = object : Dispatcher() {
@@ -139,13 +143,14 @@ class PushStrategyUnknownPropertyLinesTest {
         server.shutdown()
     }
 
-    /** Stores the resource the way pull does: every row carries the whole body. */
+    /** Stores the resource the way pull does: the body once, on the series row. */
     private suspend fun seedPulledSeries() {
         val parsed = ICalParser().parseAllEvents(resource).getOrNull()!!
         val url = server.url("/cal/series-unknown.ics").toString()
         val seriesParsed = parsed.single { it.recurrenceId == null }
         val series = ICalEventMapper.toEntity(seriesParsed, resource, calendarId, url, "e1").event
         seriesId = database.eventsDao().insert(series)
+        EventIcsStore(database).write(seriesId, resource)
         occurrenceGenerator.regenerateOccurrences(database.eventsDao().getById(seriesId)!!)
 
         val exception = ICalEventMapper.toEntity(

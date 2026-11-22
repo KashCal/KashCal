@@ -22,7 +22,8 @@ import org.junit.Test
  * unavailable: EncryptedSharedPreferences needs the Android Keystore, which a JVM test with a
  * mocked Context doesn't have, so reads return null or empty and saves return false.
  *
- * Encrypted storage itself needs an instrumented test on a device or emulator; none exists.
+ * Encrypted storage itself is tested on a device or emulator by
+ * `UnifiedCredentialManagerFailureTest` (androidTest).
  */
 class UnifiedCredentialManagerTest {
 

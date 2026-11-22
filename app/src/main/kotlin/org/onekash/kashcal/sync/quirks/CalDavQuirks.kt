@@ -53,6 +53,12 @@ interface CalDavQuirks {
     fun extractCalendars(responseBody: String, baseHost: String): List<ParsedCalendar>
 
     /**
+     * Extracts the calendar feeds (`CS:subscribed` collections) from a calendar-home PROPFIND
+     * response; null when the response can't be parsed.
+     */
+    fun extractWebcalFeeds(responseBody: String): List<ParsedWebcalFeed>?
+
+    /**
      * Extracts iCal data from a REPORT response; some providers wrap it in CDATA, others
      * escape it.
      */
@@ -171,6 +177,26 @@ interface CalDavQuirks {
         val isReadOnly: Boolean = false,
         val supportedComponents: Set<String> = emptySet()
     )
+
+    /**
+     * One calendar feed (a `CS:subscribed` collection) from a calendar-home PROPFIND response.
+     *
+     * The server stores only the feed's URL; the client downloads the feed itself.
+     *
+     * @property href the collection's own href on the server.
+     * @property source the feed URL the server stored, as it sent it, or null when absent or
+     *   empty. It can carry a `user:pass@` part, so [toString] leaves it out.
+     */
+    data class ParsedWebcalFeed(
+        val href: String,
+        val displayName: String?,
+        val color: String?,
+        val source: String?
+    ) {
+        override fun toString(): String =
+            "ParsedWebcalFeed(href=$href, displayName=$displayName, color=$color, " +
+                "source=${if (source == null) "null" else "<set>"})"
+    }
 
     /**
      * Describes one collection from a Depth-0 PROPFIND reply. [absent] is true when the server

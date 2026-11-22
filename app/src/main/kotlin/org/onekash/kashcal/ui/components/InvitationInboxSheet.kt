@@ -27,8 +27,8 @@ import org.onekash.kashcal.ui.util.DayPagerUtils
  * Lists pending CalDAV invitations across the user's accounts in a sheet that always opens at
  * full height, so it never resizes as cards load or go; the list scrolls inside it.
  *
- * Cards are keyed by `event.id`, so each keeps its identity when sync changes the list; no item
- * animation is applied.
+ * Cards are keyed by [PendingInvitation.eventId], so each keeps its identity when sync changes
+ * the list; no item animation is applied.
  *
  * With no invitations left, an "All caught up" message shows, and tapping it dismisses the sheet
  * (as do back, a drag down, or a tap beside the sheet on a wide screen).
@@ -81,7 +81,7 @@ fun InvitationInboxSheet(
             ) {
                 items(
                     items = invitations,
-                    key = { invite -> "invite_${invite.event.id}" }
+                    key = { invite -> "invite_${invite.eventId}" }
                 ) { invitation ->
                     InvitationCard(
                         invitation = invitation,

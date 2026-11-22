@@ -69,6 +69,8 @@ import org.onekash.kashcal.ui.screens.settings.SettingsRowInfo
  *   never a dead end. The host opens notification settings for Notifications and the app info
  *   page for the rest, through its internal-activity launch so app lock doesn't re-lock on
  *   return.
+ * @param onNotificationPermissionResult receives the answer to a notification permission
+ *   request fired here, so the host can record that the app asked.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,6 +78,7 @@ fun AppPermissionsScreen(
     onBack: () -> Unit,
     onOpenPermissionSettings: (AppPermissionKind) -> Unit,
     modifier: Modifier = Modifier,
+    onNotificationPermissionResult: (Boolean) -> Unit = {},
 ) {
     BackHandler(onBack = onBack)
 
@@ -133,7 +136,10 @@ fun AppPermissionsScreen(
 
     val notificationsLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
-    ) { granted -> onResult(AppPermissionKind.NOTIFICATIONS, Manifest.permission.POST_NOTIFICATIONS, granted) }
+    ) { granted ->
+        onNotificationPermissionResult(granted)
+        onResult(AppPermissionKind.NOTIFICATIONS, Manifest.permission.POST_NOTIFICATIONS, granted)
+    }
 
     val contactsLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),

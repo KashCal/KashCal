@@ -1,6 +1,6 @@
 package org.onekash.kashcal.data.db.converter
 
-import androidx.room.TypeConverter
+import androidx.room3.ColumnTypeConverter
 import kotlinx.serialization.json.Json
 import org.onekash.kashcal.data.db.entity.ReminderStatus
 import org.onekash.kashcal.data.db.entity.SyncStatus
@@ -13,13 +13,13 @@ class Converters {
 
     // ========== SyncStatus Enum ==========
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun fromSyncStatus(status: SyncStatus): String {
         return status.name
     }
 
     /** Falls back to SYNCED for an unknown value. */
-    @TypeConverter
+    @ColumnTypeConverter
     fun toSyncStatus(value: String): SyncStatus {
         return try {
             SyncStatus.valueOf(value)
@@ -30,13 +30,13 @@ class Converters {
 
     // ========== ReminderStatus Enum ==========
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun fromReminderStatus(status: ReminderStatus): String {
         return status.name
     }
 
     /** Falls back to PENDING for an unknown value. */
-    @TypeConverter
+    @ColumnTypeConverter
     fun toReminderStatus(value: String): ReminderStatus {
         return try {
             ReminderStatus.valueOf(value)
@@ -48,46 +48,46 @@ class Converters {
     // ========== AccountProvider Enum ==========
 
     /** Stores the lowercase name ("icloud", "local"), the form the database uses. */
-    @TypeConverter
+    @ColumnTypeConverter
     fun fromAccountProvider(provider: AccountProvider): String {
         return provider.name.lowercase()
     }
 
     /** Throws IllegalArgumentException for an unknown value, failing fast on corrupt data. */
-    @TypeConverter
+    @ColumnTypeConverter
     fun toAccountProvider(value: String): AccountProvider {
         return AccountProvider.fromString(value)
     }
 
     // ========== Recent changes ==========
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun fromChangeType(type: ChangeType): String = type.name
 
     /** Falls back to MODIFIED for an unknown value. */
-    @TypeConverter
+    @ColumnTypeConverter
     fun toChangeType(value: String): ChangeType =
         ChangeType.entries.firstOrNull { it.name == value } ?: ChangeType.MODIFIED
 
     /** Stores change categories as a comma-separated list in declaration order. */
-    @TypeConverter
+    @ColumnTypeConverter
     fun fromChangedFields(fields: Set<ChangedField>): String =
         ChangedField.entries.filter { it in fields }.joinToString(",") { it.name }
 
     /** Skips names this version doesn't know. */
-    @TypeConverter
+    @ColumnTypeConverter
     fun toChangedFields(value: String): Set<ChangedField> =
         value.split(",").mapNotNull { name -> ChangedField.entries.firstOrNull { it.name == name.trim() } }.toSet()
 
     // ========== List<String> as a JSON array (for example reminders, categories) ==========
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun fromStringList(list: List<String>?): String? {
         return list?.let { Json.encodeToString(it) }
     }
 
     /** Returns an empty list for null, blank or malformed JSON. */
-    @TypeConverter
+    @ColumnTypeConverter
     fun toStringList(value: String?): List<String> {
         if (value.isNullOrBlank()) return emptyList()
         return try {
@@ -101,13 +101,13 @@ class Converters {
     // extra_properties holds unknown iCal properties (X-APPLE-* and the like) and the app's
     // X-KASHCAL- markers ([org.onekash.kashcal.data.db.entity.Event.extraProperties]).
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun fromStringMap(map: Map<String, String>?): String? {
         return map?.let { Json.encodeToString(it) }
     }
 
     /** Returns an empty map for null, blank or malformed JSON. */
-    @TypeConverter
+    @ColumnTypeConverter
     fun toStringMap(value: String?): Map<String, String> {
         if (value.isNullOrBlank()) return emptyMap()
         return try {

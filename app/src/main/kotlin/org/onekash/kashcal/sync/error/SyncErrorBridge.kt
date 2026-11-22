@@ -117,12 +117,14 @@ object SyncErrorBridge {
     }
 
     /**
-     * Converts [result] to a [CalendarError], or null for a success or an advanced MOVE phase.
+     * Converts [result] to a [CalendarError], or null for a success, an advanced MOVE phase or a
+     * requeued operation.
      * [eventTitle] names the event in a conflict.
      */
     fun fromSinglePushResult(result: SinglePushResult, eventTitle: String? = null): CalendarError? = when (result) {
         is SinglePushResult.Success -> null
         is SinglePushResult.PhaseAdvanced -> null
+        is SinglePushResult.Requeued -> null
         is SinglePushResult.Conflict -> CalendarError.Server.Conflict(eventTitle)
         is SinglePushResult.RsvpModified -> CalendarError.Server.Conflict(result.eventTitle)
         is SinglePushResult.Error -> when (result.code) {

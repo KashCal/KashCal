@@ -38,6 +38,7 @@ class DayColumnComposeTest {
                 DayColumn(
                     date = LocalDate.of(2026, 5, 3),
                     events = emptyList(),
+                    now = { 0L },
                     onEventClick = {},
                     onOverflowClick = {},
                     onEmptyTap = { _, _, _ -> tapped.value = true },

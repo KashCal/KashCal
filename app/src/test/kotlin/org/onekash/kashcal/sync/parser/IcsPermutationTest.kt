@@ -1,7 +1,6 @@
 package org.onekash.kashcal.sync.parser
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -13,6 +12,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.icaldav.model.ParseResult
 import org.onekash.icaldav.parser.ICalParser
+import org.onekash.kashcal.data.db.EventIcsStore
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
@@ -22,6 +22,7 @@ import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -49,10 +50,16 @@ class IcsPermutationTest {
     private lateinit var icalParser: ICalParser
     private var testCalendarId: Long = 0
 
+    // The fixtures use floating times, read in the device zone. Pinned so the round trip
+    // compares local times whatever the host zone; on a phone whose zone id is UTC a series is
+    // written in UTC form instead (EventToICalEventMapper.writeZone).
+    private val savedZone: java.util.TimeZone = java.util.TimeZone.getDefault()
+
     @Before
     fun setup() = runTest {
+        java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("America/New_York"))
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
 
@@ -75,6 +82,7 @@ class IcsPermutationTest {
     @After
     fun teardown() {
         database.close()
+        java.util.TimeZone.setDefault(savedZone)
     }
 
     // ==================== Frequency Permutations ====================
@@ -372,8 +380,10 @@ class IcsPermutationTest {
             .groupBy { it.recurrenceId?.timestamp }
             .mapNotNull { (_, excs) -> excs.maxByOrNull { it.sequence } }
 
-        val masterEvent = ICalEventMapper.toEntity(master, icsContent, testCalendarId, null, null).event
+        val mappedMaster = ICalEventMapper.toEntity(master, icsContent, testCalendarId, null, null)
+        val masterEvent = mappedMaster.event
         val masterId = database.eventsDao().insert(masterEvent)
+        EventIcsStore(database).write(masterId, mappedMaster.ics)
         val savedMaster = masterEvent.copy(id = masterId)
 
         occurrenceGenerator.regenerateOccurrences(savedMaster)
@@ -419,7 +429,7 @@ class IcsPermutationTest {
 
     /**
      * Checks the round trip ICS to Event rows to ICS ([IcsPatcher.serializeWithExceptions]).
-     * Skipped when the master has no rawIcal.
+     * Skipped when the master has no stored ICS.
      *
      * Two checks:
      * 1. ICS content: UID, SUMMARY, RRULE and EXDATE per VEVENT ([verifyIcsContentMatches]).
@@ -432,9 +442,9 @@ class IcsPermutationTest {
         val master = database.eventsDao().getById(result.masterId)!!
         val exceptions = database.eventsDao().getExceptionsForMaster(result.masterId)
 
-        val originalIcs = master.rawIcal ?: return // Skip if no original ICS stored
+        val originalIcs = EventIcsStore(database).read(master) ?: return // Skip if no original ICS stored
 
-        val generatedIcs = IcsPatcher.serializeWithExceptions(master, exceptions)
+        val generatedIcs = IcsPatcher.serializeWithExceptions(master, originalIcs, exceptions)
 
         verifyIcsContentMatches(originalIcs, generatedIcs, name)
 

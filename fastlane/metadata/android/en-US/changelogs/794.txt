@@ -1,0 +1,3 @@
+• Settings → Troubleshooting: export a debug report to send with a bug report (#183)
+• Quick Add opens from the widget + again when the app wasn't running (#403)
+• Deleted events no longer leave changes stuck waiting to sync

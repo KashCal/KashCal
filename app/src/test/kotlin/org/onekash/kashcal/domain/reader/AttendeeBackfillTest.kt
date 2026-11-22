@@ -10,11 +10,12 @@ import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.testutil.FakeEventIcsSource
 import org.onekash.kashcal.data.db.entity.SyncStatus
 
 /**
- * Tests [AttendeeBackfill.backfillIfEmpty], which parses `event.rawIcal` and writes the master
- * VEVENT's attendees when an event has no attendee rows or an unusable address.
+ * Tests [AttendeeBackfill.backfillIfEmpty], which parses the event's stored ICS and writes the
+ * master VEVENT's attendees when an event has no attendee rows or an unusable address.
  *
  * Covers the no-op returns (missing event, null, empty or ATTENDEE-less rawIcal, a header-only
  * ICS, usable rows already stored), the re-parse of principal-href and bare-mailto rows, a
@@ -27,7 +28,9 @@ class AttendeeBackfillTest {
     private val attendeesDao = mockk<AttendeesDao>(relaxed = true)
     private val eventsDao = mockk<EventsDao>()
 
-    private val backfill = AttendeeBackfill(attendeesDao, eventsDao)
+    private val ics = FakeEventIcsSource()
+
+    private val backfill = AttendeeBackfill(attendeesDao, eventsDao, ics)
 
     @Test
     fun `returns 0 when event not found`() = runTest {
@@ -94,7 +97,7 @@ class AttendeeBackfillTest {
         coEvery { eventsDao.getById(1L) } returns event(rawIcal = ICS_WITH_ATTENDEES)
         coEvery { attendeesDao.getForEvent(1L) } returns kotlinx.coroutines.flow.flowOf(
             listOf(
-                Attendee(eventId = 1L, address = "/646691839/principal/", sortOrder = 0),
+                Attendee(eventId = 1L, address = "/123456789/principal/", sortOrder = 0),
                 Attendee(eventId = 1L, address = "mailto:alice@example.test", sortOrder = 1)
             )
         )
@@ -238,7 +241,7 @@ class AttendeeBackfillTest {
 
     @Test
     fun `does not write when re-parse yields same address-set as existing rows (F4 idempotent skip)`() = runTest {
-        // The stored `mailto:/646691839/principal/` row is unusable, so the backfill re-parses.
+        // The stored `mailto:/123456789/principal/` row is unusable, so the backfill re-parses.
         // The re-parse yields only the bare principal href, which the usable-address filter
         // drops, so the call returns 0 on the empty result, before the same-set comparison,
         // and never writes. Without that, every sheet open would rewrite the set.
@@ -247,7 +250,7 @@ class AttendeeBackfillTest {
             listOf(
                 Attendee(
                     eventId = 1L,
-                    address = "mailto:/646691839/principal/",
+                    address = "mailto:/123456789/principal/",
                     partstat = "NEEDS-ACTION",
                     sortOrder = 0
                 )
@@ -258,11 +261,12 @@ class AttendeeBackfillTest {
         coVerify(exactly = 0) { attendeesDao.replaceForEvent(any(), any()) }
     }
 
+    /** Returns event [id] and stores [rawIcal] as its ICS ([FakeEventIcsSource]). */
     private fun event(
         rawIcal: String?,
         id: Long = 1L,
         calendarId: Long = 1L
-    ): Event = Event(
+    ): Event = kotlinx.coroutines.runBlocking { ics.write(id, rawIcal) }.let { Event(
         id = id,
         uid = "evt-$id",
         calendarId = calendarId,
@@ -270,9 +274,8 @@ class AttendeeBackfillTest {
         startTs = 1_000L,
         endTs = 2_000L,
         dtstamp = System.currentTimeMillis(),
-        syncStatus = SyncStatus.SYNCED,
-        rawIcal = rawIcal
-    )
+        syncStatus = SyncStatus.SYNCED
+    ) }
 
     companion object {
         val ICS_WITH_ATTENDEES = """
@@ -304,7 +307,7 @@ class AttendeeBackfillTest {
             DTEND:20260315T110000Z
             SUMMARY:Backfill test (degenerate)
             ORGANIZER;CN=Test Organizer:mailto:organizer.synthetic@example.test
-            ATTENDEE;CN=Test User;PARTSTAT=NEEDS-ACTION:/646691839/principal/
+            ATTENDEE;CN=Test User;PARTSTAT=NEEDS-ACTION:/123456789/principal/
             END:VEVENT
             END:VCALENDAR
         """.trimIndent()

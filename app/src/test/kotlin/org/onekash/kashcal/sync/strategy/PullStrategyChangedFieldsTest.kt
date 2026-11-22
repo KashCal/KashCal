@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -15,6 +15,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.KashCalDatabase
+import org.onekash.kashcal.data.db.PendingOperationTriggers
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.repository.AccountRepository
@@ -30,6 +31,7 @@ import org.onekash.kashcal.sync.model.ChangedField
 import org.onekash.kashcal.sync.model.SyncChange
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.Instant
@@ -77,7 +79,8 @@ class PullStrategyChangedFieldsTest {
     @Before
     fun setup() = runTest {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
+            .addCallback(PendingOperationTriggers.callback())
             .allowMainThreadQueries()
             .build()
         database.accountsDao().insert(account)
@@ -97,7 +100,8 @@ class PullStrategyChangedFieldsTest {
             dataStore = dataStore,
             inviteNotifier = mockk(relaxed = true),
             accountRepository = accountRepository,
-            reminderScheduler = mockk(relaxed = true)
+            reminderScheduler = mockk(relaxed = true),
+            icsSource = EventIcsStore(database),
         )
         coEvery { accountRepository.getAccountById(account.id) } returns account
     }

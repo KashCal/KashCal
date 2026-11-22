@@ -140,7 +140,8 @@ data class CalendarGroup(
 }
 
 /**
- * Room calendar groups split the way the drawer and the Calendar notifications sheet list them:
+ * Room calendar groups split the way the drawer, the Calendar notifications sheet and
+ * [PickerSections] list them:
  * [regular] accounts, then [contacts] (birthdays and anniversaries), then, after the device
  * calendars, [offline] ([AccountProvider.LOCAL], KashCal's own calendars). Groups without
  * calendars are left out.
@@ -162,3 +163,41 @@ fun List<CalendarGroup>.toDisplaySections(): DisplaySections {
         offline = listed.filter { it.provider == AccountProvider.LOCAL },
     )
 }
+
+/**
+ * Sections of a calendar picker, in the drawer's order ([toDisplaySections]): [accounts] (the
+ * regular accounts, then the contact event accounts, each in the order given, which
+ * [CalendarGroup.fromCalendarsAndAccounts] sorts by name), [device] calendars, then [offline].
+ * A divider goes before the device and the offline section only when something is listed above.
+ */
+data class PickerSections(
+    val accounts: List<CalendarGroup>,
+    val device: List<CalendarGroup>,
+    val offline: List<CalendarGroup>,
+) {
+    val isEmpty: Boolean get() = accounts.isEmpty() && device.isEmpty() && offline.isEmpty()
+    val dividerBeforeDevice: Boolean get() = device.isNotEmpty() && accounts.isNotEmpty()
+    val dividerBeforeOffline: Boolean
+        get() = offline.isNotEmpty() && (accounts.isNotEmpty() || device.isNotEmpty())
+}
+
+/**
+ * Builds [PickerSections] from these Room groups and [deviceGroups], keeping the order within
+ * each part and leaving out groups without calendars.
+ */
+fun List<CalendarGroup>.toPickerSections(deviceGroups: List<CalendarGroup>): PickerSections {
+    val (regular, contacts, offline) = toDisplaySections()
+    return PickerSections(
+        accounts = regular + contacts,
+        device = deviceGroups.filter { it.pickerCalendars.isNotEmpty() },
+        offline = offline,
+    )
+}
+
+/**
+ * Returns the ids of the calendars in [DisplaySections.offline]: the UI's copy of
+ * [org.onekash.kashcal.domain.initializer.LocalCalendarInitializer.isLocalAccount], read from
+ * [CalendarGroup.provider] because the UI holds providers, not accounts.
+ */
+fun List<CalendarGroup>.offlineCalendarIds(): Set<Long> =
+    toDisplaySections().offline.flatMap { group -> group.calendars.map { it.id } }.toSet()

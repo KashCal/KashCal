@@ -1,9 +1,9 @@
 package org.onekash.kashcal.data.db.entity
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.Index
-import androidx.room.PrimaryKey
+import androidx.room3.ColumnInfo
+import androidx.room3.Entity
+import androidx.room3.Index
+import androidx.room3.PrimaryKey
 
 /**
  * Queues a sync operation for a local change to an event in a server calendar.
@@ -23,7 +23,10 @@ data class PendingOperation(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
 
-    /** The event. Not a foreign key, so an operation outlives its deleted event. */
+    /**
+     * The event. Not a foreign key: deleting the event drops its operations except a
+     * self-contained DELETE ([org.onekash.kashcal.data.db.PendingOperationTriggers]).
+     */
     @ColumnInfo(name = "event_id")
     val eventId: Long,
 
@@ -92,7 +95,8 @@ data class PendingOperation(
      * Event.calendarId.
      *
      * Set for a MOVE (same account), the DELETE of a move from a synced to a local calendar,
-     * and the DELETE of a cross-account move.
+     * the DELETE of a cross-account move, the DELETE a MOVE becomes when the user deletes the
+     * moved event, and a DELETE of the copy such a MOVE made (its target calendar).
      */
     @ColumnInfo(name = "source_calendar_id")
     val sourceCalendarId: Long? = null,
@@ -125,8 +129,8 @@ data class PendingOperation(
 
     /**
      * Marks an UPDATE as a PARTSTAT-only RSVP. The push then uses
-     * `IcsPatcher.patchAttendeeReply`, which keeps every ATTENDEE of rawIcal and changes only
-     * the user's PARTSTAT; the full-event serializer would write the local attendee table
+     * `IcsPatcher.patchAttendeeReply`, which keeps every ATTENDEE of the stored ICS and changes
+     * only the user's PARTSTAT; the full-event serializer would write the local attendee table
      * instead. Queue state only, not an RFC field.
      */
     @ColumnInfo(name = "partstat_only", defaultValue = "0")

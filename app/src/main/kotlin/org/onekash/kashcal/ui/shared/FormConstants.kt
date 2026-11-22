@@ -2,6 +2,7 @@ package org.onekash.kashcal.ui.shared
 
 import android.content.res.Resources
 import org.onekash.kashcal.R
+import org.onekash.kashcal.calendarbackup.CalendarBackupInterval
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 
 /*
@@ -103,9 +104,11 @@ fun formatReminderOption(minutes: Int, isAllDay: Boolean, resources: Resources):
 /**
  * Returns the compact reminder label used in [formatReminderSummary], for any stored value.
  *
- * @param use24Hour whether the 9 AM label reads "09:00" instead of "9AM".
+ * @param use24Hour whether the all-day 9 AM label reads "09:00" instead of "9AM"; a timed 540 is
+ *   9 hours before and reads "9h".
  * @param isAllDay whether [minutes] is a signed all-day offset.
- * @return e.g. "15m", "1h", "1d", "09:00" or "9AM".
+ * @return e.g. "15m", "1h", "1d", "5d 1h 10m", or "09:00" or "9AM" for the all-day 9 AM. A
+ *   negative timed value keeps its sign in minutes ("-90m").
  */
 fun formatReminderShort(minutes: Int, use24Hour: Boolean = false, isAllDay: Boolean = false, resources: Resources): String {
     // All-day offsets: -540 is 9 AM day of; 900, 2340 and 9540 are 9 AM 1, 2 and 7 days before.
@@ -124,21 +127,42 @@ fun formatReminderShort(minutes: Int, use24Hour: Boolean = false, isAllDay: Bool
     return when (minutes) {
         REMINDER_OFF -> resources.getString(R.string.reminder_short_off)
         0 -> resources.getString(R.string.reminder_short_at_event)
-        540 -> resources.getString(if (use24Hour) R.string.reminder_short_9am_24h else R.string.reminder_short_9am_12h)
         else -> reminderShortByMagnitude(minutes, resources)
     }
 }
 
 private fun reminderShortByMagnitude(minutes: Int, resources: Resources): String = when {
     minutes >= 10080 && minutes % 10080 == 0 -> resources.getString(R.string.reminder_short_weeks, minutes / 10080)
-    minutes >= 1440 && minutes % 1440 == 0 -> resources.getString(R.string.reminder_short_days, minutes / 1440)
-    minutes >= 60 && minutes % 60 == 0 -> resources.getString(R.string.reminder_short_hours, minutes / 60)
+    minutes > 0 -> joinUnitParts(
+        minutes,
+        days = { resources.getString(R.string.reminder_short_days, it) },
+        hours = { resources.getString(R.string.reminder_short_hours, it) },
+        mins = { resources.getString(R.string.reminder_short_minutes, it) },
+    )
     else -> resources.getString(R.string.reminder_short_minutes, minutes)
 }
 
 /**
+ * Joins the non-zero days, hours and minutes of positive [minutes] ([minutesToComponents]) with a
+ * space, each written by its unit's label, so 7270 reads "5d 1h 10m" and 90 reads "1h 30m".
+ */
+private fun joinUnitParts(
+    minutes: Int,
+    days: (Int) -> String,
+    hours: (Int) -> String,
+    mins: (Int) -> String,
+): String {
+    val (d, h, m) = minutesToComponents(minutes)
+    return listOfNotNull(
+        d.takeIf { it > 0 }?.let(days),
+        h.takeIf { it > 0 }?.let(hours),
+        m.takeIf { it > 0 }?.let(mins),
+    ).joinToString(" ")
+}
+
+/**
  * Returns the medium-length label for a reminder or duration in a Settings row, in abbreviated
- * words ("30 min", "1 hr", "1 day", "2 days", "1 wk").
+ * words ("30 min", "1 hr", "1 day", "2 days", "1 wk", "5 days 1 hr 10 min").
  *
  * It sits between the compact [formatReminderShort] and the sheet's full "N minutes before". The
  * picker's all-day offsets map to their day or week meaning like [formatReminderShort] does:
@@ -164,8 +188,12 @@ fun formatReminderMedium(minutes: Int, isAllDay: Boolean, resources: Resources):
 
 private fun reminderMediumByMagnitude(minutes: Int, resources: Resources): String = when {
     minutes >= 10080 && minutes % 10080 == 0 -> resources.getString(R.string.reminder_med_weeks, minutes / 10080)
-    minutes >= 1440 && minutes % 1440 == 0 -> resources.getQuantityString(R.plurals.reminder_med_days, minutes / 1440, minutes / 1440)
-    minutes >= 60 && minutes % 60 == 0 -> resources.getString(R.string.reminder_med_hours, minutes / 60)
+    minutes > 0 -> joinUnitParts(
+        minutes,
+        days = { resources.getQuantityString(R.plurals.reminder_med_days, it, it) },
+        hours = { resources.getString(R.string.reminder_med_hours, it) },
+        mins = { resources.getString(R.string.reminder_med_minutes, it) },
+    )
     else -> resources.getString(R.string.reminder_med_minutes, minutes)
 }
 
@@ -299,6 +327,12 @@ data class DurationOption(
 /** Lists the default-duration choices for new events offered in Settings. */
 val EVENT_DURATION_MINUTES = listOf(15, 30, 60, 120)
 
+/** Lengths, in minutes, offered as chips in the event form's date and time sheet. */
+val TIMED_LENGTH_CHIPS_MINUTES = listOf(30, 60, 120)
+
+/** Lengths, in days, offered as chips for an all-day event in the date and time sheet. */
+val ALL_DAY_LENGTH_CHIPS_DAYS = listOf(2, 5, 7)
+
 fun getEventDurationOptions(resources: Resources): List<DurationOption> =
     EVENT_DURATION_MINUTES.map { DurationOption(formatDuration(it, resources), it) }
 
@@ -318,6 +352,28 @@ fun formatDuration(minutes: Int, resources: Resources): String {
             val mins = minutes % 60
             resources.getString(R.string.duration_compact, hours, mins)
         }
+    }
+}
+
+/**
+ * Returns how often automatic calendar backup runs for [hours] (1 to 720): "Every 12 hours",
+ * "Every day", "Every 7 days", or days and hours together ("Every 2 days 6 hours", "Every day 1
+ * hour"). Exactly one hour or day has its own string, so no plural form has to drop its number.
+ */
+fun formatBackupInterval(hours: Int, resources: Resources): String {
+    val (days, rest) = CalendarBackupInterval.split(hours)
+    val hoursPart = { resources.getQuantityString(R.plurals.time_hours, rest, rest) }
+    return when {
+        days == 0 && rest == 1 -> resources.getString(R.string.calendar_backup_every_hour)
+        days == 0 -> resources.getQuantityString(R.plurals.calendar_backup_every_hours, rest, rest)
+        rest == 0 && days == 1 -> resources.getString(R.string.calendar_backup_every_day)
+        rest == 0 -> resources.getQuantityString(R.plurals.calendar_backup_every_days, days, days)
+        days == 1 -> resources.getString(R.string.calendar_backup_every_day_hours, hoursPart())
+        else -> resources.getString(
+            R.string.calendar_backup_every_days_hours,
+            resources.getQuantityString(R.plurals.time_days, days, days),
+            hoursPart(),
+        )
     }
 }
 

@@ -47,6 +47,22 @@ class IcsParserServiceTest {
     }
 
     @Test
+    fun `a feed event keeps a large HTML description out of extraProperties`() {
+        val ics = listOf(
+            "BEGIN:VCALENDAR", "VERSION:2.0", "BEGIN:VEVENT", "UID:html@test.com",
+            "DTSTART:20231215T140000Z", "DTEND:20231215T150000Z", "SUMMARY:Newsletter",
+            "X-ALT-DESC;FMTTYPE=text/html:" + "<b>x</b>".repeat(4_000),
+            "X-FEED-TAG:kept",
+            "END:VEVENT", "END:VCALENDAR",
+        ).joinToString("\r\n")
+
+        val events = IcsParserService.parseIcsContent(ics, CALENDAR_ID, SUBSCRIPTION_ID)
+
+        assertEquals(1, events.size)
+        assertEquals(mapOf("X-FEED-TAG" to "kept"), events[0].extraProperties)
+    }
+
+    @Test
     fun `parses multiple events`() {
         val ics = """
             BEGIN:VCALENDAR
@@ -97,6 +113,32 @@ class IcsParserServiceTest {
         val events = IcsParserService.parseIcsContent(ics, CALENDAR_ID, SUBSCRIPTION_ID)
         assertEquals("Should filter out CANCELLED event", 1, events.size)
         assertEquals("Confirmed Event", events[0].title)
+    }
+
+    @Test
+    fun `a feed reports how many events it read before dropping CANCELLED ones`() {
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            BEGIN:VEVENT
+            UID:a@test.com
+            DTSTART:20231215T140000Z
+            DTEND:20231215T150000Z
+            STATUS:CANCELLED
+            END:VEVENT
+            BEGIN:VEVENT
+            UID:b@test.com
+            DTSTART:20231216T140000Z
+            DTEND:20231216T150000Z
+            STATUS:CANCELLED
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val feed = IcsParserService.parseFeed(ics, CALENDAR_ID, SUBSCRIPTION_ID)
+
+        assertEquals(2, feed.parsedCount)
+        assertTrue(feed.events.isEmpty())
     }
 
     @Test
@@ -387,6 +429,51 @@ class IcsParserServiceTest {
         """.trimIndent()
 
         assertTrue(IcsParserService.isValidIcs(ics))
+    }
+
+    @Test
+    fun `isValidIcs returns true for a calendar with no events`() {
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            END:VCALENDAR
+        """.trimIndent()
+
+        assertTrue(IcsParserService.isValidIcs(ics))
+    }
+
+    @Test
+    fun `isValidIcs returns true for a calendar holding only a VTIMEZONE`() {
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VTIMEZONE
+            TZID:Europe/Rome
+            BEGIN:STANDARD
+            DTSTART:19701025T030000
+            TZOFFSETFROM:+0200
+            TZOFFSETTO:+0100
+            END:STANDARD
+            END:VTIMEZONE
+            END:VCALENDAR
+        """.trimIndent()
+
+        assertTrue(IcsParserService.isValidIcs(ics))
+    }
+
+    @Test
+    fun `isValidIcs returns false for a calendar cut off before END-VCALENDAR`() {
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            BEGIN:VEVENT
+            UID:test@test.com
+            DTSTART:20231215T140000Z
+        """.trimIndent()
+
+        assertFalse(IcsParserService.isValidIcs(ics))
     }
 
     // ==================== Calendar Name Extraction ====================

@@ -1,10 +1,10 @@
 package org.onekash.kashcal.data.db.dao
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Update
+import androidx.room3.Dao
+import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
+import androidx.room3.Query
+import androidx.room3.Update
 import kotlinx.coroutines.flow.Flow
 import org.onekash.kashcal.data.db.entity.PendingOperation
 
@@ -228,6 +228,16 @@ interface PendingOperationsDao {
     """)
     suspend fun hasActiveOperation(eventId: Long, operation: String): Boolean
 
+    /** Returns whether any of [eventIds] has a PENDING or IN_PROGRESS operation of any kind. */
+    @Query("""
+        SELECT EXISTS(
+            SELECT 1 FROM pending_operations
+            WHERE event_id IN (:eventIds)
+            AND status IN ('PENDING', 'IN_PROGRESS')
+        )
+    """)
+    suspend fun hasActiveOperationForAny(eventIds: List<Long>): Boolean
+
     /** Returns whether any of [eventIds] has a PENDING or IN_PROGRESS PARTSTAT-only answer. */
     @Query("""
         SELECT EXISTS(
@@ -385,4 +395,62 @@ interface PendingOperationsDao {
           AND operation = 'DELETE'
     """)
     suspend fun deleteLinkedDelete(linkedMoveId: String)
+
+    // ==================== Delete right after a move ====================
+
+    /**
+     * Turns [eventId]'s queued MOVE into a fresh self-contained DELETE of the original (its
+     * `target_url` and `source_calendar_id`), for a moved row the user deletes before the push.
+     * A running MOVE is left alone: the push holds it in memory. Returns how many changed.
+     */
+    @Query("""
+        UPDATE pending_operations
+        SET operation = 'DELETE',
+            status = 'PENDING',
+            retry_count = 0,
+            next_retry_at = 0,
+            last_error = NULL,
+            failed_at = NULL,
+            move_phase = 0,
+            target_calendar_id = NULL,
+            partstat_only = 0,
+            partstat_target = NULL,
+            lifetime_reset_at = :now,
+            updated_at = :now
+        WHERE event_id = :eventId AND operation = 'MOVE' AND status != 'IN_PROGRESS'
+    """)
+    suspend fun convertPendingMoveToDelete(eventId: Long, now: Long): Int
+
+    /**
+     * Unlinks [eventId]'s cross-account DELETE from its CREATE so it runs on its own, for a moved
+     * row the user deletes before the push. Returns how many changed.
+     */
+    @Query("""
+        UPDATE pending_operations
+        SET linked_move_id = NULL, lifetime_reset_at = :now, updated_at = :now
+        WHERE event_id = :eventId
+          AND operation = 'DELETE'
+          AND linked_move_id IS NOT NULL
+          AND status != 'IN_PROGRESS'
+    """)
+    suspend fun unlinkPendingMoveDelete(eventId: Long, now: Long): Int
+
+    /** Turns a MOVE the server completed into a plain UPDATE; 0 when it is no longer a MOVE. */
+    @Query("""
+        UPDATE pending_operations
+        SET operation = 'UPDATE', target_url = NULL, target_calendar_id = NULL, updated_at = :now
+        WHERE id = :id AND operation = 'MOVE'
+    """)
+    suspend fun completeMoveAsUpdate(id: Long, now: Long): Int
+
+    /**
+     * Points a DELETE converted from a running MOVE at the copy the MOVE just made, and queues
+     * it again. Returns 0 when [id] is not a DELETE (the MOVE was not converted).
+     */
+    @Query("""
+        UPDATE pending_operations
+        SET target_url = :url, source_calendar_id = :calendarId, status = 'PENDING', updated_at = :now
+        WHERE id = :id AND operation = 'DELETE'
+    """)
+    suspend fun retargetConvertedDelete(id: Long, url: String, calendarId: Long, now: Long): Int
 }

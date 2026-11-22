@@ -6,17 +6,23 @@ import android.util.Log
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import androidx.work.WorkManager
+import androidx.work.WorkerFactory
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.onekash.icaldav.model.ICalDateTime
+import org.onekash.kashcal.util.resolveWindowsZone
+import org.onekash.kashcal.calendarbackup.CalendarBackupNotifications
+import org.onekash.kashcal.calendarbackup.CalendarBackupReconciler
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderManager
 import org.onekash.kashcal.data.contacts.ContactEventManager
 import org.onekash.kashcal.data.credential.CredentialMigration
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.di.ApplicationScope
+import org.onekash.kashcal.domain.initializer.OccurrenceHorizonInitializer
+import org.onekash.kashcal.domain.initializer.UtcSeriesZoneRepair
 import org.onekash.kashcal.network.NetworkMonitor
 import org.onekash.kashcal.reminder.notification.InviteNotificationChannels
 import org.onekash.kashcal.reminder.notification.ReminderNotificationChannels
@@ -29,9 +35,9 @@ import org.onekash.kashcal.sync.scheduler.IcsRefreshScheduleReconciler
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.ui.appicon.DateIconRefresher
 import org.onekash.kashcal.ui.appicon.ForegroundActivityTracker
+import org.onekash.kashcal.util.JobSchedulerIds
 import org.onekash.kashcal.widget.WidgetPreviewRegistrar
 import org.onekash.kashcal.widget.WidgetUpdateManager
-import java.time.ZoneId
 import javax.inject.Inject
 
 /**
@@ -49,6 +55,18 @@ class KashCalApplication : Application(), Configuration.Provider {
 
         /** How long after the last screen stops the deferred date-icon switch is retried. */
         private const val DATE_ICON_SETTLE_MS = 3_000L
+
+        /**
+         * Builds the WorkManager configuration: the Hilt worker factory, and a job id range that
+         * keeps WorkManager off the ids the app schedules itself ([JobSchedulerIds]).
+         */
+        internal fun workManagerConfiguration(workerFactory: WorkerFactory): Configuration =
+            Configuration.Builder()
+                .setWorkerFactory(workerFactory)
+                .setMinimumLoggingLevel(Log.INFO)
+                .setJobSchedulerJobIdRange(JobSchedulerIds.WORK_MANAGER_MIN, JobSchedulerIds.WORK_MANAGER_MAX)
+                .build()
+
         const val PREFS_NAME = "kashcal_upgrade"
         const val KEY_LAST_VERSION = "last_version_code"
         /**
@@ -112,18 +130,25 @@ class KashCalApplication : Application(), Configuration.Provider {
     lateinit var contactSyncScheduleReconciler: ContactSyncScheduleReconciler
 
     @Inject
+    lateinit var utcSeriesZoneRepair: UtcSeriesZoneRepair
+
+    @Inject
+    lateinit var occurrenceHorizonInitializer: OccurrenceHorizonInitializer
+
+    @Inject
+    lateinit var calendarBackupReconciler: CalendarBackupReconciler
+
+    @Inject
+    lateinit var calendarBackupNotifications: CalendarBackupNotifications
+
+    @Inject
     @ApplicationScope
     lateinit var applicationScope: CoroutineScope
 
     override fun onCreate() {
         super.onCreate()
 
-        // Resolve Windows zone names ("Eastern Standard Time" to America/New_York) with Android
-        // ICU, which follows CLDR. The icaldav library's properties file is the JVM fallback.
-        ICalDateTime.customTimezoneResolver = { tzid ->
-            android.icu.util.TimeZone.getIDForWindowsID(tzid, null)
-                ?.let { try { ZoneId.of(it) } catch (_: Exception) { null } }
-        }
+        ICalDateTime.customTimezoneResolver = ::resolveWindowsZone
 
         handleAppUpgrade()
 
@@ -135,6 +160,7 @@ class KashCalApplication : Application(), Configuration.Provider {
         reminderNotificationChannels.createChannels()
         inviteNotificationChannels.createChannels()
         changeNotificationChannels.createChannels()
+        calendarBackupNotifications.createChannel()
 
         // Long-lived background registrations (network callbacks, WorkManager and AlarmManager
         // scheduling, content observers, the startup coroutines below) are skipped under unit
@@ -165,8 +191,9 @@ class KashCalApplication : Application(), Configuration.Provider {
             // them; without READ_CONTACTS it turns both features off instead.
             contactEventManager.initialize()
 
-            // When device calendars are on, registers their observer; without READ_CALENDAR it
-            // turns the feature off instead.
+            // When device calendars are on, registers their observer, re-picks the next device
+            // reminder and replaces the calendar-change job; without READ_CALENDAR it turns the
+            // feature off instead.
             calendarProviderManager.initialize()
 
             // Daily refresh that arms reminders that entered the scheduling window.
@@ -203,6 +230,28 @@ class KashCalApplication : Application(), Configuration.Provider {
             // reconciler catches and logs.
             applicationScope.launch {
                 contactSyncScheduleReconciler.reconcile()
+            }
+
+            // Once per install: series stored with no zone though they start at a UTC time get
+            // the zone UTC, and feeds are re-read on their next refresh (UtcSeriesZoneRepair).
+            // Offline; it re-arms reminders, so it stays out of unit tests with the rest here.
+            // No try/catch: the repair catches and logs.
+            applicationScope.launch {
+                utcSeriesZoneRepair.run()
+            }
+
+            // Repeating series stay expanded ahead of today even when the daily reminder
+            // refresh was held back (OccurrenceHorizonInitializer). No try/catch: the pass
+            // catches and logs.
+            applicationScope.launch {
+                occurrenceHorizonInitializer.run()
+            }
+
+            // Re-arm automatic calendar backup from its settings: a periodic job lost to a
+            // force-stop or a task killer has no other way back. No try/catch: the reconciler
+            // catches and logs.
+            applicationScope.launch {
+                calendarBackupReconciler.reconcile()
             }
         }
 
@@ -316,8 +365,5 @@ class KashCalApplication : Application(), Configuration.Provider {
     }
 
     override val workManagerConfiguration: Configuration
-        get() = Configuration.Builder()
-            .setWorkerFactory(workerFactory)
-            .setMinimumLoggingLevel(android.util.Log.INFO)
-            .build()
+        get() = workManagerConfiguration(workerFactory)
 }

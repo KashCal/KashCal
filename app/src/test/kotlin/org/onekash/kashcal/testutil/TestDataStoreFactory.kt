@@ -57,13 +57,17 @@ object TestDataStoreFactory {
         every { this@mockk.defaultAllDayReminder } returns MutableStateFlow(defaultAllDayReminder)
         every { userInitials } returns MutableStateFlow("")
         every { tagsAboveNotes } returns MutableStateFlow(false)
+        every { recentTimeZones } returns MutableStateFlow(emptyList())
+        coJustRun { addRecentTimeZone(any(), any()) }
         every { syncPastDays } returns MutableStateFlow(KashCalDataStore.DEFAULT_SYNC_PAST_DAYS)
         every { shownShareCardTooltip } returns MutableStateFlow(true)
         every { showWeekNumbers } returns MutableStateFlow(false)
         every { showMultiDayTimedInAllDayStrip } returns MutableStateFlow(false)
         every { showEventEmojis } returns MutableStateFlow(true)
         every { quickAddEnabled } returns MutableStateFlow(false)
-        every { onboardingDismissed } returns MutableStateFlow(true)
+        every { onboardingCompleted } returns MutableStateFlow(true)
+        every { notificationAskDone } returns MutableStateFlow(false)
+        every { notificationPermissionDeniedCount } returns MutableStateFlow(0)
         every { hiddenDeviceCalendarIds } returns MutableStateFlow(emptySet())
         every { mutedDeviceCalendarIds } returns MutableStateFlow(emptySet())
         every { deviceCalendarRemindersEnabled } returns MutableStateFlow(true)
@@ -81,6 +85,9 @@ object TestDataStoreFactory {
         every { plannerZoom } returns MutableStateFlow(1f)
         coEvery { getPlannerZoom() } returns 1f
         coJustRun { setPlannerZoom(any()) }
+        every { monthFullZoom } returns MutableStateFlow(1f)
+        coEvery { getMonthFullZoom() } returns 1f
+        coJustRun { setMonthFullZoom(any()) }
         coEvery { getTitleSuggestionsEnabled() } returns true
         coEvery { getLastWhatsNewVersionShown() } returns Int.MAX_VALUE
         coEvery { getEnabledDeviceCalendarIds() } returns enabledDeviceCalendarIds
@@ -94,7 +101,8 @@ object TestDataStoreFactory {
         coJustRun { setUserInitials(any()) }
         coJustRun { setTagsAboveNotes(any()) }
         coJustRun { setShownShareCardTooltip(any()) }
-        coJustRun { setOnboardingDismissed(any()) }
+        coJustRun { setOnboardingCompleted(any()) }
+        coJustRun { setNotificationAskDone() }
         coJustRun { setDefaultCalendarView(any()) }
         coJustRun { setDayWeekBarExpanded(any()) }
         coJustRun { setContactSuggestionsDeclined(any()) }

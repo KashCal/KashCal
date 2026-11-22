@@ -25,11 +25,17 @@ import org.onekash.kashcal.data.calendar_provider.DeviceRoundTripFixture.Compani
 import org.onekash.kashcal.data.calendar_provider.DeviceRoundTripFixture.Companion.T0
 import org.onekash.kashcal.data.calendar_provider.DeviceRoundTripFixture.Companion.occ
 import org.onekash.kashcal.data.calendar_provider.DeviceRoundTripFixture.Companion.WEEK
+import org.onekash.kashcal.domain.mapper.toFormState
 import org.onekash.kashcal.domain.writer.DeviceEventDraft
 import org.onekash.kashcal.error.CalendarError
 import org.onekash.kashcal.error.CalendarErrorException
+import org.onekash.kashcal.testutil.phoneLocalDate
+import org.onekash.kashcal.testutil.phoneMidnight
+import org.onekash.kashcal.ui.components.EventFormState
+import org.onekash.kashcal.ui.components.toStartEndTs
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.time.LocalDate
 
 /**
  * Recurring device events written through the app's device writer and read
@@ -697,5 +703,81 @@ class DeviceRecurringRoundTripTest {
         f.writer.deleteSingleOccurrence(id, DAY0 + 2 * DAY, isAllDay = true)
 
         assertEquals(listOf(DAY_CODE, DAY_CODE + 5), march().map { it.startDay })
+    }
+
+    // ---- multi-day all-day series (#444) ----
+
+    private val tripRule = "FREQ=WEEKLY;INTERVAL=2;BYDAY=FR"
+
+    /** The start and end the form saves for an all-day event over [first]..[last]. */
+    private fun allDaySpan(first: LocalDate, last: LocalDate): Pair<Long, Long> =
+        EventFormState(isAllDay = true, dateMillis = phoneMidnight(first), endDateMillis = phoneMidnight(last)).toStartEndTs()
+
+    private fun tripDraft(first: LocalDate, last: LocalDate, title: String = "Trip", rrule: String? = tripRule): DeviceEventDraft {
+        val (start, end) = allDaySpan(first, last)
+        return f.draft(title = title, isAllDay = true, startTs = start, endTs = end, rrule = rrule, reminders = emptyList())
+    }
+
+    private suspend fun createTrip(): Long = createSeries(tripDraft(LocalDate.of(2027, 1, 29), LocalDate.of(2027, 1, 31)))
+
+    /** Each shown occurrence's first and last day, from 25 Jan to 31 Mar 2027. */
+    private suspend fun tripSpans(): List<Pair<Int, Int>> =
+        f.repository.getInstancesForDayRange(20270125, 20270331, setOf(SYNCED_CAL))
+            .sortedBy { it.startTs }.map { it.startDay to it.endDay }
+
+    private val threeDaySpans = listOf(
+        20270129 to 20270131, 20270212 to 20270214, 20270226 to 20270228, 20270312 to 20270314, 20270326 to 20270328,
+    )
+
+    @Test
+    fun `a multi-day all-day series shows every occurrence over all its days`() = runTest {
+        val id = createTrip()
+
+        assertEquals("P3D", f.eventRow(id)!![Events.DURATION])
+        assertEquals(threeDaySpans, tripSpans())
+    }
+
+    @Test
+    fun `editing a multi-day all-day series keeps every occurrence's days`() = runTest {
+        val id = createTrip()
+
+        f.writer.updateEvent(id, tripDraft(LocalDate.of(2027, 1, 29), LocalDate.of(2027, 1, 31), title = "Ski trip")).getOrThrow()
+
+        assertEquals("P3D", f.eventRow(id)!![Events.DURATION])
+        assertEquals(threeDaySpans, tripSpans())
+    }
+
+    @Test
+    fun `this and future on a multi-day all-day series keeps both halves' days`() = runTest {
+        val id = createTrip()
+        val (feb12, _) = allDaySpan(LocalDate.of(2027, 2, 12), LocalDate.of(2027, 2, 12))
+
+        val newId = f.writer.editThisAndFuture(id, feb12, tripDraft(LocalDate.of(2027, 2, 12), LocalDate.of(2027, 2, 14), title = "Ski trip"))
+            .getOrThrow().eventId
+
+        assertEquals("P3D", f.eventRow(newId)!![Events.DURATION])
+        assertEquals(threeDaySpans, tripSpans())
+    }
+
+    @Test
+    fun `editing one occurrence of a multi-day all-day series keeps every occurrence's days`() = runTest {
+        val id = createTrip()
+        val (feb12, _) = allDaySpan(LocalDate.of(2027, 2, 12), LocalDate.of(2027, 2, 12))
+
+        f.writer.editSingleOccurrence(id, feb12, tripDraft(LocalDate.of(2027, 2, 12), LocalDate.of(2027, 2, 14), title = "Ski trip", rrule = null))
+            .getOrThrow()
+
+        assertEquals(threeDaySpans, tripSpans())
+    }
+
+    @Test
+    fun `a multi-day all-day series reopens with its last day as the end date`() = runTest {
+        val id = createTrip()
+
+        val opened = f.reader.getEventForEdit(id, occurrenceTs = null, isAllDay = true)!!
+        val form = opened.event.toFormState(opened.reminders, calendarColor = null, calendarName = "Work", deviceCalendarGroups = emptyList())
+
+        assertEquals(LocalDate.of(2027, 1, 29), phoneLocalDate(form.dateMillis))
+        assertEquals(LocalDate.of(2027, 1, 31), phoneLocalDate(form.endDateMillis))
     }
 }

@@ -26,22 +26,27 @@
 
 <table>
 <tr>
-<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/HomePage-with-AboutMe.png" width="180"></td>
-<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Quick-Event-Add.png" width="180"></td>
-<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Apple-Calendar-Connect.png" width="180"></td>
-<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Insights.png" width="180"></td>
+<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/01-family-week.png" width="180"></td>
+<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/02-all-calendars.png" width="180"></td>
+<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/03-quick-add.png" width="180"></td>
+<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/04-views.png" width="180"></td>
 </tr>
 <tr>
-<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/NewEvent.png" width="180"></td>
-<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/New-Event-Date-Time-Picker.png" width="180"></td>
-<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Navigation-to-different-month-year.png" width="180"></td>
-<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/ViewOptions.png" width="180"></td>
+<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/05-print.png" width="180"></td>
+<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/06-availability.png" width="180"></td>
+<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/07-insights.png" width="180"></td>
+<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/08-open-source.png" width="180"></td>
 </tr>
 <tr>
-<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Sync-with-iCloud.png" width="180"></td>
-<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/CalDAV-Account.png" width="180"></td>
-<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/manage-account.png" width="180"></td>
-<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/ICS-Subscription.png" width="180"></td>
+<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/09-invites.png" width="180"></td>
+<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/10-feeds.png" width="180"></td>
+<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/11-birthdays.png" width="180"></td>
+<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/12-accent.png" width="180"></td>
+</tr>
+<tr>
+<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/13-offline.png" width="180"></td>
+<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/14-app-lock.png" width="180"></td>
+<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/15-languages.png" width="180"></td>
 </tr>
 </table>
 
@@ -128,7 +133,7 @@ SilentSuite two-way sync was tested by [@silent-suite](https://github.com/silent
 
 | Category | Technology |
 |----------|------------|
-| CalDAV/ICS | `icaldav-core` (in-tree, wraps ical4j 4.3.0) |
+| CalDAV/ICS | `icaldav-core` (in-tree, wraps ical4j) |
 | CardDAV/contacts | `vcard-core` (in-tree, wraps ez-vcard 0.12.2) |
 | UI | Jetpack Compose, Material 3 |
 | Widgets | Jetpack Glance |

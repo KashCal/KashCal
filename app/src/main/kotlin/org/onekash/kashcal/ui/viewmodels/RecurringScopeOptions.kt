@@ -73,6 +73,9 @@ private val ICON_DELETE_ALL: ImageVector = Icons.Default.DeleteOutline
  * - Date changed on a later occurrence ([ScopeContext.occurrenceDateChanged]): ALL_EVENTS is
  *   disabled.
  *
+ * - [blockedScopes]: a Room series' move the repeat rule can't express disables those scopes
+ *   with a reason line; null (still checking) disables both series scopes.
+ *
  * An attendee change gates no scope: THIS_EVENT writes the guest set to the exception,
  * THIS_AND_FUTURE to the series split and ALL_EVENTS to the master update.
  *
@@ -83,7 +86,11 @@ fun computeEditScopeOptions(
     originalRrule: String?,
     currentRrule: String?,
     resources: Resources,
+    blockedScopes: Set<EditScope>? = emptySet(),
 ): List<ScopeOption> {
+    val checking = blockedScopes == null
+    val moveReason = resources.getString(R.string.recurring_scope_move_not_expressible)
+    fun blocked(scope: EditScope) = checking || scope in blockedScopes.orEmpty()
     val isFirstOccurrence = context.occurrenceTs <= context.masterStartTs
     // Compare by meaning, not bytes: the picker can re-emit the same rule with reordered parts,
     // different case or whitespace, which a raw compare would read as a user change and wrongly
@@ -107,15 +114,17 @@ fun computeEditScopeOptions(
             scope = EditScope.THIS_AND_FUTURE,
             label = resources.getString(R.string.recurring_this_and_future),
             icon = ICON_FUTURE,
-            enabled = thisAndFutureEnabled,
+            enabled = thisAndFutureEnabled && !blocked(EditScope.THIS_AND_FUTURE),
             tint = ScopeTint.Neutral,
+            reason = moveReason.takeIf { thisAndFutureEnabled && !checking && EditScope.THIS_AND_FUTURE in blockedScopes.orEmpty() },
         ),
         ScopeOption(
             scope = EditScope.ALL_EVENTS,
             label = resources.getString(R.string.recurring_all_events),
             icon = ICON_ALL,
-            enabled = allEventsEnabled,
+            enabled = allEventsEnabled && !blocked(EditScope.ALL_EVENTS),
             tint = ScopeTint.Warn,
+            reason = moveReason.takeIf { allEventsEnabled && !checking && EditScope.ALL_EVENTS in blockedScopes.orEmpty() },
         ),
     )
 }

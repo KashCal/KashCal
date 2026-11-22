@@ -43,6 +43,8 @@
     <string name="channel_event_invitations">Προσκλήσεις Συμβάντων</string>
     <string name="channel_event_invitations_desc">Ειδοποιήσεις όταν λαμβάνετε νέα πρόσκληση ημερολογίου</string>
     <string name="channel_calendar_updates">Αλλαγές ημερολογίου</string>
+    <string name="channel_calendar_backup">Αυτόματο αντίγραφο ασφαλείας ημερολογίων</string>
+    <string name="channel_calendar_backup_description">Σας ειδοποιεί όταν αποτυγχάνει ένα αντίγραφο ασφαλείας ημερολογίου</string>
     <string name="invite_notification_body">Από %1$s · Πατήστε για απάντηση</string>
 
     <!-- ==================== App Shortcuts ==================== -->
@@ -88,7 +90,6 @@
     <string name="action_discard">Απόρριψη</string>
     <string name="action_discard_confirm">Να γίνει απόρριψη;</string>
     <string name="action_dismiss">Παράβλεψη</string>
-    <string name="action_show_all">Εμφάνιση όλων</string>
     <string name="action_connect">Σύνδεση</string>
     <string name="action_duplicate">Αντιγραφή</string>
     <string name="action_share">Κοινοποίηση</string>
@@ -119,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d ακόμη</string>
     <string name="tags_autocomplete_create_new">Δημιουργία «%1$s»</string>
     <string name="cd_tag">Ετικέτα: %1$s</string>
+    <string name="tags_show_events_click_label">Εμφάνιση συμβάντων με αυτήν την ετικέτα</string>
+    <string name="tags_show_events">Εμφάνιση συμβάντων</string>
     <string name="cd_tags_move_menu">Μετακίνηση ετικετών</string>
     <string name="tags_move_above_notes">Μετακίνηση πάνω από τις σημειώσεις</string>
     <string name="tags_move_below_notes">Μετακίνηση κάτω από τις σημειώσεις</string>
@@ -148,7 +151,6 @@
     <string name="label_enter_hex">Εισάγετε 6 hex χαρακτήρες (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Όλα</string>
     <string name="view_week">Εβδομάδα</string>
     <string name="view_month">Μήνας</string>
     <string name="label_all_day">Ολοήμερο</string>
@@ -190,17 +192,38 @@
     <string name="settings_event_emojis_info">Προσθέτει ένα emoji στα συμβάντα με βάση τον τίτλο, όπως 🎂 για \"Γενέθλια\".</string>
     <string name="settings_force_sync">Αναγκαστικός πλήρης συγχρονισμός</string>
     <string name="settings_force_sync_subtitle">Εκ νέου λήψη όλων των δεδομένων ημερολογίου</string>
+    <string name="settings_force_sync_no_account">Δεν έχει ρυθμιστεί λογαριασμός συγχρονισμού</string>
+    <string name="force_sync_confirm">Εκ νέου λήψη %1$s από %2$s. Οι μη συγχρονισμένες αλλαγές διατηρούνται.</string>
+    <string name="action_start">Έναρξη</string>
     <string name="settings_sync_history">Ιστορικό συγχρονισμού</string>
     <string name="settings_sync_history_subtitle">Προβολή συνεδριών συγχρονισμού (τελευταίες 48 ώρες)</string>
     <string name="settings_import_subtitle">Προσθήκη συμβάντων από αρχείο ICS σε οποιοδήποτε ημερολόγιο</string>
-    <string name="settings_export_subtitle">Αποθήκευση συμβάντων σε αρχείο ICS</string>
     <string name="settings_birthday_reminder">Υπενθύμιση γενεθλίων</string>
-    <string name="settings_use_device_timezone">Χρήση ζώνης ώρας συσκευής</string>
     <string name="settings_section_calendars">Ημερολόγια και λογαριασμοί</string>
     <string name="settings_section_appearance">Εμφάνιση</string>
     <string name="settings_section_creating_events">Προτιμήσεις συμβάντων</string>
     <string name="settings_section_sync">Συγχρονισμός</string>
     <string name="settings_section_data">Αντίγραφο ασφαλείας &amp; επαναφορά</string>
+    <string name="settings_section_troubleshooting">Αντιμετώπιση προβλημάτων</string>
+
+    <!-- ==================== Debug report (Settings > Troubleshooting) ==================== -->
+    <string name="debug_report_row_label">Εξαγωγή αναφοράς διαγνωστικών</string>
+    <string name="debug_report_row_subtitle">Λεπτομέρειες καταρρεύσεων, συγχρονισμού και διαμόρφωσης για αποστολή μαζί με αναφορά σφάλματος</string>
+    <string name="debug_report_sheet_title">Αναφορά διαγνωστικών</string>
+    <string name="debug_report_sheet_body">Ένα αρχείο κειμένου για αποστολή μαζί με αναφορά σφάλματος. Στείλτε το σύντομα μετά το πρόβλημα: το αρχείο καταγραφής της εφαρμογής διατηρεί μόνο την πρόσφατη δραστηριότητα.</string>
+    <string name="debug_report_item_exits">Γιατί έκλεισε πρόσφατα η εφαρμογή</string>
+    <string name="debug_report_item_exits_detail">Καταρρεύσεις, παγώματα, χαμηλή μνήμη</string>
+    <string name="debug_report_item_log">Αρχείο καταγραφής εφαρμογής</string>
+    <string name="debug_report_item_log_detail">Τα μηνύματα του ίδιου του KashCal, μαζί με λεπτομέρειες καταρρεύσεων</string>
+    <string name="debug_report_item_sync_detail">Πρόσφατοι συγχρονισμοί, έως και 48 ώρες πίσω</string>
+    <string name="debug_report_item_pending">Αλλαγές σε αναμονή</string>
+    <string name="debug_report_item_pending_detail">Επεξεργασίες που δεν έχουν σταλεί ακόμα στον διακομιστή σας</string>
+    <string name="debug_report_item_setup">Διαμόρφωση</string>
+    <string name="debug_report_item_setup_detail">Έκδοση εφαρμογής και Android, άδειες, ρυθμίσεις μπαταρίας, τύποι λογαριασμών</string>
+    <string name="debug_report_privacy_note">Οι διευθύνσεις email, οι διευθύνσεις ιστού και τα διακριτικά πρόσβασης αποκρύπτονται. Οι τίτλοι συμβάντων, τα ονόματα ημερολογίων και τα ονόματα επαφών όχι. Στείλτε τη μέσω email, όχι σε δημόσια ανάρτηση.</string>
+    <string name="debug_report_share">Κοινοποίηση αναφοράς</string>
+    <string name="debug_report_chooser_title">Κοινοποίηση αναφοράς διαγνωστικών</string>
+    <string name="debug_report_failed">Δεν ήταν δυνατή η δημιουργία της αναφοράς διαγνωστικών</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Κλείδωμα εφαρμογής</string>
@@ -236,9 +259,37 @@
     <string name="backup_error_read_failed">Αδύνατη η ανάγνωση του αρχείου</string>
 
     <!-- ==================== Onboarding ==================== -->
-    <string name="onboarding_apple_calendar">Apple Calendar;</string>
-    <string name="onboarding_got_you">Σας καλύπτουμε.</string>
-    <string name="onboarding_connect_prompt">Συνδέστε το iCloud για να δείτε τα συμβάντα σας εδώ</string>
+    <string name="onboarding_title">Πού είναι τα ημερολόγιά σας;</string>
+    <string name="onboarding_subtitle">Επιλέξτε ένα για σύνδεση.</string>
+    <string name="onboarding_icloud_detail">Apple ID και κωδικός εφαρμογής</string>
+    <string name="onboarding_caldav_title">Διακομιστής CalDAV</string>
+    <string name="onboarding_caldav_detail">Nextcloud, Fastmail, Radicale και άλλα</string>
+    <string name="onboarding_device_title">Σε αυτή τη συσκευή</string>
+    <string name="onboarding_phone_detail">Google, Outlook και εφαρμογές συγχρονισμού</string>
+    <string name="onboarding_use_offline">Χρήση ημερολογίου εκτός σύνδεσης</string>
+    <string name="onboarding_trust">Ανοιχτός κώδικας. Χωρίς διαφημίσεις. Χωρίς παρακολούθηση.</string>
+
+    <!-- ==================== Reminders are off ==================== -->
+    <string name="reminders_off_title">Οι υπενθυμίσεις είναι απενεργοποιημένες</string>
+    <plurals name="reminders_off_body">
+        <item quantity="one">%d συμβάν αυτής της εβδομάδας έχει υπενθύμιση.</item>
+        <item quantity="other">%d συμβάντα αυτής της εβδομάδας έχουν υπενθυμίσεις.</item>
+    </plurals>
+    <string name="reminders_off_not_now">Όχι τώρα</string>
+    <string name="reminders_off_turn_on">Ενεργοποίηση</string>
+    <string name="reminders_on_snackbar">Οι υπενθυμίσεις ενεργοποιήθηκαν</string>
+
+    <!-- ==================== About ==================== -->
+    <string name="about_tagline">Όλα τα ημερολόγιά σας σε μία ιδιωτική εφαρμογή.</string>
+    <string name="about_help_title">Βοήθεια και οδηγοί</string>
+    <string name="about_help_detail">Ρύθμιση, συγχρονισμός και ερωτήσεις</string>
+    <string name="about_source_title">Πηγαίος κώδικας</string>
+    <string name="about_source_detail">Apache 2.0, στο GitHub</string>
+    <string name="about_support_title">Υποστηρίξτε το KashCal</string>
+    <string name="about_support_detail">Ευχαριστούμε όλους όσοι ήδη το κάνουν</string>
+    <string name="about_link_failed">Καμία εφαρμογή δεν μπορεί να ανοίξει αυτόν τον σύνδεσμο.</string>
+    <string name="about_built_in_austin">Φτιαγμένο με ❤️ στο Austin</string>
+    <string name="about_version">Έκδοση %1$s</string>
 
     <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Παράλειψη</string>
@@ -257,22 +308,32 @@
     <string name="whats_new_v772_changes_title">Δείτε τι άλλαξε</string>
     <string name="whats_new_v772_changes_body">Τα νέα, επεξεργασμένα και διαγραμμένα συμβάντα από τα ημερολόγιά σας iCloud και CalDAV συγκεντρώνονται στις Πρόσφατες αλλαγές για 7 ημέρες. Πατήστε ένα για να το ανοίξετε.</string>
     <string name="whats_new_v772_notifications_body">Λάβετε ειδοποίηση όταν ο συγχρονισμός στο παρασκήνιο εντοπίσει αλλαγές στα συμβάντα σας iCloud ή CalDAV. Η λειτουργία παραμένει απενεργοποιημένη μέχρι να την ενεργοποιήσετε.</string>
+    <string name="whats_new_v803_offline_title">Ημερολόγια που δεν φεύγουν από το τηλέφωνο</string>
+    <string name="whats_new_v803_offline_body">Κάποια σχέδια δεν έχουν θέση σε έναν διακομιστή. Δώστε τους δικά τους ημερολόγια εκτός σύνδεσης, όσα θέλετε.</string>
+    <string name="whats_new_v803_backup_title">Αντίγραφα ασφαλείας χωρίς έγνοιες</string>
+    <string name="whats_new_v803_backup_body">Επιλέξτε μία φορά έναν φάκελο και το KashCal κρατά εκεί ένα ενημερωμένο αντίγραφο των ημερολογίων σας εκτός σύνδεσης.</string>
+    <string name="whats_new_v803_print_title">Η εβδομάδα σας, στο χαρτί</string>
+    <string name="whats_new_v803_print_body">Εκτυπώστε την εβδομάδα που βλέπετε. Σε ποιο ψυγείο θα κολλήσει, το αποφασίζετε εσείς.</string>
     <string name="whats_new_hero_sample_lunch">Γεύμα ομάδας</string>
     <string name="whats_new_hero_sample_review">Ανασκόπηση σχεδίασης</string>
     <string name="whats_new_hero_sample_book_club">Λέσχη ανάγνωσης</string>
+    <string name="whats_new_hero_sample_dentist">Οδοντίατρος</string>
+    <string name="whats_new_hero_sample_yoga">Γιόγκα</string>
     <string name="whats_new_hero_sample_calendar">Εργασία</string>
+    <string name="whats_new_hero_sample_family">Οικογένεια</string>
+    <string name="whats_new_hero_sample_garden">Κήπος</string>
+    <string name="whats_new_hero_sample_folder">Αντίγραφα ασφαλείας ημερολογίων</string>
     <string name="whats_new_hero_now">τώρα</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Σύνδεση iCloud</string>
     <string name="signin_caldav_title">Προσθήκη λογαριασμού CalDAV</string>
+    <string name="signin_caldav_sign_in_again_title">Σύνδεση ξανά</string>
     <string name="signin_connected_to">Συνδεδεμένο με %1$s</string>
 
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Νέο συμβάν</string>
     <string name="dialog_edit_event_title">Επεξεργασία συμβάντος</string>
-    <string name="dialog_force_sync_title">Αναγκαστικός πλήρης συγχρονισμός;</string>
-    <string name="dialog_force_sync_message">Αυτό θα κατεβάσει εκ νέου όλα τα δεδομένα ημερολογίου από τον διακομιστή. Οι τοπικές αλλαγές θα διατηρηθούν.</string>
     <string name="dialog_enable_notifications">Ενεργοποίηση ειδοποιήσεων;</string>
     <string name="dialog_action_required">Αυτή η ενέργεια είναι απαραίτητη για να συνεχίσετε.</string>
     <string name="dialog_add_to_calendar">Προσθήκη στο ημερολόγιο</string>
@@ -285,6 +346,7 @@
     <string name="status_no_events_week">Δεν υπάρχουν συμβάντα αυτή την εβδομάδα</string>
     <string name="status_more_events">+%1$d ακόμα</string>
     <string name="status_no_sync_sessions">Δεν υπάρχουν ακόμα συνεδρίες συγχρονισμού.\n\nΣύρετε προς τα κάτω στην προβολή ημερολογίου για να ξεκινήσετε συγχρονισμό.</string>
+    <string name="status_no_sync_account">Δεν έχει ρυθμιστεί λογαριασμός συγχρονισμού. Τα ημερολόγια εκτός σύνδεσης παραμένουν στη συσκευή· τα ημερολόγια της συσκευής συγχρονίζονται μέσω του δικού τους λογαριασμού.</string>
     <string name="status_no_writable_calendars">Δεν υπάρχουν διαθέσιμα εγγράψιμα ημερολόγια</string>
     <string name="status_events_count">%1$d Συμβάντα</string>
     <string name="status_sync_history">Ιστορικό συγχρονισμού</string>
@@ -333,6 +395,7 @@
     <string name="caldav_error_unexpected">Απρόσμενο σφάλμα. Δοκιμάστε ξανά.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nΑν πρόκειται για διακομιστή στο τοπικό σας δίκτυο, επιτρέψτε την πρόσβαση στο τοπικό δίκτυο για να συνδεθείτε.</string>
     <string name="caldav_error_connection_refused_insecure">Ο διακομιστής ανακατεύθυνε τη σύνδεση σε σημείο που το KashCal δεν ακολουθεί (μη κρυπτογραφημένη διεύθυνση ή βρόχο ανακατευθύνσεων), οπότε το KashCal σταμάτησε πριν στείλει τον κωδικό σας. Ελέγξτε τη διεύθυνση του διακομιστή.</string>
+    <string name="caldav_error_sign_in_again_mismatch">Αυτός είναι διαφορετικός λογαριασμός. Συνδεθείτε με το όνομα χρήστη και τον διακομιστή που χρησιμοποιεί αυτός ο λογαριασμός.</string>
     <string name="local_network_banner_title">Απαιτείται πρόσβαση στο τοπικό δίκτυο</string>
     <string name="local_network_banner_body">Αυτός ο διακομιστής φαίνεται να βρίσκεται στο τοπικό σας δίκτυο. Επιτρέψτε την πρόσβαση στο τοπικό δίκτυο ώστε το KashCal να μπορεί να συνδεθεί σε αυτόν.</string>
     <string name="local_network_banner_allow">Να επιτραπεί η πρόσβαση</string>
@@ -374,7 +437,6 @@
     <string name="error_device_calendar_title">Σφάλμα ημερολογίου</string>
     <string name="error_device_calendar_write_failed">Αποτυχία αποθήκευσης στο ημερολόγιο συσκευής. Δοκιμάστε ξανά.</string>
     <string name="error_device_calendar_permission">Απαιτείται άδεια εγγραφής ημερολογίου. Δώστε άδεια από τις Ρυθμίσεις.</string>
-    <string name="error_device_calendar_permission_denied">Απενεργοποιήστε και ενεργοποιήστε ξανά την άδεια Ημερολογίου στις Ρυθμίσεις για να παραχωρήσετε πρόσβαση εγγραφής</string>
     <string name="error_device_calendar_not_found">Το ημερολόγιο δεν βρέθηκε. Ίσως αφαιρέθηκε.</string>
     <string name="error_device_event_not_found">Το συμβάν δεν βρέθηκε. Ίσως διαγράφηκε.</string>
     <string name="error_device_calendar_read_only">Αυτό το ημερολόγιο είναι μόνο για ανάγνωση.</string>
@@ -401,12 +463,11 @@
     <string name="cd_recurring">Επαναλαμβανόμενο</string>
     <string name="cd_enabled">Ενεργοποιημένο</string>
     <string name="cd_sync_error">Σφάλμα συγχρονισμού</string>
-    <string name="cd_select_label">Επιλογή %1$s</string>
     <string name="cd_wheel_picker">Τροχός επιλογής με %1$d επιλογές</string>
     <string name="cd_time_entry_keyboard">Εισαγωγή ακριβούς ώρας</string>
     <string name="time_entry_dialog_title">Εισαγωγή ώρας</string>
     <string name="time_entry_tap_to_edit">Πατήστε για επεξεργασία</string>
-    <string name="cd_version_info">KashCal έκδοση %1$s. Πατήστε παρατεταμένα για επιλογές εντοπισμού σφαλμάτων.</string>
+    <string name="cd_version_info">KashCal έκδοση %1$s</string>
     <string name="cd_about_setting">Σχετικά με %1$s</string>
     <string name="cd_color_slider">Ρυθμιστικό χρώματος, τρέχον %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d μοίρες</string>
@@ -435,7 +496,6 @@
     <string name="label_recurrence_on_date">Σε ημερομηνία</string>
 
     <!-- ==================== Settings (Additional) ==================== -->
-    <string name="settings_visible_calendars">Ορατά ημερολόγια</string>
     <string name="settings_default_calendar">Προεπιλεγμένο ημερολόγιο</string>
     <string name="settings_default_event_length">Προεπιλεγμένη διάρκεια συμβάντος</string>
     <string name="settings_default_event_length_hint">Προεπιλεγμένη διάρκεια για νέα συμβάντα</string>
@@ -455,7 +515,6 @@
     <string name="option_saturday">Σάββατο</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Δεν βρέθηκαν συμβάντα</string>
     <string name="empty_no_upcoming_events">Δεν υπάρχουν επερχόμενα συμβάντα</string>
     <string name="empty_no_calendars">Δεν υπάρχουν διαθέσιμα ημερολόγια</string>
 
@@ -466,7 +525,15 @@
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Λήψη ημερολογίου</string>
     <string name="action_import_from_file">Εισαγωγή συμβάντων από αρχείο</string>
-    <string name="action_export_local_calendar">Εξαγωγή τοπικού ημερολογίου</string>
+    <string name="settings_export_calendars">Εξαγωγή ημερολογίων</string>
+    <string name="settings_export_calendars_subtitle">Αποθήκευση ημερολογίου ως αρχείο ICS</string>
+    <string name="export_calendar_no_events">Δεν υπάρχουν συμβάντα</string>
+    <string name="export_calendar_preparing">Προετοιμασία…</string>
+    <string name="cd_export_calendar">Εξαγωγή %1$s</string>
+    <string name="cd_export_calendar_preparing">Προετοιμασία %1$s</string>
+    <string name="export_calendar_chooser_title">Εξαγωγή ημερολογίου</string>
+    <string name="export_event_chooser_title">Εξαγωγή συμβάντος</string>
+    <string name="export_file_failed">Δεν ήταν δυνατή η δημιουργία του αρχείου.</string>
 
     <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
@@ -504,12 +571,14 @@
     <string name="accounts_cd_back">Πίσω</string>
     <string name="accounts_sync_issue">Πρόβλημα συγχρονισμού</string>
     <string name="accounts_cd_sync_warning">Προειδοποίηση συγχρονισμού</string>
+    <string name="accounts_cd_sync_off">συγχρονισμός ανενεργός</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">Ροές ημερολογίου</string>
     <string name="subscriptions_section_add">Προσθήκη</string>
     <string name="subscriptions_empty_ics">Δεν υπάρχουν συνδρομές ICS</string>
     <string name="subscriptions_empty_ics_hint">Προσθέστε μια ροή ημερολογίου για να δείτε συμβάντα</string>
+    <string name="subscriptions_swipe_hint">Σύρετε μια ροή για να τη διαγράψετε.</string>
     <string name="subscriptions_add_ics">Προσθήκη ημερολογίου ICS</string>
     <string name="qs_tile_label">Προσθήκη συμβάντος</string>
     <string name="holiday_catalog_add">Προσθήκη ημερολογίου αργιών</string>
@@ -519,6 +588,11 @@
     <string name="holiday_catalog_empty_hint">Δοκιμάστε διαφορετικό όνομα</string>
     <string name="holiday_catalog_validate_error">Δεν ήταν δυνατή η σύνδεση με αυτό το ημερολόγιο. Ελέγξτε τη σύνδεσή σας και προσπαθήστε ξανά.</string>
     <string name="holiday_catalog_attribution">Ημερολόγια αργιών από το Mozilla Thunderbird, υπό την άδεια %1$s.</string>
+    <string name="account_feeds_add">Προσθήκη από λογαριασμό</string>
+    <string name="account_feeds_note">Εμφανίζει τις ροές ημερολογίου που είναι αποθηκευμένες στους λογαριασμούς σας iCloud και CalDAV. Ενεργοποιήστε τη για να την προσθέσετε στις «Ροές ημερολογίου».</string>
+    <string name="account_feeds_checking">Έλεγχος…</string>
+    <string name="account_feeds_none">Δεν βρέθηκαν ροές ημερολογίου</string>
+    <string name="account_feeds_failed">Δεν ήταν δυνατή η φόρτωση των ροών ημερολογίου</string>
     <string name="subscriptions_row_label">Ροές ημερολογίου (ICS)</string>
     <string name="subscriptions_row_hint">π.χ. αργίες, αθλητικά, σχολείο</string>
 
@@ -564,6 +638,8 @@
     <string name="account_detail_discovering">Ανακάλυψη…</string>
     <string name="account_detail_discover_calendars">Ανακάλυψη νέων ημερολογίων</string>
     <string name="account_detail_change_password">Αλλαγή κωδικού</string>
+    <string name="account_detail_sign_in_again">Σύνδεση ξανά</string>
+    <string name="account_detail_sign_in_again_subtitle">Το KashCal δεν έχει πλέον τον κωδικό αυτού του λογαριασμού. Συνδεθείτε για να γίνει ξανά συγχρονισμός. Τα ημερολόγια και τα συμβάντα σας διατηρούνται.</string>
     <string name="account_detail_sign_out">Αποσύνδεση</string>
     <string name="account_detail_never_synced">Ποτέ δεν συγχρονίστηκε</string>
     <string name="account_detail_last_success">Τελευταία επιτυχία: %1$s</string>
@@ -587,6 +663,107 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Ημερολόγια συσκευής</string>
     <string name="settings_device_calendars_hint">Ημερολόγια από άλλες εφαρμογές</string>
+    <string name="offline_calendars_row_label">Ημερολόγια εκτός σύνδεσης</string>
+    <string name="offline_calendars_row_hint">Ημερολόγια που μένουν σε αυτή τη συσκευή</string>
+    <string name="offline_calendars_manage_note">Σύρετε ένα ημερολόγιο για να το διαγράψετε.</string>
+    <string name="offline_calendars_info">Διατηρούνται σε αυτή τη συσκευή και δεν συγχρονίζονται ποτέ.</string>
+    <string name="offline_calendars_info_cd">Σχετικά με τα ημερολόγια εκτός σύνδεσης</string>
+    <string name="offline_calendar_default_state">Προεπιλογή</string>
+    <string name="offline_calendar_new">Νέο ημερολόγιο</string>
+    <string name="offline_calendar_new_in_picker">Νέο ημερολόγιο εκτός σύνδεσης</string>
+    <string name="action_create">Δημιουργία</string>
+    <string name="offline_calendar_rename">Μετονομασία</string>
+    <string name="offline_calendar_color">Χρώμα</string>
+    <string name="offline_calendar_export">Εξαγωγή ημερολογίου</string>
+    <string name="offline_calendar_builtin_info">Το ενσωματωμένο ημερολόγιο δεν μπορεί να μετονομαστεί ή να διαγραφεί. Τα νέα συμβάντα πηγαίνουν εδώ όταν δεν επιλέγεται ημερολόγιο.</string>
+    <string name="offline_calendar_builtin_info_cd">Σχετικά με το ενσωματωμένο ημερολόγιο</string>
+    <string name="offline_calendar_rename_cancel_cd">Ακύρωση μετονομασίας</string>
+    <string name="offline_calendar_rename_save_cd">Αποθήκευση ονόματος</string>
+    <string name="offline_calendar_delete_cd">Διαγραφή %1$s</string>
+    <plurals name="offline_calendar_delete_confirm">
+        <item quantity="one">Οριστική διαγραφή του \"%2$s\" και του %1$d συμβάντος του; Δεν είναι δυνατή η αναίρεση.</item>
+        <item quantity="other">Οριστική διαγραφή του \"%2$s\" και των %1$d συμβάντων του; Δεν είναι δυνατή η αναίρεση.</item>
+    </plurals>
+    <string name="offline_calendar_delete_empty">Οριστική διαγραφή του \"%1$s\"; Δεν έχει συμβάντα.</string>
+    <plurals name="offline_calendar_delete_also">
+        <item quantity="one">Διαγραφή και %1$d συμβάντος</item>
+        <item quantity="other">Διαγραφή και %1$d συμβάντων</item>
+    </plurals>
+    <string name="offline_calendar_deleted">Διαγράφηκε: %1$s</string>
+    <string name="offline_calendar_duplicate_name">Υπάρχει ήδη ημερολόγιο εκτός σύνδεσης με όνομα \"%1$s\"</string>
+    <string name="offline_calendar_similar_name">Πολύ παρόμοιο με «%1$s». Επιλέξτε διαφορετικό όνομα.</string>
+    <string name="calendar_backup_title">Αυτόματο αντίγραφο ασφαλείας ημερολογίων</string>
+    <string name="calendar_backup_row_off">Ανενεργό</string>
+    <string name="calendar_backup_row_on">%1$s · %2$s</string>
+    <string name="calendar_backup_row_problem">Δεν υπάρχει πρόσβαση στον φάκελο αντιγράφων ασφαλείας</string>
+    <string name="calendar_backup_intro">Αποθηκεύει κάθε ημερολόγιο εκτός σύνδεσης ως αρχείο ICS σε φάκελο της επιλογής σας.</string>
+    <string name="calendar_backup_choose_folder">Επιλογή φακέλου</string>
+    <string name="calendar_backup_choose_folder_hint">Επιλέξτε ή δημιουργήστε έναν φάκελο, για παράδειγμα στο Documents. Το Android δεν επιτρέπει το ανώτατο επίπεδο του αποθηκευτικού χώρου ή τον ίδιο τον φάκελο Download.</string>
+    <string name="calendar_backup_folder">Φάκελος</string>
+    <string name="calendar_backup_change">Αλλαγή</string>
+    <string name="calendar_backup_frequency">Συχνότητα</string>
+    <string name="calendar_backup_frequency_info">Τα αντίγραφα ασφαλείας μπορεί να καθυστερήσουν: το Android περιορίζει τις εργασίες στο παρασκήνιο όταν το τηλέφωνο είναι αδρανές ή όταν το KashCal δεν έχει ανοιχτεί για αρκετό καιρό.</string>
+    <string name="calendar_backup_copies">Αντίγραφα προς διατήρηση</string>
+    <string name="calendar_backup_copies_explained">Κάθε αντίγραφο ασφαλείας διατηρεί το προηγούμενο αρχείο ως αντίγραφο με ημερομηνία. Όταν ξεπεράσουν αυτόν τον αριθμό, διαγράφονται τα παλαιότερα. Το νεότερο αρχείο έχει πάντα το όνομα του ημερολογίου.</string>
+    <string name="calendar_backup_copies_fewer">Λιγότερα αντίγραφα</string>
+    <string name="calendar_backup_copies_more">Περισσότερα αντίγραφα</string>
+    <plurals name="calendar_backup_copies_state">
+        <item quantity="one">%d αντίγραφο</item>
+        <item quantity="other">%d αντίγραφα</item>
+    </plurals>
+    <plurals name="calendar_backup_deletes">
+        <item quantity="one">Διαγράφει %d παλαιότερο αντίγραφο. Δεν είναι δυνατή η αναίρεση.</item>
+        <item quantity="other">Διαγράφει %d παλαιότερα αντίγραφα. Δεν είναι δυνατή η αναίρεση.</item>
+    </plurals>
+    <string name="calendar_backup_deletes_unknown">Διαγράφει τα παλαιότερα αντίγραφα πέρα από αυτόν τον αριθμό. Δεν είναι δυνατή η αναίρεση.</string>
+    <string name="calendar_backup_calendars">Ημερολόγια εκτός σύνδεσης</string>
+    <string name="calendar_backup_calendar_nothing_saved">%1$s · Δεν υπάρχουν συμβάντα, δεν αποθηκεύτηκε τίποτα</string>
+    <string name="calendar_backup_calendar_save_failed">%1$s · Η αποθήκευση απέτυχε. Θα γίνει νέα προσπάθεια στο επόμενο αντίγραφο ασφαλείας.</string>
+    <string name="calendar_backup_status">Τελευταίο αντίγραφο ασφαλείας %1$s</string>
+    <plurals name="calendar_backup_status_failed">
+        <item quantity="one">Τελευταίο αντίγραφο ασφαλείας %1$s · %2$d ημερολόγιο απέτυχε</item>
+        <item quantity="other">Τελευταίο αντίγραφο ασφαλείας %1$s · %2$d ημερολόγια απέτυχαν</item>
+    </plurals>
+    <string name="calendar_backup_now">Δημιουργία αντιγράφου τώρα</string>
+    <string name="calendar_backup_running">Δημιουργία αντιγράφου…</string>
+    <string name="calendar_backup_footer_overwrites">Το KashCal αντικαθιστά αυτά τα αρχεία σε κάθε αντίγραφο ασφαλείας, οπότε οι αλλαγές από άλλες εφαρμογές δεν διατηρούνται. Για να επαναφέρετε ένα ημερολόγιο, χρησιμοποιήστε την επιλογή «Εισαγωγή συμβάντων από αρχείο».</string>
+    <string name="calendar_backup_off_files_stay">Τα υπάρχοντα αρχεία παραμένουν εδώ: %1$s.</string>
+    <string name="calendar_backup_folder_unreachable">Δεν υπάρχει πρόσβαση: %1$s. Ίσως μετακινήθηκε, διαγράφηκε ή αποσυνδέθηκε.</string>
+    <string name="calendar_backup_error_unsupported">Δεν είναι δυνατή η αποθήκευση αρχείων εδώ: %1$s. Επιλέξτε άλλο φάκελο.</string>
+    <string name="calendar_backup_choose_again">Επιλέξτε ξανά</string>
+    <string name="calendar_backup_pick_refused">Το KashCal δεν μπορεί να χρησιμοποιήσει αυτόν τον φάκελο. Επιλέξτε άλλον.</string>
+    <string name="calendar_backup_pick_cannot_create">Το KashCal δεν μπορεί να δημιουργήσει αρχεία σε αυτόν τον φάκελο. Επιλέξτε άλλον.</string>
+    <string name="calendar_backup_failed_title">Το αντίγραφο ασφαλείας ημερολογίων απέτυχε</string>
+    <string name="calendar_backup_folder_unnamed">φάκελος αντιγράφων ασφαλείας</string>
+    <string name="calendar_backup_alert_unreachable">Δεν υπάρχει πρόσβαση: %1$s. Πατήστε για να επιλέξετε ξανά τον φάκελο.</string>
+    <string name="calendar_backup_alert_unsupported">Δεν είναι δυνατή η αποθήκευση αρχείων εδώ: %1$s. Πατήστε για να επιλέξετε άλλο φάκελο.</string>
+    <string name="calendar_backup_alert_file_retry">Δεν ήταν δυνατή η αποθήκευση: %1$s. Το KashCal θα προσπαθήσει ξανά στο επόμενο αντίγραφο ασφαλείας.</string>
+    <string name="calendar_backup_every_hour">Κάθε ώρα</string>
+    <string name="calendar_backup_every_day">Κάθε ημέρα</string>
+    <plurals name="calendar_backup_every_hours">
+        <item quantity="one">Κάθε %d ώρα</item>
+        <item quantity="other">Κάθε %d ώρες</item>
+    </plurals>
+    <plurals name="calendar_backup_every_days">
+        <item quantity="one">Κάθε %d ημέρα</item>
+        <item quantity="other">Κάθε %d ημέρες</item>
+    </plurals>
+    <string name="calendar_backup_every_day_hours">Κάθε 1 ημέρα και %1$s</string>
+    <string name="calendar_backup_every_days_hours">Κάθε %1$s και %2$s</string>
+    <string name="calendar_backup_interval_too_short">Επιλέξτε τουλάχιστον 1 ώρα.</string>
+    <string name="calendar_backup_interval_too_long">Επιλέξτε έως 30 ημέρες.</string>
+    <plurals name="calendar_backup_alert_files_retry">
+        <item quantity="one">Δεν ήταν δυνατή η αποθήκευση %d ημερολογίου. Το KashCal θα προσπαθήσει ξανά στο επόμενο αντίγραφο ασφαλείας.</item>
+        <item quantity="other">Δεν ήταν δυνατή η αποθήκευση %d ημερολογίων. Το KashCal θα προσπαθήσει ξανά στο επόμενο αντίγραφο ασφαλείας.</item>
+    </plurals>
+    <string name="calendar_backup_notifications_app_off">Οι ειδοποιήσεις είναι απενεργοποιημένες για το KashCal, οπότε δεν μπορεί να σας ειδοποιήσει αν αποτύχει ένα αντίγραφο ασφαλείας.</string>
+    <string name="calendar_backup_notifications_channel_off">Οι ειδοποιήσεις αντιγράφων ασφαλείας είναι απενεργοποιημένες, οπότε το KashCal δεν μπορεί να σας ειδοποιήσει αν αποτύχει ένα αντίγραφο ασφαλείας.</string>
+    <string name="calendar_backup_open_settings">Άνοιγμα ρυθμίσεων</string>
+    <string name="calendar_backup_not_now">Όχι τώρα</string>
+    <plurals name="calendar_backup_row_calendars_failed">
+        <item quantity="one">%d ημερολόγιο απέτυχε</item>
+        <item quantity="other">%d ημερολόγια απέτυχαν</item>
+    </plurals>
     <string name="settings_quick_event_add">Έξυπνη προσθήκη συμβάντων</string>
     <string name="settings_quick_event_add_info">Δημιουργήστε συμβάντα πληκτρολογώντας φυσικά. Το \"Μεσημεριανό με τον Sam Παρασκευή 13:00\" συμπληρώνει για εσάς τον τίτλο, την ημερομηνία και την ώρα.</string>
     <string name="settings_suggest_titles">Πρόταση τίτλων συμβάντων</string>
@@ -646,6 +823,8 @@
     <string name="cd_pick_month_year">Επιλογή μήνα και έτους</string>
     <string name="cd_previous_month">Προηγούμενος μήνας</string>
     <string name="cd_next_month">Επόμενος μήνας</string>
+    <string name="cd_previous_day">Προηγούμενη ημέρα</string>
+    <string name="cd_next_day">Επόμενη ημέρα</string>
     <string name="cd_month_year_picker">Επιλογέας μήνα και έτους</string>
     <string name="cd_remove_alert">Αφαίρεση ειδοποίησης</string>
     <string name="cd_warning">Προειδοποίηση</string>
@@ -655,7 +834,25 @@
     <string name="label_on_days">Τις ημέρες</string>
     <string name="label_pattern">Μοτίβο</string>
     <string name="label_ends">Τέλος</string>
+    <string name="sheet_hint_change_end">Πατήστε μια ημέρα για να αλλάξετε το τέλος</string>
     <string name="label_timezone">Ζώνη ώρας</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Αναζήτηση πόλης, χώρας ή ζώνης</string>
+    <string name="timezone_section_this_event">Αυτό το συμβάν</string>
+    <string name="timezone_section_device">Ζώνη ώρας συσκευής</string>
+    <string name="timezone_section_recent">Πρόσφατες</string>
+    <string name="timezone_section_all">Όλες οι ζώνες ώρας</string>
+    <string name="timezone_offsets_on">Διαφορές στις %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Από το ημερολόγιο: %1$s</string>
+    <string name="timezone_shown_in_device_time">Εμφανίζεται στην ώρα της συσκευής</string>
+    <string name="timezone_loading">Φόρτωση ζωνών ώρας…</string>
+    <string name="timezone_no_match">Καμία ζώνη ώρας δεν ταιριάζει</string>
+    <string name="timezone_no_match_hint">Δοκιμάστε μια πόλη, μια χώρα ή μια διαφορά όπως +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Ειδοποιήσεις</string>
     <string name="label_add_alert">Προσθήκη ειδοποίησης</string>
     <string name="label_recurrence_never">Ποτέ</string>
@@ -663,11 +860,8 @@
     <string name="label_yesterday">Χθες</string>
     <string name="label_device_calendars">Ημερολόγια συσκευής</string>
     <string name="label_default_calendar_hint">Τα νέα συμβάντα θα δημιουργούνται σε αυτό το ημερολόγιο</string>
-    <string name="label_visible_count">%1$d / %2$d ορατά</string>
     <string name="label_reminders_truncated">%1$d δεν εμφανίζονται (%2$d σύνολο, μέγ. %3$d επεξεργάσιμα)</string>
     <string name="label_found_events">Βρέθηκαν: %1$d συμβάντα</string>
-    <string name="label_open_debug_menu">Άνοιγμα μενού εντοπισμού σφαλμάτων</string>
-    <string name="placeholder_search">Αναζήτηση…</string>
     <string name="settings_search_placeholder">Αναζήτηση ρυθμίσεων…</string>
     <string name="settings_search_no_results">Δεν βρέθηκαν ρυθμίσεις για \"%1$s\"</string>
     <string name="cd_search_settings">Αναζήτηση ρυθμίσεων</string>
@@ -678,16 +872,13 @@
     <string name="status_hours_ago">πριν %1$d ώρ</string>
 
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
-    <string name="device_calendars_description">Εμφάνιση συμβάντων από άλλες εφαρμογές ημερολογίου στη συσκευή σας (προσαρμογείς συγχρονισμού, τοπικά ημερολόγια).</string>
-    <string name="device_calendars_permission_required">Απαιτείται άδεια ημερολογίου. Πατήστε Ενεργοποίηση για παραχώρηση πρόσβασης.</string>
-    <string name="device_calendars_read_only_access">Πρόσβαση μόνο για ανάγνωση</string>
-    <string name="device_calendars_grant_write">Δώστε άδεια εγγραφής για επεξεργασία συμβάντων ημερολογίου συσκευής</string>
-    <string name="device_calendars_grant">Παραχώρηση</string>
-    <string name="device_calendars_none_found">Δεν βρέθηκαν ημερολόγια συσκευής.</string>
+    <string name="device_calendars_intro">Εμφάνιση ημερολογίων από Google, Outlook και εφαρμογές συγχρονισμού σε αυτή τη συσκευή.</string>
+    <string name="device_calendars_show_switch">Εμφάνιση ημερολογίων συσκευής</string>
+    <string name="device_calendars_access_off">Η πρόσβαση στο ημερολόγιο είναι απενεργοποιημένη για το KashCal.</string>
+    <string name="device_calendars_pick_hint">Επιλέξτε ημερολόγια για εμφάνιση.</string>
+    <string name="device_calendars_empty">Δεν βρέθηκαν ημερολόγια.</string>
     <string name="device_calendars_local">Τοπικό</string>
-    <string name="device_calendars_read_only_no_write">Μόνο ανάγνωση (χωρίς άδεια εγγραφής)</string>
     <string name="device_calendars_read_only_calendar">Μόνο ανάγνωση (ημερολόγιο μόνο για ανάγνωση)</string>
-    <string name="settings_developer_options">Επιλογές προγραμματιστή</string>
     <string name="settings_sync_frequency">Συχνότητα συγχρονισμού</string>
     <string name="settings_sync_frequency_hint">Πόσο συχνά να γίνεται συγχρονισμός στο παρασκήνιο</string>
 
@@ -817,6 +1008,9 @@
     <string name="ics_import_reason_this_and_future">οι αλλαγές σε αυτή και τις επόμενες επαναλήψεις δεν υποστηρίζονται</string>
     <string name="ics_import_reason_own_cancel">είστε ο διοργανωτής αυτής της σύσκεψης, οπότε ακυρώστε την από το συμβάν</string>
     <string name="ics_import_reason_on_another_calendar">υπάρχει ήδη σε άλλο ημερολόγιο αυτού του λογαριασμού</string>
+    <string name="ics_import_reason_calendar_keeps_copy">αυτό το ημερολόγιο διατηρεί δικό του αντίγραφο του συμβάντος</string>
+    <string name="ics_import_reason_own_update">είστε ο διοργανωτής αυτής της σύσκεψης, οπότε αλλάξτε την από το συμβάν</string>
+    <string name="ics_import_reason_change_waiting">το συμβάν έχει μια αλλαγή που περιμένει συγχρονισμό· κάντε ξανά εισαγωγή μετά τον συγχρονισμό</string>
     <string name="ics_import_notice_unverified">Ο αποστολέας ενός αρχείου πρόσκλησης δεν μπορεί να επαληθευτεί. Ελέγξτε ότι προέρχεται από τον διοργανωτή.</string>
     <string name="ics_import_notice_answer_notifies">Η απάντηση σε αυτή την πρόσκληση μπορεί να ειδοποιήσει τον διοργανωτή.</string>
     <string name="ics_import_notice_guests_again">Είστε ο διοργανωτής, οπότε οι προσκεκλημένοι ενδέχεται να λάβουν ξανά αυτή την πρόσκληση.</string>
@@ -847,13 +1041,17 @@
     </plurals>
     <string name="ics_import_summary_separator">", "</string>
     <string name="ics_import_summary_nothing">Τίποτα για εισαγωγή</string>
-    <plurals name="exported_events">
-        <item quantity="one">Εξήχθη %1$d συμβάν</item>
-        <item quantity="other">Εξήχθησαν %1$d συμβάντα</item>
-    </plurals>
     <plurals name="event_count">
         <item quantity="one">%1$d συμβάν</item>
         <item quantity="other">%1$d συμβάντα</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d ημερολόγιο</item>
+        <item quantity="other">%1$d ημερολόγια</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d λογαριασμό</item>
+        <item quantity="other">%1$d λογαριασμούς</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d ημερολόγιο</item>
@@ -887,10 +1085,6 @@
         <item quantity="one">%1$d έτος</item>
         <item quantity="other">%1$d έτη</item>
     </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d δευτ</item>
-        <item quantity="other">%1$d δευτ</item>
-    </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d λεπτό πριν</item>
         <item quantity="other">%1$d λεπτά πριν</item>
@@ -914,8 +1108,13 @@
     <string name="dialog_move_recurring_title">Μετακίνηση</string>
     <string name="snackbar_event_rescheduled">Το συμβάν μετακινήθηκε</string>
     <string name="snackbar_reschedule_failed">Δεν ήταν δυνατή η μετακίνηση του συμβάντος</string>
+    <string name="snackbar_move_failed">Δεν ήταν δυνατή η μετακίνηση του «%1$s»</string>
+    <string name="snackbar_move_changed_elsewhere">Το «%1$s» τροποποιήθηκε αλλού, οπότε δεν μετακινήθηκε</string>
+    <string name="event_untitled">Συμβάν χωρίς τίτλο</string>
     <string name="recurring_this_event">Αυτό το συμβάν</string>
     <string name="recurring_all_events">Όλα τα συμβάντα</string>
+    <string name="recurring_scope_move_not_expressible">Ο κανόνας επανάληψης δεν μπορεί να ακολουθήσει αυτή την αλλαγή</string>
+    <string name="event_form_move_not_expressible">Ο κανόνας επανάληψης δεν μπορεί να ακολουθήσει αυτή την αλλαγή. Δεν αποθηκεύτηκε τίποτα.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Συμμετέχοντες</string>
@@ -979,8 +1178,67 @@
     <string name="empty_no_events_day_3">Ένα δώρο: μια άδεια μέρα.</string>
     <string name="empty_no_events_day_4">Κατάσταση ημερολογίου: υπέροχα άδειο.</string>
     <string name="empty_no_events_day_5">Τίποτα προγραμματισμένο. Απολαύστε την ηρεμία.</string>
-    <string name="cd_empty_no_events_day">Ήρεμη μέρα, τίποτα προγραμματισμένο</string>
     <string name="filter_date">Ημερομηνία</string>
+    <string name="search_tab_upcoming">Προσεχή</string>
+    <string name="search_tab_past">Παλιά</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d συμβάν</item>
+        <item quantity="other">%1$s, %2$d συμβάντα</item>
+    </plurals>
+    <string name="search_date_this_week">Αυτή την εβδομάδα</string>
+    <string name="search_date_this_month">Αυτόν τον μήνα</string>
+    <string name="search_date_pick">Επιλογή ημερομηνιών…</string>
+    <string name="search_next">Επόμενο: %1$s</string>
+    <string name="search_last">Τελευταίο: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Τοποθεσία:</string>
+    <string name="search_reason_notes">Σημειώσεις:</string>
+    <string name="search_reason_guest">Προσκεκλημένος:</string>
+    <string name="search_keep_typing">Συνεχίστε να πληκτρολογείτε για αναζήτηση</string>
+    <string name="search_no_matches">Κανένα συμβάν δεν ταιριάζει με «%1$s»</string>
+    <string name="search_no_events_tagged">Κανένα συμβάν με ετικέτα «%1$s»</string>
+    <string name="search_lookback_line">Αναδρομικός συγχρονισμός: %1$s</string>
+    <string name="search_sync_settings">Ρυθμίσεις συγχρονισμού</string>
+    <string name="cd_search_sync_settings">Άνοιγμα ρύθμισης αναδρομικού συγχρονισμού</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Εμφάνιση %d παλιού συμβάντος</item>
+        <item quantity="other">Εμφάνιση %d παλιών συμβάντων</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">%d ακόμη σε κρυφό ημερολόγιο</item>
+        <item quantity="other">%d ακόμη σε κρυφά ημερολόγια</item>
+    </plurals>
+    <string name="search_show">Εμφάνιση</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Εμφάνιση %d αποτελέσματος σε κρυφό ημερολόγιο</item>
+        <item quantity="other">Εμφάνιση %d αποτελεσμάτων σε κρυφά ημερολόγια</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Εμφάνιση %d σε κρυφό ημερολόγιο</item>
+        <item quantity="other">Εμφάνιση %d σε κρυφά ημερολόγια</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Συμπεριλαμβάνεται %d κρυφό ημερολόγιο</item>
+        <item quantity="other">Συμπεριλαμβάνονται %d κρυφά ημερολόγια</item>
+    </plurals>
+    <string name="search_leave_out">Εξαίρεση</string>
+    <string name="cd_search_leave_out">Εξαίρεση κρυφών ημερολογίων</string>
+    <string name="search_hidden_calendar">%1$s · κρυφό</string>
+    <string name="cd_search_date_this_week">Εμφάνιση αποτελεσμάτων αυτής της εβδομάδας</string>
+    <string name="cd_search_date_this_month">Εμφάνιση αποτελεσμάτων αυτού του μήνα</string>
+    <string name="cd_search_date_pick">Επιλογή ημερομηνιών αναζήτησης</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d προσεχές</item>
+        <item quantity="other">%d προσεχή</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d παλιό</item>
+        <item quantity="other">%d παλιά</item>
+    </plurals>
+    <string name="search_no_past_events">Δεν υπάρχουν παλιά συμβάντα</string>
+    <string name="search_no_events_in_dates">Δεν υπάρχουν συμβάντα σε αυτές τις ημερομηνίες</string>
     <string name="label_select_date">Επιλέξτε ημερομηνία</string>
     <string name="hint_tap_date_range">Πατήστε την ίδια ημερομηνία για μία ημέρα ή άλλη για εύρος</string>
     <string name="cd_clear">Εκκαθάριση</string>
@@ -1072,7 +1330,6 @@
     <string name="reminder_none">Χωρίς υπενθύμιση</string>
     <string name="reminder_at_time_of_event">Την ώρα του συμβάντος</string>
     <string name="reminder_time_before">%1$s πριν</string>
-    <string name="reminder_time_after">%1$s μετά</string>
     <string name="reminder_day_of_event_12h">9 AM την ημέρα του συμβάντος</string>
     <string name="reminder_day_of_event_24h">09:00 την ημέρα του συμβάντος</string>
     <string name="reminder_day_of_event">Την ημέρα του συμβάντος</string>
@@ -1204,6 +1461,7 @@
     <!-- ==================== i18n: Round 2 audit gaps ==================== -->
     <string name="action_save_event">Αποθήκευση συμβάντος</string>
     <string name="badge_beta">Βήτα</string>
+    <string name="badge_sync_off">Συγχρ. ανενεργός</string>
     <string name="badge_new">Νέο</string>
     <string name="color_red">Κόκκινο</string>
     <string name="color_orange">Πορτοκαλί</string>
@@ -1232,6 +1490,19 @@
     <string name="ics_fetch_error_http">Ο διακομιστής επέστρεψε σφάλμα (%1$d). Ελέγξτε το URL.</string>
     <string name="ics_fetch_error_empty">Η ροή ημερολογίου είναι κενή.</string>
     <string name="ics_fetch_error_not_calendar">Αυτό το URL δεν μοιάζει με ροή ημερολογίου.</string>
+    <string name="ics_feed_error_empty_response">Ο διακομιστής δεν έστειλε έγκυρη ροή.</string>
+    <string name="ics_feed_error_access_denied">Ο διακομιστής αυτής της ροής αρνήθηκε την πρόσβαση.</string>
+    <string name="ics_feed_error_too_large">Αυτή η ροή ημερολογίου είναι πολύ μεγάλη για λήψη.</string>
+    <string name="ics_feed_error_unreadable">Δεν ήταν δυνατή η εμφάνιση των συμβάντων αυτής της ροής.</string>
+    <string name="ics_feed_error_event_not_saved">Το «%1$s» δεν αποθηκεύτηκε.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d συμβάν δεν αποθηκεύτηκε.</item>
+        <item quantity="other">%1$d συμβάντα δεν αποθηκεύτηκαν.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d συμβάν δεν αποθηκεύτηκε: «%2$s».</item>
+        <item quantity="other">%1$d συμβάντα δεν αποθηκεύτηκαν, ανάμεσά τους το «%2$s».</item>
+    </plurals>
     <string name="insights_title">Στατιστικά</string>
     <string name="insights_period_this_week">Εβδομάδα</string>
     <string name="insights_period_last_week">Προηγ. εβδομάδα</string>
@@ -1358,7 +1629,7 @@
         <item quantity="other">Ελεύθερο τις επόμενες %1$d ημέρες (%2$s – %3$s):</item>
     </plurals>
     <string name="share_availability_day_line">%1$s: %2$s</string>
-    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_block_separator">", "</string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">Δεν υπάρχουν ελεύθερα μπλοκ τουλάχιστον μίας ώρας στο επιλεγμένο εύρος.</string>
     <string name="share_from_kashcal_footer">Κοινοποιήθηκε από το KashCal</string>
@@ -1380,5 +1651,31 @@
     <string name="share_as_card_all_day">Ολοήμερο</string>
     <string name="share_as_card_chooser_title">Κοινοποίηση εκδήλωσης</string>
     <string name="share_as_card_share_failed">Δεν ήταν δυνατή η κοινοποίηση της κάρτας</string>
+    <string name="print_your_week">Εκτυπώστε την εβδομάδα σας</string>
+    <string name="print_options_title">Ρυθμίσεις εκτύπωσης</string>
+    <string name="print_pages_header">Σελίδες</string>
+    <string name="print_page_week">Εβδομαδιαίο ημερολόγιο</string>
+    <string name="print_page_week_detail">Η εβδομάδα σε πλέγμα</string>
+    <string name="print_page_details">Λεπτομέρειες</string>
+    <string name="print_page_details_detail">Όλα τα συμβάντα αναλυτικά</string>
+    <string name="print_action">Εκτύπωση</string>
+    <string name="cd_print_previous_week">Προηγούμενη εβδομάδα</string>
+    <string name="cd_print_next_week">Επόμενη εβδομάδα</string>
+    <plurals name="print_summary_pages">
+        <item quantity="one">%d σελίδα</item>
+        <item quantity="other">%d σελίδες</item>
+    </plurals>
+    <plurals name="print_summary_calendars">
+        <item quantity="one">%1$d από %2$d ημερολόγιο</item>
+        <item quantity="other">%1$d από %2$d ημερολόγια</item>
+    </plurals>
+    <string name="print_summary">%1$s · %2$s</string>
+    <string name="print_job_name">%1$s – Εβδομάδα από %2$s</string>
+    <string name="print_failed">Δεν ήταν δυνατή η εκτύπωση. Δοκιμάστε ξανά.</string>
+    <string name="print_doc_week">Εβδομάδα</string>
+    <string name="print_doc_printed">Εκτυπώθηκε: %1$s</string>
+    <string name="print_doc_page_of">Σελίδα %1$s από %2$s</string>
+    <string name="print_doc_numbers_note">Οι αριθμοί αντιστοιχούν στις λεπτομέρειες, όπου κάθε συμβάν αναγράφεται πλήρως.</string>
+    <string name="print_doc_times_in">Οι ώρες εμφανίζονται σε %1$s</string>
 
 </resources>

@@ -17,6 +17,8 @@ object ExternalLinks {
     const val HOME = "https://kashcal.onekash.org/"
     const val DONATE = "https://kashcal.onekash.org/donate/"
     const val PRIVACY = "https://kashcal.onekash.org/docs/privacy/overview"
+    const val HELP = "https://kashcal.onekash.org/docs/category/get-help"
+    const val SOURCE = "https://github.com/KashCal/KashCal"
 
     /**
      * Opens [url] in an external handler, or logs and returns false when none exists. Adds

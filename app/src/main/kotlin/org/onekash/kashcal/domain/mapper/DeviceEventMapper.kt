@@ -125,9 +125,9 @@ private fun mapReminders(reminders: List<Int>): Pair<List<Int>, Int> {
  * Maps a device event to a synthetic Room [Event] for ICS export.
  *
  * The [Event] is never persisted. It feeds
- * [org.onekash.kashcal.sync.parser.icaldav.IcsPatcher.serialize] or
- * [org.onekash.kashcal.sync.parser.icaldav.IcsPatcher.serializeWithExceptions], so device
- * events export through the same serialization as Room events.
+ * [org.onekash.kashcal.util.IcsExporter.exportDeviceEvent], which writes it as Room events are
+ * written, in the zone the device calendar holds
+ * ([org.onekash.kashcal.util.IcsExporter.serializeDeviceEvent]).
  *
  * - UID is `device-{masterId}@kashcal` with `masterId = originalId ?: id`, so an exception
  *   shares its master's UID as RFC 5545 requires.

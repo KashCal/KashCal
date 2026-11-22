@@ -13,7 +13,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.domain.changes.RecentChangeItem
 import org.onekash.kashcal.domain.model.DisplayEvent
-import org.onekash.kashcal.domain.model.SearchResult
+import org.onekash.kashcal.domain.search.SearchOutcome
 import org.onekash.kashcal.error.ErrorPresentation
 import org.onekash.kashcal.ui.components.SyncBannerState
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
@@ -115,13 +115,23 @@ data class HomeUiState(
     val isSearchActive: Boolean = false,
     /** Current search query. */
     val searchQuery: String = "",
-    /** Search results, Room and device events, each with its display timestamp. */
-    val searchResults: ImmutableList<SearchResult> = persistentListOf(),
     /**
-     * Date filter for search. [DateFilter.Upcoming], the default with no chip selected, skips
-     * past events; [DateFilter.AnyTime] includes them.
+     * Whether opening search focuses the field and brings up the keyboard; false for a search
+     * opened on a tag ([HomeViewModel.openTagSearch]), whose results are what the user wants.
      */
-    val searchDateFilter: DateFilter = DateFilter.Upcoming,
+    val searchFocusOnOpen: Boolean = true,
+    /** Counts searches opened on a tag, so a second one closes the keyboard again. */
+    val tagSearchOpens: Int = 0,
+    /** What the search results area shows for [searchQuery]. */
+    val searchState: SearchResultsState = SearchResultsState.Idle,
+    /** The Upcoming or Past list; a picked [searchDateFilter] shows its own list instead. */
+    val searchTab: SearchTab = SearchTab.UPCOMING,
+    /** The date range search narrows to, or null for none; the Date chip is selected while set. */
+    val searchDateFilter: DateFilter? = null,
+    /** Whether search lists matches in calendars hidden in the app, for this search only. */
+    val searchIncludeHidden: Boolean = false,
+    /** Whether the Date chip's menu (This week, This month, Pick dates) is open. */
+    val showSearchDateMenu: Boolean = false,
     /** Whether the search date picker sheet shows. */
     val showSearchDatePicker: Boolean = false,
     /**
@@ -164,8 +174,13 @@ data class HomeUiState(
     val pendingPlannerPagerPosition: Int? = null,
     /** Pinch-to-zoom scale of the Planner's box contents, clamped by `clampPlannerZoom`. */
     val plannerZoom: Float = 1f,
+    /**
+     * Pinch-to-zoom scale of the full-height month view's day cells, clamped by
+     * `clampMonthFullZoom`.
+     */
+    val monthFullZoom: Float = 1f,
 
-    // === DAY DETAIL SHEET (full-height month view) ===
+    // === DAY DETAIL SHEET (full-height month view and Planner) ===
     /** Whether the day events sheet shows. */
     val showDayDetailSheet: Boolean = false,
     /** Date of the day events sheet in epoch millis. */
@@ -174,10 +189,15 @@ data class HomeUiState(
     // === UI DIALOGS/SHEETS ===
     /** Whether the first-run onboarding sheet shows. */
     val showOnboardingSheet: Boolean = false,
+    /**
+     * Events with a reminder in the coming week while the "Reminders are off" banner shows, or
+     * null when it is hidden ([org.onekash.kashcal.domain.reminders.shouldShowRemindersOffBanner]).
+     */
+    val remindersOffBannerCount: Int? = null,
     /** Release notes the upgraded user hasn't acknowledged yet, ascending by versionCode. */
     val whatsNewReleases: ImmutableList<org.onekash.kashcal.domain.whatsnew.ReleaseNote> = persistentListOf(),
-    /** Whether the app info sheet shows. */
-    val showAppInfoSheet: Boolean = false,
+    /** Whether the About sheet shows (the account hub's About row). */
+    val showAboutSheet: Boolean = false,
     /** Whether the share-availability sheet shows. */
     val showShareAvailabilitySheet: Boolean = false,
     /** Whether the invitation inbox sheet shows. */
@@ -214,8 +234,15 @@ data class HomeUiState(
     // === SNACKBAR EVENTS ===
     /** Snackbar message waiting to show. */
     val pendingSnackbarMessage: String? = null,
-    /** Action for the pending snackbar's View button, or null for no button. */
+    /** The pending snackbar's button text; the button shows only with [pendingSnackbarAction]. */
+    val pendingSnackbarActionLabel: String? = null,
+    /** Action for the pending snackbar's button, or null for no button. */
     val pendingSnackbarAction: (() -> Unit)? = null,
+    /**
+     * Identifies the pending snackbar; every message gets a new one, so a repeated text shows
+     * again and a result reported for an older message can be told apart.
+     */
+    val pendingSnackbarId: Long = 0L,
 
     // === PENDING ACTIONS (from intents) ===
     /** Action from an intent, consumed once by the UI; see [PendingAction]. */
@@ -258,6 +285,12 @@ data class HomeUiState(
      */
     val formSaveFailedTick: Int = 0,
 
+    /**
+     * The form's inline error for a series edit the repeat rule can't express (nothing was
+     * saved); cleared when the next save starts and when the form closes.
+     */
+    val formSaveError: String? = null,
+
     // === DISPLAY PREFERENCES ===
     /** Whether event titles show auto-detected emojis. */
     val showEventEmojis: Boolean = true,
@@ -284,6 +317,9 @@ data class HomeUiState(
     /** User's avatar initials, up to 2 letters; empty shows the generic glyph. */
     val userInitials: String = ""
 ) {
+    /** Whether the day events sheet shows a day. */
+    val isDayDetailOpen: Boolean get() = showDayDetailSheet && dayDetailDate != 0L
+
     /** Returns the viewed month and year as a localized label. */
     fun getMonthYearLabel(): String {
         val cal = java.util.Calendar.getInstance().apply {
@@ -345,15 +381,24 @@ sealed class PendingAction {
     }
 
     /**
-     * Opens a new event, from a widget, the New Event app shortcut or the Quick Settings tile.
-     * With no [startTs], Quick Add opens when it is enabled, else the full form.
+     * Opens the full event form for a new event, from a widget, the New Event app shortcut or
+     * the Quick Settings tile; [HomeViewModel.requestCreateEvent] picks it.
      *
      * @param startTs start in epoch millis, set by the week widget; null for the next hour.
      */
     data class CreateEvent(val startTs: Long? = null) : PendingAction()
 
+    /** Opens the Quick Add dialog for a new event; [HomeViewModel.requestCreateEvent] picks it. */
+    data object OpenQuickAdd : PendingAction()
+
     /** Opens search, from the Search app shortcut. */
     data object OpenSearch : PendingAction()
+
+    /** Opens search on the events tagged [name], from the Tags screen's "Show events". */
+    data class OpenTagSearch(val name: String) : PendingAction() {
+        /** Leaves the tag name out, since the action is logged and the debug report reads logs. */
+        override fun toString(): String = "OpenTagSearch"
+    }
 
     /** Opens the import sheet for a shared or opened ICS file at [uri] (content or file). */
     data class ImportIcsFile(val uri: Uri) : PendingAction()
@@ -538,6 +583,12 @@ data class PendingFormSave(
      * day; see [ScopeContext.occurrenceDateChanged].
      */
     val occurrenceDateChanged: Boolean = false,
+    /**
+     * The series scopes the repeat rule can't express this edit for (a Room series' move,
+     * checked off the main thread against the stored series), or null while that check runs:
+     * the sheet greys both series scopes until it lands.
+     */
+    val blockedScopes: Set<EditScope>? = emptySet(),
 )
 
 /**
@@ -580,3 +631,34 @@ data class RecentChangeTarget(
     /** The occurrence to show; null opens the event at its own start. */
     val occurrenceTs: Long?
 )
+
+/**
+ * Holds the day sheet's shown day and that day's events, read together so the sheet never pairs
+ * a date with another day's events.
+ *
+ * @property dayCode the shown day as YYYYMMDD
+ * @property dateMs the shown day at the tapped time of day, which seeds New event's start
+ * @property canGoBack whether the sheet may step to the previous day, within
+ *   [org.onekash.kashcal.ui.util.CalendarSpan]
+ * @property canGoForward whether the sheet may step to the next day
+ */
+@Immutable
+data class DayDetailState(
+    val dayCode: Int,
+    val dateMs: Long,
+    val events: ImmutableList<DisplayEvent>,
+    val canGoBack: Boolean,
+    val canGoForward: Boolean,
+)
+
+/** The list search shows when no date range is picked. */
+enum class SearchTab { UPCOMING, PAST }
+
+/** The search results area: no query, a query too short to run, a search running, or results. */
+@Immutable
+sealed interface SearchResultsState {
+    data object Idle : SearchResultsState
+    data object TooShort : SearchResultsState
+    data object Loading : SearchResultsState
+    data class Loaded(val outcome: SearchOutcome) : SearchResultsState
+}

@@ -95,7 +95,8 @@ interface AccountRepository {
      * 3. Deletes its credentials.
      * 4. Deletes the account row, which cascades to its calendars and address books, their
      *    events, the events' occurrences, attendees and scheduled reminders, and the calendars'
-     *    Recent changes rows.
+     *    Recent changes rows. Deleting the events drops their remaining pending operations
+     *    ([org.onekash.kashcal.data.db.PendingOperationTriggers]).
      * 5. Cancels the shared periodic sync and contact-sync work when no account that can sync
      *    remains.
      * 6. For a CardDAV-capable account, purges its device contacts and contacts system account

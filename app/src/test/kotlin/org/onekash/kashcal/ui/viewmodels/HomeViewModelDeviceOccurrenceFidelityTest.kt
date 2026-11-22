@@ -53,8 +53,7 @@ class HomeViewModelDeviceOccurrenceFidelityTest {
     private lateinit var factory: DeviceHomeViewModelTestFactory
     private lateinit var repo: FakeCalendarProviderRepository
 
-    private val rescheduledMessage = DeviceHomeViewModelTestFactory.RESCHEDULED_MESSAGE
-    private val rescheduleFailedMessage = DeviceHomeViewModelTestFactory.RESCHEDULE_FAILED_MESSAGE
+    private val moveFailedMessage = DeviceHomeViewModelTestFactory.MOVE_FAILED_MESSAGE
 
     @Before
     fun setup() {
@@ -64,6 +63,7 @@ class HomeViewModelDeviceOccurrenceFidelityTest {
         repo = FakeCalendarProviderRepository()
 
         repo.deviceEvents[MASTER_ID] = masterRow()
+        repo.activeEventIds += MASTER_ID
         repo.calendars = listOf(calendar())
         // New rows get ids well clear of the seeded ones, so "the new exception" can't be the
         // master read back.
@@ -128,6 +128,8 @@ class HomeViewModelDeviceOccurrenceFidelityTest {
         rescheduleEvent(DisplayEvent.Device(occurrenceInstance()), LocalDate.of(2024, 3, 5), 600)
         assertNotNull(uiState.value.pendingDragReschedule)
         confirmReschedule(scope)
+        assertEquals(DeviceHomeViewModelTestFactory.RESCHEDULED_MESSAGE, uiState.value.pendingSnackbarMessage)
+        endDragUndoWindow()
     }
 
     /** A one-off event, or (with [originalId]) a modified occurrence, as the grid shows it. */
@@ -139,7 +141,11 @@ class HomeViewModelDeviceOccurrenceFidelityTest {
         )
 
     private fun HomeViewModel.dragSingleRow(instance: DeviceCalendarInstance) {
+        // The save re-reads the row; it is stored as the grid shows it.
+        repo.seedRowFor(instance)
         rescheduleEvent(DisplayEvent.Device(instance), LocalDate.of(2024, 3, 5), 600)
+        assertEquals(DeviceHomeViewModelTestFactory.RESCHEDULED_MESSAGE, uiState.value.pendingSnackbarMessage)
+        endDragUndoWindow()
     }
 
     private val emailAndSms = listOf(
@@ -176,7 +182,8 @@ class HomeViewModelDeviceOccurrenceFidelityTest {
         val created = repo.createdExceptions.single()
         assertEquals(MASTER_ID, created.masterEventId)
         assertEquals(OCCURRENCE_TS, created.originalInstanceTime)
-        assertEquals(rescheduledMessage, viewModel.uiState.value.pendingSnackbarMessage)
+        // The success snackbar showed at the drop; the save leaves no failure in its place.
+        assertNull(viewModel.uiState.value.pendingSnackbarMessage)
     }
 
     @Test
@@ -272,7 +279,8 @@ class HomeViewModelDeviceOccurrenceFidelityTest {
 
         assertEquals(ONE_OFF_ID, repo.updatedEvents.single().eventId)
         assertEquals(emailAndSms, repo.reminderRows[ONE_OFF_ID])
-        assertEquals(rescheduledMessage, viewModel.uiState.value.pendingSnackbarMessage)
+        // The success snackbar showed at the drop; the save leaves no failure in its place.
+        assertNull(viewModel.uiState.value.pendingSnackbarMessage)
     }
 
     @Test
@@ -343,7 +351,7 @@ class HomeViewModelDeviceOccurrenceFidelityTest {
             viewModel.dragOccurrence(scope)
             advanceUntilIdle()
 
-            assertEquals("$scope shows the failure", rescheduleFailedMessage, viewModel.uiState.value.pendingSnackbarMessage)
+            assertEquals("$scope shows the failure", "$moveFailedMessage:Standup", viewModel.uiState.value.pendingSnackbarMessage)
             assertTrue("$scope creates no exception", repo.createdExceptions.isEmpty())
             assertTrue("$scope splits nothing", repo.editedFutureSeries.isEmpty())
             assertEquals(emailAndSms, repo.reminderRows[MASTER_ID])
@@ -428,7 +436,7 @@ class HomeViewModelDeviceOccurrenceFidelityTest {
         viewModel.dragOccurrence(EditScope.THIS_EVENT)
         advanceUntilIdle()
 
-        assertEquals(rescheduleFailedMessage, viewModel.uiState.value.pendingSnackbarMessage)
+        assertEquals("$moveFailedMessage:Standup", viewModel.uiState.value.pendingSnackbarMessage)
         assertTrue(repo.createdExceptions.isEmpty())
     }
 

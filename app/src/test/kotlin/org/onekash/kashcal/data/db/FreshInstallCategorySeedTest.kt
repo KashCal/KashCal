@@ -1,7 +1,6 @@
 package org.onekash.kashcal.data.db
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -12,13 +11,14 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.entity.Category
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
  * Checks that a fresh install (Room's create callback, not a migration) seeds the same starter
  * tags `MIGRATION_21_22` gives an upgrading user, so a new user doesn't open the tag screen to an
- * empty table. It runs [KashCalDatabase.testCallback], the test copy of the production callback.
+ * empty table. It runs [KashCalDatabase.testCallback], the production create callback.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -29,7 +29,7 @@ class FreshInstallCategorySeedTest {
     @Before
     fun setup() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .addCallback(KashCalDatabase.testCallback())
             .build()

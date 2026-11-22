@@ -1,10 +1,10 @@
 package org.onekash.kashcal.data.db.entity
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.Index
-import androidx.room.PrimaryKey
+import androidx.room3.ColumnInfo
+import androidx.room3.Entity
+import androidx.room3.ForeignKey
+import androidx.room3.Index
+import androidx.room3.PrimaryKey
 
 /**
  * Stores one materialized occurrence of an event, so range queries need no RRULE expansion.
@@ -58,11 +58,18 @@ data class Occurrence(
     @ColumnInfo(name = "end_ts")
     val endTs: Long,
 
-    /** Start day as YYYYMMDD (20241225 for December 25, 2024), for day queries. */
+    /**
+     * Start day as YYYYMMDD (20241225 for December 25, 2024), computed when the row is
+     * generated: in UTC for an all-day occurrence, otherwise in the device zone of that moment,
+     * so a timed row's code is stale after a zone change. The day-code queries match it; views
+     * take days from [org.onekash.kashcal.domain.model.DisplayEvent.startDay] instead.
+     */
     @ColumnInfo(name = "start_day")
     val startDay: Int,
 
-    /** End day as YYYYMMDD; differs from [startDay] for a multi-day occurrence. */
+    /**
+     * End day as YYYYMMDD, computed like [startDay]; differs from it for a multi-day occurrence.
+     */
     @ColumnInfo(name = "end_day")
     val endDay: Int,
 

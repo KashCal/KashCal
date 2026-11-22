@@ -25,8 +25,10 @@ import ezvcard.property.Title
 import ezvcard.property.Uid
 import ezvcard.property.Url
 import ezvcard.property.VCardProperty
+import ezvcard.util.PartialDate
 import org.onekash.vcard.model.Contact
 import org.onekash.vcard.model.Photo
+import java.time.MonthDay
 import ezvcard.property.Email as EzEmail
 import ezvcard.property.Photo as EzPhoto
 import ezvcard.property.StructuredName as EzStructuredName
@@ -53,7 +55,8 @@ import ezvcard.property.StructuredName as EzStructuredName
  * Patch mode diffs the passed contact against `VCardParser.parse(rawVCard)`, so the parser's
  * representation sits on both sides. Any other producer of the passed contact, such as the app's
  * device-row mapper, must yield facets equal to the parser's for unedited fields, or the diff
- * rewrites facets the user never touched.
+ * rewrites facets the user never touched. Birthday and anniversary compare through
+ * [normalizedYearless], so spellings of one date without a year count as equal.
  *
  * ## Version handling
  *
@@ -112,9 +115,13 @@ class VCardWriter {
         if (contact.categories != original.categories) applyCategories(base, contact)
         if (contact.uid != original.uid) applyUid(base, contact)
         if (photoContentChanged(contact.photo, original.photo)) applyPhoto(base, contact)
-        if (contact.birthday != original.birthday) applyBirthday(base, contact)
+        if (normalizedYearless(contact.birthday) != normalizedYearless(original.birthday)) {
+            applyBirthday(base, contact, target)
+        }
         // The four dual-spelling facets (see the class doc).
-        if (contact.anniversary != original.anniversary) applyAnniversary(base, contact, target, groups)
+        if (normalizedYearless(contact.anniversary) != normalizedYearless(original.anniversary)) {
+            applyAnniversary(base, contact, target, groups)
+        }
         if (contact.relations != original.relations) applyRelations(base, contact, target, groups)
         if (contact.imHandles != original.imHandles) applyImHandles(base, contact)
         if (contact.kind != original.kind) applyKind(base, contact, target)
@@ -140,7 +147,7 @@ class VCardWriter {
         applyNotes(card, contact)
         applyCategories(card, contact)
         applyPhoto(card, contact)
-        applyBirthday(card, contact)
+        applyBirthday(card, contact, target)
         applyAnniversary(card, contact, target, groups)
         applyRelations(card, contact, target, groups)
         applyImHandles(card, contact)
@@ -357,13 +364,29 @@ class VCardWriter {
     private fun photoContentChanged(new: Photo?, old: Photo?): Boolean =
         new?.copy(contentType = null) != old?.copy(contentType = null)
 
-    private fun applyBirthday(card: VCard, contact: Contact) {
+    /** Writes the birthday; one without a year as [OMIT_YEAR] at 3.0 and [partialDate] at 4.0. */
+    private fun applyBirthday(card: VCard, contact: Contact, target: VCardVersion) {
         card.removeProperties(Birthday::class.java)
         val b = contact.birthday ?: return
+        val yearless = yearlessMonthDay(b.date, b.text)
         when {
+            yearless != null && target == VCardVersion.V3_0 ->
+                card.setBirthday(Birthday(yearless.atYear(OMIT_YEAR)).withOmitYear())
+            yearless != null -> card.setBirthday(Birthday(partialDate(yearless)))
             b.date != null -> card.setBirthday(b.date)
             b.text != null -> card.setBirthday(Birthday(b.text))
         }
+    }
+
+    /**
+     * Returns [monthDay] as a 4.0 date with no year, `--MMDD` (RFC 6350 §4.3.1). Cyrus refuses
+     * the `VALUE=text` spelling with 403 and keeps none of the contact.
+     */
+    private fun partialDate(monthDay: MonthDay): PartialDate =
+        PartialDate.builder().month(monthDay.monthValue).date(monthDay.dayOfMonth).build()
+
+    private fun <T : VCardProperty> T.withOmitYear(): T = apply {
+        parameters.put(OMIT_YEAR_PARAMETER, OMIT_YEAR.toString())
     }
 
     private fun applyAnniversary(
@@ -376,17 +399,22 @@ class VCardWriter {
         card.removeProperties(Anniversary::class.java)
         removeAnniversaryRawIdiom(card)
         val a = contact.anniversary ?: return
+        val yearless = yearlessMonthDay(a.date, a.text)
         if (target == VCardVersion.V4_0) {
             when {
+                yearless != null -> card.setAnniversary(Anniversary(partialDate(yearless)))
                 a.date != null -> card.setAnniversary(a.date)
                 a.text != null -> card.setAnniversary(Anniversary(a.text))
             }
         } else {
             // At 3.0, carry the anniversary as Apple's itemN.X-ABDATE in an "Anniversary"
             // labeled group, the idiom the parser routes back into this field.
-            val value = a.date?.toString() ?: a.text ?: return
+            val value = yearless?.atYear(OMIT_YEAR)?.toString()
+                ?: a.date?.toString() ?: a.text ?: return
             val group = allocateGroup(groups)
-            card.addExtendedProperty("X-ABDATE", value).group = group
+            val date = card.addExtendedProperty("X-ABDATE", value)
+            date.group = group
+            if (yearless != null) date.withOmitYear()
             card.addExtendedProperty("X-ABLabel", wrapAppleLabel("Anniversary")).group = group
         }
     }

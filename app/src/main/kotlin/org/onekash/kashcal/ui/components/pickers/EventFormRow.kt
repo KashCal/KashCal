@@ -1,6 +1,8 @@
 package org.onekash.kashcal.ui.components.pickers
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -31,6 +33,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
+
+/** How long an inline picker takes to open. */
+internal const val PICKER_EXPAND_MILLIS = 200
+
+/** How an inline picker opens below its row. */
+internal val PickerExpandEnter: EnterTransition =
+    expandVertically(animationSpec = tween(PICKER_EXPAND_MILLIS)) + fadeIn(animationSpec = tween(150))
+
+/** How an inline picker closes. */
+internal val PickerCollapseExit: ExitTransition =
+    shrinkVertically(animationSpec = tween(150)) + fadeOut(animationSpec = tween(100))
 
 @Composable
 fun EventFormRow(
@@ -101,8 +114,8 @@ fun EventFormRow(
         if (expandedContent != null) {
             AnimatedVisibility(
                 visible = isExpanded,
-                enter = expandVertically(animationSpec = tween(200)) + fadeIn(animationSpec = tween(150)),
-                exit = shrinkVertically(animationSpec = tween(150)) + fadeOut(animationSpec = tween(100))
+                enter = PickerExpandEnter,
+                exit = PickerCollapseExit
             ) {
                 Box(
                     modifier = Modifier

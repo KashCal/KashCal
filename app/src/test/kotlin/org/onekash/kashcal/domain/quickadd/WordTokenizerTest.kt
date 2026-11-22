@@ -5,6 +5,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Before
 import org.junit.Test
+import org.onekash.kashcal.domain.quickadd.normalizer.NormalizerChain
+import org.onekash.kashcal.domain.quickadd.normalizer.SpannedText
 import org.onekash.kashcal.domain.quickadd.tokenizer.TokenType
 import org.onekash.kashcal.domain.quickadd.tokenizer.WordTokenizer
 import java.time.DayOfWeek
@@ -561,38 +563,13 @@ class WordTokenizerTest {
         assertEquals(0, tokens.size)
     }
 
-    // ==================== Timezone ====================
+    // ==================== Zone abbreviations ====================
 
     @Test
-    fun `tokenizes EST as TIMEZONE`() {
-        val tokens = WordTokenizer.tokenize("est")
-        assertEquals(1, tokens.size)
-        assertEquals(TokenType.TIMEZONE, tokens[0].type)
-        assertEquals("America/New_York", tokens[0].value)
-    }
-
-    @Test
-    fun `tokenizes PST as TIMEZONE`() {
-        val tokens = WordTokenizer.tokenize("pst")
-        assertEquals(1, tokens.size)
-        assertEquals(TokenType.TIMEZONE, tokens[0].type)
-        assertEquals("America/Los_Angeles", tokens[0].value)
-    }
-
-    @Test
-    fun `tokenizes UTC as TIMEZONE`() {
-        val tokens = WordTokenizer.tokenize("utc")
-        assertEquals(1, tokens.size)
-        assertEquals(TokenType.TIMEZONE, tokens[0].type)
-        assertEquals("UTC", tokens[0].value)
-    }
-
-    @Test
-    fun `tokenizes GMT as TIMEZONE`() {
-        val tokens = WordTokenizer.tokenize("gmt")
-        assertEquals(1, tokens.size)
-        assertEquals(TokenType.TIMEZONE, tokens[0].type)
-        assertEquals("GMT", tokens[0].value)
+    fun `zone abbreviations are plain words`() {
+        for (word in listOf("est", "pst", "utc", "gmt")) {
+            assertEquals(word, TokenType.UNKNOWN, WordTokenizer.tokenize(word)[0].type)
+        }
     }
 
     // ==================== Locale-aware structured dates (issue #194) ====================
@@ -727,5 +704,65 @@ class WordTokenizerTest {
     fun `25h30 invalid hour does not tokenize as TIME`() {
         val tokens = WordTokenizer.tokenize("25h30")
         assertNotEquals(TokenType.TIME, tokens[0].type)
+    }
+
+    @Test
+    fun `span overload gives each token its typed span and text`() {
+        val source = "Call Mom day after tomorrow at 3PM"
+        val normalized = NormalizerChain().normalize(SpannedText.of(source))
+        val tokens = WordTokenizer.tokenize(normalized, source, Locale.US)
+        assertEquals(
+            listOf("Call", "Mom", "day after tomorrow", "at", "3PM"),
+            tokens.map { it.originalText }
+        )
+        assertEquals(listOf(0..3, 5..7, 9..26, 28..29, 31..33), tokens.map { it.span })
+        assertEquals(TokenType.DATE_KEYWORD, tokens[2].type)
+        assertEquals(TokenType.TIME, tokens[4].type)
+    }
+
+    @Test
+    fun `a glued 24-hour range needs minutes on both sides`() {
+        val range = WordTokenizer.tokenize("15:00-16:30")[0]
+        assertEquals(TokenType.TIME_RANGE, range.type)
+        assertEquals(
+            WordTokenizer.TimeRange(LocalTime.of(15, 0), LocalTime.of(16, 30)),
+            range.value
+        )
+        assertEquals(TokenType.STRUCTURED_DATE, WordTokenizer.tokenize("2-3")[0].type)
+    }
+
+    @Test
+    fun `glued durations tokenize as DURATION in minutes`() {
+        for ((word, minutes) in listOf("45m" to 45, "45min" to 45, "2h45m" to 165, "1.5h" to 90, "2hrs" to 120, "90min" to 90)) {
+            val token = WordTokenizer.tokenize(word)[0]
+            assertEquals(word, TokenType.DURATION, token.type)
+            assertEquals(word, minutes, (token.value as WordTokenizer.GluedDuration).minutes)
+        }
+        assertEquals(TokenType.TIME, WordTokenizer.tokenize("9h")[0].type)
+        assertEquals(TokenType.TIME, WordTokenizer.tokenize("15h30")[0].type)
+    }
+
+    @Test
+    fun `everyday is a recurrence keyword and each stays a word`() {
+        assertEquals(TokenType.RECURRENCE_KEYWORD, WordTokenizer.tokenize("everyday")[0].type)
+        assertEquals(TokenType.UNKNOWN, WordTokenizer.tokenize("each")[0].type)
+    }
+
+    @Test
+    fun `a glued h-notation range is a TIME_RANGE`() {
+        val token = WordTokenizer.tokenize("15h30-18h")[0]
+        assertEquals(TokenType.TIME_RANGE, token.type)
+        assertEquals(WordTokenizer.TimeRange(LocalTime.of(15, 30), LocalTime.of(18, 0)), token.value)
+        assertEquals(TokenType.TIME_RANGE, WordTokenizer.tokenize("9h-11h")[0].type)
+    }
+
+    @Test
+    fun `digits from other scripts read as numbers`() {
+        // Android's regex \\d matches any Unicode digit, so these were numbers on the phone; the
+        // digit check in front of the number patterns must not turn them away.
+        val arabic = WordTokenizer.tokenize("\u0663\u0663")[0]
+        assertEquals(TokenType.NUMBER, arabic.type)
+        assertEquals(33, arabic.value)
+        assertEquals(TokenType.NUMBER, WordTokenizer.tokenize("\uFF13")[0].type)
     }
 }

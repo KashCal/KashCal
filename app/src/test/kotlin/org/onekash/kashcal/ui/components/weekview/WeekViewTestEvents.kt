@@ -5,12 +5,17 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.model.DisplayEvent
+import java.time.Clock
+import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 
 /**
- * Builds a one-hour timed [DisplayEvent.Room] starting at [hour] on [date] in [zone]. The
- * Event, Occurrence and Calendar boilerplate lives here once so entity-constructor changes
+ * Builds a timed [DisplayEvent.Room] starting at [hour]:[minute] on [date] in [zone], lasting
+ * [durationMinutes] (one hour by default), with an optional [location], free/busy [transp] and
+ * calendar [color].
+ * The Event, Occurrence and Calendar boilerplate lives here once so entity-constructor changes
  * are fixed in one place.
  */
 internal fun roomDisplayEvent(
@@ -19,9 +24,14 @@ internal fun roomDisplayEvent(
     date: LocalDate,
     hour: Int,
     zone: ZoneId = ZoneId.systemDefault(),
+    minute: Int = 0,
+    durationMinutes: Int = 60,
+    location: String? = null,
+    transp: String = "OPAQUE",
+    color: Int = 0xFF2196F3.toInt(),
 ): DisplayEvent.Room {
-    val start = date.atTime(hour, 0).atZone(zone).toInstant().toEpochMilli()
-    val end = start + 3_600_000L
+    val start = date.atTime(hour, minute).atZone(zone).toInstant().toEpochMilli()
+    val end = start + durationMinutes * 60_000L
     val dayCode = date.year * 10000 + date.monthValue * 100 + date.dayOfMonth
     val event = Event(
         id = id,
@@ -35,7 +45,9 @@ internal fun roomDisplayEvent(
         syncStatus = SyncStatus.SYNCED,
         createdAt = start,
         updatedAt = start,
-        dtstamp = start
+        dtstamp = start,
+        location = location,
+        transp = transp,
     )
     val occ = Occurrence(
         eventId = id,
@@ -52,7 +64,7 @@ internal fun roomDisplayEvent(
         accountId = 1L,
         caldavUrl = "https://example.invalid/cal/",
         displayName = "Test",
-        color = 0xFF2196F3.toInt(),
+        color = color,
         isReadOnly = false
     )
     return DisplayEvent.Room(event = event, occurrence = occ, calendar = cal)
@@ -165,4 +177,17 @@ internal fun multiDayDisplayEvent(
         isReadOnly = false
     )
     return DisplayEvent.Room(event = event, occurrence = occ, calendar = cal)
+}
+
+/** A [Clock] a test sets by hand, for the time grid's minute clock. */
+internal class MutableTestClock(var instant: Instant, private val zone: ZoneId = ZoneId.systemDefault()) : Clock() {
+    override fun getZone(): ZoneId = zone
+    override fun withZone(zone: ZoneId): Clock = MutableTestClock(instant, zone)
+    override fun instant(): Instant = instant
+
+    companion object {
+        /** Returns a clock at [time] on [date] in the phone's zone. */
+        fun at(date: LocalDate, time: LocalTime): MutableTestClock =
+            MutableTestClock(date.atTime(time).atZone(ZoneId.systemDefault()).toInstant())
+    }
 }

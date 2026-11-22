@@ -87,7 +87,7 @@ class HomeViewModelDeviceAttendeeWriteTest {
         coEvery { dataStore.defaultEventDuration } returns MutableStateFlow(20)
         coEvery { dataStore.timeFormat } returns MutableStateFlow("system")
         coEvery { dataStore.showEventEmojis } returns MutableStateFlow(true)
-        coEvery { dataStore.onboardingDismissed } returns MutableStateFlow(true)
+        coEvery { dataStore.onboardingCompleted } returns MutableStateFlow(true)
 
         every { eventCoordinator.getAllCalendars() } returns MutableStateFlow(emptyList())
         every { eventReader.getVisibleOccurrencesInRange(any(), any()) } returns MutableStateFlow(emptyList())
@@ -119,6 +119,7 @@ class HomeViewModelDeviceAttendeeWriteTest {
         contactEmailReader = mockk(relaxed = true),
         context = mockk(relaxed = true),
         ioDispatcher = testDispatcher,
+        applicationScope = kotlinx.coroutines.CoroutineScope(testDispatcher),
     )
 
     @Test

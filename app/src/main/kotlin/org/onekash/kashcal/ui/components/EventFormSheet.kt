@@ -22,7 +22,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
@@ -85,6 +84,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -115,12 +115,12 @@ import org.onekash.kashcal.domain.model.toEventForDuplicate
 import org.onekash.kashcal.ui.components.pickers.ActiveDateTimeSheet
 import org.onekash.kashcal.ui.components.pickers.CalendarPickerRow
 import org.onekash.kashcal.ui.components.pickers.DateTimeDisplayRow
+import org.onekash.kashcal.ui.components.pickers.DateSelectionMode
 import org.onekash.kashcal.ui.components.pickers.DateTimeSheet
-import org.onekash.kashcal.ui.components.pickers.EventColorSheet
+import org.onekash.kashcal.ui.components.pickers.EventColorPalettePanel
 import org.onekash.kashcal.ui.components.pickers.EventFormRow
 import org.onekash.kashcal.ui.components.pickers.RecurrencePickerRow
 import org.onekash.kashcal.ui.components.pickers.ReminderPickerRow
-import org.onekash.kashcal.ui.components.pickers.TimezonePickerSheet
 import org.onekash.kashcal.ui.components.pickers.untilDisplayMillis
 import org.onekash.kashcal.ui.components.pickers.untilForPickedDate
 import org.onekash.kashcal.ui.model.CalendarGroup
@@ -146,6 +146,10 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Calendar as JavaCalendar
+import org.onekash.kashcal.util.zone.ZoneCatalog
+import androidx.compose.ui.semantics.contentDescription
+import org.onekash.kashcal.ui.components.pickers.TimeZoneSheet
+import org.onekash.kashcal.ui.components.pickers.ZonePick
 
 private const val TAG = "EventFormSheet"
 
@@ -334,6 +338,13 @@ data class EventFormState(
     val editingEventId: Long? = null,
     val isEditMode: Boolean = false,
     val editingOccurrenceTs: Long? = null,
+    /**
+     * The zone the edited event is shown in when the form loads: its stored zone, or the device
+     * zone for a timed event with none or an unreadable one (null: new or all-day). The opened
+     * occurrence's date is read in it ([occurrenceDateChanged]), since a zone pick keeps the
+     * form's date and clock time but moves the moment.
+     */
+    val editingZone: String? = null,
 
     // Attendees the user is editing (organizer flow), as Room entities: seeding
     // from the real rows preserves the role, cutype, rsvp and delegation that the
@@ -352,7 +363,7 @@ data class EventFormState(
     // A timed source event's timezone ID that the app can't resolve (the form then
     // uses the device zone), from a device event's edit or a duplicate. Kept so a
     // device save that doesn't pick a zone writes the original ID instead of the
-    // device zone. Cleared by the timezone picker.
+    // device zone. Cleared when the time zone sheet sets a zone (Device or a pick; Keep leaves it).
     val sourceTimezoneId: String? = null,
     // The repeat rule before an all-day toggle re-expressed its end date, and the
     // rule that toggle produced. Toggling back with the rule untouched restores the
@@ -385,12 +396,21 @@ internal fun eventFormHasUnsavedChanges(
         current.description != initial.description ||
         current.reminders != initial.reminders ||
         current.rrule != initial.rrule ||
-        current.timezone != initial.timezone ||
+        !sameFormZone(current.timezone, initial.timezone) ||
         current.sourceTimezoneId != initial.sourceTimezoneId ||
         current.eventColor != initial.eventColor ||
         current.transp != initial.transp ||
         current.categories != initial.categories ||
         current.attendeesEdited != initial.attendeesEdited
+
+/**
+ * True when two form zones name the same zone, reading null as the device zone: picking a zone
+ * and then Device time zone on a new event shows the same times, so it is not a change.
+ */
+private fun sameFormZone(a: String?, b: String?): Boolean {
+    val device = TimezoneUtils.getDeviceTimezone()
+    return ZoneCatalog.sameZone(a ?: device, b ?: device)
+}
 
 /** Outcome of a dismiss attempt (Cancel tap or system back press). */
 internal enum class FormDismissAction { DISMISS, SHOW_DISCARD_CONFIRM, BLOCKED }
@@ -457,14 +477,14 @@ private fun resolveFormTime(dateMillis: Long, hour: Int, minute: Int, zone: Zone
 }
 
 /** The calendar date [millis] falls on in the device's zone. */
-private fun deviceLocalDate(millis: Long): LocalDate =
+internal fun deviceLocalDate(millis: Long): LocalDate =
     Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
 
 /** True when two form dates fall on one device-local day; producers encode dates differently. */
 private fun sameDeviceDay(a: Long, b: Long): Boolean = deviceLocalDate(a) == deviceLocalDate(b)
 
 /** [date]'s midnight in the device's zone: how the form stores a date. */
-private fun deviceMidnight(date: LocalDate): Long =
+internal fun deviceMidnight(date: LocalDate): Long =
     date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
 /** The timed form fields that describe a start and end instant. */
@@ -516,6 +536,18 @@ internal fun allDayFormDateFields(startUtcMidnight: Long, endUtc: Long): FormDat
         endOffsetHintTs = null,
     )
 }
+
+/** Returns the form's start and end fields; [withDateFields] puts them back. */
+internal fun EventFormState.dateFields(): FormDateFields = FormDateFields(
+    dateMillis = dateMillis,
+    endDateMillis = endDateMillis,
+    startHour = startHour,
+    startMinute = startMinute,
+    endHour = endHour,
+    endMinute = endMinute,
+    startOffsetHintTs = startOffsetHintTs,
+    endOffsetHintTs = endOffsetHintTs,
+)
 
 internal fun EventFormState.withDateFields(fields: FormDateFields): EventFormState = copy(
     dateMillis = fields.dateMillis,
@@ -603,15 +635,76 @@ internal fun EventFormState.withTimedStart(
         startHour = hour,
         startMinute = minute,
     )
-    val newEnd = moved.toStartEndTs().first + durationMs
-    val end = Instant.ofEpochMilli(newEnd).atZone(TimezoneUtils.resolveZone(timezone))
-    return moved.copy(
+    return moved.withTimedEndAt(moved.toStartEndTs().first + durationMs)
+}
+
+/**
+ * Sets a timed form's end to the instant [endTs], as the date and clock time it falls on in the
+ * form's zone. The offset hint keeps a clock time that a daylight saving change repeats on the
+ * instant meant.
+ */
+private fun EventFormState.withTimedEndAt(endTs: Long): EventFormState {
+    val end = Instant.ofEpochMilli(endTs).atZone(TimezoneUtils.resolveZone(timezone))
+    return copy(
         endDateMillis = deviceMidnight(end.toLocalDate()),
         endHour = end.hour,
         endMinute = end.minute,
-        endOffsetHintTs = newEnd,
+        endOffsetHintTs = endTs,
     )
 }
+
+/** Sets a timed form's end [minutes] of real elapsed time after its start. */
+internal fun EventFormState.withTimedLength(minutes: Int): EventFormState =
+    withTimedEndAt(toStartEndTs().first + minutes * 60_000L)
+
+/** Returns a timed form's length in minutes, from the instants [toStartEndTs] would store. */
+internal fun EventFormState.lengthMinutes(): Int {
+    val (start, end) = toStartEndTs()
+    return ((end - start) / 60_000L).toInt()
+}
+
+/**
+ * Moves an all-day form's start to the day of [dateMillis], keeping the number of days. Both
+ * dates are stored as device-local midnights. The days are counted in calendar days: a span
+ * between midnights is 23 or 25 hours long across a daylight saving change, and adding it to
+ * another midnight can land an hour before midnight, on the previous day.
+ */
+internal fun EventFormState.withAllDayStart(dateMillis: Long): EventFormState {
+    val newStart = deviceLocalDate(dateMillis)
+    val days = ChronoUnit.DAYS.between(deviceLocalDate(this.dateMillis), deviceLocalDate(endDateMillis))
+        .coerceAtLeast(0)
+    return copy(
+        dateMillis = deviceMidnight(newStart),
+        endDateMillis = deviceMidnight(newStart.plusDays(days))
+    )
+}
+
+/**
+ * Sets an all-day form's inclusive end to the day of [dateMillis]. An end before the start swaps
+ * them: the start moves to the picked day and the end takes the old start. [hour] and [minute]
+ * are kept on the end for a later switch back to a timed event.
+ */
+internal fun EventFormState.withAllDayEnd(dateMillis: Long, hour: Int, minute: Int): EventFormState {
+    val normalizedDateMillis = normalizeToLocalMidnight(dateMillis)
+    return if (normalizedDateMillis < this.dateMillis) {
+        copy(
+            dateMillis = normalizedDateMillis,
+            endDateMillis = this.dateMillis,
+            endHour = hour,
+            endMinute = minute
+        )
+    } else {
+        copy(endDateMillis = normalizedDateMillis, endHour = hour, endMinute = minute)
+    }
+}
+
+/** Sets an all-day form's inclusive end [days] calendar days from its start, counting the start. */
+internal fun EventFormState.withAllDayLength(days: Int): EventFormState =
+    copy(endDateMillis = deviceMidnight(deviceLocalDate(dateMillis).plusDays((days - 1).toLong())))
+
+/** Returns an all-day form's length in calendar days, counting both the start and end day. */
+internal fun EventFormState.allDayLengthDays(): Int =
+    ChronoUnit.DAYS.between(deviceLocalDate(dateMillis), deviceLocalDate(endDateMillis)).toInt() + 1
 
 /**
  * Sets a timed form's end to the date of [dateMillis] at [hour]:[minute]. An end
@@ -634,15 +727,26 @@ internal fun EventFormState.withTimedEnd(dateMillis: Long, hour: Int, minute: In
 }
 
 /**
- * Switches a timed form to [newTimezone] (null = device default), keeping the
- * event at the same moment: the start and end are re-expressed as the date and
- * clock time they fall on in the new zone. Any preserved unrecognised source
- * timezone is dropped, since the user has now chosen one.
+ * Switches a timed form to [newTimezone] (null = device default), keeping the dates and clock
+ * times the form shows: "10:00 New York" becomes "10:00 Tokyo", so the moment moves. A series'
+ * start then stays on the days its rule names; keeping the moment instead would move a Tuesday
+ * start to Wednesday in Tokyo while the rule still says Tuesday. Any preserved unrecognised source
+ * timezone is dropped, since the user has now chosen one. The offset hints stay: one is used only
+ * while it names the clock time shown in the form's zone, so switching back to the event's own
+ * zone keeps the second of two repeated clock times.
  */
-internal fun EventFormState.withTimezone(newTimezone: String?): EventFormState {
-    val (start, end) = toStartEndTs()
-    return copy(timezone = newTimezone, sourceTimezoneId = null)
-        .withDateFields(timedFormDateFields(start, end, newTimezone))
+internal fun EventFormState.withTimezone(newTimezone: String?): EventFormState =
+    copy(timezone = newTimezone, sourceTimezoneId = null)
+
+/**
+ * Applies a tap in the time zone sheet. Device time zone stores [deviceZone] itself: the Room edit
+ * saves (update, move, this and future) fall back to the event's stored zone when the form's is
+ * null, so a null here would leave an existing event in its old zone.
+ */
+internal fun EventFormState.withZonePick(pick: ZonePick, deviceZone: String): EventFormState = when (pick) {
+    ZonePick.Keep -> this
+    ZonePick.Device -> withTimezone(deviceZone)
+    is ZonePick.Set -> withTimezone(pick.id)
 }
 
 /**
@@ -862,6 +966,7 @@ fun EventFormSheet(
     attendeeAccount: org.onekash.kashcal.data.db.entity.Account? = null,
     isSchedulable: Boolean = true,
     onCalendarSelected: ((Long) -> Unit)? = null,
+    onCreateOfflineCalendar: (suspend (name: String, color: Int) -> Result<Long>)? = null,
     onQueryContacts: (suspend (String) -> List<org.onekash.kashcal.data.contacts.ContactEmail>)? = null,
     contactsPermissionState: org.onekash.kashcal.ui.permission.ContactsPermissionState =
         org.onekash.kashcal.ui.permission.ContactsPermissionState.NotRequested,
@@ -870,6 +975,9 @@ fun EventFormSheet(
     onDeclineContacts: (() -> Unit)? = null,
     tagsAboveNotes: Boolean = false,
     onSetTagsAboveNotes: ((Boolean) -> Unit)? = null,
+    recentTimeZones: List<String> = emptyList(),
+    onTimeZonePicked: (String) -> Unit = {},
+    formSaveError: String? = null,
 ) {
     // Mirrored up from EventFormContent, which owns the form state, for the dismiss guard.
     var isSaving by remember { mutableStateOf(false) }
@@ -893,7 +1001,8 @@ fun EventFormSheet(
     // with safeDrawingPadding handles the status bar, IME and nav bar insets, as in
     // QuickAddDialog. The platform back dismissal is off (dismissOnBackPress = false):
     // back goes through the content's BackHandler to attemptDismiss, like Cancel, so
-    // the discard guard still fires.
+    // the discard guard still fires. An open color palette takes back first
+    // ([EventColorPalettePanel]).
     Dialog(
         onDismissRequest = attemptDismiss,
         properties = DialogProperties(
@@ -952,6 +1061,7 @@ fun EventFormSheet(
             attendeeAccount = attendeeAccount,
             isSchedulable = isSchedulable,
             onCalendarSelected = onCalendarSelected,
+            onCreateOfflineCalendar = onCreateOfflineCalendar,
             onQueryContacts = onQueryContacts,
             contactsPermissionState = contactsPermissionState,
             onRequestContactsPermission = onRequestContactsPermission,
@@ -959,6 +1069,9 @@ fun EventFormSheet(
             onDeclineContacts = onDeclineContacts,
             tagsAboveNotes = tagsAboveNotes,
             onSetTagsAboveNotes = onSetTagsAboveNotes,
+            recentTimeZones = recentTimeZones,
+            onTimeZonePicked = onTimeZonePicked,
+            formSaveError = formSaveError,
         )
         }
     }
@@ -992,7 +1105,10 @@ fun EventFormContent(
     onHasChangesChange: (Boolean) -> Unit = {},
     /** When true, the Cancel button renders the discard-confirmation label. */
     showDiscardConfirm: Boolean = false,
-    /** Invoked by Cancel and by back ([BackHandler]); the host runs its dismiss guard. */
+    /**
+     * Invoked by Cancel, and by back ([BackHandler]) once no color palette takes it first; the
+     * host runs its dismiss guard.
+     */
     onRequestDismiss: () -> Unit = {},
     modifier: Modifier = Modifier,
     eventId: Long? = null,
@@ -1102,6 +1218,8 @@ fun EventFormContent(
      * opened with.
      */
     onCalendarSelected: ((Long) -> Unit)? = null,
+    /** Creates an offline calendar from the picker's "New offline calendar"; null hides it. */
+    onCreateOfflineCalendar: (suspend (name: String, color: Int) -> Result<Long>)? = null,
     /** Debounced contact-email lookup for the picker's type-ahead. */
     onQueryContacts: (suspend (String) -> List<org.onekash.kashcal.data.contacts.ContactEmail>)? = null,
     /** READ_CONTACTS state, for the picker's permission banner. */
@@ -1117,6 +1235,12 @@ fun EventFormContent(
     tagsAboveNotes: Boolean = false,
     /** Persist a new tag-row position (above or below notes). */
     onSetTagsAboveNotes: ((Boolean) -> Unit)? = null,
+    /** Zones picked before in the time zone sheet, newest first. */
+    recentTimeZones: List<String> = emptyList(),
+    /** Records a zone picked in the time zone sheet as recent. */
+    onTimeZonePicked: (String) -> Unit = {},
+    /** Why the last save was refused (nothing saved), shown above Save; null hides it. */
+    formSaveError: String? = null,
     /**
      * Whether the host has finished its open animation. The title auto-focus, and the
      * keyboard it raises, waits for it so the keyboard doesn't rise mid-entrance.
@@ -1200,8 +1324,8 @@ fun EventFormContent(
     var deviceNoticeDismissed by remember { mutableStateOf(false) }
 
     var expandedPicker by remember { mutableStateOf<String?>(null) }
+    var showNewOfflineCalendar by remember { mutableStateOf(false) }
     var activeSheet by remember { mutableStateOf(ActiveDateTimeSheet.NONE) }
-    var showColorPicker by remember { mutableStateOf(false) }
     var showAttendeeSheet by remember { mutableStateOf(false) }
     var showAttendeePicker by remember { mutableStateOf(false) }
     // In-session dismissal of the picker's permission banner.
@@ -1368,7 +1492,8 @@ fun EventFormContent(
                 newState = mappedState.copy(
                     calendarGroups = writableGroups,
                     deviceCalendarGroups = deviceCalendarGroups,
-                    editingOccurrenceTs = deviceOccurrenceTs
+                    editingOccurrenceTs = deviceOccurrenceTs,
+                    editingZone = if (mappedState.isAllDay) null else mappedState.timezone ?: TimezoneUtils.getDeviceTimezone(),
                 )
                 initialRrule = mappedState.rrule
                 wasRecurringAtLoad = editData.event.rrule != null || editData.event.originalId != null
@@ -1425,6 +1550,9 @@ fun EventFormContent(
                     editingEventId = eventId,
                     isEditMode = true,
                     editingOccurrenceTs = occurrenceTs,
+                    editingZone = if (event.isAllDay) null else {
+                        event.timezone?.takeIf { TimezoneUtils.resolveZoneOrNull(it) != null } ?: TimezoneUtils.getDeviceTimezone()
+                    },
                     transp = event.transp,
                     eventColor = event.color,
                     categories = event.categories.orEmpty()
@@ -1720,8 +1848,9 @@ fun EventFormContent(
     }
     SideEffect { onHasChangesChange(hasUnsavedChanges) }
 
-    // Back runs the same dismiss guard as Cancel. This content sits in the form's
-    // own dialog window, whose built-in back dismissal is off.
+    // Back runs the same dismiss guard as Cancel, unless the color palette is open: its
+    // own handler, registered later, takes back first ([EventColorPalettePanel]). This
+    // content sits in the form's own dialog window, whose built-in back dismissal is off.
     BackHandler(onBack = onRequestDismiss)
 
     val paneTitleText = if (state.isEditMode) {
@@ -2107,6 +2236,7 @@ fun EventFormContent(
                     state = state.withAllDay(newIsAllDay, defaultReminderTimed, defaultReminderAllDay)
                 }
 
+                val formStartEnd = state.toStartEndTs()
                 DateTimeDisplayRow(
                     startDateMillis = state.dateMillis,
                     startHour = state.startHour,
@@ -2121,19 +2251,22 @@ fun EventFormContent(
                     isEndError = hasTimeConflict,
                     endErrorMessage = if (hasTimeConflict) stringResource(R.string.error_end_before_start) else null,
                     timezone = state.timezone,
-                    timePattern = timePattern
+                    timePattern = timePattern,
+                    startTs = formStartEnd.first,
+                    endTs = formStartEnd.second,
                 )
 
                 if (!state.isAllDay) {
                     var showTimezoneSheet by remember { mutableStateOf(false) }
                     val tzId = state.timezone
                     val effectiveTzId = tzId ?: remember { TimezoneUtils.getDeviceTimezone() }
-                    val tzAbbrev = remember(effectiveTzId) { TimezoneUtils.getAbbreviation(effectiveTzId) }
-                    val tzDisplayName = remember(effectiveTzId) {
-                        TimezoneUtils.getTimezoneInfo(effectiveTzId)?.displayName
-                            ?: effectiveTzId.substringAfterLast('/').replace('_', ' ')
+                    val resources = LocalResources.current
+                    val startTs = formStartEnd.first
+                    val timezoneLabel = remember(effectiveTzId, startTs, resources) {
+                        ZoneCatalog.label(effectiveTzId, Instant.ofEpochMilli(startTs))
+                            ?.let { timeZoneRowLabel(resources, it) }
+                            ?: TimeZoneRowLabel(effectiveTzId, effectiveTzId)
                     }
-                    val timezoneLabel = "$tzDisplayName ($tzAbbrev)"
 
                     EventFormRow(
                         icon = Icons.Default.Public,
@@ -2142,8 +2275,11 @@ fun EventFormContent(
                         onToggle = { if (!isReadOnly) showTimezoneSheet = true }
                     ) {
                         Text(
-                            timezoneLabel,
+                            timezoneLabel.text,
                             style = MaterialTheme.typography.bodyLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.semantics { contentDescription = timezoneLabel.description },
                             color = if (tzId == null)
                                 MaterialTheme.colorScheme.onSurfaceVariant
                             else
@@ -2152,10 +2288,14 @@ fun EventFormContent(
                     }
 
                     if (showTimezoneSheet) {
-                        TimezonePickerSheet(
-                            selectedTimezone = state.timezone,
-                            onTimezoneSelected = { newTimezone ->
-                                state = state.withTimezone(newTimezone)
+                        TimeZoneSheet(
+                            eventZone = state.timezone,
+                            sourceZone = state.sourceTimezoneId,
+                            at = Instant.ofEpochMilli(startTs),
+                            recents = recentTimeZones,
+                            onPick = { pick ->
+                                state = state.withZonePick(pick, TimezoneUtils.getDeviceTimezone())
+                                if (pick is ZonePick.Set) onTimeZonePicked(pick.id)
                                 showTimezoneSheet = false
                             },
                             onDismiss = { showTimezoneSheet = false }
@@ -2165,6 +2305,29 @@ fun EventFormContent(
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = SECTION_DIVIDER_SPACING))
 
+                // A pick from the list and a calendar just created from it select the same way.
+                val selectCalendar: (Long, String, Int?, Boolean) -> Unit = { id, name, color, isDevice ->
+                    state = state.copy(
+                        selectedCalendarId = id,
+                        selectedCalendarName = name,
+                        selectedCalendarColor = color,
+                        isDeviceCalendar = isDevice
+                    )
+                    // Re-resolves the attendee context for the new
+                    // calendar's account.
+                    onCalendarSelected?.invoke(id)
+                    expandedPicker = null
+                }
+                if (showNewOfflineCalendar && onCreateOfflineCalendar != null) {
+                    NewOfflineCalendarSheet(
+                        onCreate = onCreateOfflineCalendar,
+                        onCreated = { id, name, color ->
+                            showNewOfflineCalendar = false
+                            selectCalendar(id, name, color, false)
+                        },
+                        onDismiss = { showNewOfflineCalendar = false },
+                    )
+                }
                 CalendarPickerRow(
                     selectedCalendarId = state.selectedCalendarId,
                     selectedCalendarName = state.selectedCalendarName,
@@ -2199,24 +2362,30 @@ fun EventFormContent(
                         !(state.isEditMode && state.isDeviceCalendar && state.rrule != null) &&
                         !(state.isEditMode && !state.isDeviceCalendar && state.attendees.isNotEmpty()),
                     onToggle = { expandedPicker = if (expandedPicker == "calendar") null else "calendar" },
-                    onSelect = { id, name, color, isDevice ->
-                        state = state.copy(
-                            selectedCalendarId = id,
-                            selectedCalendarName = name,
-                            selectedCalendarColor = color,
-                            isDeviceCalendar = isDevice
-                        )
-                        // Re-resolves the attendee context for the new
-                        // calendar's account.
-                        onCalendarSelected?.invoke(id)
-                        expandedPicker = null
-                    }
+                    onSelect = selectCalendar,
+                    onNewOfflineCalendar = onCreateOfflineCalendar?.let { { showNewOfflineCalendar = true } },
                 )
 
+                val colorExpanded = expandedPicker == "color"
                 EventFormRow(
                     icon = Icons.Default.Palette,
                     iconContentDescription = stringResource(R.string.label_event_color),
-                    onToggle = { if (!isReadOnly) showColorPicker = true }
+                    isExpanded = colorExpanded,
+                    showExpandIcon = !isReadOnly,
+                    onToggle = { if (!isReadOnly) expandedPicker = if (colorExpanded) null else "color" },
+                    expandedContent = {
+                        EventColorPalettePanel(
+                            selectedArgb = state.eventColor,
+                            calendarDefaultArgb = state.selectedCalendarColor
+                                ?: MaterialTheme.colorScheme.primary.toArgb(),
+                            expanded = colorExpanded,
+                            onColorSelected = { color ->
+                                state = state.copy(eventColor = color)
+                                expandedPicker = null
+                            },
+                            onCollapse = { expandedPicker = null },
+                        )
+                    },
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -2241,12 +2410,6 @@ fun EventFormContent(
                             style = MaterialTheme.typography.bodyLarge
                         )
                     }
-                    Icon(
-                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
 
                 ReminderPickerRow(
@@ -2612,18 +2775,6 @@ fun EventFormContent(
                     }
                 }
 
-                if (showColorPicker) {
-                    EventColorSheet(
-                        selectedArgb = state.eventColor,
-                        calendarDefaultArgb = state.selectedCalendarColor ?: MaterialTheme.colorScheme.primary.toArgb(),
-                        onColorSelected = { color ->
-                            state = state.copy(eventColor = color)
-                            showColorPicker = false
-                        },
-                        onDismiss = { showColorPicker = false }
-                    )
-                }
-
                 if (state.error != null) {
                     Spacer(modifier = Modifier.height(16.dp))
                     val errorText = state.error.orEmpty()
@@ -2773,6 +2924,14 @@ fun EventFormContent(
             // Sticky bottom Save. Its own top divider ends the scroll content, so
             // content sections must not add a trailing divider (it would stack).
             HorizontalDivider(modifier = Modifier.testTag(TAG_SAVE_DIVIDER))
+            if (formSaveError != null) {
+                Text(
+                    formSaveError,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp),
+                )
+            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -2819,67 +2978,19 @@ fun EventFormContent(
     }
 
 
-    if (activeSheet == ActiveDateTimeSheet.START) {
+    if (activeSheet != ActiveDateTimeSheet.NONE) {
         DateTimeSheet(
-            label = stringResource(R.string.label_starts),
-            selectedDateMillis = state.dateMillis,
-            selectedHour = state.startHour,
-            selectedMinute = state.startMinute,
-            selectedTimezone = state.timezone,
-            isAllDay = state.isAllDay,
-            use24Hour = use24Hour,
-            firstDayOfWeek = firstDayOfWeek,
-            onConfirm = { dateMillis, hour, minute ->
-                if (state.isAllDay) {
-                    // Keep the day span when the start date moves.
-                    val normalizedDateMillis = normalizeToLocalMidnight(dateMillis)
-                    val normalizedOldStart = normalizeToLocalMidnight(state.dateMillis)
-                    val normalizedOldEnd = normalizeToLocalMidnight(state.endDateMillis)
-                    val daySpanMs = (normalizedOldEnd - normalizedOldStart).coerceAtLeast(0)
-                    val newEndDateMillis = normalizedDateMillis + daySpanMs
-                    state = state.copy(
-                        dateMillis = normalizedDateMillis,
-                        endDateMillis = newEndDateMillis
-                    )
-                } else {
-                    state = state.withTimedStart(dateMillis, hour, minute, defaultEventDuration)
-                }
+            initial = state,
+            openingSide = if (activeSheet == ActiveDateTimeSheet.START) DateSelectionMode.START else DateSelectionMode.END,
+            defaultDurationMinutes = defaultEventDuration,
+            // Only the start and end come back, so the calendar lists and default calendar the
+            // form updates while the sheet is open are kept.
+            onCommit = { fields ->
+                state = state.withDateFields(fields)
                 activeSheet = ActiveDateTimeSheet.NONE
             },
-            onDismiss = { activeSheet = ActiveDateTimeSheet.NONE }
-        )
-    }
-
-    if (activeSheet == ActiveDateTimeSheet.END) {
-        DateTimeSheet(
-            label = stringResource(R.string.label_ends),
-            selectedDateMillis = state.endDateMillis,
-            selectedHour = state.endHour,
-            selectedMinute = state.endMinute,
-            selectedTimezone = state.timezone,
-            isAllDay = state.isAllDay,
             use24Hour = use24Hour,
             firstDayOfWeek = firstDayOfWeek,
-            onConfirm = { dateMillis, hour, minute ->
-                if (state.isAllDay) {
-                    val normalizedDateMillis = normalizeToLocalMidnight(dateMillis)
-                    // An end date before the start date swaps them.
-                    state = if (normalizedDateMillis < state.dateMillis) {
-                        state.copy(
-                            dateMillis = normalizedDateMillis,
-                            endDateMillis = state.dateMillis,
-                            endHour = hour,
-                            endMinute = minute
-                        )
-                    } else {
-                        state.copy(endDateMillis = normalizedDateMillis, endHour = hour, endMinute = minute)
-                    }
-                } else {
-                    state = state.withTimedEnd(dateMillis, hour, minute)
-                }
-                activeSheet = ActiveDateTimeSheet.NONE
-            },
-            onDismiss = { activeSheet = ActiveDateTimeSheet.NONE }
         )
     }
 }
@@ -2939,19 +3050,23 @@ internal fun parseIso8601DurationToMinutes(duration: String?): Int? {
 }
 
 /**
- * Parses an event's first [MAX_REMINDERS] reminders into signed minutes, paired with the
- * count beyond that limit (from [alarmCount]). Unparseable entries are dropped; after-start
- * (negative) values are kept.
+ * Parses an event's stored reminders into signed minutes for the form, one alert per offset
+ * (sorted, so after-start values come first), at most [MAX_REMINDERS], paired with the number of
+ * alarms the form doesn't show. Unparseable entries are dropped.
+ *
+ * The form can't show an alarm's kind, and the edit save keeps one alarm per offset, so a display
+ * and an email alarm at the same offset show as one alert. The hidden count is the alarms a pull
+ * counted beyond the stored list (a form save doesn't recount [Event.alarmCount], so only the
+ * part past [MAX_REMINDERS] counts) plus any distinct offsets past the cap. The form's
+ * notice shows that count, and its total is the shown alerts plus the hidden ones.
  */
 private fun parseRemindersFromEvent(reminders: List<String>?, alarmCount: Int = 0): Pair<List<Int>, Int> {
     if (reminders.isNullOrEmpty()) return Pair(emptyList(), 0)
 
-    val parsed = reminders.take(MAX_REMINDERS).mapNotNull { duration ->
-        parseIso8601DurationToMinutes(duration)
-    }
-    val truncatedCount = (alarmCount - MAX_REMINDERS).coerceAtLeast(0)
-
-    return Pair(parsed, truncatedCount)
+    val distinct = deduplicateAndSortReminders(reminders.mapNotNull { parseIso8601DurationToMinutes(it) })
+    val shown = distinct.take(MAX_REMINDERS)
+    val notStored = (alarmCount - maxOf(reminders.size, MAX_REMINDERS)).coerceAtLeast(0)
+    return Pair(shown, notStored + (distinct.size - shown.size))
 }
 
 

@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.integration.multiserver
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.every
@@ -34,6 +34,7 @@ import org.onekash.kashcal.sync.model.ChangedField
 import org.onekash.kashcal.sync.strategy.PullResult
 import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.Instant
@@ -100,7 +101,7 @@ class MultiServerRecentChangesTest(
     @Before
     fun setup() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries().build()
         val dataStore = mockk<KashCalDataStore>(relaxed = true)
         every { dataStore.defaultReminderMinutes } returns flowOf(15)
@@ -124,7 +125,8 @@ class MultiServerRecentChangesTest(
             dataStore = dataStore,
             inviteNotifier = mockk(relaxed = true),
             accountRepository = accountRepository,
-            reminderScheduler = mockk(relaxed = true)
+            reminderScheduler = mockk(relaxed = true),
+            icsSource = EventIcsStore(database),
         )
         recorder = RecentChangesRecorder(database)
     }

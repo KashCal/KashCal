@@ -16,6 +16,7 @@ import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.discovery.AccountDiscoveryService
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
+import org.onekash.kashcal.sync.discovery.credentialSaveFailed
 import org.onekash.kashcal.sync.discovery.RefusalRecordingClient
 import org.onekash.kashcal.sync.discovery.confirmUnlistedCalendars
 import org.onekash.kashcal.sync.discovery.persistCalendarUserAddresses
@@ -152,9 +153,22 @@ class ICloudAccountDiscoveryService @Inject constructor(
                 )
             }
 
-            // Step 4: Create or update Account in Room
+            // Step 4: Find an existing account
             val existingAccount = accountRepository.getAccountByProviderAndEmail(AccountProvider.ICLOUD, appleId)
+            val accountCredentials = AccountCredentials(
+                username = appleId,
+                password = appSpecificPassword,
+                serverUrl = AccountCredentials.ICLOUD_DEFAULT_SERVER_URL,
+                principalUrl = principalUrl,
+                calendarHomeSet = calendarHomeUrl
+            )
+
+            // Step 4b: Save the credentials to encrypted storage. [credentialSaveFailed] says what
+            // a failed save writes.
             val account = if (existingAccount != null) {
+                if (!accountRepository.saveCredentials(existingAccount.id, accountCredentials)) {
+                    return@withContext credentialSaveFailed(TAG)
+                }
                 Log.d(TAG, "Updating existing account: ${existingAccount.id}")
                 val updated = existingAccount.copy(
                     principalUrl = principalUrl,
@@ -173,26 +187,12 @@ class ICloudAccountDiscoveryService @Inject constructor(
                     homeSetUrl = calendarHomeUrl,
                     isEnabled = true
                 )
-                val accountId = accountRepository.createAccount(newAccount)
-                newAccount.copy(id = accountId)
-            }
-
-            // Step 4b: Save credentials to encrypted storage. Without them the account can't
-            // sync, so a failed save deletes it.
-            val accountCredentials = AccountCredentials(
-                username = appleId,
-                password = appSpecificPassword,
-                serverUrl = AccountCredentials.ICLOUD_DEFAULT_SERVER_URL,
-                principalUrl = principalUrl,
-                calendarHomeSet = calendarHomeUrl
-            )
-            val credentialsSaved = accountRepository.saveCredentials(account.id, accountCredentials)
-            if (!credentialsSaved) {
-                Log.e(TAG, "Failed to save credentials - secure storage unavailable")
-                accountRepository.deleteAccount(account.id)
-                return@withContext DiscoveryResult.Error(
-                    "Could not save credentials securely. Please try again, or restart your device if the problem persists."
-                )
+                val created = newAccount.copy(id = accountRepository.createAccount(newAccount))
+                if (!accountRepository.saveCredentials(created.id, accountCredentials)) {
+                    accountRepository.deleteAccount(created.id)
+                    return@withContext credentialSaveFailed(TAG)
+                }
+                created
             }
 
             // Step 4c: Discover and persist the calendar-user-address-set (RFC 6638 §2.4.1).
@@ -492,5 +492,4 @@ class ICloudAccountDiscoveryService @Inject constructor(
             DEFAULT_COLORS[index % DEFAULT_COLORS.size]
         }
     }
-
 }

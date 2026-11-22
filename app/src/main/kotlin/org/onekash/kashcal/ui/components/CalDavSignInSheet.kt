@@ -82,6 +82,7 @@ fun CalDavSignInSheet(
     showLocalNetworkBanner: Boolean = false,
     onRequestLocalNetwork: () -> Unit = {},
     onDismissLocalNetworkBanner: () -> Unit = {},
+    title: String = stringResource(R.string.signin_caldav_title),
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
@@ -110,7 +111,7 @@ fun CalDavSignInSheet(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = stringResource(R.string.signin_caldav_title),
+                text = title,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )

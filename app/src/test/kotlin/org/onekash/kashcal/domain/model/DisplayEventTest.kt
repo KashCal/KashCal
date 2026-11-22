@@ -18,6 +18,9 @@ class DisplayEventTest {
 
     // ========== Test Fixtures ==========
 
+    private val TOKYO = java.time.ZoneId.of("Asia/Tokyo")
+    private val UTC = java.time.ZoneOffset.UTC
+
     private val testEvent = Event(
         id = 1L,
         uid = "test-uid@kashcal",
@@ -113,15 +116,16 @@ class DisplayEventTest {
     }
 
     @Test
-    fun `Room variant delegates startDay to Occurrence`() {
-        val display = DisplayEvent.Room(testEvent, testOccurrence, testCalendar)
-        assertEquals(20231116, display.startDay)
+    fun `Room variant takes a timed startDay from the occurrence start in its zone`() {
+        // 2023-11-15T22:13:20Z is Nov 16 in Tokyo and Nov 15 in UTC.
+        assertEquals(20231116, DisplayEvent.Room(testEvent, testOccurrence, testCalendar, zone = TOKYO).startDay)
+        assertEquals(20231115, DisplayEvent.Room(testEvent, testOccurrence, testCalendar, zone = UTC).startDay)
     }
 
     @Test
-    fun `Room variant delegates endDay to Occurrence`() {
-        val display = DisplayEvent.Room(testEvent, testOccurrence, testCalendar)
-        assertEquals(20231116, display.endDay)
+    fun `Room variant takes a timed endDay from the occurrence end in its zone`() {
+        assertEquals(20231116, DisplayEvent.Room(testEvent, testOccurrence, testCalendar, zone = TOKYO).endDay)
+        assertEquals(20231115, DisplayEvent.Room(testEvent, testOccurrence, testCalendar, zone = UTC).endDay)
     }
 
     @Test
@@ -546,11 +550,10 @@ class DisplayEventTest {
     }
 
     @Test
-    fun `toEventForShareCard does not set rawIcal, organizer, or caldavUrl`() {
+    fun `toEventForShareCard does not set organizer or caldavUrl`() {
         // Defense in depth: singleOccurrenceForShare strips these too, and
         // the device-event mapper has no reason to set them.
         val event = DisplayEvent.Device(testInstance).toEventForShareCard()
-        assertNull(event.rawIcal)
         assertNull(event.organizerEmail)
         assertNull(event.organizerName)
         assertNull(event.caldavUrl)

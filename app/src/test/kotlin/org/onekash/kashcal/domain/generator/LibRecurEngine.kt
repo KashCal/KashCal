@@ -11,15 +11,19 @@ import org.dmfs.rfc5545.recurrenceset.OfRuleAndFirst
 import org.onekash.kashcal.data.db.entity.Occurrence
 import java.util.Calendar
 import java.util.TimeZone
+import java.time.format.DateTimeFormatter
+import java.time.ZoneOffset
+import java.time.LocalDateTime
 
 /**
  * Expands RRULE, RDATE and EXDATE over lib-recur (`dmfs/lib-recur`), as a pure function.
  *
  * Test-only: the oracle the parity and fuzz tests compare the production [IcalDavRRuleEngine]
  * against, which [OccurrenceGenerator] calls. Its quirks are lettered (a) to (i) below, with no
- * (f). The production engine keeps (a), (b), (e), (g) and (h) under the same letters; (c), (d)
- * and (i) work around lib-recur itself. Each quirk fixes a failure on real data; changing one
- * without its test reintroduces the failure.
+ * (f). The production engine keeps (a), (b), (e), (g) and (h) under the same letters, (e) with
+ * its own starting point (see [IcalDavRRuleEngine]); (c), (d) and (i) work around lib-recur
+ * itself. Each quirk fixes a failure on real data; changing one without its test reintroduces
+ * the failure.
  */
 object LibRecurEngine {
 
@@ -65,8 +69,6 @@ object LibRecurEngine {
                 else -> TimeZone.getDefault()
             }
             val dtstartSeconds = dtstartMs / MILLISECONDS_PER_SECOND
-            val rdates = parseMultiValueField(rdateStrings, isAllDay)
-            val exdates = parseMultiValueField(exdateStrings, isAllDay)
 
             // Quirk (b): COUNT and UNTIL MUST NOT occur in the same rule (RFC 5545 §3.3.10).
             // lib-recur rejects such a rule (InvalidRecurrenceRuleException), which the catch
@@ -97,23 +99,16 @@ object LibRecurEngine {
 
             val baseSet: RecurrenceSet = OfRuleAndFirst(rule, startDateTime)
 
-            // RFC 5545 §3.8.5.1-2: the set is (DTSTART ∪ RRULE ∪ RDATE) - EXDATE.
-            val withRdates: RecurrenceSet = if (rdates.isNotEmpty()) {
-                val rdateDateTimes = rdates.mapNotNull {
-                    parseDateCode(it, tz, dtstartHour, dtstartMinute, dtstartSecond)
-                }
-                if (rdateDateTimes.isNotEmpty()) {
-                    Merged(baseSet, OfList(*rdateDateTimes.toTypedArray()))
-                } else baseSet
+            // RFC 5545 §3.8.5.1-2: the set is (DTSTART ∪ RRULE ∪ RDATE) - EXDATE, gathered from
+            // start DATE-TIME values, so a date-time value matches by instant.
+            val rdateDateTimes = parseRecurrenceValues(rdateStrings, isAllDay, tz, dtstartHour, dtstartMinute, dtstartSecond)
+            val withRdates: RecurrenceSet = if (rdateDateTimes.isNotEmpty()) {
+                Merged(baseSet, OfList(*rdateDateTimes.toTypedArray()))
             } else baseSet
 
-            val finalSet: RecurrenceSet = if (exdates.isNotEmpty()) {
-                val exdateDateTimes = exdates.mapNotNull {
-                    parseDateCode(it, tz, dtstartHour, dtstartMinute, dtstartSecond)
-                }
-                if (exdateDateTimes.isNotEmpty()) {
-                    Difference(withRdates, OfList(*exdateDateTimes.toTypedArray()))
-                } else withRdates
+            val exdateDateTimes = parseRecurrenceValues(exdateStrings, isAllDay, tz, dtstartHour, dtstartMinute, dtstartSecond)
+            val finalSet: RecurrenceSet = if (exdateDateTimes.isNotEmpty()) {
+                Difference(withRdates, OfList(*exdateDateTimes.toTypedArray()))
             } else withRdates
 
             // Quirk (d): fast-forward to 30 days before the range start only when the range
@@ -164,34 +159,52 @@ object LibRecurEngine {
     }
 
     /**
-     * Parses a comma-separated RDATE or EXDATE field into YYYYMMDD date codes, dropping values
-     * that don't yield one.
+     * Parses a comma-separated RDATE or EXDATE field into lib-recur DateTimes, dropping values
+     * that don't parse. On a timed series a date-time value keeps its own instant, as the
+     * production engine matches it; on an all-day series every value is read as its date.
      *
      * Formats:
-     *   - Milliseconds: "1737331200000" becomes a day code via [Occurrence.toDayFormat]
-     *   - Day codes: "20251225" is used as is
-     *   - DateTime: "20251225T100000Z" keeps its date part
+     *   - Milliseconds: "1737331200000", the instant (all-day: its UTC date)
+     *   - Day codes: "20251225", at DTSTART's time of day in [tz] (quirk (g))
+     *   - DateTime: "20251225T100000Z" as that instant, "20251225T100000" as that wall time in
+     *     [tz] (all-day: the date part)
      */
-    internal fun parseMultiValueField(field: String?, isAllDay: Boolean = false): List<String> {
+    private fun parseRecurrenceValues(
+        field: String?,
+        isAllDay: Boolean,
+        tz: TimeZone,
+        hour: Int,
+        minute: Int,
+        second: Int,
+    ): List<DateTime> {
         if (field.isNullOrBlank()) return emptyList()
-
         return field.split(",")
             .map { it.trim() }
             .filter { it.isNotEmpty() }
-            .mapNotNull { dateValue ->
+            .mapNotNull { value ->
                 when {
-                    // Milliseconds: 10 or more digits (13 for 2020s epoch ms).
-                    dateValue.length >= 10 && dateValue.all { it.isDigit() } -> {
-                        dateValue.toLongOrNull()?.let { ms ->
-                            Occurrence.toDayFormat(ms, isAllDay).toString()
+                    value.length >= 10 && value.all { it.isDigit() } -> value.toLongOrNull()?.let { ms ->
+                        if (isAllDay) {
+                            parseDateCode(Occurrence.toDayFormat(ms, true).toString(), tz, 0, 0, 0)
+                        } else {
+                            timestampToDateTime(Math.floorDiv(ms, MILLISECONDS_PER_SECOND), tz)
                         }
                     }
-                    dateValue.contains("T") -> dateValue.substringBefore("T")
-                    dateValue.length >= 8 -> dateValue.substring(0, 8)
+                    value.contains("T") && !isAllDay -> runCatching {
+                        val wall = LocalDateTime.parse(
+                            value.removeSuffix("Z"),
+                            DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss"),
+                        )
+                        if (value.endsWith("Z")) {
+                            timestampToDateTime(wall.toEpochSecond(ZoneOffset.UTC), tz)
+                        } else {
+                            DateTime(tz, wall.year, wall.monthValue - 1, wall.dayOfMonth, wall.hour, wall.minute, wall.second)
+                        }
+                    }.getOrNull()
+                    value.length >= 8 -> parseDateCode(value.substring(0, 8), tz, hour, minute, second)
                     else -> null
                 }
             }
-            .filter { it.length == 8 && it.all { c -> c.isDigit() } }
     }
 
     /** Parses a YYYYMMDD date code to a lib-recur DateTime at DTSTART's time; null if invalid. */

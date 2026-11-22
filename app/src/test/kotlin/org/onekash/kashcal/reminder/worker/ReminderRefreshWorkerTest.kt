@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.work.ListenableWorker
 import androidx.work.WorkerParameters
 import io.mockk.coEvery
+import io.mockk.coJustRun
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -65,7 +66,11 @@ class ReminderRefreshWorkerTest {
     }
 
     private fun createWorker(): ReminderRefreshWorker {
-        return ReminderRefreshWorker(context, workerParams, reminderScheduler, deviceCalendarReminderScheduler, dataStore)
+        // The horizon pass only writes occurrence rows; these tests are about the scheduling calls.
+        return ReminderRefreshWorker(
+            context, workerParams, reminderScheduler, deviceCalendarReminderScheduler, dataStore,
+            mockk { coJustRun { ensureOccurrenceHorizon(any()) } },
+        )
     }
 
     @Test

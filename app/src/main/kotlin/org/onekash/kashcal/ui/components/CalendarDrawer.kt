@@ -52,6 +52,7 @@ import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.model.toDisplaySections
 import org.onekash.kashcal.ui.viewmodels.ViewMode
+import org.onekash.kashcal.util.ExternalLinks
 
 /**
  * Shows the navigation drawer: view-mode switching and calendar visibility.
@@ -379,7 +380,7 @@ fun CalendarDrawer(
                         .fillMaxWidth()
                         .padding(horizontal = 12.dp, vertical = 2.dp)
                         .clip(RoundedCornerShape(50))
-                        .clickable { uriHandler.openUri("https://kashcal.onekash.org/docs/category/get-help") }
+                        .clickable { uriHandler.openUri(ExternalLinks.HELP) }
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)

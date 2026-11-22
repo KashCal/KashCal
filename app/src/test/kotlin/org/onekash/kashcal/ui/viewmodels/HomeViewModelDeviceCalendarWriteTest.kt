@@ -35,6 +35,8 @@ import org.onekash.kashcal.network.NetworkMonitor
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.sync.scheduler.SyncStatus
 import org.onekash.kashcal.ui.components.EventFormState
+import org.onekash.kashcal.ui.components.withZonePick
+import org.onekash.kashcal.ui.components.pickers.ZonePick
 
 /**
  * Tests [HomeViewModel]'s device-event writes over [FakeCalendarProviderRepository]:
@@ -101,7 +103,7 @@ class HomeViewModelDeviceCalendarWriteTest {
         coEvery { dataStore.defaultEventDuration } returns MutableStateFlow(20)
         coEvery { dataStore.timeFormat } returns MutableStateFlow("system")
         coEvery { dataStore.showEventEmojis } returns MutableStateFlow(true)
-        coEvery { dataStore.onboardingDismissed } returns MutableStateFlow(true)
+        coEvery { dataStore.onboardingCompleted } returns MutableStateFlow(true)
 
         // Event coordinator / reader defaults
         every { eventCoordinator.getAllCalendars() } returns MutableStateFlow(emptyList())
@@ -136,7 +138,8 @@ class HomeViewModelDeviceCalendarWriteTest {
             attendeeBackfill = io.mockk.mockk(relaxed = true),
             contactEmailReader = io.mockk.mockk(relaxed = true),
             context = io.mockk.mockk(relaxed = true),
-            ioDispatcher = testDispatcher
+            ioDispatcher = testDispatcher,
+            applicationScope = kotlinx.coroutines.CoroutineScope(testDispatcher)
         )
     }
 
@@ -448,7 +451,7 @@ class HomeViewModelDeviceCalendarWriteTest {
     }
 
     @Test
-    fun `picking a new timezone for a device event keeps the event at the same moment`() = withDeviceTimeZone("America/Los_Angeles") {
+    fun `picking a new timezone for a device event keeps its clock time`() = withDeviceTimeZone("America/Los_Angeles") {
         runTest {
             val viewModel = createViewModel()
             advanceUntilIdle()
@@ -458,8 +461,8 @@ class HomeViewModelDeviceCalendarWriteTest {
 
             val update = fakeCalendarProviderRepository.updatedEvents.single()
             assertEquals("America/Chicago", update.timezone)
-            assertEquals(newYork10am, update.startTs) // shown as 09:00 Chicago
-            assertEquals(newYork10am + oneHourMs, update.endTs)
+            assertEquals(newYork10am + oneHourMs, update.startTs) // 10:00 Chicago
+            assertEquals(newYork10am + 2 * oneHourMs, update.endTs)
         }
     }
 
@@ -562,7 +565,7 @@ class HomeViewModelDeviceCalendarWriteTest {
             advanceUntilIdle()
 
             openAndSave(viewModel, newYorkDeviceEvent(newYork10am, timezone = "Eastern Standard Time")) {
-                it.withTimezone(null)
+                it.withZonePick(ZonePick.Device, "America/Los_Angeles")
             }
             advanceUntilIdle()
 

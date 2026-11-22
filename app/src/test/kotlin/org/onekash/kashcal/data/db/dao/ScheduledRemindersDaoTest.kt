@@ -1,7 +1,6 @@
 package org.onekash.kashcal.data.db.dao
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -19,6 +18,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.ReminderStatus
 import org.onekash.kashcal.data.db.entity.ScheduledReminder
 import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -44,7 +44,7 @@ class ScheduledRemindersDaoTest {
     @Before
     fun setup() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
 
@@ -303,6 +303,35 @@ class ScheduledRemindersDaoTest {
 
         assertNull(remindersDao.getById(removedId))
         assertNotNull(remindersDao.getById(keptId))
+    }
+
+    @Test
+    fun `getAllForEvent returns the event's rows in every status`() = runTest {
+        val ids = ReminderStatus.entries.map { remindersDao.insert(createReminder(status = it)) }
+
+        assertEquals(ids.toSet(), remindersDao.getAllForEvent(testEventId).map { it.id }.toSet())
+    }
+
+    @Test
+    fun `updateDisplayForEvent rewrites the display copy of the event's rows only`() = runTest {
+        val otherEventId = database.eventsDao().insert(
+            Event(
+                uid = "other-uid", calendarId = testCalendarId, title = "Other",
+                startTs = 0L, endTs = 1L, dtstamp = 0L
+            )
+        )
+        val id = remindersDao.insert(createReminder(status = ReminderStatus.FIRED))
+        val otherId = remindersDao.insert(createReminder(eventId = otherEventId))
+
+        remindersDao.updateDisplayForEvent(testEventId, "Renamed", "Room 2", isAllDay = true, calendarColor = 7)
+
+        val row = remindersDao.getById(id)!!
+        assertEquals("Renamed", row.eventTitle)
+        assertEquals("Room 2", row.eventLocation)
+        assertTrue(row.isAllDay)
+        assertEquals(7, row.calendarColor)
+        assertEquals(ReminderStatus.FIRED, row.status)
+        assertEquals("Test Event", remindersDao.getById(otherId)!!.eventTitle)
     }
 
     @Test
@@ -619,5 +648,42 @@ class ScheduledRemindersDaoTest {
         val siblings = remindersDao.getSiblingIdsForOccurrence(testEventId, siblingOccurrence, onlyId)
 
         assertTrue("A single reminder has no siblings", siblings.isEmpty())
+    }
+
+    // ==================== Occurrences with pending reminders ====================
+
+    @Test
+    fun `two reminders of one occurrence count as one event`() = runTest {
+        val occurrence = System.currentTimeMillis() + 3_600_000
+        remindersDao.insert(createReminder(occurrenceTime = occurrence))
+        remindersDao.insert(createReminder(occurrenceTime = occurrence))
+
+        val count = remindersDao.countOccurrencesWithPendingReminders(0, Long.MAX_VALUE)
+
+        assertEquals(1, count)
+    }
+
+    @Test
+    fun `only pending reminders in the range count`() = runTest {
+        val now = System.currentTimeMillis()
+        remindersDao.insert(createReminder(triggerTime = now + 1_000, occurrenceTime = now + 10_000))
+        remindersDao.insert(createReminder(triggerTime = now + 2_000, occurrenceTime = now + 20_000, status = ReminderStatus.SNOOZED))
+        remindersDao.insert(createReminder(triggerTime = now + 3_000, occurrenceTime = now + 30_000, status = ReminderStatus.FIRED))
+        remindersDao.insert(createReminder(triggerTime = now + 999_999, occurrenceTime = now + 40_000))
+
+        val count = remindersDao.countOccurrencesWithPendingReminders(now, now + 10_000)
+
+        assertEquals(1, count)
+    }
+
+    @Test
+    fun `a muted calendar's pending reminders don't count`() = runTest {
+        // Muting keeps the rows PENDING so an unmute can re-arm them; the count must skip them.
+        remindersDao.insert(createReminder())
+        database.calendarsDao().setNotificationMuted(testCalendarId, true)
+
+        val count = remindersDao.countOccurrencesWithPendingReminders(0, Long.MAX_VALUE)
+
+        assertEquals(0, count)
     }
 }

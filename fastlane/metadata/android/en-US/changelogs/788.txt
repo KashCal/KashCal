@@ -1,0 +1,4 @@
+• Week, 3-day and Day: event titles wrap instead of ending in "…", and overlapping events stack so each keeps its name in view (#361, #277)
+• Pinch sideways to switch between Week, 3-day and Day; past events fade as the clock passes them
+• Full-height month: rows fit each day, a +N count shows the rest, pinch to zoom (#361)
+• Themed date icon shows today's date; fixed a very long title crashing the Planner and month views

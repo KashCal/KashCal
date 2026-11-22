@@ -1,5 +1,6 @@
 package org.onekash.kashcal.ui.components.weekview
 
+import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -1237,5 +1238,12 @@ class WeekViewUtilsTest {
         // At least one column with 2 or more events gives the toggle something to do.
         assertTrue(WeekViewUtils.anyAllDayColumnHasOverflowWhenCollapsed(listOf(1, 2, 0)))
         assertTrue(WeekViewUtils.anyAllDayColumnHasOverflowWhenCollapsed(listOf(5)))
+    }
+
+    @Test
+    fun `half-hour lines show from 60dp an hour`() {
+        assertFalse(WeekViewUtils.showsHalfHourLines(59.9f.dp))
+        assertTrue(WeekViewUtils.showsHalfHourLines(60.dp))
+        assertTrue(WeekViewUtils.showsHalfHourLines(150.dp))
     }
 }

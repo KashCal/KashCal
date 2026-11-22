@@ -30,6 +30,12 @@ import kotlin.math.abs
  *   separate, one per occurrence.
  * - An occurrence is keyed by (eventId, occurrence start), not the provider's instance ID.
  * - Nothing is stored in Room; the alarm's intent extras carry the whole event.
+ * - [scheduleNextReminder] re-picks after a device-calendar change: through the provider observer
+ *   while the process runs, and through the job [DeviceCalendarChangeWatcher] keeps scheduled
+ *   when it doesn't. App start, boot, app update, time-zone changes, the daily refresh, the
+ *   Device calendars and Device reminders switches, a settings restore while device calendars
+ *   are on, showing or hiding declined events, and ticking, unticking or muting a calendar
+ *   re-pick too.
  * - Muted calendars ([org.onekash.kashcal.data.db.entity.Calendar.isNotificationMuted], kept for
  *   device calendars in [KashCalDataStore.mutedDeviceCalendarIds]) and calendars that aren't
  *   enabled are never picked, and an alarm armed before the mute or the untick is dropped when

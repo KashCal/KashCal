@@ -44,7 +44,6 @@ class EndTimezoneRoundTripTest {
         isAllDay: Boolean = false,
         timezone: String? = "America/Los_Angeles",
         endTimezone: String? = null,
-        rawIcal: String? = null,
         sequence: Int = 0
     ): Event = Event(
         uid = uid,
@@ -59,7 +58,6 @@ class EndTimezoneRoundTripTest {
         transp = "OPAQUE",
         classification = "PUBLIC",
         sequence = sequence,
-        rawIcal = rawIcal,
         dtstamp = 0L,
         createdAt = 1_579_089_600_000L,
         updatedAt = 1_718_440_200_000L,
@@ -294,7 +292,6 @@ class EndTimezoneRoundTripTest {
             uid = "patch-override@kashcal.test",
             timezone = "America/Los_Angeles",
             endTimezone = "America/New_York",
-            rawIcal = raw
         )
 
         val ics = IcsPatcher.patch(raw, event)
@@ -310,7 +307,7 @@ class EndTimezoneRoundTripTest {
             "Patched DTEND must carry Event.endTimezone (America/New_York); got: $dtEndLine",
             dtEndLine.contains("TZID=America/New_York")
         )
-        // Negative: rawIcal's original DTSTART TZID must not survive, which catches a
+        // Negative: the stored ICS's original DTSTART TZID must not survive, which catches a
         // .copy() that keeps original.dtStart's zone.
         assertFalse(
             "Patched DTSTART must not preserve rawIcal's original TZID=America/New_York; got: $dtStartLine",
@@ -356,7 +353,6 @@ class EndTimezoneRoundTripTest {
             uid = "roundtrip-patch@kashcal.test",
             timezone = "America/Los_Angeles",
             endTimezone = "America/New_York",
-            rawIcal = raw
         )
 
         val patchedIcs = IcsPatcher.patch(raw, edited)

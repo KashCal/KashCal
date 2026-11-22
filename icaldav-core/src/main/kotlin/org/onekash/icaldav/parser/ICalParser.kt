@@ -88,9 +88,8 @@ class ICalParser(
 
     /**
      * Creates a parser with the Android-safe [SimpleTimeZoneRegistry], the choice for most
-     * callers and for Android. That registry resolves IDs with ZoneId.of, supported on Android
-     * via desugaring, relies on the data's embedded VTIMEZONE definitions, and has no external
-     * dependencies.
+     * callers and for Android. That registry resolves IDs with ZoneId.of, which Android supports,
+     * relies on the data's embedded VTIMEZONE definitions, and has no external dependencies.
      */
     constructor() : this(SimpleTimeZoneRegistry())
 
@@ -129,8 +128,8 @@ class ICalParser(
          * ZoneRulesProvider is available and that need pre-built TimeZone objects from the
          * registry or the complete Windows timezone name mapping.
          *
-         * Never use it on Android: it crashes at runtime because ZoneRulesProvider isn't
-         * available via desugaring.
+         * Not for Android: Android blocks the custom ZoneRulesProvider that registry installs, so
+         * ical4j falls back to platform zones there and the registry adds nothing over the default.
          */
         fun createWithFullRegistry(): ICalParser {
             return ICalParser(net.fortuna.ical4j.model.TimeZoneRegistryImpl())
@@ -171,8 +170,9 @@ class ICalParser(
             // java.time.ZoneId.of when a date is read: strict validation makes the per-event
             // parse throw, which would silently drop every event in the feed. With this hint
             // the event is kept and its time falls back to the device zone (floating) when
-            // the zone is unresolvable. rewriteUnresolvableVTimezones first maps the custom
-            // zones it can to their IANA zone, so this only catches the rest.
+            // the zone is unresolvable. rewriteUnresolvableVTimezones and TzidRewrite
+            // first map the custom zones they can to an IANA zone, so this only catches the
+            // rest.
             System.setProperty("ical4j.validation.relaxed", "true")
         }
     }
@@ -1077,8 +1077,9 @@ class ICalParser(
      * RFC 5545 §3.2.19 lets a TZID with no leading solidus name a zone defined only by an
      * embedded VTIMEZONE. ical4j 4.x resolves a TZID with java.time.ZoneId.of when a date
      * is read, so a non-IANA name such as "TZsfv" throws and every event is dropped. The
-     * rewrite gives the right offset instead of floating time. A zone that stays
-     * unresolvable is kept at device-local time by relaxed validation ([configureIcal4j]).
+     * rewrite gives the right offset instead of floating time. A zone it leaves unresolved
+     * may still be mapped after unfolding ([TzidRewrite]); one that stays unresolvable
+     * is kept at device-local time by relaxed validation ([configureIcal4j]).
      */
     private fun rewriteUnresolvableVTimezones(data: String): String {
         if (!data.contains("X-LIC-LOCATION", ignoreCase = true)) return data
@@ -1109,13 +1110,14 @@ class ICalParser(
      * Runs the raw-text preparation every parse entry point applies before
      * handing the body to ical4j. The stage order matters: quirk fixes
      * ([preprocessICalData]) match on folded property lines and so must run
-     * first; unfolding then joins continuation lines; the uppercase-`\N`
-     * normalization runs last so a `\N` split across a fold boundary is seen
-     * whole. Kept in one place so the sequence is asserted once, not at each
-     * call site.
+     * first; unfolding then joins continuation lines; the zone rewrite
+     * ([TzidRewrite]) needs whole lines, since a DTSTART value can be
+     * folded mid-value; the uppercase-`\N` normalization runs last so a `\N`
+     * split across a fold boundary is seen whole. Kept in one place so the
+     * sequence is asserted once, not at each call site.
      */
     private fun prepareForParsing(icalData: String): String =
-        normalizeUppercaseNewlineEscape(unfoldICalData(preprocessICalData(icalData)))
+        normalizeUppercaseNewlineEscape(TzidRewrite.apply(unfoldICalData(preprocessICalData(icalData))))
 
     /**
      * Rewrites the uppercase newline escape `\N` to lowercase `\n` in raw ICS
@@ -1302,7 +1304,7 @@ class ICalParser(
 
     /**
      * The mailbox shape [extractCalAddressEmail] requires of the value and of the `EMAIL=`
-     * fallback. It rejects principal hrefs (`/646691839/principal/`), HTTP and HTTPS
+     * fallback. It rejects principal hrefs (`/123456789/principal/`), HTTP and HTTPS
      * principal URIs (`https://caldav.example.com/principals/users/foo/`), `urn:uuid:`
      * forms, and shapes like `@example.com` or `foo@`.
      */

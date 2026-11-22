@@ -1,7 +1,6 @@
 package org.onekash.kashcal.domain.generator
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.every
 import io.mockk.mockk
@@ -19,6 +18,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -46,7 +46,7 @@ class OccurrenceGeneratorSyncLookbackTest {
     @Before
     fun setup() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
         dataStore = mockk()
@@ -312,8 +312,8 @@ class OccurrenceGeneratorSyncLookbackTest {
 
     @Test
     fun `extendPastOccurrences extends beyond initial window regardless of syncPastDays`() = runTest {
-        // syncPastDays limits the regeneration window, not extension. Extension runs on month
-        // navigation and expands locally, so it costs no network.
+        // syncPastDays limits the regeneration window, not extension. Extension runs when a view
+        // reads a range and expands locally, so it costs no network.
         every { dataStore.syncPastDays } returns flowOf(90)
 
         // Create daily recurring event starting 2 years ago

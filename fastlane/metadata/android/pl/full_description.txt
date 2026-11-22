@@ -1,36 +1,9 @@
-Twoje kalendarze są wszędzie. Rodzina w iCloud. Święta z jakiejś strony. Urodziny zagrzebane w kontaktach. Praca w kalendarzu telefonu. KashCal zbiera je wszystkie w jednej aplikacji na Androida.
+Kalendarz rodzinny jest w iCloud, praca w Google, a twój Nextcloud szumi w szafie obok routera. KashCal pokazuje wszystko w jednej aplikacji.
 
-Więcej na https://kashcal.onekash.org
+Bez reklam, bez konta i bez pojęcia, co robiłeś zeszłego lata!
 
-• iCloud: przesiadka na Androida, ale rodzina wciąż na Apple? Synchronizuj kalendarze iCloud bezpośrednio. Bez mostków, bez obejść.
+Zaplanuj tydzień na jednej stronie, wydrukuj go na lodówkę i wysyłaj wolne terminy zamiast grać w mailowy ping-pong. Zasubskrybuj raz kalendarz szkolny i harmonogram wywozu śmieci i przestań pytać na grupie.
 
-• CalDAV: Nextcloud, Fastmail, Radicale, Baikal, Zoho, Mailbox, Stalwart, SOGo i więcej. Prawdziwa dwukierunkowa synchronizacja, bez warstwy pośredniej. Pojawią się też kalendarze Google i Outlook z Twojego telefonu.
+Open source, w 63 językach, od ludzi, którzy też zapominają o urodzinach. Teraz aplikacja pamięta o nich za ciebie, a ty tylko kupujesz prezent.
 
-• Siedem widoków: miesiąc, miesiąc na pełną wysokość, agenda, dzień, 3 dni, tydzień i rok. Uszczypnij, aby przybliżyć oś czasu, przeciągnij wydarzenie, aby je przenieść.
-
-• Planowanie: zapraszaj osoby, wysyłaj zaproszenia na spotkania i odpowiadaj na zaproszenia od innych.
-
-• Statystyki: zobacz, na co idzie Twój czas. Najbardziej zajęte dni, serie bez przerwy, wolne bloki. Obliczane na urządzeniu.
-
-• Widżety: miej swój dzień na ekranie głównym bez otwierania aplikacji. Agenda, data, tydzień, miesiąc i nadchodzące.
-
-• Subskrypcje ICS: śledź dowolny kanał kalendarza. Święta, terminarze szkolne, sezony sportowe.
-
-• Urodziny: pobierane z kontaktów automatycznie.
-
-• Kolory dla każdego wydarzenia: z gotowej palety albo z pełnego koła barw, żeby tydzień czytał się na pierwszy rzut oka.
-
-• Dostosuj: motyw jasny, ciemny lub systemowy, plus paleta KashCal Teal. Wspierający mogą przełączyć się na specjalną ikonę aplikacji.
-
-• Dostępność: pełna obsługa czytnika ekranu (TalkBack) oraz ustawienie języka aplikacji wprost w ustawieniach Androida, w 67 językach.
-
-• Działa w pełni offline od samego początku.
-
-Prywatność domyślnie
-
-Bez analityki. Bez telemetrii. Bez konta KashCal. Nie mamy serwerów, więc nie ma czego zbierać.
-
-• Dane logowania szyfrowane w Android Keystore
-• Blokada aplikacji: ukryj swoje wydarzenia za odciskiem palca, twarzą lub blokadą ekranu
-
-Wolne jak wolność. I za darmo też.
+https://kashcal.onekash.org

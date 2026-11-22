@@ -248,4 +248,13 @@ class WeekdayRuleTest {
         assertEquals(LocalDate.of(2026, 4, 24), ctx.weekdayDate)
         assertEquals(LocalDate.of(2026, 4, 26), ctx.endDate)
     }
+
+    @Test
+    fun `a weekday followed by next week moves to the next calendar week`() {
+        val tokens = WordTokenizer.tokenize(NormalizerChain().normalize("tuesday next week"))
+        val context = ParseContext(monday, firstDayOfWeek = java.util.Calendar.MONDAY)
+        WeekdayRule.apply(tokens, context)
+        assertEquals(java.time.LocalDate.of(2026, 4, 21), context.weekdayDate)
+        assertEquals(tokens.indices.toSet(), context.getConsumedIndices())
+    }
 }

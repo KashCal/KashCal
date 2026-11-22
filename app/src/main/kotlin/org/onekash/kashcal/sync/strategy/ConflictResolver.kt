@@ -3,6 +3,7 @@ package org.onekash.kashcal.sync.strategy
 import android.util.Log
 import org.onekash.icaldav.model.ParseResult
 import org.onekash.icaldav.parser.ICalParser
+import org.onekash.kashcal.data.db.EventIcsSource
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.EventsDao
@@ -29,7 +30,8 @@ class ConflictResolver @Inject constructor(
     private val attendeesDao: AttendeesDao,
     private val pendingOperationsDao: PendingOperationsDao,
     private val occurrenceGenerator: OccurrenceGenerator,
-    private val database: KashCalDatabase
+    private val database: KashCalDatabase,
+    private val icsSource: EventIcsSource,
 ) {
     private val icalParser = ICalParser()
 
@@ -165,6 +167,8 @@ class ConflictResolver @Inject constructor(
         // occurrences.
         database.runInTransaction {
             eventsDao.upsert(updatedEvent)
+            // Server wins: its body becomes the resource's stored ICS, with the etag just upserted.
+            icsSource.writeResource(updatedEvent.id, serverEvent.url, mapped.ics)
             attendeesDao.replaceForEvent(
                 updatedEvent.id,
                 mapped.attendees.map { it.copy(eventId = updatedEvent.id) }

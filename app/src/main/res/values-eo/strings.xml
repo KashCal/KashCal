@@ -43,6 +43,8 @@
     <string name="channel_event_invitations">Eventaj invitoj</string>
     <string name="channel_event_invitations_desc">Sciigoj kiam vi ricevas novan kalendaran inviton</string>
     <string name="channel_calendar_updates">Kalendaraj ŝanĝoj</string>
+    <string name="channel_calendar_backup">Aŭtomata sekurkopio de kalendaroj</string>
+    <string name="channel_calendar_backup_description">Sciigas vin, kiam sekurkopio de kalendaroj malsukcesas</string>
     <string name="invite_notification_body">De %1$s · Frapetu por respondi</string>
 
     <!-- ==================== App Shortcuts ==================== -->
@@ -88,7 +90,6 @@
     <string name="action_discard">Forjeti</string>
     <string name="action_discard_confirm">Ĉu forĵeti ŝanĝojn?</string>
     <string name="action_dismiss">Forigi</string>
-    <string name="action_show_all">Montri ĉion</string>
     <string name="action_connect">Konekti</string>
     <string name="action_duplicate">Duobligi</string>
     <string name="action_share">Kunhavigi</string>
@@ -119,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d pli</string>
     <string name="tags_autocomplete_create_new">Krei «%1$s»</string>
     <string name="cd_tag">Etikedo: %1$s</string>
+    <string name="tags_show_events_click_label">Montri eventojn kun ĉi tiu etikedo</string>
+    <string name="tags_show_events">Montri eventojn</string>
     <string name="cd_tags_move_menu">Movi etikedojn</string>
     <string name="tags_move_above_notes">Movi super notojn</string>
     <string name="tags_move_below_notes">Movi sub notojn</string>
@@ -148,7 +151,6 @@
     <string name="label_enter_hex">Enigu 6 deksesumajn signojn (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Ĉio</string>
     <string name="view_week">Semajno</string>
     <string name="view_month">Monato</string>
     <string name="label_all_day">Tuttaga</string>
@@ -190,17 +192,38 @@
     <string name="settings_event_emojis_info">Aldonas emoĝion al eventoj laŭ la titolo, kiel 🎂 por \"Naskiĝtago\".</string>
     <string name="settings_force_sync">Devigi plenan sinkronigon</string>
     <string name="settings_force_sync_subtitle">Re-elŝuti ĉiujn kalendarajn datumojn</string>
+    <string name="settings_force_sync_no_account">Neniu sinkroniga konto agordita</string>
+    <string name="force_sync_confirm">Re-elŝuti %1$s de %2$s. Ankoraŭ ne sinkronigitaj ŝanĝoj estas konservataj.</string>
+    <string name="action_start">Komenci</string>
     <string name="settings_sync_history">Sinkroniga historio</string>
     <string name="settings_sync_history_subtitle">Vidi sinkronigajn seancojn (lastaj 48 horoj)</string>
     <string name="settings_import_subtitle">Aldoni eventojn el ICS-dosiero al iu ajn kalendaro</string>
-    <string name="settings_export_subtitle">Konservi eventojn al ICS-dosiero</string>
     <string name="settings_birthday_reminder">Naskig̉taga rememorigo</string>
-    <string name="settings_use_device_timezone">Uzi aparatan horzonon</string>
     <string name="settings_section_calendars">Kalendaroj kaj kontoj</string>
     <string name="settings_section_appearance">Aspekto</string>
     <string name="settings_section_creating_events">Eventaj preferoj</string>
     <string name="settings_section_sync">Sinkronigo</string>
     <string name="settings_section_data">Sekurkopio kaj restarigo</string>
+    <string name="settings_section_troubleshooting">Problemsolvado</string>
+
+    <!-- ==================== Debug report (Settings > Troubleshooting) ==================== -->
+    <string name="debug_report_row_label">Eksporti sencimigan raporton</string>
+    <string name="debug_report_row_subtitle">Detaloj pri kraŝoj, sinkronigo kaj agordoj por sendi kun cimraporto</string>
+    <string name="debug_report_sheet_title">Sencimiga raporto</string>
+    <string name="debug_report_sheet_body">Tekstdosiero por sendi kun cimraporto. Sendu ĝin baldaŭ post la problemo: la aplikaĵa protokolo konservas nur lastatempan agadon.</string>
+    <string name="debug_report_item_exits">Kial la aplikaĵo lastatempe fermiĝis</string>
+    <string name="debug_report_item_exits_detail">Kraŝoj, frostiĝoj, malmulte da memoro</string>
+    <string name="debug_report_item_log">Aplikaĵa protokolo</string>
+    <string name="debug_report_item_log_detail">La propraj mesaĝoj de KashCal, inkluzive de detaloj pri kraŝoj</string>
+    <string name="debug_report_item_sync_detail">Lastatempaj sinkronigoj, ĝis 48 horoj antaŭe</string>
+    <string name="debug_report_item_pending">Atendantaj ŝanĝoj</string>
+    <string name="debug_report_item_pending_detail">Redaktoj ankoraŭ ne senditaj al via servilo</string>
+    <string name="debug_report_item_setup">Agordo</string>
+    <string name="debug_report_item_setup_detail">Versioj de la aplikaĵo kaj de Android, permesoj, baterio-agordoj, kontospecoj</string>
+    <string name="debug_report_privacy_note">Retpoŝtadresoj, retadresoj kaj ĵetonoj estas maskitaj. Titoloj de eventoj, nomoj de kalendaroj kaj nomoj de kontaktoj ne estas. Sendu ĝin retpoŝte, ne en publika afiŝo.</string>
+    <string name="debug_report_share">Kunhavigi raporton</string>
+    <string name="debug_report_chooser_title">Kunhavigi sencimigan raporton</string>
+    <string name="debug_report_failed">Ne eblis krei la sencimigan raporton</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Aplikaĵa ŝloso</string>
@@ -236,9 +259,37 @@
     <string name="backup_error_read_failed">Ne eblis legi dosieron</string>
 
     <!-- ==================== Onboarding ==================== -->
-    <string name="onboarding_apple_calendar">Apple Calendar?</string>
-    <string name="onboarding_got_you">Ni helpas vin.</string>
-    <string name="onboarding_connect_prompt">Konektu iCloud por vidi viajn eventojn ĉi tie</string>
+    <string name="onboarding_title">Kie estas viaj kalendaroj?</string>
+    <string name="onboarding_subtitle">Elektu unu por konekti.</string>
+    <string name="onboarding_icloud_detail">Apple ID kaj aplikaĵa pasvorto</string>
+    <string name="onboarding_caldav_title">CalDAV-servilo</string>
+    <string name="onboarding_caldav_detail">Nextcloud, Fastmail, Radicale kaj aliaj</string>
+    <string name="onboarding_device_title">En ĉi tiu aparato</string>
+    <string name="onboarding_phone_detail">Google, Outlook kaj sinkronigaj aplikaĵoj</string>
+    <string name="onboarding_use_offline">Uzi eksterretan kalendaron</string>
+    <string name="onboarding_trust">Malferma kodo. Sen reklamoj. Sen spurado.</string>
+
+    <!-- ==================== Reminders are off ==================== -->
+    <string name="reminders_off_title">Memorigoj estas malŝaltitaj</string>
+    <plurals name="reminders_off_body">
+        <item quantity="one">%d evento ĉi-semajne havas memorigon.</item>
+        <item quantity="other">%d eventoj ĉi-semajne havas memorigojn.</item>
+    </plurals>
+    <string name="reminders_off_not_now">Ne nun</string>
+    <string name="reminders_off_turn_on">Ŝalti</string>
+    <string name="reminders_on_snackbar">Memorigoj ŝaltitaj</string>
+
+    <!-- ==================== About ==================== -->
+    <string name="about_tagline">Ĉiuj viaj kalendaroj en unu privata aplikaĵo.</string>
+    <string name="about_help_title">Helpo kaj gvidiloj</string>
+    <string name="about_help_detail">Agordo, sinkronigo kaj demandoj</string>
+    <string name="about_source_title">Fontkodo</string>
+    <string name="about_source_detail">Apache 2.0, ĉe GitHub</string>
+    <string name="about_support_title">Subteni KashCal</string>
+    <string name="about_support_detail">Dankon al ĉiuj, kiuj jam faras tion</string>
+    <string name="about_link_failed">Neniu aplikaĵo povas malfermi ĉi tiun ligilon.</string>
+    <string name="about_built_in_austin">Farita kun ❤️ en Austin</string>
+    <string name="about_version">Versio %1$s</string>
 
     <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Preterlasi</string>
@@ -257,22 +308,32 @@
     <string name="whats_new_v772_changes_title">Vidu, kio ŝanĝiĝis</string>
     <string name="whats_new_v772_changes_body">Novaj, redaktitaj kaj forigitaj eventoj el viaj iCloud- kaj CalDAV-kalendaroj kolektiĝas en Lastatempaj ŝanĝoj dum 7 tagoj. Tuŝu unu por malfermi ĝin.</string>
     <string name="whats_new_v772_notifications_body">Ricevu sciigon kiam fona sinkronigo trovas ŝanĝojn en viaj iCloud- aŭ CalDAV-eventoj. Ĝi restas malŝaltita ĝis vi ŝaltos ĝin.</string>
+    <string name="whats_new_v803_offline_title">Kalendaroj, kiuj restas en via telefono</string>
+    <string name="whats_new_v803_offline_body">Kelkaj planoj ne apartenas al servilo. Donu al ili proprajn eksterretajn kalendarojn, tiom, kiom vi volas.</string>
+    <string name="whats_new_v803_backup_title">Sekurkopioj, pri kiuj vi povas forgesi</string>
+    <string name="whats_new_v803_backup_body">Elektu dosierujon unufoje, kaj KashCal tenos tie freŝan kopion de viaj eksterretaj kalendaroj.</string>
+    <string name="whats_new_v803_print_title">Via semajno, sur papero</string>
+    <string name="whats_new_v803_print_body">Presu la semajnon, kiun vi rigardas. Sur kiun fridujon ĝi iros, dependas de vi.</string>
     <string name="whats_new_hero_sample_lunch">Teama tagmanĝo</string>
     <string name="whats_new_hero_sample_review">Dezajna revizio</string>
     <string name="whats_new_hero_sample_book_club">Legoklubo</string>
+    <string name="whats_new_hero_sample_dentist">Dentisto</string>
+    <string name="whats_new_hero_sample_yoga">Jogo</string>
     <string name="whats_new_hero_sample_calendar">Laboro</string>
+    <string name="whats_new_hero_sample_family">Familio</string>
+    <string name="whats_new_hero_sample_garden">Ĝardeno</string>
+    <string name="whats_new_hero_sample_folder">Sekurkopioj de kalendaroj</string>
     <string name="whats_new_hero_now">nun</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Konekti iCloud</string>
     <string name="signin_caldav_title">Aldoni CalDAV-konton</string>
+    <string name="signin_caldav_sign_in_again_title">Ensaluti denove</string>
     <string name="signin_connected_to">Konektita al %1$s</string>
 
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Nova evento</string>
     <string name="dialog_edit_event_title">Redakti eventon</string>
-    <string name="dialog_force_sync_title">Devigi plenan sinkronigon?</string>
-    <string name="dialog_force_sync_message">Ĉi tio re-elŝutos ĉiujn kalendarajn datumojn de la servilo. Lokaj ŝanĝoj estos konservitaj.</string>
     <string name="dialog_enable_notifications">Ŝalti sciigojn?</string>
     <string name="dialog_action_required">Ĉi tiu ago estas necesa por daŭrigi.</string>
     <string name="dialog_add_to_calendar">Aldoni al kalendaro</string>
@@ -285,6 +346,7 @@
     <string name="status_no_events_week">Neniuj eventoj ĉi-semajne</string>
     <string name="status_more_events">+%1$d pliaj</string>
     <string name="status_no_sync_sessions">Ankaŭ neniuj sinkronigaj seancoj.\n\nTiru malsupren por aktualigi ĉe la kalendara vido.</string>
+    <string name="status_no_sync_account">Neniu sinkroniga konto agordita. Eksterretaj kalendaroj restas en ĉi tiu aparato; aparataj kalendaroj sinkroniĝas per sia propra konto.</string>
     <string name="status_no_writable_calendars">Neniuj skribeblaj kalendaroj disponeblaj</string>
     <string name="status_events_count">%1$d eventoj</string>
     <string name="status_sync_history">Sinkroniga historio</string>
@@ -333,6 +395,7 @@
     <string name="caldav_error_unexpected">Neatendita eraro. Bonvolu reprovi.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nSe ĉi tio estas servilo en via loka reto, permesu aliron al la loka reto por konektiĝi.</string>
     <string name="caldav_error_connection_refused_insecure">La servilo alidirektis la konekton al loko, kien KashCal ne sekvas (neĉifrita adreso aŭ alidirekta buklo), do KashCal haltis antaŭ ol sendi vian pasvorton. Kontrolu la adreson de la servilo.</string>
+    <string name="caldav_error_sign_in_again_mismatch">Ĉi tio estas alia konto. Ensalutu per la uzantnomo kaj servilo, kiujn ĉi tiu konto uzas.</string>
     <string name="local_network_banner_title">Necesas aliro al la loka reto</string>
     <string name="local_network_banner_body">Ĉi tiu servilo ŝajnas esti en via loka reto. Permesu aliron al la loka reto por ke KashCal povu konektiĝi al ĝi.</string>
     <string name="local_network_banner_allow">Permesi aliron</string>
@@ -374,7 +437,6 @@
     <string name="error_device_calendar_title">Kalendara eraro</string>
     <string name="error_device_calendar_write_failed">Malsukcesis konservi en aparata kalendaro. Bonvolu reprovi.</string>
     <string name="error_device_calendar_permission">Kalendara skribpermeso bezonata. Bonvolu doni permeson en Agordoj.</string>
-    <string name="error_device_calendar_permission_denied">Malŝaltu kaj reŝaltu la Kalendaran permeson en Agordoj por doni skribaliron</string>
     <string name="error_device_calendar_not_found">Kalendaro ne trovita. Ĝi eble estis forigita.</string>
     <string name="error_device_event_not_found">Evento ne trovita. Ĝi eble estis forigita.</string>
     <string name="error_device_calendar_read_only">Ĉi tiu kalendaro estas nurlega.</string>
@@ -401,12 +463,11 @@
     <string name="cd_recurring">Ripeta</string>
     <string name="cd_enabled">Ŝaltita</string>
     <string name="cd_sync_error">Sinkroniga eraro</string>
-    <string name="cd_select_label">Elekti %1$s</string>
     <string name="cd_wheel_picker">Rada elektilo kun %1$d elektoj</string>
     <string name="cd_time_entry_keyboard">Entajpu precizan horon</string>
     <string name="time_entry_dialog_title">Entajpu horon</string>
     <string name="time_entry_tap_to_edit">Tuŝetu por redakti</string>
-    <string name="cd_version_info">KashCal versio %1$s. Longe premu por sencimigaj elektoj.</string>
+    <string name="cd_version_info">KashCal versio %1$s</string>
     <string name="cd_about_setting">Pri %1$s</string>
     <string name="cd_color_slider">Kolora glitilo, nune %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d gradoj</string>
@@ -435,7 +496,6 @@
     <string name="label_recurrence_on_date">Je dato</string>
 
     <!-- ==================== Settings (Additional) ==================== -->
-    <string name="settings_visible_calendars">Videblaj kalendaroj</string>
     <string name="settings_default_calendar">Defaŭlta kalendaro</string>
     <string name="settings_default_event_length">Defaŭlta eventa daŭro</string>
     <string name="settings_default_event_length_hint">Norma daŭro por novaj eventoj</string>
@@ -455,7 +515,6 @@
     <string name="option_saturday">Sabato</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Neniuj eventoj trovitaj</string>
     <string name="empty_no_upcoming_events">Neniuj venontaj eventoj</string>
     <string name="empty_no_calendars">Neniuj kalendaroj disponeblaj</string>
 
@@ -466,7 +525,15 @@
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Alporti kalendaron</string>
     <string name="action_import_from_file">Importi eventojn el dosiero</string>
-    <string name="action_export_local_calendar">Eksporti lokan kalendaron</string>
+    <string name="settings_export_calendars">Eksporti kalendarojn</string>
+    <string name="settings_export_calendars_subtitle">Konservi kalendaron kiel ICS-dosiero</string>
+    <string name="export_calendar_no_events">Neniuj eventoj</string>
+    <string name="export_calendar_preparing">Preparante…</string>
+    <string name="cd_export_calendar">Eksporti %1$s</string>
+    <string name="cd_export_calendar_preparing">Preparante %1$s</string>
+    <string name="export_calendar_chooser_title">Eksporti kalendaron</string>
+    <string name="export_event_chooser_title">Eksporti eventon</string>
+    <string name="export_file_failed">Ne eblis krei la dosieron.</string>
 
     <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
@@ -504,12 +571,14 @@
     <string name="accounts_cd_back">Navigu reen</string>
     <string name="accounts_sync_issue">Sinkroniga problemo</string>
     <string name="accounts_cd_sync_warning">Sinkroniga averto</string>
+    <string name="accounts_cd_sync_off">sinkronigo malŝaltita</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">Kalendaraj fluoj</string>
     <string name="subscriptions_section_add">Aldoni</string>
     <string name="subscriptions_empty_ics">Neniuj ICS abonoj</string>
     <string name="subscriptions_empty_ics_hint">Aldonu kalendaran fluon por vidi eventojn</string>
+    <string name="subscriptions_swipe_hint">Ŝovu fluon por forigi ĝin.</string>
     <string name="subscriptions_add_ics">Aldoni ICS kalendaron</string>
     <string name="qs_tile_label">Aldoni</string>
     <string name="holiday_catalog_add">Aldoni feritagan kalendaron</string>
@@ -519,6 +588,11 @@
     <string name="holiday_catalog_empty_hint">Provu alian nomon</string>
     <string name="holiday_catalog_validate_error">Ne eblis atingi ĉi tiun kalendaron. Kontrolu vian konekton kaj reprovu.</string>
     <string name="holiday_catalog_attribution">Feritagaj kalendaroj de Mozilla Thunderbird, licencitaj sub %1$s.</string>
+    <string name="account_feeds_add">Aldoni el konto</string>
+    <string name="account_feeds_note">Listigas la kalendarajn fluojn konservitajn en viaj kontoj de iCloud kaj CalDAV. Ŝaltu por aldoni ĝin al Kalendaraj fluoj.</string>
+    <string name="account_feeds_checking">Kontrolante…</string>
+    <string name="account_feeds_none">Neniuj kalendaraj fluoj trovitaj</string>
+    <string name="account_feeds_failed">Ne eblis ŝargi kalendarajn fluojn</string>
     <string name="subscriptions_row_label">Kalendaraj fluoj (ICS)</string>
     <string name="subscriptions_row_hint">ekz. festoj, sportoj, lernejo</string>
 
@@ -564,6 +638,8 @@
     <string name="account_detail_discovering">Malkovrante…</string>
     <string name="account_detail_discover_calendars">Malkovri novajn kalendarojn</string>
     <string name="account_detail_change_password">Ŝanĝi pasvorton</string>
+    <string name="account_detail_sign_in_again">Ensaluti denove</string>
+    <string name="account_detail_sign_in_again_subtitle">KashCal ne plu havas la pasvorton de ĉi tiu konto. Ensalutu por denove sinkronigi. Viaj kalendaroj kaj eventoj restas.</string>
     <string name="account_detail_sign_out">Elsaluti</string>
     <string name="account_detail_never_synced">Neniam sinkronigita</string>
     <string name="account_detail_last_success">Lasta sukceso: %1$s</string>
@@ -587,6 +663,107 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Aparataj kalendaroj</string>
     <string name="settings_device_calendars_hint">Kalendaroj el aliaj aplikaĵoj</string>
+    <string name="offline_calendars_row_label">Eksterretaj kalendaroj</string>
+    <string name="offline_calendars_row_hint">Kalendaroj, kiuj restas en ĉi tiu aparato</string>
+    <string name="offline_calendars_manage_note">Ŝovu kalendaron por forigi ĝin.</string>
+    <string name="offline_calendars_info">Konservataj en ĉi tiu aparato kaj neniam sinkronigataj.</string>
+    <string name="offline_calendars_info_cd">Pri eksterretaj kalendaroj</string>
+    <string name="offline_calendar_default_state">Defaŭlta</string>
+    <string name="offline_calendar_new">Nova kalendaro</string>
+    <string name="offline_calendar_new_in_picker">Nova eksterreta kalendaro</string>
+    <string name="action_create">Krei</string>
+    <string name="offline_calendar_rename">Renomi</string>
+    <string name="offline_calendar_color">Koloro</string>
+    <string name="offline_calendar_export">Eksporti kalendaron</string>
+    <string name="offline_calendar_builtin_info">La enkonstruita kalendaro ne povas esti renomita aŭ forigita. Novaj eventoj iras ĉi tien, kiam neniu kalendaro estas elektita.</string>
+    <string name="offline_calendar_builtin_info_cd">Pri la enkonstruita kalendaro</string>
+    <string name="offline_calendar_rename_cancel_cd">Nuligi renomadon</string>
+    <string name="offline_calendar_rename_save_cd">Konservi nomon</string>
+    <string name="offline_calendar_delete_cd">Forigi %1$s</string>
+    <plurals name="offline_calendar_delete_confirm">
+        <item quantity="one">Ĉu forigi \"%2$s\" kaj ĝian %1$d eventon por ĉiam? Ne malfareblas.</item>
+        <item quantity="other">Ĉu forigi \"%2$s\" kaj ĝiajn %1$d eventojn por ĉiam? Ne malfareblas.</item>
+    </plurals>
+    <string name="offline_calendar_delete_empty">Ĉu forigi \"%1$s\" por ĉiam? Ĝi ne havas eventojn.</string>
+    <plurals name="offline_calendar_delete_also">
+        <item quantity="one">Ankaŭ forigi %1$d eventon</item>
+        <item quantity="other">Ankaŭ forigi %1$d eventojn</item>
+    </plurals>
+    <string name="offline_calendar_deleted">%1$s forigita</string>
+    <string name="offline_calendar_duplicate_name">Eksterreta kalendaro nomita \"%1$s\" jam ekzistas</string>
+    <string name="offline_calendar_similar_name">Tro simila al \"%1$s\". Elektu alian nomon.</string>
+    <string name="calendar_backup_title">Aŭtomata sekurkopio de kalendaroj</string>
+    <string name="calendar_backup_row_off">Malŝaltita</string>
+    <string name="calendar_backup_row_on">%1$s · %2$s</string>
+    <string name="calendar_backup_row_problem">La sekurkopia dosierujo ne atingeblas</string>
+    <string name="calendar_backup_intro">Konservas ĉiun eksterretan kalendaron kiel ICS-dosieron en dosierujo, kiun vi elektas.</string>
+    <string name="calendar_backup_choose_folder">Elekti dosierujon</string>
+    <string name="calendar_backup_choose_folder_hint">Elektu aŭ kreu dosierujon, ekzemple en Documents. Android ne permesas la radikon de la konservejo nek la dosierujon Download mem.</string>
+    <string name="calendar_backup_folder">Dosierujo</string>
+    <string name="calendar_backup_change">Ŝanĝi</string>
+    <string name="calendar_backup_frequency">Ofteco</string>
+    <string name="calendar_backup_frequency_info">Sekurkopioj povas okazi malfrue: Android prokrastas fonan laboron, kiam la telefono estas neaktiva aŭ KashCal ne estis malfermita dum iom da tempo.</string>
+    <string name="calendar_backup_copies">Konservotaj kopioj</string>
+    <string name="calendar_backup_copies_explained">Ĉiu sekurkopio konservas la antaŭan dosieron kiel datitan kopion. Kiam estas pli ol ĉi tiu nombro, la plej malnovaj estas forigitaj. La plej nova dosiero ĉiam havas la nomon de la kalendaro.</string>
+    <string name="calendar_backup_copies_fewer">Konservi malpli da kopioj</string>
+    <string name="calendar_backup_copies_more">Konservi pli da kopioj</string>
+    <plurals name="calendar_backup_copies_state">
+        <item quantity="one">%d kopio</item>
+        <item quantity="other">%d kopioj</item>
+    </plurals>
+    <plurals name="calendar_backup_deletes">
+        <item quantity="one">Forigas %d malnovan kopion. Tio ne malfareblas.</item>
+        <item quantity="other">Forigas %d malnovajn kopiojn. Tio ne malfareblas.</item>
+    </plurals>
+    <string name="calendar_backup_deletes_unknown">Forigas la malnovajn kopiojn preter ĉi tiu nombro. Tio ne malfareblas.</string>
+    <string name="calendar_backup_calendars">Eksterretaj kalendaroj</string>
+    <string name="calendar_backup_calendar_nothing_saved">%1$s · Neniuj eventoj, nenio konservita</string>
+    <string name="calendar_backup_calendar_save_failed">%1$s · Ne eblis konservi. Reprovos ĉe la sekva sekurkopio.</string>
+    <string name="calendar_backup_status">Lasta sekurkopio %1$s</string>
+    <plurals name="calendar_backup_status_failed">
+        <item quantity="one">Lasta sekurkopio %1$s · %2$d kalendaro malsukcesis</item>
+        <item quantity="other">Lasta sekurkopio %1$s · %2$d kalendaroj malsukcesis</item>
+    </plurals>
+    <string name="calendar_backup_now">Sekurkopii nun</string>
+    <string name="calendar_backup_running">Sekurkopiado…</string>
+    <string name="calendar_backup_footer_overwrites">KashCal anstataŭigas ĉi tiujn dosierojn ĉe ĉiu sekurkopio, do ŝanĝoj faritaj al ili en aliaj aplikaĵoj ne daŭras. Por restarigi kalendaron, uzu Importi eventojn el dosiero.</string>
+    <string name="calendar_backup_off_files_stay">Ekzistantaj dosieroj restas en %1$s.</string>
+    <string name="calendar_backup_folder_unreachable">Ne atingeblas: %1$s. Ĝi eble estis movita, forigita aŭ malkonektita.</string>
+    <string name="calendar_backup_error_unsupported">Ne eblas konservi dosierojn en %1$s. Elektu alian dosierujon.</string>
+    <string name="calendar_backup_choose_again">Denove elekti</string>
+    <string name="calendar_backup_pick_refused">KashCal ne povas uzi tiun dosierujon. Elektu alian.</string>
+    <string name="calendar_backup_pick_cannot_create">KashCal ne povas krei dosierojn en tiu dosierujo. Elektu alian.</string>
+    <string name="calendar_backup_failed_title">Sekurkopio de kalendaroj malsukcesis</string>
+    <string name="calendar_backup_folder_unnamed">la sekurkopia dosierujo</string>
+    <string name="calendar_backup_alert_unreachable">Ne atingeblas: %1$s. Tuŝetu por denove elekti ĝin.</string>
+    <string name="calendar_backup_alert_unsupported">Ne eblas konservi dosierojn en %1$s. Tuŝetu por elekti alian dosierujon.</string>
+    <string name="calendar_backup_alert_file_retry">Ne eblis konservi %1$s. KashCal reprovos ĉe la sekva sekurkopio.</string>
+    <string name="calendar_backup_every_hour">Ĉiun horon</string>
+    <string name="calendar_backup_every_day">Ĉiutage</string>
+    <plurals name="calendar_backup_every_hours">
+        <item quantity="one">Ĉiun %d horon</item>
+        <item quantity="other">Ĉiujn %d horojn</item>
+    </plurals>
+    <plurals name="calendar_backup_every_days">
+        <item quantity="one">Ĉiun %d tagon</item>
+        <item quantity="other">Ĉiujn %d tagojn</item>
+    </plurals>
+    <string name="calendar_backup_every_day_hours">Intervalo: 1 tago kaj %1$s</string>
+    <string name="calendar_backup_every_days_hours">Intervalo: %1$s kaj %2$s</string>
+    <string name="calendar_backup_interval_too_short">Elektu almenaŭ 1 horon.</string>
+    <string name="calendar_backup_interval_too_long">Elektu 30 tagojn aŭ malpli.</string>
+    <plurals name="calendar_backup_alert_files_retry">
+        <item quantity="one">Ne eblis konservi %d kalendaron. KashCal reprovos ĉe la sekva sekurkopio.</item>
+        <item quantity="other">Ne eblis konservi %d kalendarojn. KashCal reprovos ĉe la sekva sekurkopio.</item>
+    </plurals>
+    <string name="calendar_backup_notifications_app_off">Sciigoj estas malŝaltitaj por KashCal, do ĝi ne povas sciigi vin, se sekurkopio malsukcesas.</string>
+    <string name="calendar_backup_notifications_channel_off">Sekurkopiaj sciigoj estas malŝaltitaj, do KashCal ne povas sciigi vin, se sekurkopio malsukcesas.</string>
+    <string name="calendar_backup_open_settings">Malfermi agordojn</string>
+    <string name="calendar_backup_not_now">Ne nun</string>
+    <plurals name="calendar_backup_row_calendars_failed">
+        <item quantity="one">%d kalendaro malsukcesis</item>
+        <item quantity="other">%d kalendaroj malsukcesis</item>
+    </plurals>
     <string name="settings_quick_event_add">Inteligenta eventaldono</string>
     <string name="settings_quick_event_add_info">Kreu eventojn per natura tajpado. \"Tagmanĝo kun Sam vendredon je la 1a posttagmeze\" plenigas la titolon, daton kaj horon por vi.</string>
     <string name="settings_suggest_titles">Sugesti eventajn titolojn</string>
@@ -646,6 +823,8 @@
     <string name="cd_pick_month_year">Elekti monaton kaj jaron</string>
     <string name="cd_previous_month">Antaŭa monato</string>
     <string name="cd_next_month">Venonta monato</string>
+    <string name="cd_previous_day">Antaŭa tago</string>
+    <string name="cd_next_day">Venonta tago</string>
     <string name="cd_month_year_picker">Monata kaj jara elektilo</string>
     <string name="cd_remove_alert">Forigi alarmon</string>
     <string name="cd_warning">Averto</string>
@@ -655,7 +834,25 @@
     <string name="label_on_days">En tagoj</string>
     <string name="label_pattern">Ŝablono</string>
     <string name="label_ends">Finiĝas</string>
+    <string name="sheet_hint_change_end">Tuŝetu tagon por ŝanĝi la finon</string>
     <string name="label_timezone">Horzono</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Serĉu urbon, landon aŭ zonon</string>
+    <string name="timezone_section_this_event">Ĉi tiu evento</string>
+    <string name="timezone_section_device">Horzono de la aparato</string>
+    <string name="timezone_section_recent">Lastatempaj</string>
+    <string name="timezone_section_all">Ĉiuj horzonoj</string>
+    <string name="timezone_offsets_on">Deŝovoj je %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">El la kalendaro: %1$s</string>
+    <string name="timezone_shown_in_device_time">Montrata laŭ la horo de la aparato</string>
+    <string name="timezone_loading">Ŝargante horzonojn…</string>
+    <string name="timezone_no_match">Neniu horzono kongruas</string>
+    <string name="timezone_no_match_hint">Provu urbon, landon aŭ deŝovon kiel +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Alarmoj</string>
     <string name="label_add_alert">Aldoni alarmon</string>
     <string name="label_recurrence_never">Neniam</string>
@@ -663,11 +860,8 @@
     <string name="label_yesterday">Hieraŭ</string>
     <string name="label_device_calendars">Aparataj kalendaroj</string>
     <string name="label_default_calendar_hint">Novaj eventoj estos kreataj en ĉi tiu kalendaro</string>
-    <string name="label_visible_count">%1$d / %2$d videblaj</string>
     <string name="label_reminders_truncated">%1$d ne montritaj (%2$d totale, maks. %3$d redakteblaj)</string>
     <string name="label_found_events">Trovitaj: %1$d eventoj</string>
-    <string name="label_open_debug_menu">Malfermi sencimigan menuon</string>
-    <string name="placeholder_search">Serĉi…</string>
     <string name="settings_search_placeholder">Serĉi en agordoj…</string>
     <string name="settings_search_no_results">Neniu agordo trovita por \"%1$s\"</string>
     <string name="cd_search_settings">Serĉi en agordoj</string>
@@ -678,16 +872,13 @@
     <string name="status_hours_ago">Antaŭ %1$dh</string>
 
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
-    <string name="device_calendars_description">Montri eventojn de aliaj kalendaraj aplikaĵoj en via aparato (sinkronigaj adaptiloj, lokaj kalendaroj).</string>
-    <string name="device_calendars_permission_required">Kalendara permeso bezonata. Tuŝu Ŝalti por doni aliron.</string>
-    <string name="device_calendars_read_only_access">Nurlega aliro</string>
-    <string name="device_calendars_grant_write">Donu skriban permeson por redakti aparatajn kalendarajn eventojn</string>
-    <string name="device_calendars_grant">Doni</string>
-    <string name="device_calendars_none_found">Neniuj aparataj kalendaroj trovitaj.</string>
+    <string name="device_calendars_intro">Montri kalendarojn de Google, Outlook kaj sinkronigaj aplikaĵoj en ĉi tiu aparato.</string>
+    <string name="device_calendars_show_switch">Montri aparatajn kalendarojn</string>
+    <string name="device_calendars_access_off">Aliro al kalendaro estas malŝaltita por KashCal.</string>
+    <string name="device_calendars_pick_hint">Elektu kalendarojn por montri.</string>
+    <string name="device_calendars_empty">Neniu kalendaro troviĝis.</string>
     <string name="device_calendars_local">Loka</string>
-    <string name="device_calendars_read_only_no_write">Nurlega (sen skribpermeso)</string>
     <string name="device_calendars_read_only_calendar">Nurlega (kalendaro estas nurlega)</string>
-    <string name="settings_developer_options">Programistaj elektoj</string>
     <string name="settings_sync_frequency">Sinkroniga ofteco</string>
     <string name="settings_sync_frequency_hint">Kiom ofte sinkronigi en la fono</string>
 
@@ -817,6 +1008,9 @@
     <string name="ics_import_reason_this_and_future">ŝanĝoj al ĉi tiu kaj postaj okazoj ne estas subtenataj</string>
     <string name="ics_import_reason_own_cancel">vi organizas ĉi tiun kunvenon, do nuligu ĝin el la evento</string>
     <string name="ics_import_reason_on_another_calendar">ĝi jam estas en alia kalendaro de ĉi tiu konto</string>
+    <string name="ics_import_reason_calendar_keeps_copy">ĉi tiu kalendaro konservas sian propran kopion de la evento</string>
+    <string name="ics_import_reason_own_update">vi organizas ĉi tiun kunvenon, do ŝanĝu ĝin el la evento</string>
+    <string name="ics_import_reason_change_waiting">la evento havas ŝanĝon, kiu atendas sinkronigon; importu denove post la sinkronigo</string>
     <string name="ics_import_notice_unverified">Ne eblas kontroli la sendinton de invita dosiero. Certigu, ke ĝi venis de la organizanto.</string>
     <string name="ics_import_notice_answer_notifies">Respondi al ĉi tiu invito eble sciigos la organizanton.</string>
     <string name="ics_import_notice_guests_again">Vi estas la organizanto, do ĉeestantoj eble ricevos ĉi tiun inviton denove.</string>
@@ -847,13 +1041,17 @@
     </plurals>
     <string name="ics_import_summary_separator">", "</string>
     <string name="ics_import_summary_nothing">Nenio por importi</string>
-    <plurals name="exported_events">
-        <item quantity="one">Eksportita %1$d evento</item>
-        <item quantity="other">Eksportitaj %1$d eventoj</item>
-    </plurals>
     <plurals name="event_count">
         <item quantity="one">%1$d evento</item>
         <item quantity="other">%1$d eventoj</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d kalendaron</item>
+        <item quantity="other">%1$d kalendarojn</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d konto</item>
+        <item quantity="other">%1$d kontoj</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d kalendaro</item>
@@ -887,10 +1085,6 @@
         <item quantity="one">%1$d jaro</item>
         <item quantity="other">%1$d jaroj</item>
     </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d sek</item>
-        <item quantity="other">%1$d sek</item>
-    </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d minuto antaŭe</item>
         <item quantity="other">%1$d minutoj antaŭe</item>
@@ -914,8 +1108,13 @@
     <string name="dialog_move_recurring_title">Movi</string>
     <string name="snackbar_event_rescheduled">Evento replanita</string>
     <string name="snackbar_reschedule_failed">Ne eblis replani la eventon</string>
+    <string name="snackbar_move_failed">Ne eblis movi \"%1$s\"</string>
+    <string name="snackbar_move_changed_elsewhere">\"%1$s\" ŝanĝiĝis aliloke, do ĝi ne estis movita</string>
+    <string name="event_untitled">Sentitola evento</string>
     <string name="recurring_this_event">Ĉi tiu evento</string>
     <string name="recurring_all_events">Ĉiuj eventoj</string>
+    <string name="recurring_scope_move_not_expressible">La ripeta regulo ne povas sekvi ĉi tiun ŝanĝon</string>
+    <string name="event_form_move_not_expressible">La ripeta regulo ne povas sekvi ĉi tiun ŝanĝon. Nenio estis konservita.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Ĉeestantoj</string>
@@ -979,8 +1178,67 @@
     <string name="empty_no_events_day_3">Donaco: malplena tago.</string>
     <string name="empty_no_events_day_4">Stato de la kalendaro: bele malplena.</string>
     <string name="empty_no_events_day_5">Nenio planita. Ĝuu la trankvilon.</string>
-    <string name="cd_empty_no_events_day">Trankvila tago, nenio planita</string>
     <string name="filter_date">Dato</string>
+    <string name="search_tab_upcoming">Venontaj</string>
+    <string name="search_tab_past">Pasintaj</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d evento</item>
+        <item quantity="other">%1$s, %2$d eventoj</item>
+    </plurals>
+    <string name="search_date_this_week">Ĉi-semajne</string>
+    <string name="search_date_this_month">Ĉi-monate</string>
+    <string name="search_date_pick">Elekti datojn…</string>
+    <string name="search_next">Sekva: %1$s</string>
+    <string name="search_last">Lasta: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Loko:</string>
+    <string name="search_reason_notes">Notoj:</string>
+    <string name="search_reason_guest">Gasto:</string>
+    <string name="search_keep_typing">Daŭre tajpu por serĉi</string>
+    <string name="search_no_matches">Neniu evento kongruas kun “%1$s”</string>
+    <string name="search_no_events_tagged">Neniu evento etikedita per “%1$s”</string>
+    <string name="search_lookback_line">Sinkroniga retrorigardo: %1$s</string>
+    <string name="search_sync_settings">Sinkronigaj agordoj</string>
+    <string name="cd_search_sync_settings">Malfermi la agordon de sinkroniga retrorigardo</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Montri %d pasintan eventon</item>
+        <item quantity="other">Montri %d pasintajn eventojn</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">%d plia en kaŝita kalendaro</item>
+        <item quantity="other">%d pliaj en kaŝitaj kalendaroj</item>
+    </plurals>
+    <string name="search_show">Montri</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Montri %d kongruon en kaŝita kalendaro</item>
+        <item quantity="other">Montri %d kongruojn en kaŝitaj kalendaroj</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Montri %d en kaŝita kalendaro</item>
+        <item quantity="other">Montri %d en kaŝitaj kalendaroj</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Inkluzive de %d kaŝita kalendaro</item>
+        <item quantity="other">Inkluzive de %d kaŝitaj kalendaroj</item>
+    </plurals>
+    <string name="search_leave_out">Preterlasi</string>
+    <string name="cd_search_leave_out">Preterlasi kaŝitajn kalendarojn</string>
+    <string name="search_hidden_calendar">%1$s · kaŝita</string>
+    <string name="cd_search_date_this_week">Montri kongruojn de ĉi tiu semajno</string>
+    <string name="cd_search_date_this_month">Montri kongruojn de ĉi tiu monato</string>
+    <string name="cd_search_date_pick">Elekti datojn por serĉi</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d venonta</item>
+        <item quantity="other">%d venontaj</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d pasinta</item>
+        <item quantity="other">%d pasintaj</item>
+    </plurals>
+    <string name="search_no_past_events">Neniu pasinta evento</string>
+    <string name="search_no_events_in_dates">Neniu evento en ĉi tiuj datoj</string>
     <string name="label_select_date">Elektu daton</string>
     <string name="hint_tap_date_range">Tuŝu la saman daton por unu tago, aŭ alian daton por intervalo</string>
     <string name="cd_clear">Forviŝi</string>
@@ -1072,7 +1330,6 @@
     <string name="reminder_none">Sen rememorigo</string>
     <string name="reminder_at_time_of_event">Je la tempo de la evento</string>
     <string name="reminder_time_before">%1$s antaŭe</string>
-    <string name="reminder_time_after">%1$s poste</string>
     <string name="reminder_day_of_event_12h">9 AM tage de la evento</string>
     <string name="reminder_day_of_event_24h">09:00 tage de la evento</string>
     <string name="reminder_day_of_event">Tage de la evento</string>
@@ -1204,6 +1461,7 @@
     <!-- ==================== i18n: Round 2 audit gaps ==================== -->
     <string name="action_save_event">Konservi eventon</string>
     <string name="badge_beta">Beta</string>
+    <string name="badge_sync_off">Sinkr. malŝaltita</string>
     <string name="badge_new">Nova</string>
     <string name="color_red">Ruĝa</string>
     <string name="color_orange">Oranĝa</string>
@@ -1232,6 +1490,19 @@
     <string name="ics_fetch_error_http">La servilo redonis eraron (%1$d). Bonvolu kontroli la URL.</string>
     <string name="ics_fetch_error_empty">La kalendara fluo estas malplena.</string>
     <string name="ics_fetch_error_not_calendar">Tiu URL ne aspektas kiel kalendara fluo.</string>
+    <string name="ics_feed_error_empty_response">La servilo ne sendis validan fluon.</string>
+    <string name="ics_feed_error_access_denied">La servilo de ĉi tiu fluo rifuzis aliron.</string>
+    <string name="ics_feed_error_too_large">Ĉi tiu kalendara fluo estas tro granda por elŝuti.</string>
+    <string name="ics_feed_error_unreadable">Ne eblis montri la eventojn de ĉi tiu fluo.</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s” ne estis konservita.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d evento ne estis konservita.</item>
+        <item quantity="other">%1$d eventoj ne estis konservitaj.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d evento ne estis konservita, inkluzive de “%2$s”.</item>
+        <item quantity="other">%1$d eventoj ne estis konservitaj, inkluzive de “%2$s”.</item>
+    </plurals>
     <string name="insights_title">Enrigardoj</string>
     <string name="insights_period_this_week">Semajno</string>
     <string name="insights_period_last_week">Pasinta sem.</string>
@@ -1359,7 +1630,7 @@
         <item quantity="other">Libera dum la sekvaj %1$d tagoj (%2$s – %3$s):</item>
     </plurals>
     <string name="share_availability_day_line">%1$s: %2$s</string>
-    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_block_separator">", "</string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">Neniuj liberaj blokoj de almenaŭ unu horo en la elektita intervalo.</string>
     <string name="share_from_kashcal_footer">Kunhavigita el KashCal</string>
@@ -1381,5 +1652,31 @@
     <string name="share_as_card_all_day">La tutan tagon</string>
     <string name="share_as_card_chooser_title">Kunhavigi eventon</string>
     <string name="share_as_card_share_failed">Ne eblis kunhavigi karton</string>
+    <string name="print_your_week">Presu vian semajnon</string>
+    <string name="print_options_title">Elektu presadajn opciojn</string>
+    <string name="print_pages_header">Paĝoj</string>
+    <string name="print_page_week">Semajna kalendaro</string>
+    <string name="print_page_week_detail">La semajno kiel krado</string>
+    <string name="print_page_details">Detaloj</string>
+    <string name="print_page_details_detail">Ĉiu evento plene</string>
+    <string name="print_action">Presi</string>
+    <string name="cd_print_previous_week">Antaŭa semajno</string>
+    <string name="cd_print_next_week">Sekva semajno</string>
+    <plurals name="print_summary_pages">
+        <item quantity="one">%d paĝo</item>
+        <item quantity="other">%d paĝoj</item>
+    </plurals>
+    <plurals name="print_summary_calendars">
+        <item quantity="one">%1$d el %2$d kalendaro</item>
+        <item quantity="other">%1$d el %2$d kalendaroj</item>
+    </plurals>
+    <string name="print_summary">%1$s · %2$s</string>
+    <string name="print_job_name">%1$s – Semajno de %2$s</string>
+    <string name="print_failed">Ne eblis presi. Reprovu.</string>
+    <string name="print_doc_week">Semajno</string>
+    <string name="print_doc_printed">Presita je %1$s</string>
+    <string name="print_doc_page_of">Paĝo %1$s el %2$s</string>
+    <string name="print_doc_numbers_note">La numeroj kongruas kun la detaloj, kiuj listigas ĉiun eventon plene.</string>
+    <string name="print_doc_times_in">Horoj laŭ %1$s</string>
 
 </resources>

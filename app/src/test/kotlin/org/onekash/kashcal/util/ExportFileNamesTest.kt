@@ -4,8 +4,39 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Locale
 
 class ExportFileNamesTest {
+
+    @Test
+    fun `name key is the cleaned name in lower case`() {
+        assertEquals("work", exportNameKey("Work!"))
+        assertEquals("team-1", exportNameKey("Team 1"))
+        assertEquals("team-1", exportNameKey("Team-1"))
+    }
+
+    @Test
+    fun `name key folds case fully`() {
+        assertEquals(exportNameKey("Strasse"), exportNameKey("Straße"))
+        assertEquals(exportNameKey("ΟΔΟΣ"), exportNameKey("οδος"))
+    }
+
+    @Test
+    fun `name key is empty when nothing survives cleaning`() {
+        assertEquals("", exportNameKey("🎂"))
+        assertEquals("", exportNameKey("  "))
+    }
+
+    @Test
+    fun `name key lower-cases with the root locale`() {
+        val saved = Locale.getDefault()
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr"))
+            assertEquals("ideas", exportNameKey("IDEAS"))
+        } finally {
+            Locale.setDefault(saved)
+        }
+    }
 
     @Test
     fun `preserves latin diacritics and eszett`() {

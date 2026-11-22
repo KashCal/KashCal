@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import io.mockk.Runs
+import org.onekash.kashcal.testutil.FakeEventIcsSource
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -101,7 +102,8 @@ class PushStrategyAdversarialTest {
             pendingOperationsDao = pendingOperationsDao,
             accountRepository = mockk(relaxed = true),
             attendeesDao = mockk(relaxed = true),
-            pendingCancelsDao = mockk { coEvery { getForEvent(any()) } returns emptyList() }
+            pendingCancelsDao = mockk { coEvery { getForEvent(any()) } returns emptyList() },
+            icsSource = FakeEventIcsSource(),
         )
     }
 
@@ -261,7 +263,6 @@ class PushStrategyAdversarialTest {
         coEvery { client.createEvent(any(), any(), any()) } returns
             CalDavResult.success(Pair("url", "etag"))
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
-        coEvery { eventsDao.markCreatedOnServerWithCopy(any(), any(), any(), any(), any()) } just Runs
 
         val result = pushStrategy.pushAll(client)
 
@@ -296,7 +297,6 @@ class PushStrategyAdversarialTest {
         coEvery { calendarRepository.getCalendarById(any()) } returns testCalendar
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
-        coEvery { eventsDao.markCreatedOnServerWithCopy(any(), any(), any(), any(), any()) } just Runs
 
         // Op1: server error, Op2: success, Op3: server error
         coEvery { client.createEvent(eq(testCalendar.caldavUrl), eq("uid-1"), any()) } returns

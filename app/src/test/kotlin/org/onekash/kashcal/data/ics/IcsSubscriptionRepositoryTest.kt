@@ -108,7 +108,9 @@ class IcsSubscriptionRepositoryTest {
         coEvery { icsSubscriptionsDao.urlExists(any()) } returns false
         coEvery { icsSubscriptionsDao.insert(any()) } returns 0L
         coEvery { icsSubscriptionsDao.updateSyncSuccess(any(), any(), any(), any()) } returns Unit
+        coEvery { icsSubscriptionsDao.updateSyncTimeOnly(any(), any()) } returns Unit
         coEvery { icsSubscriptionsDao.updateSyncError(any(), any()) } returns Unit
+        coEvery { icsSubscriptionsDao.updateSyncWithMissingEvents(any(), any(), any(), any(), any()) } returns Unit
         coEvery { icsSubscriptionsDao.setEnabled(any(), any()) } returns Unit
         coEvery { icsSubscriptionsDao.updateSettings(any(), any(), any(), any()) } returns Unit
         accountRepository = mockk()
@@ -403,6 +405,7 @@ class IcsSubscriptionRepositoryTest {
         repository.setSubscriptionEnabled(1L, false)
 
         coVerify(exactly = 0) { reminderScheduler.cancelRemindersForEvent(any()) }
+        coVerify(exactly = 0) { reminderScheduler.reconcileRemindersForEvent(any()) }
         coVerify { icsSubscriptionsDao.setEnabled(1L, false) }
     }
 
@@ -416,6 +419,7 @@ class IcsSubscriptionRepositoryTest {
         // Enabling cancels nothing; the refresh reschedules reminders when the feed returns a
         // body.
         coVerify(exactly = 0) { reminderScheduler.cancelRemindersForEvent(any()) }
+        coVerify(exactly = 0) { reminderScheduler.reconcileRemindersForEvent(any()) }
         coVerify { icsSubscriptionsDao.setEnabled(1L, true) }
     }
 
@@ -460,7 +464,9 @@ class IcsSubscriptionRepositoryTest {
         val result = repository.refreshSubscription(1L)
 
         assertTrue(result is IcsSubscriptionRepository.SyncResult.NotModified)
-        coVerify { icsSubscriptionsDao.updateSyncSuccess(any(), any(), any(), any()) }
+        // Only the sync time: the validators stay as stored now, not as this request sent them.
+        coVerify { icsSubscriptionsDao.updateSyncTimeOnly(1L, any()) }
+        coVerify(exactly = 0) { icsSubscriptionsDao.updateSyncSuccess(any(), any(), any(), any()) }
     }
 
     @Test
@@ -611,6 +617,152 @@ class IcsSubscriptionRepositoryTest {
         assertTrue(result is IcsSubscriptionRepository.SyncResult.Success)
         val success = result as IcsSubscriptionRepository.SyncResult.Success
         assertEquals(2, success.count.added) // the 2 events in icsContent
+    }
+
+    @Test
+    fun `a refresh with no failed write writes the feed once`() = runTest {
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
+        coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
+            content = icsContent,
+            etag = "\"new-etag\"",
+            lastModified = null
+        )
+        coEvery { eventsDao.insert(any()) } returns 1L
+
+        repository.refreshSubscription(1L)
+
+        // One read of the stored rows and one transaction: the per-event retry didn't run.
+        coVerify(exactly = 1) { eventsDao.getByCalendarIdAndCaldavUrlPrefix(any(), any()) }
+        coVerify(exactly = 1) { database.runInTransaction(any<suspend () -> Any>()) }
+        coVerify(exactly = 0) { icsSubscriptionsDao.updateSyncWithMissingEvents(any(), any(), any(), any(), any()) }
+        coVerify { icsSubscriptionsDao.updateSyncSuccess(1L, any(), "\"new-etag\"", null) }
+    }
+
+    @Test
+    fun `a refresh that stores nothing keeps no validators`() = runTest {
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
+        coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
+            content = icsContent,
+            etag = "\"v2\"",
+            lastModified = "Thu, 19 Nov 2026 10:00:00 GMT"
+        )
+        coEvery { eventsDao.insert(any()) } throws android.database.sqlite.SQLiteConstraintException("refused")
+
+        val result = repository.refreshSubscription(1L)
+
+        assertEquals(2, (result as IcsSubscriptionRepository.SyncResult.Success).count.failed)
+        // With nothing stored a 304 would clear the message, so the next fetch must be full.
+        coVerify {
+            icsSubscriptionsDao.updateSyncWithMissingEvents(
+                1L, any(), null, null, IcsFeedErrors.notSaved(2, listOf("Test Event 1", "Test Event 2"))
+            )
+        }
+    }
+
+    @Test
+    fun `a series that can't be stored counts its changed occurrence as missing`() = runTest {
+        val feed = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:series@test.com
+            DTSTART:20260115T100000Z
+            DTEND:20260115T110000Z
+            RRULE:FREQ=WEEKLY;COUNT=3
+            SUMMARY:Series
+            END:VEVENT
+            BEGIN:VEVENT
+            UID:series@test.com
+            RECURRENCE-ID:20260122T100000Z
+            DTSTART:20260122T120000Z
+            DTEND:20260122T130000Z
+            SUMMARY:Moved
+            END:VEVENT
+            BEGIN:VEVENT
+            UID:other@test.com
+            DTSTART:20260116T100000Z
+            DTEND:20260116T110000Z
+            SUMMARY:Other
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
+        coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(feed, "\"v2\"", null)
+        coEvery { eventsDao.insert(any()) } answers {
+            if (firstArg<Event>().title == "Series") throw android.database.sqlite.SQLiteConstraintException("refused")
+            7L
+        }
+
+        val result = repository.refreshSubscription(1L)
+
+        val count = (result as IcsSubscriptionRepository.SyncResult.Success).count
+        assertEquals("the series and its moved occurrence", 2, count.failed)
+        // Something was stored, so the validators stay and the next 304 clears the message.
+        coVerify {
+            icsSubscriptionsDao.updateSyncWithMissingEvents(1L, any(), "\"v2\"", null, IcsFeedErrors.notSaved(2, listOf("Series")))
+        }
+    }
+
+    private fun occurrence(title: String, sequence: Int, itipDtstamp: Long?, instance: Long = 1_000L) = Event(
+        uid = "series",
+        calendarId = 1L,
+        title = title,
+        startTs = instance + 3_600_000L,
+        endTs = instance + 7_200_000L,
+        dtstamp = System.currentTimeMillis(),
+        originalInstanceTime = instance,
+        sequence = sequence,
+        itipDtstamp = itipDtstamp,
+    )
+
+    @Test
+    fun `repeated changed occurrences keep the higher SEQUENCE`() {
+        val kept = repository.collapseRepeatedOccurrences(
+            listOf(occurrence("old", sequence = 1, itipDtstamp = 9L), occurrence("new", sequence = 2, itipDtstamp = 1L))
+        )
+        assertEquals(listOf("new"), kept.map { it.title })
+    }
+
+    @Test
+    fun `repeated changed occurrences with one SEQUENCE keep the later source DTSTAMP`() {
+        val kept = repository.collapseRepeatedOccurrences(
+            listOf(
+                occurrence("no stamp", sequence = 0, itipDtstamp = null),
+                occurrence("later", sequence = 0, itipDtstamp = 20L),
+                occurrence("earlier", sequence = 0, itipDtstamp = 10L),
+            )
+        )
+        assertEquals(listOf("later"), kept.map { it.title })
+    }
+
+    @Test
+    fun `identical repeated changed occurrences keep the first in feed order`() {
+        val kept = repository.collapseRepeatedOccurrences(
+            listOf(occurrence("first", 0, 5L), occurrence("second", 0, 5L))
+        )
+        assertEquals(listOf("first"), kept.map { it.title })
+    }
+
+    @Test
+    fun `byte-identical repeated changed occurrences keep one`() {
+        val copy = occurrence("moved", 0, 5L)
+        assertEquals(1, repository.collapseRepeatedOccurrences(listOf(copy, copy.copy())).size)
+    }
+
+    @Test
+    fun `masters and distinct occurrences pass through in feed order`() {
+        val master = occurrence("series", 0, 1L).copy(originalInstanceTime = null)
+        val events = listOf(
+            occurrence("week 2", 0, 1L, instance = 2_000L),
+            master,
+            occurrence("week 1", 0, 1L, instance = 1_000L),
+            occurrence("week 2 again", 0, 1L, instance = 2_000L),
+        )
+        assertEquals(
+            listOf("week 2", "series", "week 1"),
+            repository.collapseRepeatedOccurrences(events).map { it.title }
+        )
     }
 
     @Test

@@ -25,14 +25,13 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Probes how each CalDAV server handles the RSVP write path and prints what it observed: the
- * PARTSTAT round trip, Schedule-Tag and Schedule-Status exposure, If-Schedule-Tag-Match
- * enforcement, stale-tag and stale-ETag rejection, the shape of a recurring RSVP, PARTSTAT case,
- * SEQUENCE handling and read-only enforcement on attendee edits. The tests fail only on outcomes
- * outside [OutcomeBands] (see [loudFailIfUnexpected]); the per-server data points are printed, not
- * asserted.
+ * PARTSTAT round trip, Schedule-Tag and Schedule-Status exposure, stale-ETag rejection, the shape
+ * of a recurring RSVP, PARTSTAT case, SEQUENCE handling and read-only enforcement on attendee
+ * edits. The tests fail only on outcomes outside [OutcomeBands] (see [loudFailIfUnexpected]); the
+ * per-server data points are printed, not asserted.
  *
- * `CalDavClient` exposes no `Schedule-Tag` or `Schedule-Status` response header and sends no
- * `If-Schedule-Tag-Match`, so the probes go through a raw OkHttp client ([rawHttp]).
+ * `CalDavClient` exposes no `Schedule-Tag` or `Schedule-Status` response header, so the probes go
+ * through a raw OkHttp client ([rawHttp]).
  *
  * Run: `./gradlew :app:testDebugUnitTest -Pintegration --tests
  * '*MultiServerRsvpFixturesTest*'`. A server without credentials or unreachable at runtime skips
@@ -57,13 +56,12 @@ class MultiServerRsvpFixturesTest(
         internal val ICAL_MEDIA_TYPE = "text/calendar; charset=utf-8".toMediaType()
 
         // Calendar URL per server. Parameterized builds a new instance per server and test, so
-        // without this each of the 8 tests re-runs 3 chained PROPFINDs (about 2-3s each on iCloud).
+        // without this each of the 7 tests re-runs 3 chained PROPFINDs (about 2-3s each on iCloud).
         private val calendarUrlCache = ConcurrentHashMap<String, String>()
     }
 
     // Used only for calendar discovery and the cleanup in [cleanup]. Probe traffic goes through
-    // [rawHttp], which can read Schedule-Tag, Schedule-Status and ETag and send
-    // If-Schedule-Tag-Match.
+    // [rawHttp], which can read Schedule-Tag, Schedule-Status and ETag.
     private var caldavClient: CalDavClient? = null
     private var creds: ServerCredentials? = null
     private var calendarUrl: String? = null
@@ -77,7 +75,7 @@ class MultiServerRsvpFixturesTest(
      * fails even if listed, and so does any other non-2xx code outside the band.
      */
     private object OutcomeBands {
-        // Stale Schedule-Tag or ETag: 412, or 409 from a server that phrases it that way.
+        // Stale ETag: 412, or 409 from a server that phrases it that way.
         val STALE_TAG = setOf(412, 409)
         // Attendee's substantive edit refused by server policy.
         val READ_ONLY_REJECT = setOf(403, 409, 422)
@@ -85,13 +83,11 @@ class MultiServerRsvpFixturesTest(
         val MALFORMED_INPUT = setOf(400, 422)
         // Attendee PUT that doesn't bump SEQUENCE, refused by server policy.
         val SEQUENCE_POLICY_REJECT = setOf(400, 409, 422)
-        // PUT with no precondition header: some servers accept it, others answer 412, 403 or 409.
-        val NO_HEADER_PUT = setOf(412, 403, 409)
     }
 
     /**
-     * Sends the probes: it can read `Schedule-Tag` and `Schedule-Status` and send
-     * `If-Schedule-Tag-Match`, which `CalDavClient` can't.
+     * Sends the probes: it can read `Schedule-Tag` and `Schedule-Status`, which `CalDavClient`
+     * can't.
      *
      * [setup] rebuilds it with the [DigestAuthenticator] the production client uses once
      * credentials are known. The preemptive Basic header on each request satisfies Basic-auth
@@ -251,8 +247,7 @@ END:VCALENDAR
         eventUrl: String,
         ics: String,
         ifMatch: String? = null,
-        ifNoneMatch: String? = null,
-        ifScheduleTagMatch: String? = null
+        ifNoneMatch: String? = null
     ): Response {
         val builder = Request.Builder()
             .url(eventUrl)
@@ -261,7 +256,6 @@ END:VCALENDAR
         ifMatch?.let { builder.header("If-Match", "\"$it\"") }
         ifNoneMatch?.let { builder.header("If-None-Match", it) }
         if (ifNoneMatch == "*") createdEventUrls += eventUrl
-        ifScheduleTagMatch?.let { builder.header("If-Schedule-Tag-Match", "\"$it\"") }
         return rawHttp.newCall(builder.build()).execute()
     }
 
@@ -390,63 +384,6 @@ END:VCALENDAR
                 "create.scheduleStatus=${createScheduleStatus ?: "<absent>"} " +
                 "update.scheduleTag=${updateScheduleTag ?: "<absent>"} " +
                 "update.scheduleStatus=${updateScheduleStatus ?: "<absent>"}"
-        )
-    }
-
-    @Test
-    fun `rsvp_if_schedule_tag_match_honored - does server enforce on stale tag`() = runBlocking {
-        assumeReady()
-        calendarUrl = discoverCalendar()
-        assumeTrue("No calendar found on ${config.name}", calendarUrl != null)
-
-        val uid = "${UID_PREFIX}schedtagmatch-${config.name.lowercase()}-${UUID.randomUUID()}"
-        val url = newEventUrl(uid)
-
-        val createResp = rawPut(url, buildRsvpFixture(uid), ifNoneMatch = "*")
-        loudFailIfUnexpected("create", createResp, allowedCodes = emptySet())
-        observe("create", createResp)
-        val scheduleTag = createResp.header("Schedule-Tag")?.trim('"')
-        val createEtag = createResp.header("ETag")?.trim('"')
-
-        // Without a Schedule-Tag there is nothing to match against, so skip.
-        assumeTrue(
-            "${config.name} doesn't expose Schedule-Tag (skipping If-Schedule-Tag-Match probe)",
-            scheduleTag != null
-        )
-
-        // (a) Stale tag: 412 or 409 if the server enforces it, 2xx if it doesn't.
-        val staleTag = "stale-$scheduleTag"
-        val staleResp = rawPut(
-            url,
-            buildRsvpFixture(uid, partstat = "ACCEPTED"),
-            ifScheduleTagMatch = staleTag
-        )
-        observe("update-stale-tag", staleResp)
-        loudFailIfUnexpected("update-stale-tag", staleResp, allowedCodes = OutcomeBands.STALE_TAG)
-
-        // (b) Current tag: must succeed.
-        val currentResp = rawPut(
-            url,
-            buildRsvpFixture(uid, partstat = "ACCEPTED"),
-            ifScheduleTagMatch = scheduleTag
-        )
-        observe("update-current-tag", currentResp)
-        loudFailIfUnexpected("update-current-tag", currentResp, allowedCodes = emptySet())
-        val newEtag = currentResp.header("ETag")?.trim('"') ?: createEtag
-
-        // (c) No precondition header: record what the server does.
-        val noHeaderResp = rawPut(
-            url,
-            buildRsvpFixture(uid, partstat = "TENTATIVE"),
-            // intentionally no If-Match, no If-Schedule-Tag-Match
-        )
-        observe("update-no-header", noHeaderResp)
-        loudFailIfUnexpected("update-no-header", noHeaderResp, allowedCodes = OutcomeBands.NO_HEADER_PUT)
-        val finalEtag = noHeaderResp.header("ETag")?.trim('"') ?: newEtag
-
-        println(
-            "[${config.name}] rsvp_if_schedule_tag_match_honored: " +
-                "stale=${staleResp.code} current=${currentResp.code} no-header=${noHeaderResp.code}"
         )
     }
 

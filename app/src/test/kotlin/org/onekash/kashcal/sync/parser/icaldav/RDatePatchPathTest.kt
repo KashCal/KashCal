@@ -64,7 +64,6 @@ class RDatePatchPathTest {
         rrule: String? = "FREQ=WEEKLY;BYDAY=TU",
         exdate: String? = null,
         rdate: String? = null,
-        rawIcal: String? = null
     ): Event = Event(
         uid = uid,
         calendarId = 1L,
@@ -79,7 +78,6 @@ class RDatePatchPathTest {
         rrule = rrule,
         exdate = exdate,
         rdate = rdate,
-        rawIcal = rawIcal,
         sequence = 0,
         dtstamp = 0L,
         createdAt = 1_579_089_600_000L,
@@ -88,7 +86,7 @@ class RDatePatchPathTest {
     )
 
     /**
-     * Builds a rawIcal fixture for patch-path tests. It takes ICS timestamps, since it feeds
+     * Builds a stored ICS fixture for patch-path tests. It takes ICS timestamps, since it feeds
      * the parser, not parseTimestampCsv.
      */
     private fun buildRawIcal(
@@ -123,7 +121,6 @@ class RDatePatchPathTest {
         val raw = buildRawIcal(rdateIcs = emptyList())
         val event = createEvent(
             rdate = "$rdateMs_Feb14",
-            rawIcal = raw
         )
 
         val ics = IcsPatcher.patch(raw, event)
@@ -142,11 +139,10 @@ class RDatePatchPathTest {
 
     @Test
     fun `patch path overrides server RDATE when Event rdate differs`() {
-        // rawIcal has Jan 1 RDATE; Event.rdate changed to Feb 14.
+        // The stored ICS has Jan 1 RDATE; Event.rdate changed to Feb 14.
         val raw = buildRawIcal(rdateIcs = listOf("20260101T100000Z"))
         val event = createEvent(
             rdate = "$rdateMs_Feb14",
-            rawIcal = raw
         )
 
         val ics = IcsPatcher.patch(raw, event)
@@ -157,7 +153,7 @@ class RDatePatchPathTest {
             "RDATE must reflect Event value (Feb 14); got: ${rdateLines.single()}",
             rdateLines.single().contains("20260214")
         )
-        // Negative assertion: rawIcal's original Jan 1 must not survive.
+        // Negative assertion: the stored ICS's original Jan 1 must not survive.
         assertFalse(
             "RawIcal's original Jan 1 RDATE must not survive the override",
             rdateLines.single().contains("20260101")
@@ -166,11 +162,10 @@ class RDatePatchPathTest {
 
     @Test
     fun `patch path emits no RDATE line when Event rdate null regardless of server RDATE`() {
-        // rawIcal has Jan 1 RDATE; user cleared Event.rdate to null. Push must drop it.
+        // The stored ICS has Jan 1 RDATE; user cleared Event.rdate to null. Push must drop it.
         val raw = buildRawIcal(rdateIcs = listOf("20260101T100000Z"))
         val event = createEvent(
             rdate = null,
-            rawIcal = raw
         )
 
         val ics = IcsPatcher.patch(raw, event)
@@ -189,7 +184,6 @@ class RDatePatchPathTest {
         val raw = buildRawIcal(rdateIcs = emptyList())
         val event = createEvent(
             rdate = "$rdateMs_Feb14,$rdateMs_Jun1",
-            rawIcal = raw
         )
 
         val ics = IcsPatcher.patch(raw, event)
@@ -244,7 +238,6 @@ class RDatePatchPathTest {
             isAllDay = true,
             timezone = null,
             rdate = "$allDayMs",
-            rawIcal = raw
         )
 
         val ics = IcsPatcher.patch(raw, event)
@@ -276,7 +269,7 @@ class RDatePatchPathTest {
 
     @Test
     fun `patch path RDATE override does not affect EXDATE RRULE or rawProperties`() {
-        // rawIcal has RRULE, EXDATE (Jan 5), an X-custom prop, and Jan 1 RDATE.
+        // The stored ICS has RRULE, EXDATE (Jan 5), an X-custom prop, and Jan 1 RDATE.
         // Event overrides rdate and exdate to different values.
         val raw = buildRawIcal(
             rrule = "FREQ=WEEKLY;BYDAY=TU",
@@ -290,7 +283,6 @@ class RDatePatchPathTest {
             rrule = "FREQ=WEEKLY;BYDAY=TU",  // unchanged
             rdate = "$rdateMs_Feb14",
             exdate = "$newExdateMs",
-            rawIcal = raw
         )
 
         val ics = IcsPatcher.patch(raw, event)
@@ -300,7 +292,7 @@ class RDatePatchPathTest {
             "RDATE must reflect Event value (Feb 14)",
             findLines(ics, "RDATE").single().contains("20260214")
         )
-        // EXDATE reflects Event's new value (March 10), not rawIcal's original (Jan 5)
+        // EXDATE reflects Event's new value (March 10), not the stored ICS's original (Jan 5)
         val exdateLines = findLines(ics, "EXDATE")
         assertTrue(
             "EXDATE must reflect new Event value (March 10); got: $exdateLines",
@@ -312,7 +304,7 @@ class RDatePatchPathTest {
             "RRULE must remain FREQ=WEEKLY;BYDAY=TU; got: $rruleLines",
             rruleLines.any { it.contains("FREQ=WEEKLY") && it.contains("BYDAY=TU") }
         )
-        // X-* property kept from rawIcal
+        // X-* property kept from the stored ICS
         assertTrue(
             "X-APPLE-MARKER custom prop must be preserved from rawIcal",
             ics.contains("X-APPLE-MARKER:foo")
@@ -327,7 +319,6 @@ class RDatePatchPathTest {
         val raw = buildRawIcal(rdateIcs = emptyList())
         val event = createEvent(
             rdate = null,
-            rawIcal = raw
         )
 
         val ics = IcsPatcher.patch(raw, event)
@@ -337,10 +328,9 @@ class RDatePatchPathTest {
 
     @Test
     fun `fresh path still emits RDATE from Event rdate unchanged`() {
-        // The fresh path (no rawIcal) emits RDATE from Event.rdate.
+        // The fresh path (no stored ICS) emits RDATE from Event.rdate.
         val event = createEvent(
             rdate = "$rdateMs_Feb14",
-            rawIcal = null
         )
 
         val ics = IcsPatcher.generateFresh(event)

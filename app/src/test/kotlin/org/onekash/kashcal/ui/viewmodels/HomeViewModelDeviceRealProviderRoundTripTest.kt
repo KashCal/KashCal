@@ -21,6 +21,8 @@ import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
+import org.onekash.kashcal.ui.components.withTimedStart
+import org.onekash.kashcal.ui.components.withZonePick
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.calendar_provider.DeviceAttendee
 import org.onekash.kashcal.data.calendar_provider.DeviceRoundTripFixture
@@ -42,6 +44,7 @@ import org.onekash.kashcal.domain.mapper.toFormState
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.model.toEventForDuplicate
 import org.onekash.kashcal.domain.writer.DeviceEventDraft
+import org.onekash.kashcal.testutil.phoneLocalDate
 import org.onekash.kashcal.testutil.phoneMidnight
 import org.onekash.kashcal.ui.components.EventFormState
 import org.onekash.kashcal.ui.components.withDuplicateOf
@@ -52,6 +55,7 @@ import org.robolectric.annotation.Config
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import org.onekash.kashcal.util.TimezoneUtils
 
 /**
  * Tests device-calendar workflows that start in the ViewModel (the form's load
@@ -109,7 +113,7 @@ class HomeViewModelDeviceRealProviderRoundTripTest {
             deviceCalendarGroups = emptyList(),
             occurrenceTs = occurrenceTs,
         )
-        return mapped.copy(editingOccurrenceTs = occurrenceTs, attendees = deviceGuestsToPickerSeed(data.attendees))
+        return mapped.copy(editingOccurrenceTs = occurrenceTs, editingZone = if (mapped.isAllDay) null else mapped.timezone ?: TimezoneUtils.getDeviceTimezone(), attendees = deviceGuestsToPickerSeed(data.attendees))
     }
 
     /**
@@ -147,8 +151,18 @@ class HomeViewModelDeviceRealProviderRoundTripTest {
         }
     }
 
-    private suspend fun TestScope.awaitDragResult() =
-        awaitUntil("the drag's result") { vm.uiState.value.pendingSnackbarMessage != null || vm.uiState.value.currentError != null }
+    /**
+     * Ends the drag's Undo window, waits for its save, and returns the snackbar the drop
+     * showed: the success one, or a drop-time failure.
+     */
+    private suspend fun TestScope.awaitDragResult(): String? {
+        val shownAtDrop = vm.uiState.value.pendingSnackbarMessage
+        vm.endDragUndoWindow()
+        awaitUntil("the drag's save") {
+            vm.dragSaveSettled
+        }
+        return shownAtDrop
+    }
 
     // ---- open and save changes nothing ----
 
@@ -264,18 +278,18 @@ class HomeViewModelDeviceRealProviderRoundTripTest {
     }
 
     @Test
-    fun `changing only the timezone from a later occurrence keeps the series' first date`() = runTest {
-        // No weekday in the rule, so moving the series to Tokyo can't shift it to another day.
-        val id = createSyncedSeries(rrule = "FREQ=WEEKLY;COUNT=4")
+    fun `changing only the timezone from a later occurrence keeps the series' first date and time`() = runTest {
+        val id = createSyncedSeries(rrule = "FREQ=WEEKLY;BYDAY=TU;COUNT=4")
 
         val form = openForm(id, occurrenceTs = occ(2)).withTimezone("Asia/Tokyo")
         assertTrue(vm.saveDeviceEvent(form, EditScope.ALL_EVENTS).isSuccess)
 
-        assertEquals(T0.toString(), f.eventRow(id)!![Events.DTSTART])
+        // Tue 5 Mar 10:00 New York becomes Tue 5 Mar 10:00 Tokyo, so BYDAY=TU still matches.
+        val tokyoStart = ZonedDateTime.of(2024, 3, 5, 10, 0, 0, 0, ZoneId.of("Asia/Tokyo")).toInstant().toEpochMilli()
+        assertEquals(tokyoStart.toString(), f.eventRow(id)!![Events.DTSTART])
         assertEquals("Asia/Tokyo", f.eventRow(id)!![Events.EVENT_TIMEZONE])
-        // Tokyo keeps no summer time, so each occurrence is the first one's instant plus
-        // whole weeks.
-        assertEquals((0..3).map { T0 + it * WEEK }, shownStarts(id))
+        // Tokyo keeps no summer time, so each occurrence is a whole number of weeks on.
+        assertEquals((0..3).map { tokyoStart + it * WEEK }, shownStarts(id))
     }
 
     @Test
@@ -373,6 +387,40 @@ class HomeViewModelDeviceRealProviderRoundTripTest {
 
         assertEquals(before, snapshot(exceptionId))
         assertEquals(4, march().size)
+    }
+
+    // ---- zone change on a series with a changed occurrence ----
+
+    @Ignore("Known gap: a device series move keeps the changed occurrence at its old ORIGINAL_INSTANCE_TIME, so the provider shows it beside the moved occurrence")
+    @Test
+    fun `a zone change for all events keeps a renamed occurrence shown once`() = runTest {
+        // Tuesdays 10:00 New York; the second one renamed; then the series moves to Los Angeles,
+        // keeping the clock time, so every occurrence is three hours later.
+        val id = createSyncedSeries()
+        assertTrue(vm.saveDeviceEvent(openForm(id, occurrenceTs = occ(1)).copy(title = "Renamed"), EditScope.THIS_EVENT).isSuccess)
+        val form = openForm(id, occurrenceTs = occ(0))
+            .withZonePick(org.onekash.kashcal.ui.components.pickers.ZonePick.Set("America/Los_Angeles"), "Europe/Berlin")
+
+        assertTrue(vm.saveDeviceEvent(form, EditScope.ALL_EVENTS).isSuccess)
+
+        val shown = march().map { it.title to it.startTs }
+        assertEquals("${shown}", 4, shown.size)
+        assertEquals(1, shown.count { it.first == "Renamed" })
+    }
+
+    @Ignore("Known gap: a device series move keeps the changed occurrence at its old ORIGINAL_INSTANCE_TIME, so the provider shows it beside the moved occurrence")
+    @Test
+    fun `a new time for all events keeps a renamed occurrence shown once`() = runTest {
+        val id = createSyncedSeries()
+        assertTrue(vm.saveDeviceEvent(openForm(id, occurrenceTs = occ(1)).copy(title = "Renamed"), EditScope.THIS_EVENT).isSuccess)
+        val opened = openForm(id, occurrenceTs = occ(0))
+        val form = opened.withTimedStart(opened.dateMillis, 11, 0, defaultDurationMinutes = 60)
+
+        assertTrue(vm.saveDeviceEvent(form, EditScope.ALL_EVENTS).isSuccess)
+
+        val shown = march().map { it.title to it.startTs }
+        assertEquals("${shown}", 4, shown.size)
+        assertEquals(1, shown.count { it.first == "Renamed" })
     }
 
     // ---- form edits ----
@@ -535,6 +583,26 @@ class HomeViewModelDeviceRealProviderRoundTripTest {
         assertEquals((0..3).map(::occ), march().map { it.startTs })
     }
 
+    @Test
+    fun `a multi-day all-day series saved in the form keeps its last day through reopen and save`() = runTest {
+        val form = EventFormState(
+            title = "Trip", isAllDay = true, selectedCalendarId = SYNCED_CAL, reminders = emptyList(), isDeviceCalendar = true,
+            dateMillis = phoneMidnight(LocalDate.of(2027, 1, 29)), endDateMillis = phoneMidnight(LocalDate.of(2027, 1, 31)),
+            rrule = "FREQ=WEEKLY;INTERVAL=2;BYDAY=FR",
+        )
+        val id = vm.saveDeviceEvent(form).getOrThrow()
+        f.markSynced(id, "series-$id")
+        assertEquals("P3D", f.eventRow(id)!![Events.DURATION])
+
+        val reopened = openForm(id, isAllDay = true)
+        assertEquals(LocalDate.of(2027, 1, 31), phoneLocalDate(reopened.endDateMillis))
+        assertTrue(vm.saveDeviceEvent(reopened.copy(title = "Ski trip"), EditScope.ALL_EVENTS).isSuccess)
+
+        assertEquals("P3D", f.eventRow(id)!![Events.DURATION])
+        val shown = f.repository.getInstancesForDayRange(20270125, 20270228, setOf(SYNCED_CAL)).sortedBy { it.startTs }
+        assertEquals(listOf(20270129 to 20270131, 20270212 to 20270214, 20270226 to 20270228), shown.map { it.startDay to it.endDay })
+    }
+
     /**
      * The form for a duplicate of [instance], as MainActivity builds the source and
      * [withDuplicateOf] loads it, on the source's device calendar.
@@ -564,6 +632,27 @@ class HomeViewModelDeviceRealProviderRoundTripTest {
         assertEquals((2..5).map(::occ), f.inMarchAndApril().filter { it.eventId == copyId }.map { it.startTs })
         assertEquals(before, snapshot(id))
         assertEquals((0..3).map(::occ), shownStarts(id))
+    }
+
+    @Test
+    fun `duplicating an event copies its alerts and colour`() = runTest {
+        val id = create(f.draft(reminders = listOf(15, 1440), eventColor = 0xFF4CAF50.toInt()))
+        val source = DisplayEvent.Device(march().single { it.eventId == id })
+
+        val copyId = vm.saveDeviceEvent(duplicateForm(source)).getOrThrow()
+
+        assertEquals(listOf(15 to Reminders.METHOD_ALERT, 1440 to Reminders.METHOD_ALERT), f.provider.reminderRows(copyId))
+        assertEquals(0xFF4CAF50.toInt().toString(), f.eventRow(copyId)!![Events.EVENT_COLOR])
+    }
+
+    @Test
+    fun `duplicating an all-day event keeps its day-of alert`() = runTest {
+        val id = create(f.draft(isAllDay = true, startTs = DAY0, endTs = DAY0 + DAY, reminders = listOf(-540)))
+        val source = DisplayEvent.Device(march().single { it.eventId == id })
+
+        val copyId = vm.saveDeviceEvent(duplicateForm(source)).getOrThrow()
+
+        assertEquals(listOf(-540 to Reminders.METHOD_ALERT), f.provider.reminderRows(copyId))
     }
 
     @Test
@@ -657,14 +746,28 @@ class HomeViewModelDeviceRealProviderRoundTripTest {
         ZonedDateTime.of(2024, 3, day, hour, 0, 0, 0, ZoneId.systemDefault()).toInstant().toEpochMilli()
 
     @Test
+    fun `dragging an event with no notes, location or colour of its own still saves`() = runTest {
+        // The provider stores these as null, while the instance read maps them to empty text
+        // and no colour; the save's check must see the two as the same event.
+        for ((n, colour) in listOf(null, 0).withIndex()) {
+            val id = create(f.draft(title = "Bare $n", description = null, location = null, eventColor = colour))
+            val shown = f.occurrences(DAY_CODE).single { it.eventId == id }
+
+            vm.rescheduleEvent(DisplayEvent.Device(shown), LocalDate.of(2024, 3, 7), (18 + n) * 60)
+            awaitDragResult()
+
+            assertEquals(berlin(7, 18 + n).toString(), f.eventRow(id)!![Events.DTSTART])
+        }
+    }
+
+    @Test
     fun `dragging a one-off event moves it and keeps every other field`() = runTest {
         val id = create(f.draft(attendees = listOf(ana), categories = listOf("Work")))
         val before = snapshot(id)
 
         vm.rescheduleEvent(DisplayEvent.Device(f.occurrences(DAY_CODE).single()), LocalDate.of(2024, 3, 7), 18 * 60)
-        awaitDragResult()
 
-        assertEquals(DeviceHomeViewModelTestFactory.RESCHEDULED_MESSAGE, vm.uiState.value.pendingSnackbarMessage)
+        assertEquals(DeviceHomeViewModelTestFactory.RESCHEDULED_MESSAGE, awaitDragResult())
         val after = snapshot(id)
         val row = after.getValue("event") as Map<*, *>
         assertEquals(berlin(7, 18).toString(), row[Events.DTSTART])

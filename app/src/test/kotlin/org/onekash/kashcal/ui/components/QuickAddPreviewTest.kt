@@ -84,4 +84,27 @@ class QuickAddPreviewTest {
 
         assertTrue("Note-only input must still render its note", textVisible("just a note"))
     }
+
+    @Test
+    fun timedUntilSeries_namesTheLastDayInTheDeviceZone() {
+        // A timed series ending Jun 15 in New York carries UNTIL as Jun 16 03:59:59 UTC; the
+        // preview must name the day in the zone the event is saved in.
+        val saved = java.util.TimeZone.getDefault()
+        java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("America/New_York"))
+        try {
+            render(
+                QuickAddResult(
+                    title = "class",
+                    startDate = LocalDate.of(2026, 4, 20),
+                    startTime = LocalTime.of(9, 0),
+                    rrule = "FREQ=WEEKLY;BYDAY=MO;UNTIL=20260616T035959Z"
+                )
+            )
+            composeTestRule.waitForIdle()
+            assertTrue("Last day must read Jun 15", textVisible("Jun 15"))
+            assertFalse("Last day must not read Jun 16", textVisible("Jun 16"))
+        } finally {
+            java.util.TimeZone.setDefault(saved)
+        }
+    }
 }

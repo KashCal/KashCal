@@ -1,7 +1,6 @@
 package org.onekash.kashcal.sync.strategy
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -14,6 +13,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.KashCalDatabase
+import org.onekash.kashcal.data.db.PendingOperationTriggers
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
@@ -21,6 +21,7 @@ import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.util.UUID
@@ -67,7 +68,8 @@ class ExceptionOccurrenceModelTest {
     @Before
     fun setup() = runTest {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
+            .addCallback(PendingOperationTriggers.callback())
             .allowMainThreadQueries()
             .build()
 
@@ -626,8 +628,8 @@ class ExceptionOccurrenceModelTest {
             placeholderTitle = "Recurring meeting",
         )
 
-        // The sentinel lets the FTS-search and title-suggest exclusions in `EventsDao`, shared
-        // with ICS-sync synthetics, hide it.
+        // The sentinel lets the search exclusion in `EventSearchSql` and the title-suggest
+        // exclusion in `EventsDao`, shared with ICS-sync synthetics, hide it.
         assertEquals(
             "true",
             syntheticMaster.extraProperties?.get("X-KASHCAL-SYNTHETIC-MASTER"),

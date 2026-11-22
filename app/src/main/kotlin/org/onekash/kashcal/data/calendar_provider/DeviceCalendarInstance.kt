@@ -50,7 +50,8 @@ data class DeviceCalendarInstance(
      * per-instance [startTs]. For an occurrence of a series it's the series' first occurrence.
      * The provider joins each instance to its own event row, so for an exception it's the
      * exception's own start, not the master's. Anchors the first-occurrence rule for the
-     * drag-to-reschedule and delete scope options.
+     * drag-to-reschedule and delete scope options, and gives the quick view's repeat line its
+     * "since" date.
      *
      * Has no default, so every construction site sets it.
      */

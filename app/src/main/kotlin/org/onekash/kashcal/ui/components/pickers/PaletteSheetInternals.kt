@@ -6,7 +6,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,11 +26,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -37,10 +43,28 @@ import org.onekash.kashcal.ui.shared.Css3ColorEntry
 import org.onekash.kashcal.ui.shared.contrastForegroundOn
 
 /**
- * Grid, swatch and wheel pieces shared by [EventColorSheet], [ColorPaletteSheet],
- * [AccentColorSheet] and [WidgetAccentColorSheet], kept in one place so an edit can't reach
- * one sheet and miss the others.
+ * Grid, swatch and wheel pieces shared by [ColorPaletteSheet], [AccentColorSheet],
+ * [WidgetAccentColorSheet] and the inline [ColorPalettePanel] and [EventColorPalettePanel], kept
+ * in one place so an edit can't reach one picker and miss the others.
  */
+
+/** Grid padding inside a sheet. */
+internal val SHEET_GRID_PADDING = PaddingValues(start = 24.dp, top = 16.dp, end = 24.dp, bottom = 32.dp)
+
+/** Gap between swatches, across a row and between rows. */
+private val SWATCH_GAP = 16.dp
+
+/** Full swatch size; [GridContentImpl] gives a narrower grid smaller swatches. */
+private val SWATCH_SIZE = 56.dp
+
+/** Size of each [SwatchCell] in the grid around it. */
+private val LocalSwatchSize = compositionLocalOf { SWATCH_SIZE }
+
+/** Tags the "Calendar default" or other leading default swatch, for tests. */
+const val DEFAULT_SWATCH_TEST_TAG = "swatch-default"
+
+/** Returns the test tag of the swatch for [argb], its hex without `#`. */
+fun swatchTestTag(argb: Int): String = "swatch-" + argbToHex(argb)
 
 @Composable
 internal fun SwatchCell(
@@ -51,9 +75,10 @@ internal fun SwatchCell(
 ) {
     val checkColor = remember(color) { contrastForegroundOn(color) }
     val outlineColor = MaterialTheme.colorScheme.outline
+    val size = LocalSwatchSize.current
     Box(
         modifier = Modifier
-            .size(56.dp)
+            .size(size)
             .clip(CircleShape)
             .background(color)
             .then(
@@ -65,7 +90,8 @@ internal fun SwatchCell(
                     )
                 else Modifier
             )
-            .clickable { onClick() },
+            .clickable { onClick() }
+            .testTag(if (isDefault) DEFAULT_SWATCH_TEST_TAG else swatchTestTag(color.toArgb())),
         contentAlignment = Alignment.Center
     ) {
         if (isSelected) {
@@ -73,7 +99,7 @@ internal fun SwatchCell(
                 Icons.Default.Check,
                 contentDescription = stringResource(R.string.cd_checkmark),
                 tint = checkColor,
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(size / 2)
             )
         }
     }
@@ -81,27 +107,45 @@ internal fun SwatchCell(
 
 /**
  * Renders [cells] in rows of 4, then a footer with [rowLabelRes] on the left and a "More
- * colors" link calling [onMoreColors] on the right.
+ * colors" link calling [onMoreColors] on the right. A row of four full-size swatches needs 272dp
+ * inside [contentPadding]; in less, every swatch shrinks alike so they stay round and in line.
  */
 @Composable
 internal fun GridContentImpl(
     cells: List<@Composable () -> Unit>,
     @StringRes rowLabelRes: Int,
-    onMoreColors: () -> Unit
+    onMoreColors: () -> Unit,
+    contentPadding: PaddingValues = SHEET_GRID_PADDING,
 ) {
-    Column(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 24.dp, top = 16.dp, end = 24.dp, bottom = 32.dp),
+            .padding(contentPadding),
+    ) {
+        val swatchSize = ((maxWidth - SWATCH_GAP * 3) / 4).coerceAtMost(SWATCH_SIZE)
+        CompositionLocalProvider(LocalSwatchSize provides swatchSize) {
+            GridRows(cells, rowLabelRes, onMoreColors)
+        }
+    }
+}
+
+@Composable
+private fun GridRows(
+    cells: List<@Composable () -> Unit>,
+    @StringRes rowLabelRes: Int,
+    onMoreColors: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         cells.chunked(4).forEach { row ->
             Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(SWATCH_GAP)
             ) {
                 row.forEach { cell -> cell() }
             }
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(SWATCH_GAP))
         }
 
         Row(

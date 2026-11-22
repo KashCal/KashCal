@@ -24,6 +24,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.R
+import org.onekash.kashcal.ui.components.EventFormState
 import java.util.Calendar as JavaCalendar
 
 /**
@@ -109,7 +110,7 @@ class DateTimePickerComposeTest {
      * time, not the one centered before the swipe (#238).
      *
      * Drives [DateTimeSheet], not the `VerticalWheelPicker` building block, because the rule
-     * spans the callback from the wheel to the sheet's buffered localHour and localMinute.
+     * spans the callback from the wheel to the sheet's working state ([DateTimeSheetState]).
      *
      * The clock is manual so the snap-fling is still running when Done is tapped; with
      * autoAdvance, waitForIdle would settle the fling first and the test couldn't fail.
@@ -123,13 +124,15 @@ class DateTimePickerComposeTest {
         composeTestRule.setContent {
             MaterialTheme {
                 DateTimeSheet(
-                    selectedDateMillis = startMillis,
-                    selectedHour = initialHour,
-                    selectedMinute = 0,
-                    isAllDay = false,
+                    initial = EventFormState(
+                        isAllDay = false,
+                        dateMillis = startMillis, startHour = initialHour, startMinute = 0,
+                        endDateMillis = startMillis, endHour = initialHour + 1, endMinute = 0,
+                    ),
+                    openingSide = DateSelectionMode.START,
+                    defaultDurationMinutes = 30,
+                    onCommit = { fields -> confirmedHour = fields.startHour },
                     use24Hour = true,
-                    onConfirm = { _, hour, _ -> confirmedHour = hour },
-                    onDismiss = {}
                 )
             }
         }

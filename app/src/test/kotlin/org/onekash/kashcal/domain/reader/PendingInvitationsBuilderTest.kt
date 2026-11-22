@@ -3,7 +3,7 @@ package org.onekash.kashcal.domain.reader
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
+import org.onekash.kashcal.data.db.dao.PendingInvitationRow
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Calendar
@@ -68,11 +68,20 @@ class PendingInvitationsBuilderTest {
         originalEventId = originalEventId
     )
 
-    private fun eventWithNext(
+    private fun invitationRow(
         e: Event,
         nextStart: Long? = e.startTs
-    ): EventWithNextOccurrence = EventWithNextOccurrence(
-        event = e,
+    ): PendingInvitationRow = PendingInvitationRow(
+        id = e.id,
+        calendarId = e.calendarId,
+        title = e.title,
+        location = e.location,
+        isAllDay = e.isAllDay,
+        startTs = e.startTs,
+        endTs = e.endTs,
+        organizerEmail = e.organizerEmail,
+        organizerName = e.organizerName,
+        originalEventId = e.originalEventId,
         nextOccurrenceTs = nextStart
     )
 
@@ -92,7 +101,7 @@ class PendingInvitationsBuilderTest {
     @Test
     fun `empty events returns empty list`() {
         val result = buildPendingInvitations(
-            eventsWithNext = emptyList(),
+            invitationRows = emptyList(),
             needsActionAttendees = emptyList(),
             accountsById = emptyMap(),
             calendarsById = emptyMap()
@@ -110,14 +119,14 @@ class PendingInvitationsBuilderTest {
         val att = attendee(eventId = 100, address = "mailto:alice@icloud.com")
 
         val result = buildPendingInvitations(
-            eventsWithNext = listOf(eventWithNext(ev)),
+            invitationRows = listOf(invitationRow(ev)),
             needsActionAttendees = listOf(att),
             accountsById = mapOf(1L to a),
             calendarsById = mapOf(10L to cal)
         )
 
         assertEquals(1, result.size)
-        assertEquals(100L, result[0].event.id)
+        assertEquals(100L, result[0].eventId)
         assertEquals(1L, result[0].accountId)
         assertEquals(cal.color, result[0].calendarColor)
     }
@@ -136,7 +145,7 @@ class PendingInvitationsBuilderTest {
         val evInA = event(100, calendarId = 10)
 
         val result = buildPendingInvitations(
-            eventsWithNext = listOf(eventWithNext(evInA), eventWithNext(evInB)),
+            invitationRows = listOf(invitationRow(evInA), invitationRow(evInB)),
             needsActionAttendees = listOf(
                 attendee(eventId = 100, address = "mailto:alice@icloud.com"),
                 attendee(eventId = 200, address = "mailto:alice@icloud.com")
@@ -146,7 +155,7 @@ class PendingInvitationsBuilderTest {
         )
 
         assertEquals(1, result.size)
-        assertEquals(100L, result[0].event.id)
+        assertEquals(100L, result[0].eventId)
     }
 
     // ---- 4. organizer-self exclusion (event.organizerEmail matches account) ----
@@ -158,7 +167,7 @@ class PendingInvitationsBuilderTest {
         val ev = event(100, calendarId = 10, organizerEmail = "mailto:alice@icloud.com")
 
         val result = buildPendingInvitations(
-            eventsWithNext = listOf(eventWithNext(ev)),
+            invitationRows = listOf(invitationRow(ev)),
             needsActionAttendees = listOf(
                 attendee(eventId = 100, address = "mailto:alice@icloud.com")
             ),
@@ -183,7 +192,7 @@ class PendingInvitationsBuilderTest {
         val ev = event(100, calendarId = 10, organizerEmail = "mailto:alice2@icloud.com")
 
         val result = buildPendingInvitations(
-            eventsWithNext = listOf(eventWithNext(ev)),
+            invitationRows = listOf(invitationRow(ev)),
             needsActionAttendees = listOf(
                 attendee(eventId = 100, address = "mailto:alice@icloud.com")
             ),
@@ -203,7 +212,7 @@ class PendingInvitationsBuilderTest {
         val ev = event(100, calendarId = 10, organizerEmail = "  MAILTO:Alice@ICLOUD.com  ")
 
         val result = buildPendingInvitations(
-            eventsWithNext = listOf(eventWithNext(ev)),
+            invitationRows = listOf(invitationRow(ev)),
             needsActionAttendees = listOf(
                 attendee(eventId = 100, address = "mailto:alice@icloud.com")
             ),
@@ -222,7 +231,7 @@ class PendingInvitationsBuilderTest {
         val ev = event(100, calendarId = 10, organizerEmail = "Alice@iCloud.com")
 
         val result = buildPendingInvitations(
-            eventsWithNext = listOf(eventWithNext(ev)),
+            invitationRows = listOf(invitationRow(ev)),
             needsActionAttendees = listOf(
                 attendee(eventId = 100, address = "mailto:alice@icloud.com")
             ),
@@ -242,7 +251,7 @@ class PendingInvitationsBuilderTest {
         val ev = event(100, calendarId = 10, originalEventId = 99L)
 
         val result = buildPendingInvitations(
-            eventsWithNext = listOf(eventWithNext(ev)),
+            invitationRows = listOf(invitationRow(ev)),
             needsActionAttendees = listOf(
                 attendee(eventId = 100, address = "mailto:alice@icloud.com")
             ),
@@ -267,10 +276,10 @@ class PendingInvitationsBuilderTest {
         val middleEv = event(300, calendarId = 10, startTs = 30_000L)
 
         val result = buildPendingInvitations(
-            eventsWithNext = listOf(
-                eventWithNext(laterEv),
-                eventWithNext(earlierEv),
-                eventWithNext(middleEv)
+            invitationRows = listOf(
+                invitationRow(laterEv),
+                invitationRow(earlierEv),
+                invitationRow(middleEv)
             ),
             needsActionAttendees = listOf(
                 attendee(eventId = 100, address = "mailto:alice@icloud.com"),
@@ -281,7 +290,7 @@ class PendingInvitationsBuilderTest {
             calendarsById = mapOf(10L to calA, 20L to calB)
         )
 
-        assertEquals(listOf(200L, 300L, 100L), result.map { it.event.id })
+        assertEquals(listOf(200L, 300L, 100L), result.map { it.eventId })
     }
 
     // ---- 9. multi-server fixture ----
@@ -311,14 +320,14 @@ class PendingInvitationsBuilderTest {
         )
 
         val result = buildPendingInvitations(
-            eventsWithNext = events.map { eventWithNext(it) },
+            invitationRows = events.map { invitationRow(it) },
             needsActionAttendees = attendees,
             accountsById = mapOf(1L to icloud, 2L to stalwart, 3L to nextcloud),
             calendarsById = mapOf(10L to cal1, 20L to cal2, 30L to cal3)
         )
 
         assertEquals(5, result.size)
-        assertEquals(listOf(100L, 200L, 300L, 400L, 500L), result.map { it.event.id })
+        assertEquals(listOf(100L, 200L, 300L, 400L, 500L), result.map { it.eventId })
     }
 
     // ---- 10. calendar with unknown account is skipped ----
@@ -329,7 +338,7 @@ class PendingInvitationsBuilderTest {
         val ev = event(100, calendarId = 10)
 
         val result = buildPendingInvitations(
-            eventsWithNext = listOf(eventWithNext(ev)),
+            invitationRows = listOf(invitationRow(ev)),
             needsActionAttendees = listOf(
                 attendee(eventId = 100, address = "mailto:alice@icloud.com")
             ),
@@ -349,7 +358,7 @@ class PendingInvitationsBuilderTest {
         val ev = event(100, calendarId = 10)
 
         val result = buildPendingInvitations(
-            eventsWithNext = listOf(eventWithNext(ev)),
+            invitationRows = listOf(invitationRow(ev)),
             needsActionAttendees = listOf(
                 attendee(eventId = 100, address = "mailto:alice@example.com")
             ),
@@ -369,7 +378,7 @@ class PendingInvitationsBuilderTest {
         val ev = event(100, calendarId = 10)
 
         val result = buildPendingInvitations(
-            eventsWithNext = listOf(eventWithNext(ev)),
+            invitationRows = listOf(invitationRow(ev)),
             needsActionAttendees = listOf(
                 attendee(eventId = 100, address = "mailto:alice@icloud.com")
             ),
@@ -378,7 +387,7 @@ class PendingInvitationsBuilderTest {
         )
 
         assertEquals(1, result.size)
-        assertEquals(100L, result[0].event.id)
+        assertEquals(100L, result[0].eventId)
     }
 
     // ---- 13. null ORGANIZER + matching attendee row included ----
@@ -390,7 +399,7 @@ class PendingInvitationsBuilderTest {
         val ev = event(100, calendarId = 10, organizerEmail = null)
 
         val result = buildPendingInvitations(
-            eventsWithNext = listOf(eventWithNext(ev)),
+            invitationRows = listOf(invitationRow(ev)),
             needsActionAttendees = listOf(
                 attendee(eventId = 100, address = "mailto:alice@icloud.com")
             ),
@@ -399,7 +408,7 @@ class PendingInvitationsBuilderTest {
         )
 
         assertEquals(1, result.size)
-        assertEquals(100L, result[0].event.id)
+        assertEquals(100L, result[0].eventId)
     }
 
     // ---- 14. organizerLabel field uses name when present ----
@@ -416,7 +425,7 @@ class PendingInvitationsBuilderTest {
         )
 
         val result = buildPendingInvitations(
-            eventsWithNext = listOf(eventWithNext(ev)),
+            invitationRows = listOf(invitationRow(ev)),
             needsActionAttendees = listOf(
                 attendee(eventId = 100, address = "mailto:alice@icloud.com")
             ),
@@ -439,7 +448,7 @@ class PendingInvitationsBuilderTest {
         )
 
         val result = buildPendingInvitations(
-            eventsWithNext = listOf(eventWithNext(ev)),
+            invitationRows = listOf(invitationRow(ev)),
             needsActionAttendees = listOf(
                 attendee(eventId = 100, address = "mailto:alice@icloud.com")
             ),
@@ -462,7 +471,7 @@ class PendingInvitationsBuilderTest {
         )
 
         val result = buildPendingInvitations(
-            eventsWithNext = listOf(eventWithNext(ev)),
+            invitationRows = listOf(invitationRow(ev)),
             needsActionAttendees = listOf(
                 attendee(eventId = 100, address = "mailto:alice@icloud.com")
             ),
@@ -482,7 +491,7 @@ class PendingInvitationsBuilderTest {
         val ev = event(100, calendarId = 10)
 
         val result = buildPendingInvitations(
-            eventsWithNext = listOf(eventWithNext(ev)),
+            invitationRows = listOf(invitationRow(ev)),
             // The attendee is bob, not alice, so alice has nothing to respond to.
             needsActionAttendees = listOf(
                 attendee(eventId = 100, address = "mailto:bob@example.com")

@@ -104,4 +104,23 @@ class QuickAddRecurrenceFormWiringTest {
             parsed.monthlyPattern,
         )
     }
+
+    @Test
+    fun `an until series reaches the picker with the named last day`() {
+        val zone = java.time.ZoneId.of("America/New_York")
+        val result = QuickAddParser.parse(
+            "class every monday at 9am until june 15", reference, Locale.US, java.util.Calendar.MONDAY, zone
+        )
+        val parsed = RruleBuilder.parseRrule(
+            result.rrule,
+            defaultWeekday = result.startDate.dayOfWeek,
+            defaultDayOfMonth = result.startDate.dayOfMonth,
+            defaultOrdinal = 1,
+        )
+        val until = parsed.endCondition as org.onekash.kashcal.domain.rrule.EndCondition.Until
+        assertEquals(
+            java.time.LocalDate.of(2026, 6, 15),
+            java.time.Instant.ofEpochMilli(until.dateMillis).atZone(zone).toLocalDate()
+        )
+    }
 }

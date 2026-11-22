@@ -1,7 +1,6 @@
 package org.onekash.kashcal.domain.reader
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -22,6 +21,7 @@ import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.LocalDate
@@ -34,7 +34,6 @@ import java.time.ZoneId
  * - master and exception lookups
  * - calendar reads, filtering by provider, and the one write, [EventReader.setCalendarVisibility]
  * - occurrence queries by range and day, with hidden calendars excluded
- * - search by title and location, case-insensitive
  * - pending-sync and sync-error events, and event counts
  */
 @RunWith(RobolectricTestRunner::class)
@@ -53,7 +52,7 @@ class EventReaderTest {
     @Before
     fun setup() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
 
@@ -414,38 +413,6 @@ class EventReaderTest {
         val hasEvents = eventReader.hasEventsOnDay(dayCode)
 
         assertFalse(hasEvents)
-    }
-
-    // ==================== Search Tests ====================
-
-    @Test
-    fun `searchEvents finds events by title`() = runTest {
-        createEvent(title = "Important Meeting")
-        createEvent(title = "Doctor Appointment")
-        createEvent(title = "Another Meeting")
-
-        val results = eventReader.searchEvents("Meeting")
-
-        assertEquals(2, results.size)
-    }
-
-    @Test
-    fun `searchEvents finds events by location`() = runTest {
-        val event = createEvent(title = "Conference")
-        database.eventsDao().update(event.copy(location = "Room 101"))
-
-        val results = eventReader.searchEvents("Room")
-
-        assertEquals(1, results.size)
-    }
-
-    @Test
-    fun `searchEvents is case insensitive`() = runTest {
-        createEvent(title = "IMPORTANT MEETING")
-
-        val results = eventReader.searchEvents("important")
-
-        assertEquals(1, results.size)
     }
 
     // ==================== Sync Status Tests ====================

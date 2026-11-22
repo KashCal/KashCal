@@ -34,9 +34,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -60,6 +61,9 @@ import org.onekash.kashcal.ui.util.text.highlighted
  * @param showChevron defaults to true only when [trailing] is null
  * @param searchQuery when not blank, its matches in the label, subtitle and value are
  *   highlighted
+ * @param subtitleColor the subtitle's color, such as the error color for a problem; unspecified
+ *   keeps the usual secondary text color
+ * @param enabled false dims the row, ignores taps and announces it as disabled
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -75,16 +79,21 @@ fun SettingsRow(
     trailing: @Composable (() -> Unit)? = null,
     showChevron: Boolean = trailing == null,
     showDivider: Boolean = true,
-    searchQuery: String = ""
+    searchQuery: String = "",
+    subtitleColor: Color = Color.Unspecified,
+    enabled: Boolean = true,
 ) {
+    val subtitleTint = subtitleColor.takeOrElse { MaterialTheme.colorScheme.onSurfaceVariant }
     Column(modifier = modifier) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .combinedClickable(
+                    enabled = enabled,
                     onClick = onClick,
                     onLongClick = null
                 )
+                .alpha(if (enabled) 1f else DISABLED_ROW_ALPHA)
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
@@ -131,13 +140,13 @@ fun SettingsRow(
                             Text(
                                 subtitle,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = subtitleTint
                             )
                         } else {
                             Text(
                                 highlighted(subtitle, searchQuery, settingsSearchHighlightStyle()),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = subtitleTint
                             )
                         }
                     }
@@ -363,35 +372,22 @@ internal fun SettingsInfoButton(info: SettingsRowInfo, compact: Boolean = true) 
 }
 
 /**
- * Shows the app version at the bottom of the settings screen. A tap calls [onClick]; a long
- * press gives haptic feedback and calls [onLongPress], which the settings screen uses to open
- * the debug menu.
+ * Shows the app version at the bottom of the settings screen; a tap calls [onClick].
  *
  * @param versionName app version, for example "2026.09.25-1"
  */
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun VersionFooter(
     versionName: String,
     onClick: () -> Unit,
-    onLongPress: () -> Unit
 ) {
-    val hapticFeedback = LocalHapticFeedback.current
     val cdVersionInfo = stringResource(R.string.cd_version_info, versionName)
-    val longClickLabel = stringResource(R.string.label_open_debug_menu)
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 24.dp)
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = {
-                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onLongPress()
-                },
-                onLongClickLabel = longClickLabel
-            )
+            .clickable(onClick = onClick)
             .semantics {
                 contentDescription = cdVersionInfo
             },
@@ -438,3 +434,6 @@ internal fun settingsSearchHighlightStyle(): SpanStyle = SpanStyle(
     background = MaterialTheme.colorScheme.primaryContainer,
     color = MaterialTheme.colorScheme.onPrimaryContainer
 )
+
+/** Material's opacity for disabled content. */
+private const val DISABLED_ROW_ALPHA = 0.38f

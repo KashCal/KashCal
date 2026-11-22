@@ -104,7 +104,7 @@ class ServerChangeMergeTest {
         attendees: List<Attendee> = local.attendees,
         occurrences: List<Pair<Event, List<Attendee>>> = local.occurrences,
     ) = ServerChangeMerge.merge(
-        baseline = base, series = series.copy(rawIcal = base), seriesAttendees = attendees,
+        baseline = base, series = series, seriesAttendees = attendees,
         occurrences = occurrences, server = server, account = account
     )
 
@@ -560,7 +560,7 @@ class ServerChangeMergeTest {
         val local = pull(base)
         val mine = local.attendees.map { if (it.address == self) it.copy(partstat = "TENTATIVE") else it }
 
-        val merged = ServerChangeMerge.merge(base, local.series.copy(rawIcal = base), mine, emptyList(), server, twoAddresses)!!
+        val merged = ServerChangeMerge.merge(base, local.series, mine, emptyList(), server, twoAddresses)!!
 
         val own = attendeeLinesFor(seriesOf(merged.body), listOf(self, alias))
         assertEquals(own.toString(), 1, own.size)
@@ -594,7 +594,7 @@ class ServerChangeMergeTest {
         )
         val sent = IcsPatcher.serialize(created, null)
         val server = sent.replace("DESCRIPTION:Notes", "DESCRIPTION:Notes from the laptop")
-        val local = Pulled(created.copy(rawIcal = sent), emptyList(), emptyList())
+        val local = Pulled(created, emptyList(), emptyList())
 
         val merged = seriesOf(merge(sent, local, server, series = local.series.copy(title = "Made here renamed"))!!.body)
 
@@ -611,7 +611,7 @@ class ServerChangeMergeTest {
         )
         val sent = IcsPatcher.serialize(created, null)
         val server = sent.replace("SUMMARY:Holiday", "SUMMARY:Holiday\r\nDESCRIPTION:Bring snacks")
-        val local = Pulled(created.copy(rawIcal = sent), emptyList(), emptyList())
+        val local = Pulled(created, emptyList(), emptyList())
 
         val merged = seriesOf(merge(sent, local, server, series = local.series.copy(location = "Lake"))!!.body)
 

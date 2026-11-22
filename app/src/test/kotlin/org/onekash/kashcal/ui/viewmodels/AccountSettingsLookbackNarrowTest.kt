@@ -1,8 +1,8 @@
 package org.onekash.kashcal.ui.viewmodels
 
 import android.content.Context
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -46,12 +46,14 @@ import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.repository.AccountRepositoryImpl
 import org.onekash.kashcal.data.repository.CalendarRepositoryImpl
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
+import org.onekash.kashcal.domain.feeds.noFeedAccountsServerCalendarFeeds
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.initializer.LocalCalendarInitializer
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.domain.reader.SyncLogReader
 import org.onekash.kashcal.domain.writer.EventWriter
+import org.onekash.kashcal.reminder.device.DeviceCalendarChangeWatcher
 import org.onekash.kashcal.sync.auth.Credentials
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
@@ -62,6 +64,7 @@ import org.onekash.kashcal.sync.strategy.PullResult
 import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.sync.strategy.PushResult
 import org.onekash.kashcal.sync.strategy.PushStrategy
+import org.onekash.kashcal.testutil.TestDatabases
 import org.onekash.kashcal.ui.permission.FakePermissionChecker
 import org.onekash.kashcal.widget.WidgetUpdateManager
 import org.robolectric.RobolectricTestRunner
@@ -87,8 +90,8 @@ import java.util.concurrent.TimeUnit
  * over a real DataStore (so the lookback the occurrence generator and the pull read changes the
  * way the setting does), a real in-memory Room, the real EventCoordinator, EventWriter,
  * OccurrenceGenerator, PullStrategy, PushStrategy and IcsSubscriptionRepository, and a CalDAV
- * server that keeps its resources ([FakeDavCalendar]). Scrolling back runs the past extension and
- * the occurrence repair that HomeViewModel runs on month navigation.
+ * server that keeps its resources ([FakeDavCalendar]). Scrolling back runs the coverage pass a
+ * view's read runs and the occurrence repair HomeViewModel runs on a month swipe.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -133,7 +136,7 @@ class AccountSettingsLookbackNarrowTest {
         TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
         Dispatchers.setMain(Dispatchers.Unconfined)
         context = ApplicationProvider.getApplicationContext()
-        db = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java).allowMainThreadQueries().build()
+        db = TestDatabases.inMemory(context).allowMainThreadQueries().build()
         dataStoreScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
         dataStoreFile = File(context.filesDir, "lookback_narrow_${System.nanoTime()}.preferences_pb")
         dataStore = KashCalDataStore(context, PreferenceDataStoreFactory.create(scope = dataStoreScope) { dataStoreFile })
@@ -343,7 +346,7 @@ class AccountSettingsLookbackNarrowTest {
 
     private fun viewModel(): AccountSettingsViewModel {
         val repo = FakeCalendarProviderRepository()
-        val manager = CalendarProviderManager(context, dataStore, mockk(relaxed = true), widgetUpdateManager)
+        val manager = CalendarProviderManager(context, dataStore, mockk(relaxed = true), widgetUpdateManager, DeviceCalendarChangeWatcher(context, dataStore))
         val syncLogReader = mockk<SyncLogReader> {
             every { getRecentLogs(any()) } returns MutableStateFlow(emptyList())
         }
@@ -354,6 +357,7 @@ class AccountSettingsLookbackNarrowTest {
             discoveryService = mockk(),
             calDavDiscoveryService = mockk(),
             eventCoordinator = coordinator,
+            serverCalendarFeeds = noFeedAccountsServerCalendarFeeds(),
             syncLogReader = syncLogReader,
             contactEventManager = mockk(),
             calendarProviderManager = manager,
@@ -394,11 +398,11 @@ class AccountSettingsLookbackNarrowTest {
     }
 
     /**
-     * Month navigation back to [daysAgo] days before today: the past extension and the repair
-     * HomeViewModel runs (it also extends forward, which a past cutoff doesn't touch).
+     * A view read back to [daysAgo] days before today: the coverage pass the read runs and the
+     * repair HomeViewModel runs on a month swipe.
      */
     private suspend fun scrollBackTo(daysAgo: Int) {
-        coordinator.extendPastOccurrencesIfNeeded(now - daysAgo * day)
+        generator.ensureCovered(now - daysAgo * day, now - daysAgo * day + day)
         coordinator.repairMissingOccurrences()
     }
 
@@ -460,6 +464,7 @@ class AccountSettingsLookbackNarrowTest {
         inviteNotifier = mockk(relaxed = true),
         accountRepository = accountRepository,
         reminderScheduler = mockk(relaxed = true),
+        icsSource = EventIcsStore(db),
     )
 
     private fun pushStrategy() = PushStrategy(
@@ -469,6 +474,7 @@ class AccountSettingsLookbackNarrowTest {
         accountRepository = accountRepository,
         attendeesDao = db.attendeesDao(),
         pendingCancelsDao = db.pendingCancelsDao(),
+        icsSource = EventIcsStore(db),
     )
 
     // ---- fixtures ----

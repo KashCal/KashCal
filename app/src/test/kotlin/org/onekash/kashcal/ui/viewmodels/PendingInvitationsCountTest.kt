@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.reader.PendingInvitation
 
 /**
@@ -20,15 +19,10 @@ import org.onekash.kashcal.domain.reader.PendingInvitation
 class PendingInvitationsCountTest {
 
     private fun stub(id: Long) = PendingInvitation(
-        event = Event(
-            id = id,
-            calendarId = 1L,
-            uid = "uid-$id",
-            title = "evt-$id",
-            startTs = 0L,
-            endTs = 0L,
-            dtstamp = 0L
-        ),
+        eventId = id,
+        title = "evt-$id",
+        location = null,
+        isAllDay = false,
         occurrenceStartTs = 0L,
         occurrenceEndTs = 0L,
         accountId = 1L,

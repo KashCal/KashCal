@@ -1,5 +1,6 @@
 package org.onekash.kashcal
 
+import android.Manifest
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -9,7 +10,10 @@ import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.core.app.ActivityCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -22,11 +26,19 @@ import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.ui.permission.LocalNetworkPermissionManager
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager
 import org.onekash.kashcal.ui.screens.SettingsRoute
+import org.onekash.kashcal.ui.screens.settings.SettingsDestination
 import org.onekash.kashcal.ui.theme.ColorSource
 import org.onekash.kashcal.ui.theme.ThemeMode
 import org.onekash.kashcal.ui.viewmodels.AccountSettingsViewModel
-import org.onekash.kashcal.util.IcsExporter
+import org.onekash.kashcal.ui.viewmodels.CalendarExportEvent
+import org.onekash.kashcal.ui.viewmodels.CalendarExportFailure
+import org.onekash.kashcal.ui.viewmodels.CalendarBackupViewModel
+import org.onekash.kashcal.ui.viewmodels.CalendarExportViewModel
+import org.onekash.kashcal.ui.viewmodels.DebugReportEvent
+import org.onekash.kashcal.ui.viewmodels.DebugReportViewModel
+import org.onekash.kashcal.ui.viewmodels.OnboardingRoute
 import org.onekash.kashcal.util.IcsFileReader
+import org.onekash.kashcal.util.SearchIntentRouter
 import org.onekash.kashcal.util.ShareChooser
 import javax.inject.Inject
 
@@ -38,20 +50,42 @@ private const val TAG = "SettingsActivity"
  *
  * The activity keeps only work that needs an injected collaborator, the content resolver or the
  * activity itself. It passes narrow lambdas down for the ICS export share intent, ICS file reads
- * and imports, the backup stream I/O, the local-network and notification permission reads and
- * the notification settings screens, and does the cold-start theme seed reads, the `onResume`
- * permission refresh and the intent-extra bootstrap itself.
+ * and imports, the backup stream I/O, the local-network, notification and calendar permission
+ * reads, the notification settings screens and the app's settings page, and does the cold-start
+ * theme seed reads, the `onResume` permission refresh and the intent-extra bootstrap itself.
  */
 @AndroidEntryPoint
 class SettingsActivity : FragmentActivity() {
 
     companion object {
+        // The onboarding sheet's routes: each opens one screen, and closing it returns to
+        // HomeScreen ([AccountSettingsViewModel.applyOnboardingRoute] for the sign-ins,
+        // [SettingsDestination.closesActivity] for Device calendars).
         const val EXTRA_OPEN_ICLOUD_SIGNIN = "open_icloud_signin"
+        const val EXTRA_OPEN_CALDAV_SIGNIN = "open_caldav_signin"
+        const val EXTRA_OPEN_DEVICE_CALENDARS = "open_device_calendars"
+
         const val EXTRA_SUBSCRIPTION_URL = "subscription_url"
         const val EXTRA_OPEN_TAGS = "open_tags"
+
+        /** Opens the Automatic calendar backup sheet, as the backup failure notification does. */
+        const val EXTRA_OPEN_CALENDAR_BACKUP = "open_calendar_backup"
+
+        /** Opens Settings on the Sync lookback sheet; search's Sync settings link sends it. */
+        const val EXTRA_OPEN_SYNC_LOOKBACK = "open_sync_lookback"
+
+        /**
+         * Returns whether this create should open the Sync lookback sheet: only a fresh start
+         * with [EXTRA_OPEN_SYNC_LOOKBACK]; after a recreation the sheet's own state decides.
+         */
+        fun opensSyncLookback(savedInstanceState: Bundle?, intent: Intent): Boolean =
+            savedInstanceState == null && intent.getBooleanExtra(EXTRA_OPEN_SYNC_LOOKBACK, false)
     }
 
     private val viewModel: AccountSettingsViewModel by viewModels()
+    private val debugReportViewModel: DebugReportViewModel by viewModels()
+    private val calendarExportViewModel: CalendarExportViewModel by viewModels()
+    private val calendarBackupViewModel: CalendarBackupViewModel by viewModels()
 
     private val localNetworkPermissionManager by lazy {
         LocalNetworkPermissionManager(applicationContext)
@@ -63,9 +97,6 @@ class SettingsActivity : FragmentActivity() {
 
     @Inject
     lateinit var eventCoordinator: EventCoordinator
-
-    @Inject
-    lateinit var icsExporter: IcsExporter
 
     @Inject
     lateinit var syncSessionStore: SyncSessionStore
@@ -95,6 +126,13 @@ class SettingsActivity : FragmentActivity() {
         // open on that screen and let its back finish the activity to the hub instead of
         // dropping onto the Settings root.
         val openTags = intent.getBooleanExtra(EXTRA_OPEN_TAGS, false)
+        // Read on every create, like Tags, so Back still finishes the activity after a rotation.
+        val route = onboardingRoute()
+        // Only on a fresh start: after rotation the sheet's own saved state decides.
+        if (savedInstanceState == null && intent.getBooleanExtra(EXTRA_OPEN_CALENDAR_BACKUP, false)) {
+            calendarBackupViewModel.requestSheet()
+        }
+        if (opensSyncLookback(savedInstanceState, intent)) viewModel.requestSyncLookbackSheet()
 
         setContent {
             SettingsRoute(
@@ -104,8 +142,15 @@ class SettingsActivity : FragmentActivity() {
                 initialAccentSeed = initialAccentSeed,
                 syncSessionStore = syncSessionStore,
                 openTagsInitially = openTags,
+                // Back to the calendar with search open on the tag; Settings closes.
+                onShowTagEvents = { name ->
+                    startActivity(SearchIntentRouter.tagSearchIntent(this, name))
+                    finish()
+                },
+                openDeviceCalendarsInitially = route == OnboardingRoute.DEVICE_CALENDARS,
                 onFinish = { finish() },
-                onExportCalendar = ::exportCalendar,
+                calendarExportViewModel = calendarExportViewModel,
+                calendarBackupViewModel = calendarBackupViewModel,
                 readIcsContent = { uri -> icsFileReader.readIcsContent(uri) },
                 importIcsToRoom = { file, calendarId -> eventCoordinator.importIcsFile(file, calendarId) },
                 previewIcsInRoom = { file, calendarId -> eventCoordinator.previewIcsImport(file, calendarId) },
@@ -122,19 +167,52 @@ class SettingsActivity : FragmentActivity() {
                         NotificationPermissionManager.PermissionState.PermanentlyDenied
                 },
                 openNotificationSettings = ::openNotificationSettings,
+                onExportDebugReport = debugReportViewModel::export,
+                shouldShowCalendarRationale = {
+                    ActivityCompat.shouldShowRequestPermissionRationale(
+                        this@SettingsActivity, Manifest.permission.READ_CALENDAR
+                    )
+                },
+                openAppDetailsSettings = ::openAppDetailsSettings,
             )
         }
 
-        // Auto-open iCloud sign-in sheet if launched from onboarding
-        if (intent.getBooleanExtra(EXTRA_OPEN_ICLOUD_SIGNIN, false)) {
-            viewModel.setInitialSetupMode(true)  // Auto-navigate back after sign-in
-            viewModel.showICloudSignInSheet()
+        // The export outlives a rotation in its view model; its result shows only while the
+        // screen is started, so the share menu never opens from the background.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                debugReportViewModel.events.collect(::showDebugReportEvent)
+            }
         }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                calendarExportViewModel.events.collect(::showCalendarExportEvent)
+            }
+        }
+
+        route?.let(viewModel::applyOnboardingRoute)
 
         // Auto-open subscription dialog if launched from webcal:// link
         intent.getStringExtra(EXTRA_SUBSCRIPTION_URL)?.let { url ->
             viewModel.openAddSubscriptionWithUrl(url)
         }
+    }
+
+    // The backup failure notification can reach a Settings screen that is already running.
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.getBooleanExtra(EXTRA_OPEN_CALENDAR_BACKUP, false)) {
+            calendarBackupViewModel.requestSheet()
+        }
+    }
+
+    /** Returns the onboarding route this activity was launched with, or null. */
+    private fun onboardingRoute(): OnboardingRoute? = when {
+        intent.getBooleanExtra(EXTRA_OPEN_ICLOUD_SIGNIN, false) -> OnboardingRoute.ICLOUD
+        intent.getBooleanExtra(EXTRA_OPEN_CALDAV_SIGNIN, false) -> OnboardingRoute.CALDAV
+        intent.getBooleanExtra(EXTRA_OPEN_DEVICE_CALENDARS, false) -> OnboardingRoute.DEVICE_CALENDARS
+        else -> null
     }
 
     override fun onResume() {
@@ -149,6 +227,29 @@ class SettingsActivity : FragmentActivity() {
             localNetworkPermissionManager.resolveState(this)
         )
         viewModel.refreshChangeNotifications()
+        calendarBackupViewModel.refreshNotifications()
+    }
+
+    private fun showDebugReportEvent(event: DebugReportEvent) {
+        when (event) {
+            is DebugReportEvent.Ready -> startActivity(
+                ShareChooser.createFileChooser(
+                    this, event.uri, "text/plain", getString(R.string.debug_report_chooser_title)
+                )
+            )
+            DebugReportEvent.Failed -> viewModel.showSnackbar(getString(R.string.debug_report_failed))
+        }
+    }
+
+    /** Opens this app's page in Android settings; returns false when no screen can show it. */
+    private fun openAppDetailsSettings(): Boolean = try {
+        startActivity(
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null))
+        )
+        true
+    } catch (e: android.content.ActivityNotFoundException) {
+        Log.e(TAG, "No app settings screen", e)
+        false
     }
 
     /** Opens the system notification settings for [channelId]'s channel, or the app's when null. */
@@ -168,40 +269,23 @@ class SettingsActivity : FragmentActivity() {
         }
     }
 
-    /** Exports a calendar to ICS and hands it to the system share sheet. */
-    private fun exportCalendar(calendarId: Long) {
-        lifecycleScope.launch {
-            try {
-                val calendar = eventCoordinator.getCalendarById(calendarId)
-                if (calendar == null) {
-                    viewModel.showSnackbar("Calendar not found")
-                    return@launch
-                }
-                val events = eventCoordinator.getCalendarEventsForExport(calendarId)
-                if (events.isEmpty()) {
-                    viewModel.showSnackbar("No events to export")
-                    return@launch
-                }
-                icsExporter.exportCalendar(
-                    context = this@SettingsActivity,
-                    events = events,
-                    calendarName = calendar.displayName
-                ).onSuccess { uri ->
-                    val intent = Intent(Intent.ACTION_SEND).apply {
-                        type = "text/calendar"
-                        putExtra(Intent.EXTRA_STREAM, uri)
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    /** Opens the share sheet for an exported calendar, or shows why there is no file. */
+    private fun showCalendarExportEvent(event: CalendarExportEvent) {
+        when (event) {
+            is CalendarExportEvent.Share -> startActivity(
+                ShareChooser.createFileChooser(
+                    this, event.uri, "text/calendar", getString(R.string.export_calendar_chooser_title)
+                )
+            )
+            is CalendarExportEvent.Failed -> viewModel.showSnackbar(
+                getString(
+                    when (event.reason) {
+                        CalendarExportFailure.CALENDAR_NOT_FOUND -> R.string.error_calendar_not_found
+                        CalendarExportFailure.NO_EVENTS -> R.string.error_export_no_events
+                        CalendarExportFailure.FILE_FAILED -> R.string.export_file_failed
                     }
-                    startActivity(ShareChooser.createKashCalChooser(this@SettingsActivity, intent, "Export Calendar"))
-                    viewModel.showSnackbar(resources.getQuantityString(R.plurals.exported_events, events.size, events.size))
-                }.onFailure { e ->
-                    Log.e(TAG, "Failed to export calendar", e)
-                    viewModel.showSnackbar("Export failed")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to export calendar", e)
-                viewModel.showSnackbar("Export failed")
-            }
+                )
+            )
         }
     }
 

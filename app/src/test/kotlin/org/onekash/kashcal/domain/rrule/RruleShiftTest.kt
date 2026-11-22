@@ -282,6 +282,30 @@ class RruleShiftTest {
     }
 
     @Test
+    fun `an occurrence of a daily series from 1998 can move this and future when only an earlier one is deleted`() {
+        val start = at("1998-01-05", "09:00")
+        val deleted = at("2010-06-01", "09:00")
+        val master = series("FREQ=DAILY", exdate = deleted.toString()).copy(startTs = start, endTs = start + 3_600_000)
+        val occurrence = at("2026-11-10", "09:00")
+
+        val result = RruleShift.dragAvailability(master, emptyList(), occurrence, localPlusDays(occurrence, 1))
+
+        assertEquals(DragMoveAvailability(allEvents = false, thisAndFuture = true), result)
+    }
+
+    @Test
+    fun `an occurrence a spring-forward gap moved can still be dragged`() {
+        val start = at("2024-03-01", "02:30")
+        val master = series("FREQ=DAILY").copy(startTs = start, endTs = start + 3_600_000)
+        // 02:30 doesn't exist in New York on 10 March 2024; the occurrence starts at 03:30 EDT.
+        val occurrence = at("2024-03-10", "03:30")
+
+        val result = RruleShift.dragAvailability(master, emptyList(), occurrence, localPlusDays(occurrence, 1))
+
+        assertTrue("this and future is offered", result.thisAndFuture)
+    }
+
+    @Test
     fun `an edited occurrence blocks all events and blocks this and future only when it lies ahead`() {
         val earlier = RruleShift.dragAvailability(series(weekly), listOf(exceptionAt(mondayN(2))), mondayN(3), localPlusDays(mondayN(3), 1))
         assertEquals(DragMoveAvailability(allEvents = false, thisAndFuture = true), earlier)
@@ -333,6 +357,65 @@ class RruleShiftTest {
         assertEquals(at("2024-03-05", "11:30"), RruleShift.movedStart(master, mondayN(3), at("2024-03-19", "11:30")))
     }
 
+    // ---- zone and all-day pairs ----
+
+    private fun expand(rule: String, start: Long, zone: String?, allDay: Boolean = false, end: Long = start + 400L * 86_400_000) =
+        IcalDavRRuleEngine.expandToTimestamps(rule, start, start - 1000, end, zone, allDay, null, null)
+
+    @Test
+    fun `a zone change keeping the clock time keeps the weekday`() {
+        val tokyo = at("2024-03-05", "10:00", ZoneId.of("Asia/Tokyo"))
+        val rule = RruleShift.shift("FREQ=WEEKLY;BYDAY=TU;COUNT=4", tuesday, tokyo, NY, false, newZone = "Asia/Tokyo")
+        assertEquals("FREQ=WEEKLY;BYDAY=TU;COUNT=4", rule)
+    }
+
+    @Test
+    fun `a zone change keeps an end date's last day`() {
+        // Daily 10:00 New York, Mar 20 to Mar 26 (UNTIL = last second of Mar 26 in New York).
+        val first = at("2024-03-20", "10:00")
+        val tokyoFirst = at("2024-03-20", "10:00", ZoneId.of("Asia/Tokyo"))
+        val rule = RruleShift.shift("FREQ=DAILY;UNTIL=20240327T035959Z", first, tokyoFirst, NY, false, newZone = "Asia/Tokyo")
+        assertEquals("FREQ=DAILY;UNTIL=20240326T145959Z", rule)
+        val dates = expand(rule!!, tokyoFirst, "Asia/Tokyo").map { Instant.ofEpochMilli(it).atZone(ZoneId.of("Asia/Tokyo")).toLocalDate() }
+        assertEquals((20..26).map { LocalDate.of(2024, 3, it) }, dates)
+    }
+
+    @Test
+    fun `a zone change across different clock changes keeps the clock time`() {
+        // London from 1 Jul 2024 (BST) to UTC: every occurrence stays at 10:00 local.
+        val london = ZoneId.of("Europe/London")
+        val first = at("2024-07-01", "10:00", london)
+        val utc = at("2024-07-01", "10:00", ZoneOffset.UTC)
+        assertEquals("FREQ=WEEKLY;COUNT=30", RruleShift.shift("FREQ=WEEKLY;COUNT=30", first, utc, "Europe/London", false, newZone = "UTC"))
+    }
+
+    @Test
+    fun `turning a timed series all-day keeps its dates and end`() {
+        val rule = RruleShift.shift(
+            "FREQ=WEEKLY;BYDAY=TU;UNTIL=20240327T035959Z", tuesday, utcMidnight("2024-03-05"), NY, false,
+            newZone = null, newIsAllDay = true,
+        )
+        assertEquals("FREQ=WEEKLY;BYDAY=TU;UNTIL=20240326", rule)
+    }
+
+    @Test
+    fun `turning an all-day series timed keeps its dates and end`() {
+        val rule = RruleShift.shift(
+            "FREQ=WEEKLY;BYDAY=TU;UNTIL=20240326", utcMidnight("2024-03-05"), tuesday, null, true,
+            newZone = NY, newIsAllDay = false,
+        )
+        assertEquals(4, expand(rule!!, tuesday, NY).size)
+    }
+
+    @Test
+    fun `isInstance finds an occurrence years after the start`() {
+        val start = at("2022-01-03", "09:00")
+        val later = at("2024-03-18", "09:00")
+        assertTrue(RruleShift.isInstance("FREQ=DAILY", start, NY, false, later))
+        assertTrue(!RruleShift.isInstance("FREQ=DAILY", start, NY, false, later + 3_600_000))
+        assertTrue(!RruleShift.isInstance("FREQ=DAILY;COUNT=10", start, NY, false, later))
+    }
+
     private fun localPlusWeeks(ts: Long, weeks: Long): Long =
         Instant.ofEpochMilli(ts).atZone(ny).plusWeeks(weeks).toInstant().toEpochMilli()
 
@@ -341,5 +424,15 @@ class RruleShiftTest {
 
     private companion object {
         const val NY = "America/New_York"
+    }
+
+    @Test
+    fun `a date UNTIL on a timed series keeps its date form when moved a day`() {
+        val tue = java.time.ZonedDateTime.of(2024, 3, 5, 10, 0, 0, 0, java.time.ZoneId.of("America/New_York")).toInstant().toEpochMilli()
+        val wed = tue + 86_400_000L
+
+        val rule = RruleShift.shift("FREQ=WEEKLY;BYDAY=TU;UNTIL=20240326", tue, wed, "America/New_York", false)
+
+        assertEquals("FREQ=WEEKLY;BYDAY=WE;UNTIL=20240327", rule)
     }
 }

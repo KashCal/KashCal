@@ -14,6 +14,7 @@ import java.time.ZonedDateTime
 import java.time.chrono.IsoChronology
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
+import java.time.format.DecimalStyle
 import java.time.format.FormatStyle
 import java.time.temporal.ChronoUnit
 import java.time.temporal.WeekFields
@@ -35,6 +36,15 @@ object DateTimeUtils {
 
     fun localizedPattern(skeleton: String, locale: Locale = Locale.getDefault()): String =
         DateFormat.getBestDateTimePattern(locale, skeleton)
+
+    /**
+     * Returns a formatter for [skeleton]'s [localizedPattern] in [locale] that writes the locale's
+     * own digits (Bengali, Burmese, Nepali, Persian and others), as java.text.SimpleDateFormat
+     * does; a plain DateTimeFormatter writes ASCII digits.
+     */
+    fun localizedFormatter(skeleton: String, locale: Locale = Locale.getDefault()): DateTimeFormatter =
+        DateTimeFormatter.ofPattern(localizedPattern(skeleton, locale), locale)
+            .withDecimalStyle(DecimalStyle.of(locale))
 
     /**
      * Returns true if [locale] orders day before month in its short date pattern from
@@ -222,7 +232,7 @@ object DateTimeUtils {
 
     /**
      * Returns how many days [date] is past the start of its week: 0 on the first day, 6 on the
-     * last. Used for week starts, such as DateFilter's "This Week" and "Next Week".
+     * last. Search's This week filter starts its week here.
      *
      * @param firstDayOfWeek a Calendar constant or 0 for the locale default
      */
@@ -356,6 +366,36 @@ object DateTimeUtils {
             zdt.toLocalDate()
         }
         return date.year * 10000 + date.monthValue * 100 + date.dayOfMonth
+    }
+
+    /**
+     * Returns the day code an occurrence starts on for display: from [startTs] in [zone] for a
+     * timed occurrence, whose stored code may be from another zone
+     * ([org.onekash.kashcal.data.db.entity.Occurrence.startDay]), and [storedStartDay] (its UTC
+     * code) for an all-day one.
+     */
+    fun occurrenceStartDay(
+        startTs: Long,
+        storedStartDay: Int,
+        isAllDay: Boolean,
+        zone: ZoneId,
+    ): Int = if (isAllDay) {
+        storedStartDay
+    } else {
+        eventTsToDayCode(startTs, isAllDay = false, localZone = zone)
+    }
+
+    /** Returns the last day code an occurrence occupies for display; see [occurrenceStartDay]. */
+    fun occurrenceEndDay(
+        startTs: Long,
+        endTs: Long,
+        storedEndDay: Int,
+        isAllDay: Boolean,
+        zone: ZoneId,
+    ): Int = if (isAllDay) {
+        storedEndDay
+    } else {
+        eventTsToEndDayCode(endTs, startTs, isAllDay = false, localZone = zone)
     }
 
     /**

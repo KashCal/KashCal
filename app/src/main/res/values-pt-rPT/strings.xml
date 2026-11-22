@@ -43,6 +43,8 @@
     <string name="channel_event_invitations">Convites para eventos</string>
     <string name="channel_event_invitations_desc">Notificações quando recebes um novo convite de calendário</string>
     <string name="channel_calendar_updates">Alterações ao calendário</string>
+    <string name="channel_calendar_backup">Cópia de segurança automática dos calendários</string>
+    <string name="channel_calendar_backup_description">Avisa-te quando uma cópia de segurança dos calendários falha</string>
     <string name="invite_notification_body">De %1$s · Toca para responder</string>
 
     <!-- ==================== App Shortcuts ==================== -->
@@ -88,7 +90,6 @@
     <string name="action_discard">Descartar</string>
     <string name="action_discard_confirm">Descartar?</string>
     <string name="action_dismiss">Dispensar</string>
-    <string name="action_show_all">Mostrar tudo</string>
     <string name="action_connect">Ligar</string>
     <string name="action_duplicate">Duplicar</string>
     <string name="action_share">Partilhar</string>
@@ -119,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d mais</string>
     <string name="tags_autocomplete_create_new">Criar \"%1$s\"</string>
     <string name="cd_tag">Etiqueta: %1$s</string>
+    <string name="tags_show_events_click_label">Mostrar eventos com esta etiqueta</string>
+    <string name="tags_show_events">Mostrar eventos</string>
     <string name="cd_tags_move_menu">Mover etiquetas</string>
     <string name="tags_move_above_notes">Mover acima das notas</string>
     <string name="tags_move_below_notes">Mover abaixo das notas</string>
@@ -148,7 +151,6 @@
     <string name="label_enter_hex">Introduza 6 caracteres hex (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Todos</string>
     <string name="view_week">Semana</string>
     <string name="view_month">Mês</string>
     <string name="label_all_day">O dia todo</string>
@@ -190,17 +192,38 @@
     <string name="settings_event_emojis_info">Adiciona um emoji aos eventos com base no título, como 🎂 para \"Aniversário\".</string>
     <string name="settings_force_sync">Forçar sincronização completa</string>
     <string name="settings_force_sync_subtitle">Voltar a transferir todos os dados do calendário</string>
+    <string name="settings_force_sync_no_account">Nenhuma conta de sincronização configurada</string>
+    <string name="force_sync_confirm">Voltar a transferir %1$s de %2$s. As alterações ainda não sincronizadas são mantidas.</string>
+    <string name="action_start">Iniciar</string>
     <string name="settings_sync_history">Histórico de sincronização</string>
     <string name="settings_sync_history_subtitle">Ver sessões de sincronização (últimas 48 horas)</string>
     <string name="settings_import_subtitle">Adicionar eventos de um ficheiro ICS a qualquer calendário</string>
-    <string name="settings_export_subtitle">Guardar eventos num ficheiro ICS</string>
     <string name="settings_birthday_reminder">Lembrete de aniversário</string>
-    <string name="settings_use_device_timezone">Usar fuso horário do dispositivo</string>
     <string name="settings_section_calendars">Calendários e contas</string>
     <string name="settings_section_appearance">Aparência</string>
     <string name="settings_section_creating_events">Preferências de eventos</string>
     <string name="settings_section_sync">Sincronização</string>
     <string name="settings_section_data">Cópia de segurança e restauro</string>
+    <string name="settings_section_troubleshooting">Resolução de problemas</string>
+
+    <!-- ==================== Debug report (Settings > Troubleshooting) ==================== -->
+    <string name="debug_report_row_label">Exportar relatório de depuração</string>
+    <string name="debug_report_row_subtitle">Detalhes de falhas, sincronização e configuração para enviar com um relatório de erro</string>
+    <string name="debug_report_sheet_title">Relatório de depuração</string>
+    <string name="debug_report_sheet_body">Um ficheiro de texto para enviar com um relatório de erro. Envia-o pouco depois do problema: o registo da app guarda apenas a atividade recente.</string>
+    <string name="debug_report_item_exits">Porque é que a app fechou recentemente</string>
+    <string name="debug_report_item_exits_detail">Falhas, bloqueios, pouca memória</string>
+    <string name="debug_report_item_log">Registo da app</string>
+    <string name="debug_report_item_log_detail">Mensagens do próprio KashCal, incluindo detalhes de falhas</string>
+    <string name="debug_report_item_sync_detail">Sincronizações recentes, até 48 horas atrás</string>
+    <string name="debug_report_item_pending">Alterações pendentes</string>
+    <string name="debug_report_item_pending_detail">Alterações ainda não enviadas para o teu servidor</string>
+    <string name="debug_report_item_setup">Configuração</string>
+    <string name="debug_report_item_setup_detail">Versão da app e do Android, permissões, definições de bateria, tipos de conta</string>
+    <string name="debug_report_privacy_note">Os endereços de e-mail, os endereços web e os tokens são ocultados. Os títulos dos eventos, os nomes dos calendários e os nomes dos contactos não. Envia-o por e-mail, não numa publicação pública.</string>
+    <string name="debug_report_share">Partilhar relatório</string>
+    <string name="debug_report_chooser_title">Partilhar relatório de depuração</string>
+    <string name="debug_report_failed">Não foi possível criar o relatório de depuração</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Bloqueio da app</string>
@@ -236,9 +259,38 @@
     <string name="backup_error_read_failed">Não foi possível ler o ficheiro</string>
 
     <!-- ==================== Onboarding ==================== -->
-    <string name="onboarding_apple_calendar">Calendário da Apple?</string>
-    <string name="onboarding_got_you">Nós tratamos disso.</string>
-    <string name="onboarding_connect_prompt">Ligue o iCloud para ver os seus eventos aqui</string>
+    <string name="onboarding_title">Onde estão os seus calendários?</string>
+    <string name="onboarding_subtitle">Escolha um para ligar.</string>
+    <string name="onboarding_icloud_detail">Apple ID e palavra-passe de aplicação</string>
+    <string name="onboarding_caldav_title">Servidor CalDAV</string>
+    <string name="onboarding_caldav_detail">Nextcloud, Fastmail, Radicale e outros</string>
+    <string name="onboarding_device_title">Neste dispositivo</string>
+    <string name="onboarding_phone_detail">Google, Outlook e aplicações de sincronização</string>
+    <string name="onboarding_use_offline">Usar calendário offline</string>
+    <string name="onboarding_trust">Código aberto. Sem anúncios. Sem rastreio.</string>
+
+    <!-- ==================== Reminders are off ==================== -->
+    <string name="reminders_off_title">Os lembretes estão desativados</string>
+    <plurals name="reminders_off_body">
+        <item quantity="one">%d evento desta semana tem lembrete.</item>
+        <item quantity="many">%d eventos desta semana têm lembretes.</item>
+        <item quantity="other">%d eventos desta semana têm lembretes.</item>
+    </plurals>
+    <string name="reminders_off_not_now">Agora não</string>
+    <string name="reminders_off_turn_on">Ativar</string>
+    <string name="reminders_on_snackbar">Lembretes ativados</string>
+
+    <!-- ==================== About ==================== -->
+    <string name="about_tagline">Todos os seus calendários numa única aplicação privada.</string>
+    <string name="about_help_title">Ajuda e guias</string>
+    <string name="about_help_detail">Configuração, sincronização e dúvidas</string>
+    <string name="about_source_title">Código-fonte</string>
+    <string name="about_source_detail">Apache 2.0, no GitHub</string>
+    <string name="about_support_title">Apoiar a KashCal</string>
+    <string name="about_support_detail">Obrigado a todos os que já apoiam</string>
+    <string name="about_link_failed">Nenhuma aplicação consegue abrir esta ligação.</string>
+    <string name="about_built_in_austin">Feito com ❤️ em Austin</string>
+    <string name="about_version">Versão %1$s</string>
 
     <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Ignorar</string>
@@ -257,22 +309,32 @@
     <string name="whats_new_v772_changes_title">Vê o que mudou</string>
     <string name="whats_new_v772_changes_body">Os eventos novos, editados e removidos dos teus calendários iCloud e CalDAV ficam reunidos em Alterações recentes durante 7 dias. Toca num para o abrir.</string>
     <string name="whats_new_v772_notifications_body">Recebe uma notificação quando uma sincronização em segundo plano encontra alterações nos teus eventos iCloud ou CalDAV. A opção fica desativada até a ativares.</string>
+    <string name="whats_new_v803_offline_title">Calendários que ficam no telemóvel</string>
+    <string name="whats_new_v803_offline_body">Há planos que não têm de estar num servidor. Dá-lhes os seus próprios calendários offline, quantos quiseres.</string>
+    <string name="whats_new_v803_backup_title">Cópias de segurança em que nem precisas de pensar</string>
+    <string name="whats_new_v803_backup_body">Escolhe uma pasta uma vez e o KashCal guarda lá uma cópia atualizada dos teus calendários offline.</string>
+    <string name="whats_new_v803_print_title">A tua semana, em papel</string>
+    <string name="whats_new_v803_print_body">Imprime a semana que estás a ver. Em que frigorífico a pões, isso é contigo.</string>
     <string name="whats_new_hero_sample_lunch">Almoço de equipa</string>
     <string name="whats_new_hero_sample_review">Revisão de design</string>
     <string name="whats_new_hero_sample_book_club">Clube de leitura</string>
+    <string name="whats_new_hero_sample_dentist">Dentista</string>
+    <string name="whats_new_hero_sample_yoga">Ioga</string>
     <string name="whats_new_hero_sample_calendar">Trabalho</string>
+    <string name="whats_new_hero_sample_family">Família</string>
+    <string name="whats_new_hero_sample_garden">Jardim</string>
+    <string name="whats_new_hero_sample_folder">Cópias de segurança dos calendários</string>
     <string name="whats_new_hero_now">agora</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Ligar iCloud</string>
     <string name="signin_caldav_title">Adicionar conta CalDAV</string>
+    <string name="signin_caldav_sign_in_again_title">Iniciar sessão novamente</string>
     <string name="signin_connected_to">Ligado a %1$s</string>
 
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Novo evento</string>
     <string name="dialog_edit_event_title">Editar evento</string>
-    <string name="dialog_force_sync_title">Forçar sincronização completa?</string>
-    <string name="dialog_force_sync_message">Isto irá voltar a transferir todos os dados do calendário do servidor. As alterações locais serão preservadas.</string>
     <string name="dialog_enable_notifications">Ativar notificações?</string>
     <string name="dialog_action_required">Esta ação é necessária para continuar.</string>
     <string name="dialog_add_to_calendar">Adicionar ao calendário</string>
@@ -285,6 +347,7 @@
     <string name="status_no_events_week">Sem eventos esta semana</string>
     <string name="status_more_events">+%1$d mais</string>
     <string name="status_no_sync_sessions">Ainda sem sessões de sincronização.\n\nArraste para baixo na vista do calendário para iniciar uma sincronização.</string>
+    <string name="status_no_sync_account">Nenhuma conta de sincronização configurada. Os calendários offline ficam neste dispositivo; os calendários do dispositivo sincronizam através da sua própria conta.</string>
     <string name="status_no_writable_calendars">Sem calendários editáveis disponíveis</string>
     <string name="status_events_count">%1$d eventos</string>
     <string name="status_sync_history">Histórico de sincronização</string>
@@ -333,6 +396,7 @@
     <string name="caldav_error_unexpected">Erro inesperado. Tente novamente.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nSe for um servidor na sua rede local, permita o acesso à rede local para poder ligar-se.</string>
     <string name="caldav_error_connection_refused_insecure">O servidor redirecionou a ligação para um sítio onde o KashCal não vai (um endereço sem encriptação ou um ciclo de redirecionamentos), por isso o KashCal parou antes de enviar a tua palavra-passe. Verifica o endereço do servidor.</string>
+    <string name="caldav_error_sign_in_again_mismatch">Esta é uma conta diferente. Inicia sessão com o nome de utilizador e o servidor que esta conta usa.</string>
     <string name="local_network_banner_title">É necessário acesso à rede local</string>
     <string name="local_network_banner_body">Este servidor parece estar na sua rede local. Permita o acesso à rede local para que o KashCal se possa ligar a ele.</string>
     <string name="local_network_banner_allow">Permitir acesso</string>
@@ -374,7 +438,6 @@
     <string name="error_device_calendar_title">Erro de calendário</string>
     <string name="error_device_calendar_write_failed">Falha ao guardar no calendário do dispositivo. Tente novamente.</string>
     <string name="error_device_calendar_permission">Permissão de escrita no calendário necessária. Conceda-a nas Definições.</string>
-    <string name="error_device_calendar_permission_denied">Desative e volte a ativar a permissão de Calendário nas Definições para conceder acesso de escrita</string>
     <string name="error_device_calendar_not_found">Calendário não encontrado. Pode ter sido removido.</string>
     <string name="error_device_event_not_found">Evento não encontrado. Pode ter sido eliminado.</string>
     <string name="error_device_calendar_read_only">Este calendário é só de leitura.</string>
@@ -401,12 +464,11 @@
     <string name="cd_recurring">Recorrente</string>
     <string name="cd_enabled">Ativado</string>
     <string name="cd_sync_error">Erro de sincronização</string>
-    <string name="cd_select_label">Selecionar %1$s</string>
     <string name="cd_wheel_picker">Seletor giratório com %1$d opções</string>
     <string name="cd_time_entry_keyboard">Introduzir hora exata</string>
     <string name="time_entry_dialog_title">Introduzir hora</string>
     <string name="time_entry_tap_to_edit">Toque para editar</string>
-    <string name="cd_version_info">KashCal versão %1$s. Manter premido para opções de depuração.</string>
+    <string name="cd_version_info">KashCal versão %1$s</string>
     <string name="cd_about_setting">Acerca de %1$s</string>
     <string name="cd_color_slider">Seletor de cor, atualmente %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d graus</string>
@@ -435,7 +497,6 @@
     <string name="label_recurrence_on_date">Na data</string>
 
     <!-- ==================== Settings (Additional) ==================== -->
-    <string name="settings_visible_calendars">Calendários visíveis</string>
     <string name="settings_default_calendar">Calendário predefinido</string>
     <string name="settings_default_event_length">Duração predefinida do evento</string>
     <string name="settings_default_event_length_hint">Duração predefinida dos novos eventos</string>
@@ -455,7 +516,6 @@
     <string name="option_saturday">Sábado</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Nenhum evento encontrado</string>
     <string name="empty_no_upcoming_events">Sem próximos eventos</string>
     <string name="empty_no_calendars">Sem calendários disponíveis</string>
 
@@ -466,7 +526,15 @@
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Obter calendário</string>
     <string name="action_import_from_file">Importar eventos de ficheiro</string>
-    <string name="action_export_local_calendar">Exportar calendário Local</string>
+    <string name="settings_export_calendars">Exportar calendários</string>
+    <string name="settings_export_calendars_subtitle">Guardar um calendário como ficheiro ICS</string>
+    <string name="export_calendar_no_events">Sem eventos</string>
+    <string name="export_calendar_preparing">A preparar…</string>
+    <string name="cd_export_calendar">Exportar %1$s</string>
+    <string name="cd_export_calendar_preparing">A preparar %1$s</string>
+    <string name="export_calendar_chooser_title">Exportar calendário</string>
+    <string name="export_event_chooser_title">Exportar evento</string>
+    <string name="export_file_failed">Não foi possível criar o ficheiro.</string>
 
     <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
@@ -504,12 +572,14 @@
     <string name="accounts_cd_back">Voltar</string>
     <string name="accounts_sync_issue">Problema de sincronização</string>
     <string name="accounts_cd_sync_warning">Aviso de sincronização</string>
+    <string name="accounts_cd_sync_off">sincronização desativada</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">Feeds de calendário</string>
     <string name="subscriptions_section_add">Adicionar</string>
     <string name="subscriptions_empty_ics">Sem subscrições ICS</string>
     <string name="subscriptions_empty_ics_hint">Adicione um feed de calendário para ver eventos</string>
+    <string name="subscriptions_swipe_hint">Deslize um feed para o eliminar.</string>
     <string name="subscriptions_add_ics">Adicionar calendário ICS</string>
     <string name="qs_tile_label">Adicionar evento</string>
     <string name="holiday_catalog_add">Adicionar calendário de feriados</string>
@@ -519,6 +589,11 @@
     <string name="holiday_catalog_empty_hint">Experimente outro nome</string>
     <string name="holiday_catalog_validate_error">Não foi possível aceder a este calendário. Verifique a sua ligação e tente novamente.</string>
     <string name="holiday_catalog_attribution">Calendários de feriados da Mozilla Thunderbird, sob a licença %1$s.</string>
+    <string name="account_feeds_add">Adicionar da conta</string>
+    <string name="account_feeds_note">Lista os feeds de calendário guardados nas tuas contas iCloud e CalDAV. Ativa-o para o adicionar a Feeds de calendário.</string>
+    <string name="account_feeds_checking">A verificar…</string>
+    <string name="account_feeds_none">Nenhum feed de calendário encontrado</string>
+    <string name="account_feeds_failed">Não foi possível carregar os feeds de calendário</string>
     <string name="subscriptions_row_label">Feeds de calendário (ICS)</string>
     <string name="subscriptions_row_hint">ex. feriados, desporto, escola</string>
 
@@ -564,6 +639,8 @@
     <string name="account_detail_discovering">A descobrir…</string>
     <string name="account_detail_discover_calendars">Descobrir novos calendários</string>
     <string name="account_detail_change_password">Alterar palavra-passe</string>
+    <string name="account_detail_sign_in_again">Iniciar sessão novamente</string>
+    <string name="account_detail_sign_in_again_subtitle">O KashCal já não tem a palavra-passe desta conta. Inicia sessão para voltar a sincronizar. Os teus calendários e eventos mantêm-se.</string>
     <string name="account_detail_sign_out">Terminar sessão</string>
     <string name="account_detail_never_synced">Nunca sincronizado</string>
     <string name="account_detail_last_success">Último sucesso: %1$s</string>
@@ -587,6 +664,109 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Calendários do dispositivo</string>
     <string name="settings_device_calendars_hint">Calendários de outras apps</string>
+    <string name="offline_calendars_row_label">Calendários offline</string>
+    <string name="offline_calendars_row_hint">Calendários que ficam neste dispositivo</string>
+    <string name="offline_calendars_manage_note">Deslize um calendário para o eliminar.</string>
+    <string name="offline_calendars_info">Guardados neste dispositivo e nunca sincronizados.</string>
+    <string name="offline_calendars_info_cd">Acerca dos calendários offline</string>
+    <string name="offline_calendar_default_state">Predefinido</string>
+    <string name="offline_calendar_new">Novo calendário</string>
+    <string name="offline_calendar_new_in_picker">Novo calendário offline</string>
+    <string name="action_create">Criar</string>
+    <string name="offline_calendar_rename">Mudar nome</string>
+    <string name="offline_calendar_color">Cor</string>
+    <string name="offline_calendar_export">Exportar calendário</string>
+    <string name="offline_calendar_builtin_info">O calendário integrado não pode mudar de nome nem ser eliminado. Os novos eventos vão para aqui quando não é escolhido nenhum calendário.</string>
+    <string name="offline_calendar_builtin_info_cd">Acerca do calendário integrado</string>
+    <string name="offline_calendar_rename_cancel_cd">Cancelar mudança de nome</string>
+    <string name="offline_calendar_rename_save_cd">Guardar nome</string>
+    <string name="offline_calendar_delete_cd">Eliminar %1$s</string>
+    <plurals name="offline_calendar_delete_confirm">
+        <item quantity="one">Eliminar \"%2$s\" e o seu %1$d evento para sempre? Não é possível anular.</item>
+        <item quantity="many">Eliminar \"%2$s\" e os seus %1$d eventos para sempre? Não é possível anular.</item>
+        <item quantity="other">Eliminar \"%2$s\" e os seus %1$d eventos para sempre? Não é possível anular.</item>
+    </plurals>
+    <string name="offline_calendar_delete_empty">Eliminar \"%1$s\" para sempre? Não tem eventos.</string>
+    <plurals name="offline_calendar_delete_also">
+        <item quantity="one">Eliminar também %1$d evento</item>
+        <item quantity="many">Eliminar também %1$d eventos</item>
+        <item quantity="other">Eliminar também %1$d eventos</item>
+    </plurals>
+    <string name="offline_calendar_deleted">%1$s eliminado</string>
+    <string name="offline_calendar_duplicate_name">Já existe um calendário offline chamado \"%1$s\"</string>
+    <string name="offline_calendar_similar_name">Demasiado parecido com \"%1$s\". Escolhe outro nome.</string>
+    <string name="calendar_backup_title">Cópia de segurança automática dos calendários</string>
+    <string name="calendar_backup_row_off">Desativada</string>
+    <string name="calendar_backup_row_on">%1$s · %2$s</string>
+    <string name="calendar_backup_row_problem">Não é possível abrir a pasta de cópia de segurança</string>
+    <string name="calendar_backup_intro">Guarda cada calendário offline como ficheiro ICS numa pasta à tua escolha.</string>
+    <string name="calendar_backup_choose_folder">Escolher pasta</string>
+    <string name="calendar_backup_choose_folder_hint">Escolhe ou cria uma pasta, por exemplo em Documents. O Android não permite a raiz do armazenamento nem a própria pasta Download.</string>
+    <string name="calendar_backup_folder">Pasta</string>
+    <string name="calendar_backup_change">Alterar</string>
+    <string name="calendar_backup_frequency">Frequência</string>
+    <string name="calendar_backup_frequency_info">As cópias de segurança podem atrasar-se: o Android limita o trabalho em segundo plano quando o telemóvel está inativo ou o KashCal não é aberto há algum tempo.</string>
+    <string name="calendar_backup_copies">Cópias a manter</string>
+    <string name="calendar_backup_copies_explained">Cada cópia de segurança guarda o ficheiro anterior como cópia datada. Quando há mais do que este número, as mais antigas são eliminadas. O ficheiro mais recente tem sempre o nome do calendário.</string>
+    <string name="calendar_backup_copies_fewer">Manter menos cópias</string>
+    <string name="calendar_backup_copies_more">Manter mais cópias</string>
+    <plurals name="calendar_backup_copies_state">
+        <item quantity="one">%d cópia</item>
+        <item quantity="other">%d cópias</item>
+    </plurals>
+    <plurals name="calendar_backup_deletes">
+        <item quantity="one">Elimina %d cópia mais antiga. Não é possível anular.</item>
+        <item quantity="other">Elimina %d cópias mais antigas. Não é possível anular.</item>
+    </plurals>
+    <string name="calendar_backup_deletes_unknown">Elimina as cópias mais antigas além deste número. Não é possível anular.</string>
+    <string name="calendar_backup_calendars">Calendários offline</string>
+    <string name="calendar_backup_calendar_nothing_saved">%1$s · Sem eventos, nada guardado</string>
+    <string name="calendar_backup_calendar_save_failed">%1$s · Não foi possível guardar. Será tentado novamente na próxima cópia de segurança.</string>
+    <string name="calendar_backup_status">Última cópia de segurança %1$s</string>
+    <plurals name="calendar_backup_status_failed">
+        <item quantity="one">Última cópia de segurança %1$s · %2$d calendário falhou</item>
+        <item quantity="other">Última cópia de segurança %1$s · %2$d calendários falharam</item>
+    </plurals>
+    <string name="calendar_backup_now">Fazer cópia agora</string>
+    <string name="calendar_backup_running">A fazer cópia de segurança…</string>
+    <string name="calendar_backup_footer_overwrites">O KashCal substitui estes ficheiros em cada cópia de segurança, por isso as alterações feitas noutras apps não se mantêm. Para restaurar um calendário, usa Importar eventos de ficheiro.</string>
+    <string name="calendar_backup_off_files_stay">Os ficheiros existentes ficam em %1$s.</string>
+    <string name="calendar_backup_folder_unreachable">Não é possível abrir %1$s. Pode ter sido movida, eliminada ou desligada.</string>
+    <string name="calendar_backup_error_unsupported">Não é possível usar %1$s para guardar ficheiros. Escolhe outra pasta.</string>
+    <string name="calendar_backup_choose_again">Escolher novamente</string>
+    <string name="calendar_backup_pick_refused">O KashCal não pode usar essa pasta. Escolhe outra.</string>
+    <string name="calendar_backup_pick_cannot_create">O KashCal não consegue criar ficheiros nessa pasta. Escolhe outra.</string>
+    <string name="calendar_backup_failed_title">Falha na cópia de segurança dos calendários</string>
+    <string name="calendar_backup_folder_unnamed">a pasta de cópia de segurança</string>
+    <string name="calendar_backup_alert_unreachable">Não é possível abrir %1$s. Toca para a escolher novamente.</string>
+    <string name="calendar_backup_alert_unsupported">Não é possível usar %1$s para guardar ficheiros. Toca para escolher outra pasta.</string>
+    <string name="calendar_backup_alert_file_retry">Não foi possível guardar %1$s. O KashCal vai tentar novamente na próxima cópia de segurança.</string>
+    <string name="calendar_backup_every_hour">A cada hora</string>
+    <string name="calendar_backup_every_day">Todos os dias</string>
+    <plurals name="calendar_backup_every_hours">
+        <item quantity="one">A cada %d hora</item>
+        <item quantity="other">A cada %d horas</item>
+    </plurals>
+    <plurals name="calendar_backup_every_days">
+        <item quantity="one">A cada %d dia</item>
+        <item quantity="other">A cada %d dias</item>
+    </plurals>
+    <string name="calendar_backup_every_day_hours">A cada 1 dia e %1$s</string>
+    <string name="calendar_backup_every_days_hours">A cada %1$s e %2$s</string>
+    <string name="calendar_backup_interval_too_short">Escolhe pelo menos 1 hora.</string>
+    <string name="calendar_backup_interval_too_long">Escolhe 30 dias ou menos.</string>
+    <plurals name="calendar_backup_alert_files_retry">
+        <item quantity="one">Não foi possível guardar %d calendário. O KashCal vai tentar novamente na próxima cópia de segurança.</item>
+        <item quantity="other">Não foi possível guardar %d calendários. O KashCal vai tentar novamente na próxima cópia de segurança.</item>
+    </plurals>
+    <string name="calendar_backup_notifications_app_off">As notificações do KashCal estão desativadas, por isso não te pode avisar se uma cópia de segurança falhar.</string>
+    <string name="calendar_backup_notifications_channel_off">As notificações de cópia de segurança estão desativadas, por isso o KashCal não te pode avisar se uma cópia de segurança falhar.</string>
+    <string name="calendar_backup_open_settings">Abrir Definições</string>
+    <string name="calendar_backup_not_now">Agora não</string>
+    <plurals name="calendar_backup_row_calendars_failed">
+        <item quantity="one">%d calendário falhou</item>
+        <item quantity="other">%d calendários falharam</item>
+    </plurals>
     <string name="settings_quick_event_add">Adição inteligente de evento</string>
     <string name="settings_quick_event_add_info">Cria eventos escrevendo de forma natural. \"Almoço com o Sam sexta às 13:00\" preenche o título, a data e a hora por ti.</string>
     <string name="settings_suggest_titles">Sugerir títulos de eventos</string>
@@ -646,6 +826,8 @@
     <string name="cd_pick_month_year">Escolher mês e ano</string>
     <string name="cd_previous_month">Mês anterior</string>
     <string name="cd_next_month">Mês seguinte</string>
+    <string name="cd_previous_day">Dia anterior</string>
+    <string name="cd_next_day">Dia seguinte</string>
     <string name="cd_month_year_picker">Seletor de mês e ano</string>
     <string name="cd_remove_alert">Remover alerta</string>
     <string name="cd_warning">Aviso</string>
@@ -655,7 +837,25 @@
     <string name="label_on_days">Nos dias</string>
     <string name="label_pattern">Padrão</string>
     <string name="label_ends">Termina</string>
+    <string name="sheet_hint_change_end">Toca num dia para alterar o fim</string>
     <string name="label_timezone">Fuso horário</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Pesquisar cidade, país ou fuso</string>
+    <string name="timezone_section_this_event">Este evento</string>
+    <string name="timezone_section_device">Fuso horário do dispositivo</string>
+    <string name="timezone_section_recent">Recentes</string>
+    <string name="timezone_section_all">Todos os fusos horários</string>
+    <string name="timezone_offsets_on">Diferenças horárias a %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Do calendário: %1$s</string>
+    <string name="timezone_shown_in_device_time">Apresentado na hora do dispositivo</string>
+    <string name="timezone_loading">A carregar fusos horários…</string>
+    <string name="timezone_no_match">Nenhum fuso horário corresponde</string>
+    <string name="timezone_no_match_hint">Experimenta uma cidade, um país ou uma diferença como +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Alertas</string>
     <string name="label_add_alert">Adicionar alerta</string>
     <string name="label_recurrence_never">Nunca</string>
@@ -663,11 +863,8 @@
     <string name="label_yesterday">Ontem</string>
     <string name="label_device_calendars">Calendários do dispositivo</string>
     <string name="label_default_calendar_hint">Os novos eventos serão criados neste calendário</string>
-    <string name="label_visible_count">%1$d / %2$d visíveis</string>
     <string name="label_reminders_truncated">%1$d não mostrados (%2$d total, máx %3$d editáveis)</string>
     <string name="label_found_events">Encontrados: %1$d eventos</string>
-    <string name="label_open_debug_menu">Abrir menu de depuração</string>
-    <string name="placeholder_search">Pesquisar…</string>
     <string name="settings_search_placeholder">Pesquisar definições…</string>
     <string name="settings_search_no_results">Nenhuma definição encontrada para \"%1$s\"</string>
     <string name="cd_search_settings">Pesquisar definições</string>
@@ -678,16 +875,13 @@
     <string name="status_hours_ago">Há %1$dh</string>
 
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
-    <string name="device_calendars_description">Mostra eventos de outras aplicações de calendário no seu dispositivo (adaptadores de sincronização, calendários locais).</string>
-    <string name="device_calendars_permission_required">Permissão de calendário necessária. Toque em Ativar para conceder acesso.</string>
-    <string name="device_calendars_read_only_access">Acesso só de leitura</string>
-    <string name="device_calendars_grant_write">Conceda permissão de escrita para editar eventos do calendário do dispositivo</string>
-    <string name="device_calendars_grant">Conceder</string>
-    <string name="device_calendars_none_found">Nenhum calendário de dispositivo encontrado.</string>
+    <string name="device_calendars_intro">Mostrar calendários do Google, Outlook e aplicações de sincronização neste dispositivo.</string>
+    <string name="device_calendars_show_switch">Mostrar calendários do dispositivo</string>
+    <string name="device_calendars_access_off">O acesso ao calendário está desativado para o KashCal.</string>
+    <string name="device_calendars_pick_hint">Escolha os calendários a mostrar.</string>
+    <string name="device_calendars_empty">Nenhum calendário encontrado.</string>
     <string name="device_calendars_local">Local</string>
-    <string name="device_calendars_read_only_no_write">Só leitura (sem permissão de escrita)</string>
     <string name="device_calendars_read_only_calendar">Só leitura (o calendário é só de leitura)</string>
-    <string name="settings_developer_options">Opções de programador</string>
     <string name="settings_sync_frequency">Frequência de sincronização</string>
     <string name="settings_sync_frequency_hint">Com que frequência sincronizar em segundo plano</string>
 
@@ -833,6 +1027,9 @@
     <string name="ics_import_reason_this_and_future">as alterações a esta ocorrência e às seguintes não são suportadas</string>
     <string name="ics_import_reason_own_cancel">és o organizador desta reunião, por isso cancela-a a partir do evento</string>
     <string name="ics_import_reason_on_another_calendar">já está noutro calendário desta conta</string>
+    <string name="ics_import_reason_calendar_keeps_copy">este calendário guarda a sua própria cópia do evento</string>
+    <string name="ics_import_reason_own_update">és o organizador desta reunião, por isso altera-a a partir do evento</string>
+    <string name="ics_import_reason_change_waiting">o evento tem uma alteração à espera de sincronização; importa-o novamente depois de sincronizar</string>
     <string name="ics_import_notice_unverified">Não é possível verificar o remetente de um ficheiro de convite. Confirma que veio do organizador.</string>
     <string name="ics_import_notice_answer_notifies">Responder a este convite pode notificar o organizador.</string>
     <string name="ics_import_notice_guests_again">És o organizador, por isso os participantes podem voltar a receber este convite.</string>
@@ -863,15 +1060,18 @@
     </plurals>
     <string name="ics_import_summary_separator">", "</string>
     <string name="ics_import_summary_nothing">Nada para importar</string>
-    <plurals name="exported_events">
-        <item quantity="one">%1$d evento exportado</item>
-        <item quantity="many">%1$d eventos exportados</item>
-        <item quantity="other">%1$d eventos exportados</item>
-    </plurals>
     <plurals name="event_count">
         <item quantity="one">%1$d evento</item>
         <item quantity="many">%1$d eventos</item>
         <item quantity="other">%1$d eventos</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d calendário</item>
+        <item quantity="other">%1$d calendários</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d conta</item>
+        <item quantity="other">%1$d contas</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d calendário</item>
@@ -912,11 +1112,6 @@
         <item quantity="many">%1$d anos</item>
         <item quantity="other">%1$d anos</item>
     </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d seg</item>
-        <item quantity="many">%1$d seg</item>
-        <item quantity="other">%1$d seg</item>
-    </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d minuto antes</item>
         <item quantity="many">%1$d minutos antes</item>
@@ -944,8 +1139,13 @@
     <string name="dialog_move_recurring_title">Mover</string>
     <string name="snackbar_event_rescheduled">Evento movido</string>
     <string name="snackbar_reschedule_failed">Não foi possível mover o evento</string>
+    <string name="snackbar_move_failed">Não foi possível mover \"%1$s\"</string>
+    <string name="snackbar_move_changed_elsewhere">\"%1$s\" foi alterado noutro local, por isso não foi movido</string>
+    <string name="event_untitled">Evento sem título</string>
     <string name="recurring_this_event">Este evento</string>
     <string name="recurring_all_events">Todos os eventos</string>
+    <string name="recurring_scope_move_not_expressible">A regra de repetição não consegue acompanhar esta alteração</string>
+    <string name="event_form_move_not_expressible">A regra de repetição não consegue acompanhar esta alteração. Nada foi guardado.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Participantes</string>
@@ -1009,8 +1209,67 @@
     <string name="empty_no_events_day_3">Um presente: um dia vazio.</string>
     <string name="empty_no_events_day_4">Estado do calendário: gloriosamente vazio.</string>
     <string name="empty_no_events_day_5">Nada planeado. Aproveita a calma.</string>
-    <string name="cd_empty_no_events_day">Dia tranquilo, nada agendado</string>
     <string name="filter_date">Data</string>
+    <string name="search_tab_upcoming">Próximos</string>
+    <string name="search_tab_past">Passados</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d evento</item>
+        <item quantity="other">%1$s, %2$d eventos</item>
+    </plurals>
+    <string name="search_date_this_week">Esta semana</string>
+    <string name="search_date_this_month">Este mês</string>
+    <string name="search_date_pick">Escolher datas…</string>
+    <string name="search_next">Próximo: %1$s</string>
+    <string name="search_last">Último: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Localização:</string>
+    <string name="search_reason_notes">Notas:</string>
+    <string name="search_reason_guest">Convidado:</string>
+    <string name="search_keep_typing">Continua a escrever para pesquisar</string>
+    <string name="search_no_matches">Nenhum evento corresponde a «%1$s»</string>
+    <string name="search_no_events_tagged">Nenhum evento etiquetado como «%1$s»</string>
+    <string name="search_lookback_line">Período de sincronização retroativa: %1$s</string>
+    <string name="search_sync_settings">Definições de sincronização</string>
+    <string name="cd_search_sync_settings">Abrir o período de sincronização retroativa</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Mostrar %d evento passado</item>
+        <item quantity="other">Mostrar %d eventos passados</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">Mais %d num calendário oculto</item>
+        <item quantity="other">Mais %d em calendários ocultos</item>
+    </plurals>
+    <string name="search_show">Mostrar</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Mostrar %d resultado num calendário oculto</item>
+        <item quantity="other">Mostrar %d resultados em calendários ocultos</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Mostrar %d num calendário oculto</item>
+        <item quantity="other">Mostrar %d em calendários ocultos</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Inclui %d calendário oculto</item>
+        <item quantity="other">Inclui %d calendários ocultos</item>
+    </plurals>
+    <string name="search_leave_out">Excluir</string>
+    <string name="cd_search_leave_out">Excluir calendários ocultos</string>
+    <string name="search_hidden_calendar">%1$s · oculto</string>
+    <string name="cd_search_date_this_week">Mostrar resultados desta semana</string>
+    <string name="cd_search_date_this_month">Mostrar resultados deste mês</string>
+    <string name="cd_search_date_pick">Escolher datas para pesquisar</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d próximo</item>
+        <item quantity="other">%d próximos</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d passado</item>
+        <item quantity="other">%d passados</item>
+    </plurals>
+    <string name="search_no_past_events">Sem eventos passados</string>
+    <string name="search_no_events_in_dates">Sem eventos nestas datas</string>
     <string name="label_select_date">Selecionar data</string>
     <string name="hint_tap_date_range">Toque na mesma data para um dia, ou noutra para um intervalo</string>
     <string name="cd_clear">Limpar</string>
@@ -1103,7 +1362,6 @@
     <string name="reminder_none">Sem lembrete</string>
     <string name="reminder_at_time_of_event">Na hora do evento</string>
     <string name="reminder_time_before">%1$s antes</string>
-    <string name="reminder_time_after">%1$s depois</string>
     <string name="reminder_day_of_event_12h">9:00 no dia do evento</string>
     <string name="reminder_day_of_event_24h">09:00 no dia do evento</string>
     <string name="reminder_day_of_event">Dia do evento</string>
@@ -1244,6 +1502,7 @@
     <!-- ==================== i18n: Round 2 audit gaps ==================== -->
     <string name="action_save_event">Guardar evento</string>
     <string name="badge_beta">Beta</string>
+    <string name="badge_sync_off">Sinc. desativada</string>
     <string name="badge_new">Novo</string>
     <string name="color_red">Vermelho</string>
     <string name="color_orange">Laranja</string>
@@ -1272,6 +1531,19 @@
     <string name="ics_fetch_error_http">O servidor devolveu um erro (%1$d). Confirma o URL.</string>
     <string name="ics_fetch_error_empty">A subscrição de calendário está vazia.</string>
     <string name="ics_fetch_error_not_calendar">Este URL não aparenta ser um feed de calendário.</string>
+    <string name="ics_feed_error_empty_response">O servidor não enviou um feed válido.</string>
+    <string name="ics_feed_error_access_denied">O servidor deste feed recusou o acesso.</string>
+    <string name="ics_feed_error_too_large">Este feed de calendário é demasiado grande para transferir.</string>
+    <string name="ics_feed_error_unreadable">Não foi possível mostrar os eventos deste feed.</string>
+    <string name="ics_feed_error_event_not_saved">«%1$s» não foi guardado.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d evento não foi guardado.</item>
+        <item quantity="other">%1$d eventos não foram guardados.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d evento não foi guardado, incluindo «%2$s».</item>
+        <item quantity="other">%1$d eventos não foram guardados, incluindo «%2$s».</item>
+    </plurals>
     <string name="insights_title">Estatísticas</string>
     <string name="insights_period_this_week">Semana</string>
     <string name="insights_period_last_week">Sem. passada</string>
@@ -1399,7 +1671,7 @@
         <item quantity="other">Livre nos próximos %1$d dias (%2$s – %3$s):</item>
     </plurals>
     <string name="share_availability_day_line">%1$s: %2$s</string>
-    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_block_separator">", "</string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">Não há blocos livres de pelo menos uma hora no intervalo selecionado.</string>
     <string name="share_from_kashcal_footer">Partilhado a partir do KashCal</string>
@@ -1421,5 +1693,33 @@
     <string name="share_as_card_all_day">Dia inteiro</string>
     <string name="share_as_card_chooser_title">Partilhar evento</string>
     <string name="share_as_card_share_failed">Não foi possível partilhar o cartão</string>
+    <string name="print_your_week">Imprime a tua semana</string>
+    <string name="print_options_title">Escolhe as opções de impressão</string>
+    <string name="print_pages_header">Páginas</string>
+    <string name="print_page_week">Calendário semanal</string>
+    <string name="print_page_week_detail">A semana numa grelha</string>
+    <string name="print_page_details">Detalhes</string>
+    <string name="print_page_details_detail">Cada evento na íntegra</string>
+    <string name="print_action">Imprimir</string>
+    <string name="cd_print_previous_week">Semana anterior</string>
+    <string name="cd_print_next_week">Semana seguinte</string>
+    <plurals name="print_summary_pages">
+        <item quantity="one">%d página</item>
+        <item quantity="many">%d páginas</item>
+        <item quantity="other">%d páginas</item>
+    </plurals>
+    <plurals name="print_summary_calendars">
+        <item quantity="one">%1$d de %2$d calendário</item>
+        <item quantity="many">%1$d de %2$d calendários</item>
+        <item quantity="other">%1$d de %2$d calendários</item>
+    </plurals>
+    <string name="print_summary">%1$s · %2$s</string>
+    <string name="print_job_name">%1$s – Semana de %2$s</string>
+    <string name="print_failed">Não foi possível imprimir. Tenta novamente.</string>
+    <string name="print_doc_week">Semana</string>
+    <string name="print_doc_printed">Impresso a %1$s</string>
+    <string name="print_doc_page_of">Página %1$s de %2$s</string>
+    <string name="print_doc_numbers_note">Os números correspondem aos detalhes, que listam cada evento na íntegra.</string>
+    <string name="print_doc_times_in">Horas apresentadas em %1$s</string>
 
 </resources>

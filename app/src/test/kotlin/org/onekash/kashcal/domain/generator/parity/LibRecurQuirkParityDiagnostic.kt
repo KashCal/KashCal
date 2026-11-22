@@ -149,8 +149,9 @@ class LibRecurQuirkParityDiagnostic {
             migrationImplication = "LIB_RECUR_ONLY — ical4j has no isAllDay/isFloating assertion; quirk irrelevant post-migration",
         ),
 
-        // (d) FastForwarded only when the range starts > DTSTART + 30d. ical4j has no
-        // FastForward optimization, so the branch doesn't apply to it.
+        // (d) FastForwarded only when the range starts > DTSTART + 30d. For a rule without
+        // COUNT ical4j makes its own jump to the range, keeping DTSTART as the rule's root, and
+        // with one it reads from DTSTART, so the branch doesn't apply to it.
         fixture(
             label = "d",
             description = "range starts same day as DTSTART (no FastForward)",
@@ -163,7 +164,7 @@ class LibRecurQuirkParityDiagnostic {
             expectedVerdict = ExpectedVerdict.AGREE,
             expectedLibCount = 5,
             expectedIcalCount = 5,
-            migrationImplication = "LIB_RECUR_ONLY — ical4j has no FastForward; quirk irrelevant post-migration",
+            migrationImplication = "LIB_RECUR_ONLY — ical4j jumps to the range itself without a COUNT; quirk irrelevant post-migration",
         ),
 
         // (e) MAX_ITERATIONS safety cap. This fixture uses a 2-hour MINUTELY range, 120
@@ -255,7 +256,7 @@ class LibRecurQuirkParityDiagnostic {
             expectedVerdict = ExpectedVerdict.AGREE,
             expectedLibCount = 6,
             expectedIcalCount = 6,
-            migrationImplication = "LIB_RECUR_ONLY — ical4j has no FastForward optimization; quirk irrelevant post-migration",
+            migrationImplication = "LIB_RECUR_ONLY — ical4j jumps to the range itself without a COUNT; quirk irrelevant post-migration",
         ),
     )
 

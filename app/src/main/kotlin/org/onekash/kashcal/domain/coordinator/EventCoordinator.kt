@@ -3,14 +3,17 @@ package org.onekash.kashcal.domain.coordinator
 import org.onekash.kashcal.data.ics.IcsImportFile
 import org.onekash.kashcal.data.ics.ImportGroup
 import org.onekash.kashcal.data.ics.ImportedComponent
+import org.onekash.kashcal.data.ics.ImportedCopy
 import org.onekash.kashcal.domain.ics.GroupPlan
 import org.onekash.kashcal.domain.ics.IcsImportPlanner
 import org.onekash.kashcal.domain.ics.IcsImportResult
+import org.onekash.kashcal.domain.ics.IgnoreReason
 import org.onekash.kashcal.domain.ics.ImportAction
 import org.onekash.kashcal.domain.ics.ImportPlanInput
 import org.onekash.kashcal.domain.ics.ImportTarget
 import org.onekash.kashcal.domain.ics.StoredComponent
 import org.onekash.kashcal.domain.ics.StoredUid
+import org.onekash.kashcal.domain.ics.isUpdate
 import org.onekash.kashcal.domain.identity.matchesAttendee
 import org.onekash.kashcal.util.AddressNormalizer
 import android.util.Log
@@ -34,17 +37,23 @@ import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
+import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
+import org.onekash.kashcal.domain.initializer.LocalCalendarException
 import org.onekash.kashcal.domain.initializer.LocalCalendarInitializer
 import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.domain.model.EventExport
+import org.onekash.kashcal.domain.model.LocalCalendarSummary
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.domain.reader.EventReader.OccurrenceWithEvent
+import org.onekash.kashcal.domain.scheduling.SequenceBumper
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.sync.scheduler.IcsRefreshScheduleReconciler
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
+import org.onekash.kashcal.sync.strategy.isPullSyntheticMaster
 import org.onekash.kashcal.widget.WidgetUpdateManager
 import java.util.UUID
 import javax.inject.Inject
@@ -56,9 +65,9 @@ import javax.inject.Singleton
  * Writes go through [EventWriter] and reads through [EventReader]. After an event create, edit,
  * move or delete it requests an expedited sync for a synced calendar, arms or cancels the affected
  * reminders and refreshes the widgets. It also fronts RRULE expansion ([OccurrenceGenerator]), the
- * local calendar ([LocalCalendarInitializer]), ICS subscriptions and file import, and the contact
- * birthday and anniversary calendars. Device-calendar events don't come here; they go through
- * `DeviceEventWriter`.
+ * offline calendars ([LocalCalendarInitializer]), ICS subscriptions and file import, and the
+ * contact birthday and anniversary calendars. Device-calendar events don't come here; they go
+ * through `DeviceEventWriter`.
  *
  * ```
  * UI Layer (ViewModels)
@@ -94,7 +103,7 @@ class EventCoordinator @Inject constructor(
 
     // ========== Initialization ==========
 
-    /** Creates the local calendar if missing and returns its id; call on app startup. */
+    /** Creates the built-in local calendar if missing and returns its id; call on app startup. */
     suspend fun ensureLocalCalendarExists(): Long {
         return localCalendarInitializer.ensureLocalCalendarExists()
     }
@@ -103,8 +112,93 @@ class EventCoordinator @Inject constructor(
         return localCalendarInitializer.getLocalCalendarId()
     }
 
-    fun isLocalCalendar(calendar: Calendar): Boolean {
+    /** Returns true if [calendar] is local ([LocalCalendarInitializer.isLocalAccount]). */
+    suspend fun isLocalCalendar(calendar: Calendar): Boolean {
         return localCalendarInitializer.isLocalCalendar(calendar)
+    }
+
+    // ========== Offline Calendars ==========
+    //
+    // Each returns Result.failure(LocalCalendarException) for a refused change, and a failure
+    // for any other error. builtInName is the built-in calendar's translated label (the UI's
+    // R.string.calendar_local), which names are checked against.
+
+    /**
+     * Adds an offline calendar ([LocalCalendarInitializer.createCalendar]) and refreshes the
+     * widgets. Returns its id.
+     */
+    suspend fun createLocalCalendar(name: String, color: Int, builtInName: String): Result<Long> =
+        offlineCalendarChange { localCalendarInitializer.createCalendar(name, color, builtInName) }
+
+    /**
+     * Renames an offline calendar other than the built-in
+     * ([LocalCalendarInitializer.renameCalendar]) and refreshes the widgets.
+     */
+    suspend fun renameLocalCalendar(calendarId: Long, name: String, builtInName: String): Result<Unit> =
+        offlineCalendarChange { localCalendarInitializer.renameCalendar(calendarId, name, builtInName) }
+
+    /**
+     * Recolors an offline calendar, the built-in included
+     * ([LocalCalendarInitializer.recolorCalendar]), and refreshes the widgets, which paint the
+     * calendar color.
+     */
+    suspend fun recolorLocalCalendar(calendarId: Long, color: Int): Result<Unit> =
+        offlineCalendarChange { localCalendarInitializer.recolorCalendar(calendarId, color) }
+
+    /**
+     * Deletes an offline calendar other than the built-in, with its events, and returns how many
+     * events it had ([LocalCalendarInitializer.deleteCalendar]). Don't call inside a database
+     * transaction.
+     *
+     * After the refusal checks it deletes the row and then cancels the calendar's alarms
+     * ([ReminderScheduler.cancelCalendarAlarmsAfter]), so a failed delete changes nothing. If the
+     * stored default was this calendar, the default becomes the built-in; a device default stays.
+     * Then the widgets refresh. After the refusal checks the work is not cancelled with its
+     * caller, which would otherwise leave alarms armed and the default pointing at a deleted
+     * calendar. A failure of the default move or the refresh, after the row is gone, is logged and
+     * the delete still succeeds.
+     */
+    suspend fun deleteLocalCalendar(calendarId: Long): Result<Int> {
+        offlineCalendarResult { localCalendarInitializer.checkDeletable(calendarId) }
+            .onFailure { return Result.failure(it) }
+        return withContext(NonCancellable) {
+            offlineCalendarResult {
+                reminderScheduler.cancelCalendarAlarmsAfter(calendarId) {
+                    localCalendarInitializer.deleteCalendar(calendarId)
+                }
+            }.onSuccess {
+                moveDefaultOffDeletedCalendar(calendarId)
+                triggerWidgetUpdate()
+            }
+        }
+    }
+
+    /** Sets the default calendar to the built-in when it is the Room calendar [calendarId]. */
+    private suspend fun moveDefaultOffDeletedCalendar(calendarId: Long) {
+        try {
+            if (dataStore.getDefaultCalendar() == DefaultCalendar.Room(calendarId)) {
+                dataStore.setDefaultCalendar(DefaultCalendar.Room(localCalendarInitializer.getLocalCalendarId()))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Moving the default off deleted calendar $calendarId failed", e)
+        }
+    }
+
+    /** Runs [change] and refreshes the widgets if it succeeded ([offlineCalendarResult]). */
+    private suspend fun <T> offlineCalendarChange(change: suspend () -> T): Result<T> =
+        offlineCalendarResult(change).onSuccess { triggerWidgetUpdate() }
+
+    /**
+     * Returns [block]'s outcome as a [Result]; logs a failure other than a refusal
+     * ([LocalCalendarException]). Cancellation is rethrown.
+     */
+    private suspend fun <T> offlineCalendarResult(block: suspend () -> T): Result<T> = try {
+        Result.success(block())
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        if (e !is LocalCalendarException) Log.e(TAG, "Offline calendar change failed", e)
+        Result.failure(e)
     }
 
     // ========== Sync Trigger ==========
@@ -189,7 +283,9 @@ class EventCoordinator @Inject constructor(
                 listOfNotNull(eventReader.getOccurrenceByExceptionEventId(event.id))
             } else {
                 eventReader.getOccurrencesForEventInScheduleWindow(
-                    event.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS
+                    event.id,
+                    ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS,
+                    ReminderScheduler.STARTED_LOOKBACK_MS
                 )
             }
 
@@ -205,25 +301,37 @@ class EventCoordinator @Inject constructor(
     }
 
     /**
-     * Cancels and re-arms [event]'s reminders.
+     * Brings [event]'s reminders in line with its edit: keeps the ones still valid
+     * ([ReminderScheduler.reconcileRemindersForEvent]) and arms the missing ones.
      *
      * Catches failures so the write that called it still succeeds; the daily
      * `ReminderRefreshWorker` re-arms whatever is missing.
      */
     private suspend fun rescheduleRemindersForEvent(event: Event) {
         try {
-            reminderScheduler.cancelRemindersForEvent(event.id)
+            reminderScheduler.reconcileRemindersForEvent(event)
             scheduleRemindersForEvent(event)
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             Log.e(TAG, "Failed to reschedule reminders for event ${event.id}, " +
                 "ReminderRefreshWorker will recover", e)
         }
     }
 
+    /**
+     * Re-arms the reminders of a series' changed occurrences: a moved series moves the ones
+     * whose time the user never edited ([EventWriter.updateEvent]), and their alarms are stored
+     * under their own ids, which [rescheduleRemindersForEvent] on the master doesn't reach.
+     */
+    private suspend fun rescheduleMovedExceptionReminders(master: Event) {
+        if (master.rrule == null || master.originalEventId != null) return
+        eventReader.getExceptionsForMaster(master.id).forEach { rescheduleRemindersForEvent(it) }
+    }
+
     // ========== Create Operations ==========
 
     /**
-     * Creates [event] in [calendarId], or in the local calendar when null.
+     * Creates [event] in [calendarId], or in the built-in local calendar when null.
      *
      * @param attendees the invite's attendees; a non-empty list may also set the organizer
      *   ([resolveOrganizer]).
@@ -321,10 +429,13 @@ class EventCoordinator @Inject constructor(
     // ========== Update Operations ==========
 
     /**
-     * Updates [event] and re-arms its reminders.
+     * Updates [event] and re-arms its reminders, and those of a series' changed occurrences
+     * the save moved ([EventWriter.updateEvent]).
      *
      * @param attendees the edited attendee set, or null to leave the stored set as it is.
      * @throws IllegalArgumentException when the event ends before it starts or doesn't exist.
+     * @throws org.onekash.kashcal.domain.rrule.MoveNotExpressibleException when the repeat rule
+     *   can't follow a series' move; nothing is written.
      */
     suspend fun updateEvent(
         event: Event,
@@ -342,6 +453,7 @@ class EventCoordinator @Inject constructor(
 
         // Time or reminders may have changed.
         rescheduleRemindersForEvent(result)
+        rescheduleMovedExceptionReminders(result)
 
         triggerWidgetUpdate()
 
@@ -352,7 +464,8 @@ class EventCoordinator @Inject constructor(
      * Edits the occurrence of [masterEventId] at [occurrenceTimeMs] as an exception.
      *
      * @param changes applied to the master projected onto that occurrence
-     *   ([Event.projectOntoOccurrence]), with its recurrence cleared.
+     *   ([Event.projectOntoOccurrence]), with its recurrence cleared; it may return the
+     *   occurrence's own row instead (a drag of an occurrence already changed).
      * @param attendees this occurrence's attendee set, or null to leave attendees alone
      *   ([EventWriter.editSingleOccurrence]).
      * @return the exception event.
@@ -383,10 +496,11 @@ class EventCoordinator @Inject constructor(
         triggerImmediatePushIfNeeded(isLocal)
 
         // The exception replaces this occurrence. Cancel its reminders before arming the
-        // exception's, or both fire.
+        // exception's, or both fire. An occurrence changed before keeps its alarms under its
+        // own id at its earlier start, which the reconcile drops when it moved.
         reminderScheduler.cancelReminderForOccurrence(masterEventId, occurrenceTimeMs)
 
-        scheduleRemindersForEvent(result)
+        rescheduleRemindersForEvent(result)
 
         triggerWidgetUpdate()
 
@@ -400,6 +514,8 @@ class EventCoordinator @Inject constructor(
      * @return the new series, or the master updated in place when [EventWriter.splitSeries]
      *   takes that path (a split at or before the first occurrence, or a COUNT split that
      *   would leave one side empty).
+     * @throws org.onekash.kashcal.domain.rrule.MoveNotExpressibleException when the repeat rule
+     *   can't follow the move; nothing is written.
      */
     suspend fun editThisAndFuture(
         masterEventId: Long,
@@ -432,6 +548,8 @@ class EventCoordinator @Inject constructor(
         reminderScheduler.cancelRemindersForOccurrencesAfter(masterEventId, splitTimeMs)
 
         scheduleRemindersForEvent(result)
+        // An in-place edit returns the master, whose changed occurrences may have moved.
+        if (result.id == masterEventId) rescheduleMovedExceptionReminders(result)
 
         triggerWidgetUpdate()
 
@@ -573,6 +691,14 @@ class EventCoordinator @Inject constructor(
         return eventReader.getAllCalendars()
     }
 
+    /**
+     * Emits the offline calendars with their event counts
+     * ([EventReader.getLocalCalendarSummaries]).
+     */
+    fun getLocalCalendarSummaries(
+        localizeName: (Calendar) -> String
+    ): Flow<List<LocalCalendarSummary>> = eventReader.getLocalCalendarSummaries(localizeName)
+
     /** Emits the number of iCloud calendars, again whenever calendars change. */
     fun getICloudCalendarCount(): Flow<Int> {
         return eventReader.getICloudCalendarCount()
@@ -586,6 +712,9 @@ class EventCoordinator @Inject constructor(
     fun getCalDavAccounts(): Flow<List<Account>> {
         return accountRepository.getAccountsByProviderFlow(AccountProvider.CALDAV)
     }
+
+    /** Emits each calendar's event count by id ([EventReader.getCalendarEventCounts]). */
+    fun getCalendarEventCounts(): Flow<Map<Long, Int>> = eventReader.getCalendarEventCounts()
 
     fun getAllAccounts(): Flow<List<Account>> {
         return accountRepository.getAllAccountsFlow()
@@ -658,11 +787,15 @@ class EventCoordinator @Inject constructor(
         return eventReader.getVisibleOccurrencesInRange(startTs, endTs)
     }
 
-    /** Emits the occurrences on [day], a YYYYMMDD code. */
+    /**
+     * Emits the occurrences whose stored codes span [day]; see
+     * [EventReader.getOccurrencesForDay].
+     */
     fun getOccurrencesForDay(day: Int): Flow<List<Occurrence>> {
         return eventReader.getOccurrencesForDay(day)
     }
 
+    /** Returns the occurrences whose stored codes span [dayCode]; see [EventReader]. */
     suspend fun getEventsForDay(dayCode: Int): List<OccurrenceWithEvent> {
         return eventReader.getEventsForDay(dayCode)
     }
@@ -689,19 +822,9 @@ class EventCoordinator @Inject constructor(
         return eventReader.getOccurrenceWithEvent(eventId, occurrenceTimeMs)
     }
 
+    /** Returns a month's stored start days; see [EventReader.getDaysWithEventsInMonth]. */
     suspend fun getDaysWithEventsInMonth(year: Int, month: Int): Set<Int> {
         return eventReader.getDaysWithEventsInMonth(year, month)
-    }
-
-    suspend fun searchEvents(query: String): List<Event> {
-        return eventReader.searchEvents(query)
-    }
-
-    suspend fun searchEventsWithOccurrences(
-        query: String,
-        futureOnly: Boolean = true
-    ): List<OccurrenceWithEvent> {
-        return eventReader.searchEventsWithOccurrences(query, futureOnly)
     }
 
     fun getPendingOperationCount(): Flow<Int> {
@@ -726,64 +849,32 @@ class EventCoordinator @Inject constructor(
         return occurrenceGenerator.regenerateOccurrences(event)
     }
 
-    /** Expands event [eventId]'s occurrences forward to [extendToMs]; returns the count added. */
-    suspend fun extendOccurrences(eventId: Long, extendToMs: Long): Int {
-        val event = requireNotNull(eventReader.getEventById(eventId)) {
-            "Event not found: $eventId"
-        }
-        return occurrenceGenerator.extendOccurrences(event, extendToMs)
-    }
 
     /**
-     * Expands every recurring event whose last occurrence starts before [targetDateMs] plus
-     * [bufferMonths] 30-day months; called on month navigation.
-     *
-     * @return the number of occurrences added across all events.
+     * Keeps every repeating series expanded ahead of [nowMs], forward only, for the readers that
+     * work near today (reminders, Insights, share availability): a series whose rows end within
+     * HORIZON_RENEW_MS is extended to [OccurrenceGenerator.EXPANSION_WINDOW_MS] ahead, so a
+     * series written in the last year needs no work. The daily reminder refresh and each
+     * process start call it.
      */
-    suspend fun extendOccurrencesIfNeeded(targetDateMs: Long, bufferMonths: Int = 6): Int {
-        val extendToMs = targetDateMs + (bufferMonths * 30L * 24 * 60 * 60 * 1000)
-        val eventIds = eventReader.getRecurringEventsNeedingExtension(extendToMs)
-
-        var totalExtended = 0
-        for (eventId in eventIds) {
-            totalExtended += extendOccurrences(eventId, extendToMs)
-        }
-        return totalExtended
+    suspend fun ensureOccurrenceHorizon(nowMs: Long) {
+        occurrenceGenerator.ensureCovered(
+            startMs = nowMs,
+            endMs = nowMs + HORIZON_RENEW_MS,
+            backward = false,
+            extendToMs = nowMs + OccurrenceGenerator.EXPANSION_WINDOW_MS,
+        )
     }
 
-    /** Expands event [eventId]'s occurrences back to [extendToMs]; returns the count added. */
-    suspend fun extendPastOccurrences(eventId: Long, extendToMs: Long): Int {
-        val event = requireNotNull(eventReader.getEventById(eventId)) {
-            "Event not found: $eventId"
-        }
-        return occurrenceGenerator.extendPastOccurrences(event, extendToMs)
-    }
-
-    /**
-     * Expands back every recurring event whose first occurrence starts after both its DTSTART
-     * and [targetDateMs] minus [bufferMonths] 30-day months; called on month navigation.
-     *
-     * @return the number of occurrences added across all events.
-     */
-    suspend fun extendPastOccurrencesIfNeeded(targetDateMs: Long, bufferMonths: Int = 6): Int {
-        val extendToMs = targetDateMs - (bufferMonths * 30L * 24 * 60 * 60 * 1000)
-        val eventIds = eventReader.getRecurringEventsNeedingPastExtension(extendToMs)
-
-        var totalExtended = 0
-        for (eventId in eventIds) {
-            totalExtended += extendPastOccurrences(eventId, extendToMs)
-        }
-        return totalExtended
-    }
-
-    /** Regenerates every recurring event that has no occurrences; returns the count repaired. */
+    /** Regenerates every recurring event that has no occurrences; returns how many got rows. */
     suspend fun repairMissingOccurrences(): Int {
         val eventIds = eventReader.getRecurringEventsWithNoOccurrences()
         var repaired = 0
         for (eventId in eventIds) {
             try {
-                regenerateOccurrences(eventId)
-                repaired++
+                // A rule with nothing in the window writes no rows: not a repair, or the month
+                // swipe would retry it on every swipe.
+                if (regenerateOccurrences(eventId) > 0) repaired++
             } catch (_: IllegalArgumentException) {
                 // Deleted between the query and the regeneration.
             }
@@ -914,8 +1005,10 @@ class EventCoordinator @Inject constructor(
      * Imports a parsed ICS file into Room calendar [calendarId], applying its iTIP METHOD the way
      * [IcsImportPlanner] decides (RFC 5546): a new UID is created with the file's UID, organizer
      * and guests; a UID the calendar holds is updated, left alone or cancelled; a REPLY or
-     * another unsupported method writes nothing. For one-shot file imports; subscriptions
-     * refresh through [IcsSubscriptionRepository].
+     * another unsupported method writes nothing. On a synced calendar an update is uploaded: one
+     * UPDATE for the series per group ([EventWriter.queueImportedUpdate]), planned inside the
+     * group's transaction. For one-shot file imports; subscriptions refresh through
+     * [IcsSubscriptionRepository].
      *
      * Creates keep [Event.uid] unless another calendar of the account holds it (a plain event
      * then gets a fresh UID) or the group is malformed (two masters with one UID, or exceptions
@@ -931,12 +1024,20 @@ class EventCoordinator @Inject constructor(
         for (group in file.groups) {
             val effects = ReminderEffects()
             result += try {
-                val plan = IcsImportPlanner.plan(planInput(context, file, group))
-                // One transaction per group, so a failure leaves none of its components written.
+                // One transaction per group, so a failure leaves none of its components written,
+                // and the plan reads the stored event as the writes find it.
                 eventWriter.inTransaction {
-                    plan.actions.fold(IcsImportResult()) { sum, action ->
-                        sum + applyImportAction(context, file, action, effects)
+                    val input = planInput(context, file, group)
+                    val actions = IcsImportPlanner.plan(input).actions
+                    // On a synced calendar a group that updates the series uploads it once, its
+                    // changed and cancelled occurrences inside that PUT; a cancel's own PUT first
+                    // would leave the series PUT a stale etag. A cancel-only group keeps its own.
+                    val uploadSeries = !context.isLocal && actions.any { it.isUpdate }
+                    val sum = actions.fold(IcsImportResult()) { sum, action ->
+                        sum + applyImportAction(context, file, action, effects, queueCancel = !uploadSeries)
                     }
+                    if (uploadSeries) input.stored?.master?.eventId?.let { eventWriter.queueImportedUpdate(it) }
+                    sum
                 }
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
@@ -990,7 +1091,7 @@ class EventCoordinator @Inject constructor(
             calendar = calendar,
             isLocal = isLocal,
             account = account,
-            // The local calendar has no identity: its account's login is not an address.
+            // A local calendar has no identity: its account's login is not an address.
             userAddresses = if (isLocal) emptySet()
             else account?.effectiveAddresses()?.map(AddressNormalizer::canonical)?.toSet().orEmpty(),
             defaultTimedReminder = dataStore.defaultReminderMinutes.first(),
@@ -1015,6 +1116,7 @@ class EventCoordinator @Inject constructor(
             target = if (context.isLocal) ImportTarget.LOCAL else ImportTarget.CALDAV,
             userAddresses = context.userAddresses,
             elsewhereInAccount = elsewhere,
+            changeWaiting = !context.isLocal && eventReader.hasChangeWaiting(here.map { it.id }),
         )
     }
 
@@ -1026,6 +1128,7 @@ class EventCoordinator @Inject constructor(
         itipDtstamp = itipDtstamp,
         status = status,
         pendingDelete = isPendingDelete,
+        isPullPlaceholder = isPullSyntheticMaster,
     )
 
     /** Reminder work for a group's writes, done once its transaction commits. */
@@ -1043,16 +1146,23 @@ class EventCoordinator @Inject constructor(
         file: IcsImportFile,
         action: ImportAction,
         effects: ReminderEffects,
+        queueCancel: Boolean,
     ): IcsImportResult = when (action) {
         is ImportAction.Create -> createImported(context, file, action, effects)
         is ImportAction.UpdateSeries -> importedUpdate(context, action.stored.eventId, action.component, effects)
         is ImportAction.UpdateInstance -> importedUpdate(context, action.stored.eventId, action.component, effects)
         is ImportAction.CreateInstance -> {
+            val instanceTime = requireNotNull(action.component.event.originalInstanceTime)
+            val master = requireNotNull(eventReader.getEventById(action.master.eventId)) {
+                "Event not found: ${action.master.eventId}"
+            }
             val created = eventWriter.createImportedException(
                 action.master.eventId,
-                requireNotNull(action.component.event.originalInstanceTime),
+                instanceTime,
                 action.component.event,
-                attendeeRows(context, action.component),
+                updatedAttendeeRows(context, action.component, master.projectOntoOccurrence(instanceTime)),
+                keepUserFields = !context.isLocal,
+                ics = action.component.ics,
             )
             effects.armed += created
             IcsImportResult(updated = 1, firstStartTs = created.startTs)
@@ -1060,7 +1170,7 @@ class EventCoordinator @Inject constructor(
         is ImportAction.CancelSeries -> {
             val cancelled = eventWriter.applyImportedCancel(
                 action.master.eventId, null, action.component.event.sequence,
-                action.component.event.itipDtstamp, context.isLocal
+                action.component.event.itipDtstamp, context.isLocal, queueCancel
             )
             effects.cancelled += cancelled.map { it.id }
             IcsImportResult(cancelled = 1, firstStartTs = cancelled.firstOrNull()?.startTs)
@@ -1069,7 +1179,7 @@ class EventCoordinator @Inject constructor(
             val instanceTime = requireNotNull(action.component.event.originalInstanceTime)
             val cancelled = eventWriter.applyImportedCancel(
                 action.master.eventId, instanceTime, action.component.event.sequence,
-                action.component.event.itipDtstamp, context.isLocal
+                action.component.event.itipDtstamp, context.isLocal, queueCancel
             )
             effects.cancelled += cancelled.map { it.id }
             effects.cancelledOccurrences += action.master.eventId to instanceTime
@@ -1085,7 +1195,12 @@ class EventCoordinator @Inject constructor(
         component: ImportedComponent,
         effects: ReminderEffects,
     ): IcsImportResult {
-        val updated = eventWriter.applyImportedUpdate(eventId, component.event, attendeeRows(context, component))
+        val existing = requireNotNull(eventReader.getEventById(eventId)) { "Event not found: $eventId" }
+        val updated = eventWriter.applyImportedUpdate(
+            eventId, component.event, updatedAttendeeRows(context, component, existing),
+            keepUserFields = !context.isLocal,
+            ics = component.ics,
+        )
         effects.armed += updated
         return IcsImportResult(updated = 1, firstStartTs = updated.startTs)
     }
@@ -1128,13 +1243,16 @@ class EventCoordinator @Inject constructor(
 
         if (linked && master != null) {
             val uid = if (action.freshUid) "${UUID.randomUUID()}@kashcal.onekash.org" else group.uid
+            // The group's copy names the file's UID; a fresh UID is written into it too, so the
+            // copy's changed occurrences still match the series.
+            val copy = master.ics?.let { if (action.freshUid) ImportedCopy.withUid(it, group.uid, uid) else it }
             val masterReminders = remindersFor(master)
             val masterEvent = master.event.asImported(calendarId, uid, masterReminders).copy(
                 importSource = Event.IMPORT_SOURCE_ICS_FILE,
                 alarmCount = masterReminders?.size ?: 0,
             )
             if (group.exceptions.isEmpty()) {
-                val created = eventWriter.createEvent(masterEvent, context.isLocal, attendeeRows(context, master))
+                val created = eventWriter.createEvent(masterEvent, context.isLocal, attendeeRows(context, master), copy)
                 effects.armed += created
                 return IcsImportResult(created = 1, firstStartTs = created.startTs)
             }
@@ -1152,6 +1270,7 @@ class EventCoordinator @Inject constructor(
                 masterEvent, exceptions, context.isLocal,
                 masterAttendees = attendeeRows(context, master),
                 exceptionAttendees = group.exceptions.map { attendeeRows(context, it) },
+                ics = copy,
             )
             effects.armed += series.master
             effects.armed += series.exceptions
@@ -1159,7 +1278,8 @@ class EventCoordinator @Inject constructor(
         }
 
         // Malformed: each event standalone under a fresh UID; a cancelled one has nothing to
-        // stand for on its own.
+        // stand for on its own. No stored copy: patched from it, a standalone row would keep a
+        // changed occurrence's RECURRENCE-ID, or share another series' VEVENT.
         var result = IcsImportResult()
         for (component in group.components.filterNot { it.isCancelled }) {
             val reminders = remindersFor(component)
@@ -1170,6 +1290,33 @@ class EventCoordinator @Inject constructor(
             result += IcsImportResult(created = 1, firstStartTs = created.startTs)
         }
         return result
+    }
+
+    /**
+     * Returns [component]'s attendee rows for a write over [before] on a synced calendar: the
+     * stored row it rewrites, or for a new changed occurrence the series projected onto it. The
+     * user's own row takes NEEDS-ACTION when the write reschedules ([SequenceBumper.reschedules],
+     * RFC 6638 §3.2.8), else the user's answer stored on [before], else the file's; other guests
+     * come from the file. An offline calendar takes the file's rows as they are. DURATION is left
+     * out of the comparison: start and end already carry a change of length, and a series row
+     * stores a DURATION an occurrence change doesn't.
+     */
+    private suspend fun updatedAttendeeRows(
+        context: ImportContext,
+        component: ImportedComponent,
+        before: Event,
+    ): List<Attendee> {
+        val rows = attendeeRows(context, component)
+        if (context.isLocal) return rows
+        val account = context.account ?: return rows
+        if (rows.none { account.matchesAttendee(it.address) }) return rows
+        val partstat = if (SequenceBumper.reschedules(before.copy(duration = null), component.event.copy(duration = null))) {
+            "NEEDS-ACTION"
+        } else {
+            eventReader.getAttendeesForEventsOnce(listOf(before.id))[before.id].orEmpty()
+                .firstOrNull { account.matchesAttendee(it.address) }?.partstat ?: return rows
+        }
+        return rows.map { if (account.matchesAttendee(it.address)) it.copy(partstat = partstat) else it }
     }
 
     /**
@@ -1200,19 +1347,22 @@ class EventCoordinator @Inject constructor(
     // ========== ICS Export ==========
 
     /**
-     * Returns the exceptions of master [masterEventId], empty for a non-recurring event.
-     *
-     * ICS export bundles them with the master in one VCALENDAR.
+     * Returns event [eventId] as stored, with its exceptions when it is a recurring master and
+     * the attendee rows and stored ICS of each, for a single-event export; null when it doesn't
+     * exist. An event shown from an occurrence query carries neither, so the export reads them
+     * here by id.
      */
-    suspend fun getExceptionsForMaster(masterEventId: Long): List<Event> {
-        return eventReader.getExceptionsForMaster(masterEventId)
+    suspend fun getEventForExport(eventId: Long): EventExport? {
+        val (event, exceptions) = eventReader.getEventWithExceptions(eventId) ?: return null
+        val attendees = eventReader.getAttendeesForEventsOnce(listOf(event.id) + exceptions.map { it.id })
+        return EventExport(event, exceptions, attendees, eventReader.getIcsForExport(event, exceptions))
     }
 
     /**
-     * Returns every master in calendar [calendarId] paired with its exceptions, for ICS
-     * export to bundle each series into one VCALENDAR (RFC 5545).
+     * Returns every master in calendar [calendarId] with its exceptions and the attendee rows and
+     * stored ICS of each, for ICS export to bundle each series into one VCALENDAR (RFC 5545).
      */
-    suspend fun getCalendarEventsForExport(calendarId: Long): List<Pair<Event, List<Event>>> {
+    suspend fun getCalendarEventsForExport(calendarId: Long): List<EventExport> {
         val masterEvents = eventReader.getAllMasterEventsForCalendar(calendarId)
         val recurringIds = masterEvents.filter { it.isRecurring }.map { it.id }
         val exceptionsByMaster = if (recurringIds.isNotEmpty()) {
@@ -1220,8 +1370,11 @@ class EventCoordinator @Inject constructor(
         } else {
             emptyMap()
         }
+        val eventIds = masterEvents.map { it.id } + exceptionsByMaster.values.flatten().map { it.id }
+        val attendees = eventReader.getAttendeesForEventsOnce(eventIds)
         return masterEvents.map { master ->
-            Pair(master, exceptionsByMaster[master.id].orEmpty())
+            val exceptions = exceptionsByMaster[master.id].orEmpty()
+            EventExport(master, exceptions, attendees, eventReader.getIcsForExport(master, exceptions))
         }
     }
 
@@ -1426,5 +1579,8 @@ class EventCoordinator @Inject constructor(
 
     companion object {
         private const val TAG = "EventCoordinator"
+
+        /** How close to running out a series' rows may get before the daily band extends them. */
+        private const val HORIZON_RENEW_MS = 365L * 24 * 60 * 60 * 1000
     }
 }

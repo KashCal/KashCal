@@ -23,6 +23,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.reminder.device.DeviceCalendarChangeWatcher
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 import org.onekash.kashcal.widget.WidgetUpdateManager
 import org.robolectric.RobolectricTestRunner
@@ -31,7 +32,8 @@ import org.robolectric.annotation.Config
 
 /**
  * Tests the reminder cleanup in [CalendarProviderManager]: onDisabled and onRemindersDisabled
- * cancel the pending alarm, and onRemindersEnabled schedules the next reminder.
+ * cancel the pending alarm, onRemindersEnabled schedules the next reminder, and both reminder
+ * switches bring the calendar-change job in step.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -43,6 +45,7 @@ class CalendarProviderManagerCleanupTest {
     private lateinit var dataStore: KashCalDataStore
     private lateinit var deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler
     private lateinit var widgetUpdateManager: WidgetUpdateManager
+    private lateinit var changeWatcher: DeviceCalendarChangeWatcher
     private lateinit var manager: CalendarProviderManager
 
     @Before
@@ -61,11 +64,13 @@ class CalendarProviderManagerCleanupTest {
         dataStore = mockk(relaxed = true)
         deviceCalendarReminderScheduler = mockk(relaxed = true)
         widgetUpdateManager = mockk(relaxed = true)
+        // Side-effect collaborator (schedules or cancels a job), so relaxed is allowed.
+        changeWatcher = mockk(relaxed = true)
 
         every { dataStore.deviceCalendarsEnabled } returns MutableStateFlow(false)
         every { context.contentResolver } returns mockk(relaxed = true)
 
-        manager = CalendarProviderManager(context, dataStore, deviceCalendarReminderScheduler, widgetUpdateManager)
+        manager = CalendarProviderManager(context, dataStore, deviceCalendarReminderScheduler, widgetUpdateManager, changeWatcher)
     }
 
     @After
@@ -91,7 +96,7 @@ class CalendarProviderManagerCleanupTest {
         val realDataStore = mockk<KashCalDataStore>(relaxed = true)
         every { realDataStore.deviceCalendarsEnabled } returns MutableStateFlow(true)
 
-        val realManager = CalendarProviderManager(app, realDataStore, deviceCalendarReminderScheduler, widgetUpdateManager)
+        val realManager = CalendarProviderManager(app, realDataStore, deviceCalendarReminderScheduler, widgetUpdateManager, changeWatcher)
         realManager.onEnabled()
         advanceUntilIdle()
 
@@ -112,6 +117,15 @@ class CalendarProviderManagerCleanupTest {
         advanceUntilIdle()
 
         coVerify { deviceCalendarReminderScheduler.scheduleNextReminder() }
+    }
+
+    @Test
+    fun `switching device reminders on and off reconciles the calendar-change job`() = runTest {
+        manager.onRemindersEnabled()
+        manager.onRemindersDisabled()
+        advanceUntilIdle()
+
+        coVerify(exactly = 2) { changeWatcher.reconcile() }
     }
 
     // The ContentObserver callback (reminder reschedule, change signal, widget refresh on a

@@ -1,0 +1,483 @@
+MIGRATION_10_11	addColumnIfNotExists	INTEGER
+MIGRATION_10_11	addColumnIfNotExists	INTEGER NOT NULL DEFAULT 0
+MIGRATION_10_11	addColumnIfNotExists	failed_at
+MIGRATION_10_11	addColumnIfNotExists	lifetime_reset_at
+MIGRATION_10_11	addColumnIfNotExists	pending_operations
+MIGRATION_10_11	addColumnIfNotExists	pending_operations
+MIGRATION_10_11	columnExists	failed_at
+MIGRATION_10_11	columnExists	lifetime_reset_at
+MIGRATION_10_11	columnExists	pending_operations
+MIGRATION_10_11	columnExists	pending_operations
+MIGRATION_10_11	sql	UPDATE pending_operations SET lifetime_reset_at = created_at WHERE lifetime_reset_at = 0
+MIGRATION_11_12	addColumnIfNotExists	INTEGER DEFAULT NULL
+MIGRATION_11_12	addColumnIfNotExists	pending_operations
+MIGRATION_11_12	addColumnIfNotExists	source_calendar_id
+MIGRATION_11_12	columnExists	pending_operations
+MIGRATION_11_12	columnExists	source_calendar_id
+MIGRATION_11_12	sql	UPDATE pending_operations SET status = 'FAILED', last_error = 'Migration 11->12: MOVE requires retry after upgrade', failed_at = ${System.currentTimeMillis()} WHERE operation = 'MOVE' AND move_phase = 0 AND source_calendar_id IS NULL AND status != 'FAILED'
+MIGRATION_12_13	dropIndexIfExists	index_accounts_provider_email
+MIGRATION_12_13	indexExists	index_accounts_provider_email
+MIGRATION_12_13	indexExists	index_accounts_provider_email_home_set_url
+MIGRATION_12_13	sql	CREATE UNIQUE INDEX IF NOT EXISTS index_accounts_provider_email_home_set_url
+MIGRATION_12_13	sql	ON accounts (provider, email, home_set_url)
+MIGRATION_12_13	sql	SELECT COUNT(*) FROM accounts WHERE provider = 'CALDAV' AND home_set_url IS NULL
+MIGRATION_13_14	dropIndexIfExists	index_events_calendar_id_uid_original_instance_time
+MIGRATION_13_14	dropIndexIfExists	index_events_original_event_id_original_instance_time
+MIGRATION_13_14	indexExists	index_events_calendar_id_uid_original_instance_time
+MIGRATION_13_14	sql	CREATE INDEX IF NOT EXISTS index_events_original_event_id_original_instance_time
+MIGRATION_13_14	sql	CREATE UNIQUE INDEX IF NOT EXISTS index_events_calendar_id_uid_original_instance_time
+MIGRATION_13_14	sql	DELETE FROM events WHERE id IN ( SELECT e1.id FROM events e1 INNER JOIN events e2 ON e1.calendar_id = e2.calendar_id AND e1.uid = e2.uid AND e1.original_instance_time = e2.original_instance_time WHERE e1.original_event_id IS NULL AND e2.original_event_id IS NOT NULL AND e1.original_instance_time IS NOT NULL )
+MIGRATION_13_14	sql	DELETE FROM events WHERE original_instance_time IS NOT NULL AND id NOT IN ( SELECT MAX(id) FROM events WHERE original_instance_time IS NOT NULL GROUP BY calendar_id, uid, original_instance_time )
+MIGRATION_13_14	sql	ON events (calendar_id, uid, original_instance_time)
+MIGRATION_13_14	sql	ON events (original_event_id, original_instance_time)
+MIGRATION_14_15	addColumnIfNotExists	TEXT DEFAULT NULL
+MIGRATION_14_15	addColumnIfNotExists	linked_move_id
+MIGRATION_14_15	addColumnIfNotExists	pending_operations
+MIGRATION_14_15	columnExists	linked_move_id
+MIGRATION_14_15	columnExists	pending_operations
+MIGRATION_14_15	sql	CREATE INDEX $INDEX_NAME ON pending_operations(linked_move_id)
+MIGRATION_14_15	sql	SELECT COUNT(DISTINCT po1.event_id) FROM pending_operations po1 INNER JOIN pending_operations po2 ON po1.event_id = po2.event_id WHERE po1.operation = 'CREATE' AND po2.operation = 'DELETE' AND po1.status = 'PENDING' AND po2.status = 'PENDING' AND po1.linked_move_id IS NULL AND po2.linked_move_id IS NULL
+MIGRATION_14_15	val	index_pending_operations_linked_move_id
+MIGRATION_15_16	addColumnIfNotExists	INTEGER
+MIGRATION_15_16	addColumnIfNotExists	INTEGER NOT NULL DEFAULT 0
+MIGRATION_15_16	addColumnIfNotExists	TEXT
+MIGRATION_15_16	addColumnIfNotExists	TEXT
+MIGRATION_15_16	addColumnIfNotExists	calendars
+MIGRATION_15_16	addColumnIfNotExists	calendars
+MIGRATION_15_16	addColumnIfNotExists	calendars
+MIGRATION_15_16	addColumnIfNotExists	default_reminder
+MIGRATION_15_16	addColumnIfNotExists	end_timezone
+MIGRATION_15_16	addColumnIfNotExists	events
+MIGRATION_15_16	addColumnIfNotExists	is_notification_muted
+MIGRATION_15_16	addColumnIfNotExists	local_color_override
+MIGRATION_16_17	addColumnIfNotExists	TEXT
+MIGRATION_16_17	addColumnIfNotExists	TEXT
+MIGRATION_16_17	addColumnIfNotExists	TEXT NOT NULL DEFAULT '[]'
+MIGRATION_16_17	addColumnIfNotExists	accounts
+MIGRATION_16_17	addColumnIfNotExists	calendar_user_addresses
+MIGRATION_16_17	addColumnIfNotExists	events
+MIGRATION_16_17	addColumnIfNotExists	events
+MIGRATION_16_17	addColumnIfNotExists	organizer_schedule_status
+MIGRATION_16_17	addColumnIfNotExists	organizer_sent_by
+MIGRATION_16_17	columnExists	accounts
+MIGRATION_16_17	columnExists	calendar_user_addresses
+MIGRATION_16_17	columnExists	events
+MIGRATION_16_17	columnExists	events
+MIGRATION_16_17	columnExists	organizer_schedule_status
+MIGRATION_16_17	columnExists	organizer_sent_by
+MIGRATION_16_17	indexExists	index_attendees_address
+MIGRATION_16_17	indexExists	index_attendees_event_id
+MIGRATION_16_17	sql	CREATE INDEX IF NOT EXISTS `index_attendees_address`
+MIGRATION_16_17	sql	CREATE INDEX IF NOT EXISTS `index_attendees_event_id`
+MIGRATION_16_17	sql	CREATE TABLE IF NOT EXISTS `attendees` ( `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `event_id` INTEGER NOT NULL, `address` TEXT NOT NULL, `display_name` TEXT, `role` TEXT, `partstat` TEXT, `cutype` TEXT, `rsvp` INTEGER, `delegated_from` TEXT NOT NULL DEFAULT '[]', `delegated_to` TEXT NOT NULL DEFAULT '[]', `member` TEXT NOT NULL DEFAULT '[]', `sent_by` TEXT, `schedule_agent` TEXT, `schedule_status` TEXT, `schedule_force_send` TEXT, `sort_order` INTEGER NOT NULL DEFAULT 0, FOREIGN KEY(`event_id`) REFERENCES `events`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )
+MIGRATION_16_17	sql	DROP TABLE attendees
+MIGRATION_16_17	sql	ON `attendees` (`address`)
+MIGRATION_16_17	sql	ON `attendees` (`event_id`)
+MIGRATION_16_17	tableColumns	attendees
+MIGRATION_16_17	tableExists	attendees
+MIGRATION_16_17	val	accounts.calendar_user_addresses
+MIGRATION_16_17	val	attendees table
+MIGRATION_16_17	val	events.organizer_schedule_status
+MIGRATION_16_17	val	events.organizer_sent_by
+MIGRATION_16_17	val	index_attendees_address
+MIGRATION_16_17	val	index_attendees_event_id
+MIGRATION_17_18	addColumnIfNotExists	INTEGER
+MIGRATION_17_18	addColumnIfNotExists	INTEGER NOT NULL DEFAULT 0
+MIGRATION_17_18	addColumnIfNotExists	TEXT
+MIGRATION_17_18	addColumnIfNotExists	attendees
+MIGRATION_17_18	addColumnIfNotExists	notified_at
+MIGRATION_17_18	addColumnIfNotExists	partstat_only
+MIGRATION_17_18	addColumnIfNotExists	partstat_target
+MIGRATION_17_18	addColumnIfNotExists	pending_operations
+MIGRATION_17_18	addColumnIfNotExists	pending_operations
+MIGRATION_17_18	columnExists	attendees
+MIGRATION_17_18	columnExists	notified_at
+MIGRATION_17_18	columnExists	partstat_only
+MIGRATION_17_18	columnExists	partstat_target
+MIGRATION_17_18	columnExists	pending_operations
+MIGRATION_17_18	columnExists	pending_operations
+MIGRATION_17_18	val	attendees.notified_at
+MIGRATION_17_18	val	pending_operations.partstat_only
+MIGRATION_17_18	val	pending_operations.partstat_target
+MIGRATION_18_19	addColumnIfNotExists	INTEGER
+MIGRATION_18_19	addColumnIfNotExists	TEXT
+MIGRATION_18_19	addColumnIfNotExists	accounts
+MIGRATION_18_19	addColumnIfNotExists	auto_schedule_supported
+MIGRATION_18_19	addColumnIfNotExists	calendars
+MIGRATION_18_19	addColumnIfNotExists	schedule_outbox_url
+MIGRATION_18_19	columnExists	accounts
+MIGRATION_18_19	columnExists	auto_schedule_supported
+MIGRATION_18_19	columnExists	calendars
+MIGRATION_18_19	columnExists	schedule_outbox_url
+MIGRATION_18_19	val	accounts.schedule_outbox_url
+MIGRATION_18_19	val	calendars.auto_schedule_supported
+MIGRATION_19_20	addColumnIfNotExists	INTEGER
+MIGRATION_19_20	addColumnIfNotExists	TEXT
+MIGRATION_19_20	addColumnIfNotExists	attendees
+MIGRATION_19_20	addColumnIfNotExists	attendees
+MIGRATION_19_20	addColumnIfNotExists	itip_request_sequence
+MIGRATION_19_20	addColumnIfNotExists	itip_request_status
+MIGRATION_19_20	columnExists	attendees
+MIGRATION_19_20	columnExists	attendees
+MIGRATION_19_20	columnExists	itip_request_sequence
+MIGRATION_19_20	columnExists	itip_request_status
+MIGRATION_19_20	val	attendees.itip_request_sequence
+MIGRATION_19_20	val	attendees.itip_request_status
+MIGRATION_1_2	sql	CREATE TABLE IF NOT EXISTS ics_subscriptions ( id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, url TEXT NOT NULL, name TEXT NOT NULL, color INTEGER NOT NULL, calendar_id INTEGER NOT NULL, last_sync INTEGER NOT NULL DEFAULT 0, sync_interval_hours INTEGER NOT NULL DEFAULT 24, enabled INTEGER NOT NULL DEFAULT 1, etag TEXT, last_modified TEXT, username TEXT, last_error TEXT, created_at INTEGER NOT NULL, FOREIGN KEY (calendar_id) REFERENCES calendars(id) ON DELETE CASCADE )
+MIGRATION_1_2	sql	CREATE UNIQUE INDEX IF NOT EXISTS index_ics_subscriptions_calendar_id ON ics_subscriptions (calendar_id)
+MIGRATION_1_2	sql	CREATE UNIQUE INDEX IF NOT EXISTS index_ics_subscriptions_url ON ics_subscriptions (url)
+MIGRATION_20_21	columnExists	pending_cancels
+MIGRATION_20_21	list	address
+MIGRATION_20_21	list	attempt_count
+MIGRATION_20_21	list	event_id
+MIGRATION_20_21	list	recurrence_id
+MIGRATION_20_21	list	schedule_agent
+MIGRATION_20_21	list	schedule_status
+MIGRATION_20_21	list	sequence
+MIGRATION_20_21	sql	CREATE INDEX IF NOT EXISTS `index_pending_cancels_event_id`
+MIGRATION_20_21	sql	CREATE TABLE IF NOT EXISTS `pending_cancels` (
+MIGRATION_20_21	sql	CREATE UNIQUE INDEX IF NOT EXISTS
+MIGRATION_20_21	sql	FOREIGN KEY(`event_id`) REFERENCES `events`(`id`)
+MIGRATION_20_21	sql	ON UPDATE NO ACTION ON DELETE CASCADE )
+MIGRATION_20_21	sql	ON `pending_cancels` (`event_id`)
+MIGRATION_20_21	sql	ON `pending_cancels` (`event_id`, `recurrence_id`, `address`)
+MIGRATION_20_21	sql	`address` TEXT NOT NULL,
+MIGRATION_20_21	sql	`attempt_count` INTEGER NOT NULL DEFAULT 0,
+MIGRATION_20_21	sql	`event_id` INTEGER NOT NULL,
+MIGRATION_20_21	sql	`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+MIGRATION_20_21	sql	`index_pending_cancels_event_id_recurrence_id_address`
+MIGRATION_20_21	sql	`recurrence_id` INTEGER,
+MIGRATION_20_21	sql	`schedule_agent` TEXT,
+MIGRATION_20_21	sql	`schedule_status` TEXT,
+MIGRATION_20_21	sql	`sequence` INTEGER NOT NULL,
+MIGRATION_20_21	tableExists	pending_cancels
+MIGRATION_20_21	val	pending_cancels (table)
+MIGRATION_20_21	val	pending_cancels.$col
+MIGRATION_21_22	columnExists	categories
+MIGRATION_21_22	list	color
+MIGRATION_21_22	list	last_used_at
+MIGRATION_21_22	list	name
+MIGRATION_21_22	primaryKeyIsNoCase	categories
+MIGRATION_21_22	sql	CREATE INDEX IF NOT EXISTS `index_categories_last_used_at`
+MIGRATION_21_22	sql	CREATE TABLE IF NOT EXISTS `categories` (
+MIGRATION_21_22	sql	FROM events WHERE categories IS NOT NULL AND categories != ''
+MIGRATION_21_22	sql	INSERT OR IGNORE INTO categories (name, color, last_used_at) VALUES (?, ?, ?)
+MIGRATION_21_22	sql	INSERT OR IGNORE INTO categories (name, color, last_used_at) VALUES (?, NULL, ?)
+MIGRATION_21_22	sql	ON `categories` (`last_used_at`)
+MIGRATION_21_22	sql	PRIMARY KEY(`name`))
+MIGRATION_21_22	sql	SELECT categories, COALESCE(local_modified_at, start_ts) AS recency
+MIGRATION_21_22	sql	`color` INTEGER,
+MIGRATION_21_22	sql	`last_used_at` INTEGER NOT NULL,
+MIGRATION_21_22	sql	`name` TEXT NOT NULL COLLATE NOCASE,
+MIGRATION_21_22	tableExists	categories
+MIGRATION_21_22	val	categories
+MIGRATION_21_22	val	categories (table)
+MIGRATION_21_22	val	categories.$col
+MIGRATION_21_22	val	recency
+MIGRATION_22_23	columnExists	address_books
+MIGRATION_22_23	list	account_id
+MIGRATION_22_23	list	id
+MIGRATION_22_23	list	sync_token
+MIGRATION_22_23	list	url
+MIGRATION_22_23	list	vcard_version
+MIGRATION_22_23	sql	CREATE INDEX IF NOT EXISTS `index_address_books_account_id`
+MIGRATION_22_23	sql	CREATE TABLE IF NOT EXISTS `address_books` (
+MIGRATION_22_23	sql	CREATE UNIQUE INDEX IF NOT EXISTS `index_address_books_account_id_url`
+MIGRATION_22_23	sql	FOREIGN KEY(`account_id`) REFERENCES `accounts`(`id`)
+MIGRATION_22_23	sql	ON UPDATE NO ACTION ON DELETE CASCADE )
+MIGRATION_22_23	sql	ON `address_books` (`account_id`)
+MIGRATION_22_23	sql	ON `address_books` (`account_id`, `url`)
+MIGRATION_22_23	sql	`account_id` INTEGER NOT NULL, `url` TEXT NOT NULL,
+MIGRATION_22_23	sql	`display_name` TEXT NOT NULL, `description` TEXT,
+MIGRATION_22_23	sql	`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+MIGRATION_22_23	sql	`is_read_only` INTEGER NOT NULL, `is_sync_enabled` INTEGER NOT NULL,
+MIGRATION_22_23	sql	`vcard_version` TEXT NOT NULL, `ctag` TEXT, `sync_token` TEXT,
+MIGRATION_22_23	tableExists	address_books
+MIGRATION_22_23	val	address_books (table)
+MIGRATION_22_23	val	address_books.$col
+MIGRATION_23_24	addColumnIfNotExists	INTEGER NOT NULL DEFAULT 0
+MIGRATION_23_24	addColumnIfNotExists	accounts
+MIGRATION_23_24	addColumnIfNotExists	contact_sync_enabled
+MIGRATION_23_24	columnExists	accounts
+MIGRATION_23_24	columnExists	contact_sync_enabled
+MIGRATION_24_25	addColumnIfNotExists	INTEGER NOT NULL DEFAULT 0
+MIGRATION_24_25	addColumnIfNotExists	calendars
+MIGRATION_24_25	addColumnIfNotExists	initial_pull_done
+MIGRATION_24_25	columnExists	calendars
+MIGRATION_24_25	columnExists	initial_pull_done
+MIGRATION_24_25	columnTypeOf	calendars
+MIGRATION_24_25	columnTypeOf	initial_pull_done
+MIGRATION_24_25	sql	CREATE INDEX IF NOT EXISTS `index_recent_changes_calendar_id`
+MIGRATION_24_25	sql	CREATE INDEX IF NOT EXISTS `index_recent_changes_detected_at`
+MIGRATION_24_25	sql	CREATE INDEX IF NOT EXISTS `index_recent_changes_event_id`
+MIGRATION_24_25	sql	CREATE TABLE IF NOT EXISTS `recent_changes` (
+MIGRATION_24_25	sql	CREATE UNIQUE INDEX IF NOT EXISTS
+MIGRATION_24_25	sql	DROP TABLE recent_changes
+MIGRATION_24_25	sql	FOREIGN KEY(`calendar_id`) REFERENCES `calendars`(`id`)
+MIGRATION_24_25	sql	FOREIGN KEY(`event_id`) REFERENCES `events`(`id`)
+MIGRATION_24_25	sql	ON UPDATE NO ACTION ON DELETE CASCADE ,
+MIGRATION_24_25	sql	ON UPDATE NO ACTION ON DELETE SET NULL )
+MIGRATION_24_25	sql	ON `recent_changes` (`calendar_id`)
+MIGRATION_24_25	sql	ON `recent_changes` (`calendar_id`, `event_uid`, `instance_ts`)
+MIGRATION_24_25	sql	ON `recent_changes` (`detected_at`)
+MIGRATION_24_25	sql	ON `recent_changes` (`event_id`)
+MIGRATION_24_25	sql	UPDATE calendars SET initial_pull_done = 1
+MIGRATION_24_25	sql	WHERE sync_token IS NOT NULL OR ctag IS NOT NULL
+MIGRATION_24_25	sql	`calendar_id` INTEGER NOT NULL, `event_uid` TEXT NOT NULL,
+MIGRATION_24_25	sql	`change_type` TEXT NOT NULL, `title` TEXT NOT NULL,
+MIGRATION_24_25	sql	`changed_fields` TEXT NOT NULL DEFAULT '',
+MIGRATION_24_25	sql	`detected_at` INTEGER NOT NULL,
+MIGRATION_24_25	sql	`dismissed_at` INTEGER,
+MIGRATION_24_25	sql	`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+MIGRATION_24_25	sql	`index_recent_changes_calendar_id_event_uid_instance_ts`
+MIGRATION_24_25	sql	`instance_ts` INTEGER NOT NULL, `event_id` INTEGER,
+MIGRATION_24_25	sql	`is_all_day` INTEGER NOT NULL, `is_recurring` INTEGER NOT NULL,
+MIGRATION_24_25	sql	`previous_start_ts` INTEGER, `previous_is_all_day` INTEGER,
+MIGRATION_24_25	sql	`start_ts` INTEGER NOT NULL, `end_ts` INTEGER NOT NULL,
+MIGRATION_24_25	tableColumns	recent_changes
+MIGRATION_24_25	tableColumns	recent_changes
+MIGRATION_24_25	tableExists	recent_changes
+MIGRATION_24_25	tableExists	recent_changes
+MIGRATION_24_25	val	calendars.initial_pull_done
+MIGRATION_24_25	val	recent_changes (table)
+MIGRATION_24_25	val	recent_changes.$it
+MIGRATION_25_26	addColumnIfNotExists	events
+MIGRATION_25_26	columnExists	events
+MIGRATION_25_26	columnTypeOf	events
+MIGRATION_26_27	columnExists	pending_operations
+MIGRATION_26_27	list	events
+MIGRATION_26_27	list	pending_operations
+MIGRATION_26_27	sql	AND NOT ($LINKED_TO_ORPHANED_CREATE)
+MIGRATION_26_27	sql	CREATE TEMP TABLE po_keep AS SELECT * FROM pending_operations
+MIGRATION_26_27	sql	DELETE FROM pending_operations WHERE $EVENT_MISSING AND NOT ($SELF_CONTAINED_DELETE)
+MIGRATION_26_27	sql	DELETE FROM pending_operations WHERE $LINKED_TO_ORPHANED_CREATE
+MIGRATION_26_27	sql	DROP TABLE IF EXISTS temp.po_keep
+MIGRATION_26_27	sql	DROP TABLE temp.po_keep
+MIGRATION_26_27	sql	DROP TRIGGER IF EXISTS $EVENT_DELETE_TRIGGER_V27
+MIGRATION_26_27	sql	OR ($EVENT_MISSING AND NOT ($SELF_CONTAINED_DELETE)) GROUP BY operation
+MIGRATION_26_27	sql	SELECT COUNT(*) FROM (SELECT * FROM temp.po_keep EXCEPT SELECT * FROM pending_operations)
+MIGRATION_26_27	sql	SELECT COUNT(*) FROM events
+MIGRATION_26_27	sql	SELECT COUNT(*) FROM events
+MIGRATION_26_27	sql	SELECT COUNT(*) FROM pending_operations WHERE $EVENT_MISSING
+MIGRATION_26_27	sql	SELECT COUNT(*) FROM pending_operations WHERE $EVENT_MISSING AND $SELF_CONTAINED_DELETE
+MIGRATION_26_27	sql	SELECT COUNT(*) FROM pending_operations WHERE event_id IN (SELECT id FROM events)
+MIGRATION_26_27	sql	SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name = '$EVENT_DELETE_TRIGGER_V27'
+MIGRATION_26_27	sql	SELECT COUNT(*) FROM temp.po_keep
+MIGRATION_26_27	sql	SELECT operation, COUNT(*) FROM pending_operations WHERE ($LINKED_TO_ORPHANED_CREATE)
+MIGRATION_26_27	sql	WHERE event_id IN (SELECT id FROM events)
+MIGRATION_27_28	sql	DROP TABLE IF EXISTS `$FTS_TABLE_V27`
+MIGRATION_27_28	sql	DROP TABLE IF EXISTS `$it`
+MIGRATION_27_28	sql	DROP TRIGGER IF EXISTS `$it`
+MIGRATION_27_28	sql	OR instr(sql, '$FTS_TABLE_V27') > 0
+MIGRATION_27_28	sql	SELECT COUNT(*) FROM events
+MIGRATION_27_28	sql	SELECT COUNT(*) FROM events
+MIGRATION_27_28	sql	SELECT COUNT(*) FROM sqlite_master WHERE instr(name, '$FTS_TABLE_V27') > 0
+MIGRATION_27_28	sql	SELECT name FROM sqlite_master WHERE type = 'trigger' AND instr(sql, ?) > 0
+MIGRATION_28_29	columnExists	events
+MIGRATION_28_29	columnExists	raw_ical
+MIGRATION_28_29	sql	!= (length(e.raw_ical) + 262143) / 262144
+MIGRATION_28_29	sql	(SELECT o.id FROM events o WHERE o.original_event_id = m.id
+MIGRATION_28_29	sql	) SELECT event_id, part_index, substr(rest, 1, 262144) FROM split
+MIGRATION_28_29	sql	ALTER TABLE `events_new` RENAME TO `events`
+MIGRATION_28_29	sql	AND e.id NOT IN (SELECT owner_id FROM temp.ics_owner)
+MIGRATION_28_29	sql	AND e.raw_ical IS NOT (SELECT s.raw_ical FROM temp.ics_owner so JOIN events s ON s.id = so.source_id
+MIGRATION_28_29	sql	AND e.raw_ical IS NOT (SELECT s.raw_ical FROM temp.ics_owner so JOIN events s ON s.id = so.source_id
+MIGRATION_28_29	sql	AND e.raw_ical IS NOT NULL AND e.raw_ical != '' AND instr(CAST(e.raw_ical AS BLOB), x'00') = 0
+MIGRATION_28_29	sql	AND e.raw_ical IS NOT NULL AND e.raw_ical != '' AND instr(CAST(e.raw_ical AS BLOB), x'00') = 0
+MIGRATION_28_29	sql	AND m.extra_properties LIKE '%\"X-KASHCAL-SYNTHETIC-MASTER\":\"true\"%'
+MIGRATION_28_29	sql	AND m.id NOT IN (SELECT owner_id FROM temp.ics_owner)) WHERE source_id IS NOT NULL
+MIGRATION_28_29	sql	AND o.raw_ical IS NOT NULL AND o.raw_ical != '' AND instr(CAST(o.raw_ical AS BLOB), x'00') = 0
+MIGRATION_28_29	sql	AND raw_ical IS NOT NULL AND raw_ical != '' AND instr(CAST(raw_ical AS BLOB), x'00') = 0
+MIGRATION_28_29	sql	AND sql IS NOT NULL ORDER BY type, name
+MIGRATION_28_29	sql	CREATE TABLE IF NOT EXISTS `event_ics` (`event_id` INTEGER NOT NULL, `part_index` INTEGER NOT NULL,
+MIGRATION_28_29	sql	CREATE TABLE `events_new` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `uid` TEXT NOT NULL,
+MIGRATION_28_29	sql	CREATE TEMP TABLE ics_owner (owner_id INTEGER PRIMARY KEY NOT NULL, source_id INTEGER NOT NULL)
+MIGRATION_28_29	sql	DELETE FROM `event_ics`
+MIGRATION_28_29	sql	DROP TABLE IF EXISTS `events_new`
+MIGRATION_28_29	sql	DROP TABLE IF EXISTS temp.ics_owner
+MIGRATION_28_29	sql	DROP TABLE `events`
+MIGRATION_28_29	sql	DROP TABLE temp.ics_owner
+MIGRATION_28_29	sql	FOREIGN KEY(`calendar_id`) REFERENCES `calendars`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE ,
+MIGRATION_28_29	sql	FOREIGN KEY(`original_event_id`) REFERENCES `events`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )
+MIGRATION_28_29	sql	FROM events m WHERE m.original_event_id IS NULL AND m.caldav_url IS NULL
+MIGRATION_28_29	sql	INSERT INTO `event_ics` (event_id, part_index, content)
+MIGRATION_28_29	sql	INSERT INTO `events_new` ($kept) SELECT $kept FROM `events`
+MIGRATION_28_29	sql	INSERT INTO sqlite_sequence (name, seq) VALUES ('events', ?)
+MIGRATION_28_29	sql	INSERT INTO temp.ics_owner (owner_id, source_id)
+MIGRATION_28_29	sql	INSERT INTO temp.ics_owner (owner_id, source_id)
+MIGRATION_28_29	sql	INSERT INTO temp.ics_owner (owner_id, source_id)
+MIGRATION_28_29	sql	IS NOT length(CAST(e.raw_ical AS BLOB))
+MIGRATION_28_29	sql	JOIN events e ON e.id = o.source_id
+MIGRATION_28_29	sql	ORDER BY o.id LIMIT 1) AS source_id
+MIGRATION_28_29	sql	PRAGMA foreign_key_check
+MIGRATION_28_29	sql	PRAGMA foreign_keys
+MIGRATION_28_29	sql	REFERENCES `events`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )
+MIGRATION_28_29	sql	SELECT COUNT(*) FROM `event_ics`
+MIGRATION_28_29	sql	SELECT COUNT(*) FROM `event_ics` p JOIN temp.ics_owner o ON o.owner_id = p.event_id
+MIGRATION_28_29	sql	SELECT COUNT(*) FROM events
+MIGRATION_28_29	sql	SELECT COUNT(*) FROM events
+MIGRATION_28_29	sql	SELECT COUNT(*) FROM events WHERE raw_ical IS NOT NULL AND instr(CAST(raw_ical AS BLOB), x'00') > 0
+MIGRATION_28_29	sql	SELECT COUNT(*) FROM events e WHERE e.original_event_id IS NOT NULL
+MIGRATION_28_29	sql	SELECT COUNT(*) FROM sqlite_sequence WHERE name = 'events'
+MIGRATION_28_29	sql	SELECT COUNT(*) FROM temp.ics_owner
+MIGRATION_28_29	sql	SELECT COUNT(*) FROM temp.ics_owner o JOIN events e ON e.id = o.source_id
+MIGRATION_28_29	sql	SELECT COUNT(*) FROM temp.ics_owner o JOIN events e ON e.id = o.source_id
+MIGRATION_28_29	sql	SELECT e.id, e.id FROM events e WHERE e.original_event_id IS NOT NULL
+MIGRATION_28_29	sql	SELECT event_id, part_index + 1, substr(rest, 262145) FROM split WHERE length(rest) > 262144
+MIGRATION_28_29	sql	SELECT id, id FROM events WHERE original_event_id IS NULL
+MIGRATION_28_29	sql	SELECT o.owner_id, 0, e.raw_ical FROM temp.ics_owner o JOIN events e ON e.id = o.source_id
+MIGRATION_28_29	sql	SELECT owner_id, source_id FROM (SELECT m.id AS owner_id,
+MIGRATION_28_29	sql	SELECT seq FROM sqlite_sequence WHERE name = 'events'
+MIGRATION_28_29	sql	SELECT sql FROM sqlite_master WHERE tbl_name = 'events' AND type IN ('index', 'trigger')
+MIGRATION_28_29	sql	UNION ALL
+MIGRATION_28_29	sql	UPDATE sqlite_sequence SET seq = MAX(seq, ?) WHERE name = 'events'
+MIGRATION_28_29	sql	WHERE (SELECT COUNT(*) FROM `event_ics` p WHERE p.event_id = o.owner_id)
+MIGRATION_28_29	sql	WHERE (SELECT SUM(length(CAST(p.content AS BLOB))) FROM `event_ics` p WHERE p.event_id = o.owner_id)
+MIGRATION_28_29	sql	WHERE p.content IS NOT substr(e.raw_ical, p.part_index * 262144 + 1, 262144)
+MIGRATION_28_29	sql	WHERE so.owner_id = e.original_event_id)
+MIGRATION_28_29	sql	WHERE so.owner_id = e.original_event_id)
+MIGRATION_28_29	sql	WITH RECURSIVE split(event_id, part_index, rest) AS (
+MIGRATION_28_29	sql	`classification` TEXT NOT NULL DEFAULT 'PUBLIC', `organizer_email` TEXT, `organizer_name` TEXT,
+MIGRATION_28_29	sql	`content` TEXT NOT NULL, PRIMARY KEY(`event_id`, `part_index`), FOREIGN KEY(`event_id`)
+MIGRATION_28_29	sql	`description` TEXT, `start_ts` INTEGER NOT NULL, `end_ts` INTEGER NOT NULL, `timezone` TEXT,
+MIGRATION_28_29	sql	`end_timezone` TEXT, `is_all_day` INTEGER NOT NULL DEFAULT 0,
+MIGRATION_28_29	sql	`exdate` TEXT, `duration` TEXT, `original_event_id` INTEGER, `original_instance_time` INTEGER,
+MIGRATION_28_29	sql	`extra_properties` TEXT, `dtstamp` INTEGER NOT NULL, `caldav_url` TEXT, `etag` TEXT,
+MIGRATION_28_29	sql	`import_id` TEXT, `calendar_id` INTEGER NOT NULL, `title` TEXT NOT NULL, `location` TEXT,
+MIGRATION_28_29	sql	`last_sync_error` TEXT, `sync_retry_count` INTEGER NOT NULL DEFAULT 0, `local_modified_at` INTEGER,
+MIGRATION_28_29	sql	`organizer_sent_by` TEXT, `organizer_schedule_status` TEXT, `rrule` TEXT, `rdate` TEXT,
+MIGRATION_28_29	sql	`original_sync_id` TEXT, `reminders` TEXT, `alarm_count` INTEGER NOT NULL DEFAULT 0,
+MIGRATION_28_29	sql	`priority` INTEGER NOT NULL DEFAULT 0, `geo_lat` REAL, `geo_lon` REAL, `color` INTEGER,
+MIGRATION_28_29	sql	`sequence` INTEGER NOT NULL DEFAULT 0, `sync_status` TEXT NOT NULL DEFAULT 'SYNCED',
+MIGRATION_28_29	sql	`server_modified_at` INTEGER, `import_source` TEXT, `itip_dtstamp` INTEGER,
+MIGRATION_28_29	sql	`status` TEXT NOT NULL DEFAULT 'CONFIRMED', `transp` TEXT NOT NULL DEFAULT 'OPAQUE',
+MIGRATION_28_29	sql	`url` TEXT, `categories` TEXT, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL,
+MIGRATION_28_29	tableColumns	events
+MIGRATION_28_29	tableColumns	events_new
+MIGRATION_28_29	val	,
+MIGRATION_28_29	val	`$it`
+MIGRATION_2_3	sql	CREATE INDEX IF NOT EXISTS index_scheduled_reminders_event_id ON scheduled_reminders (event_id)
+MIGRATION_2_3	sql	CREATE INDEX IF NOT EXISTS index_scheduled_reminders_status ON scheduled_reminders (status)
+MIGRATION_2_3	sql	CREATE INDEX IF NOT EXISTS index_scheduled_reminders_trigger_time ON scheduled_reminders (trigger_time)
+MIGRATION_2_3	sql	CREATE TABLE IF NOT EXISTS scheduled_reminders ( id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, event_id INTEGER NOT NULL, occurrence_time INTEGER NOT NULL, trigger_time INTEGER NOT NULL, reminder_offset TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'PENDING', snooze_count INTEGER NOT NULL DEFAULT 0, event_title TEXT NOT NULL, event_location TEXT, is_all_day INTEGER NOT NULL DEFAULT 0, calendar_color INTEGER NOT NULL, created_at INTEGER NOT NULL, FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE )
+MIGRATION_2_3	sql	CREATE UNIQUE INDEX IF NOT EXISTS index_scheduled_reminders_unique ON scheduled_reminders (event_id, occurrence_time, reminder_offset)
+MIGRATION_4_5	sql	ALTER TABLE pending_operations ADD COLUMN target_calendar_id INTEGER
+MIGRATION_4_5	sql	ALTER TABLE pending_operations ADD COLUMN target_url TEXT
+MIGRATION_5_6	sql	ALTER TABLE pending_operations ADD COLUMN move_phase INTEGER NOT NULL DEFAULT 0
+MIGRATION_6_7	dropIndexIfExists	index_events_uid_calendar_master
+MIGRATION_6_7	sql	ALTER TABLE events ADD COLUMN alarm_count INTEGER NOT NULL DEFAULT 0
+MIGRATION_6_7	sql	ALTER TABLE events ADD COLUMN import_id TEXT
+MIGRATION_6_7	sql	ALTER TABLE events ADD COLUMN raw_ical TEXT
+MIGRATION_6_7	sql	CREATE INDEX IF NOT EXISTS index_events_calendar_id_import_id ON events (calendar_id, import_id)
+MIGRATION_6_7	sql	CREATE INDEX IF NOT EXISTS index_events_import_id ON events (import_id)
+MIGRATION_6_7	sql	CREATE TRIGGER IF NOT EXISTS trigger_master_event_unique_insert BEFORE INSERT ON events WHEN NEW.original_event_id IS NULL BEGIN SELECT RAISE(ABORT, 'UNIQUE constraint failed: duplicate master event uid in calendar') WHERE EXISTS ( SELECT 1 FROM events WHERE uid = NEW.uid AND calendar_id = NEW.calendar_id AND original_event_id IS NULL ); END
+MIGRATION_6_7	sql	CREATE TRIGGER IF NOT EXISTS trigger_master_event_unique_update BEFORE UPDATE ON events WHEN NEW.original_event_id IS NULL BEGIN SELECT RAISE(ABORT, 'UNIQUE constraint failed: duplicate master event uid in calendar') WHERE EXISTS ( SELECT 1 FROM events WHERE uid = NEW.uid AND calendar_id = NEW.calendar_id AND original_event_id IS NULL AND id != NEW.id ); END
+MIGRATION_6_7	sql	UPDATE events SET import_id = uid WHERE import_id IS NULL
+MIGRATION_7_8	addColumnIfNotExists	INTEGER
+MIGRATION_7_8	addColumnIfNotExists	INTEGER NOT NULL DEFAULT 0
+MIGRATION_7_8	addColumnIfNotExists	REAL
+MIGRATION_7_8	addColumnIfNotExists	REAL
+MIGRATION_7_8	addColumnIfNotExists	TEXT
+MIGRATION_7_8	addColumnIfNotExists	TEXT
+MIGRATION_7_8	addColumnIfNotExists	categories
+MIGRATION_7_8	addColumnIfNotExists	color
+MIGRATION_7_8	addColumnIfNotExists	events
+MIGRATION_7_8	addColumnIfNotExists	events
+MIGRATION_7_8	addColumnIfNotExists	events
+MIGRATION_7_8	addColumnIfNotExists	events
+MIGRATION_7_8	addColumnIfNotExists	events
+MIGRATION_7_8	addColumnIfNotExists	events
+MIGRATION_7_8	addColumnIfNotExists	geo_lat
+MIGRATION_7_8	addColumnIfNotExists	geo_lon
+MIGRATION_7_8	addColumnIfNotExists	priority
+MIGRATION_7_8	addColumnIfNotExists	url
+MIGRATION_7_8	dropIndexIfExists	index_events_uid_calendar_master
+MIGRATION_7_8	sql	CREATE INDEX IF NOT EXISTS index_accounts_is_enabled ON accounts (is_enabled)
+MIGRATION_7_8	sql	CREATE INDEX IF NOT EXISTS index_calendars_is_visible ON calendars (is_visible)
+MIGRATION_7_8	sql	CREATE INDEX IF NOT EXISTS index_ics_subscriptions_enabled ON ics_subscriptions (enabled)
+MIGRATION_7_8	sql	CREATE INDEX IF NOT EXISTS index_occurrences_is_cancelled ON occurrences (is_cancelled)
+MIGRATION_8_9	sql	CREATE INDEX $INDEX_NAME ON events (calendar_id, uid, original_instance_time)
+MIGRATION_8_9	val	index_events_calendar_id_uid_original_instance_time
+MIGRATION_9_10	sql	CREATE UNIQUE INDEX $INDEX_NAME ON occurrences (event_id, start_ts)
+MIGRATION_9_10	sql	DELETE FROM occurrences WHERE id NOT IN ( SELECT MIN(id) FROM occurrences GROUP BY event_id, start_ts )
+MIGRATION_9_10	sql	SELECT COUNT(*) FROM occurrences WHERE id NOT IN ( SELECT MIN(id) FROM occurrences GROUP BY event_id, start_ts )
+MIGRATION_9_10	val	index_occurrences_event_id_start_ts_unique
+shared	list	INTEGER
+shared	list	INTEGER
+shared	list	INTEGER
+shared	list	TEXT
+shared	list	TEXT
+shared	list	address
+shared	list	attendees
+shared	list	calendar_id
+shared	list	change_type
+shared	list	changed_fields
+shared	list	content
+shared	list	cutype
+shared	list	delegated_from
+shared	list	delegated_to
+shared	list	detected_at
+shared	list	dismissed_at
+shared	list	display_name
+shared	list	docsize
+shared	list	end_ts
+shared	list	event_id
+shared	list	event_id
+shared	list	event_id
+shared	list	event_uid
+shared	list	id
+shared	list	id
+shared	list	import_source
+shared	list	index_recent_changes_calendar_id
+shared	list	index_recent_changes_calendar_id_event_uid_instance_ts
+shared	list	index_recent_changes_detected_at
+shared	list	index_recent_changes_event_id
+shared	list	instance_ts
+shared	list	is_all_day
+shared	list	is_recurring
+shared	list	itip_dtstamp
+shared	list	linked_move_id
+shared	list	member
+shared	list	notified_at
+shared	list	operation
+shared	list	partstat
+shared	list	partstat_only
+shared	list	partstat_target
+shared	list	pending_operations
+shared	list	pending_operations
+shared	list	previous_is_all_day
+shared	list	previous_start_ts
+shared	list	role
+shared	list	rsvp
+shared	list	schedule_agent
+shared	list	schedule_force_send
+shared	list	schedule_status
+shared	list	segdir
+shared	list	segments
+shared	list	sent_by
+shared	list	sort_order
+shared	list	source_calendar_id
+shared	list	start_ts
+shared	list	stat
+shared	list	target_url
+shared	list	title
+shared	sql	ALTER TABLE $table ADD COLUMN $column $definition
+shared	sql	DROP INDEX $indexName
+shared	sql	PRAGMA table_info($table)
+shared	sql	PRAGMA table_info($table)
+shared	sql	PRAGMA table_info($tableName)
+shared	sql	SELECT name FROM sqlite_master WHERE type='index' AND name=?
+shared	sql	SELECT name FROM sqlite_master WHERE type='table' AND name=?
+shared	sql	SELECT sql FROM sqlite_master WHERE type='table' AND name=?
+shared	val	${FTS_TABLE_V27}_$it
+shared	val	CREATE TRIGGER $EVENT_DELETE_TRIGGER_V27 AFTER DELETE ON events BEGIN DELETE FROM pending_operations WHERE event_id = OLD.id AND operation = 'DELETE' AND linked_move_id IS NOT NULL AND linked_move_id IN ( SELECT linked_move_id FROM pending_operations WHERE event_id = OLD.id AND operation = 'CREATE' AND linked_move_id IS NOT NULL ); DELETE FROM pending_operations WHERE event_id = OLD.id AND NOT (operation = 'DELETE' AND target_url IS NOT NULL AND source_calendar_id IS NOT NULL); END
+shared	val	Migrations
+shared	val	NOT EXISTS (SELECT 1 FROM events e WHERE e.id = pending_operations.event_id)
+shared	val	events_fts
+shared	val	name
+shared	val	name
+shared	val	name
+shared	val	operation = 'DELETE' AND linked_move_id IS NOT NULL AND $EVENT_MISSING AND linked_move_id IN ( SELECT c.linked_move_id FROM pending_operations c WHERE c.operation = 'CREATE' AND c.linked_move_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM events e WHERE e.id = c.event_id) )
+shared	val	operation = 'DELETE' AND target_url IS NOT NULL AND source_calendar_id IS NOT NULL
+shared	val	trigger_pending_operations_follow_event_delete
+shared	val	type

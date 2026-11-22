@@ -7,7 +7,7 @@ kotlin = "2.3.21"
 ksp = "2.3.12"
 
 # AndroidX
-coreKtx = "1.19.0"
+coreKtx = "1.19.1"
 lifecycleRuntimeKtx = "2.11.0"
 activityCompose = "1.13.0"
 biometric = "1.1.0"
@@ -16,13 +16,17 @@ biometric = "1.1.0"
 composeBom = "2026.09.00"
 
 # Room
-room = "2.8.5"
+room3 = "3.0.3"
+# androidx.sqlite at the version Room 3.0.3 declares; keep the two in step.
+sqlite = "2.7.1"
+# Room 2, which WorkManager uses for its own database; the app's code doesn't use it.
+room2ForWorkManager = "2.8.5"
 
 # Coroutines
 coroutines = "1.11.0"
 
 # Collections
-collectionsImmutable = "0.5.1"
+collectionsImmutable = "0.5.2"
 
 # DI
 hilt = "2.60.1"
@@ -34,18 +38,25 @@ material = "1.14.0"
 # JSON
 kotlinxSerializationJson = "1.11.0"
 
+# iCalendar (icaldav-core). Keep at 4.0.7 or later, where ical4j PR #763 fixed a
+# duplicate-class bug.
+ical4j = "4.4.0"
+
+# vCard (vcard-core)
+ezVcard = "0.12.2"
+
 # RFC 5545 Recurrence
 libRecur = "0.17.1"
 
 # HTTP Client
-okhttp = "5.5.0"
+okhttp = "5.5.1"
 
 # DataStore & Security
-datastore = "1.2.1"
+datastore = "1.3.0"
 securityCrypto = "1.1.0"
 
 # WorkManager
-workManager = "2.11.2"
+workManager = "2.12.0"
 hiltWork = "1.4.0"
 
 # Glance (App Widgets)
@@ -55,7 +66,7 @@ glance = "1.2.0"
 materialkolor = "4.1.1"
 
 # Code Coverage
-kover = "0.9.9"
+kover = "0.9.11"
 
 # Documentation
 dokka = "2.2.0"
@@ -64,13 +75,15 @@ dokka = "2.2.0"
 junit = "4.13.2"
 junitExt = "1.3.0"
 espressoCore = "3.7.0"
-mockk = "1.14.11"
+mockk = "1.14.12"
 turbine = "1.2.1"
 coroutinesTest = "1.11.0"
 archCoreTesting = "2.2.0"
 robolectric = "4.16.1"
 roborazzi = "1.74.0"
 androidxTestCore = "1.7.0"
+kotest = "6.2.6"
+junitJupiter = "6.1.3"
 
 [libraries]
 # AndroidX Core
@@ -90,10 +103,11 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 
 # Room
-androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
-androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
-androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
-androidx-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
+androidx-room3-runtime = { group = "androidx.room3", name = "room3-runtime", version.ref = "room3" }
+androidx-room3-compiler = { group = "androidx.room3", name = "room3-compiler", version.ref = "room3" }
+androidx-room3-testing = { group = "androidx.room3", name = "room3-testing", version.ref = "room3" }
+androidx-room2-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room2ForWorkManager" }
+androidx-sqlite-framework = { group = "androidx.sqlite", name = "sqlite-framework", version.ref = "sqlite" }
 
 # Coroutines
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
@@ -148,12 +162,16 @@ androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-man
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-ui-test-junit4-accessibility = { group = "androidx.compose.ui", name = "ui-test-junit4-accessibility" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junitJupiter" }
+ical4j = { group = "org.mnode.ical4j", name = "ical4j", version.ref = "ical4j" }
+ez-vcard = { group = "com.googlecode.ez-vcard", name = "ez-vcard", version.ref = "ezVcard" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 arch-core-testing = { group = "androidx.arch.core", name = "core-testing", version.ref = "archCoreTesting" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 roborazzi = { group = "io.github.takahirom.roborazzi", name = "roborazzi", version.ref = "roborazzi" }
 roborazzi-compose = { group = "io.github.takahirom.roborazzi", name = "roborazzi-compose", version.ref = "roborazzi" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
+kotest-property = { group = "io.kotest", name = "kotest-property-jvm", version.ref = "kotest" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -55,6 +55,26 @@ interface CalendarProviderRepository {
     ): List<DeviceCalendarInstance>
 
     /**
+     * Searches the occurrences of [enabledCalendarIds] in a day range for events that carry
+     * every tag in [tags], each equal to one of the event's own tags once both are folded by
+     * [org.onekash.kashcal.domain.search.SearchFold] (the folding the phone's LIKE applies to
+     * app-calendar tags). A non-blank [query] must also match, as [searchInstances] matches it.
+     * An exception is matched by its own tags. With empty [tags] this is [searchInstances].
+     *
+     * @param startDayCode first day, YYYYMMDD, inclusive
+     * @param endDayCode last day, YYYYMMDD, inclusive
+     * @param hideDeclined drops occurrences the user declined
+     */
+    suspend fun searchTaggedInstances(
+        tags: List<String>,
+        query: String,
+        startDayCode: Int,
+        endDayCode: Int,
+        enabledCalendarIds: Set<Long>,
+        hideDeclined: Boolean = false
+    ): List<DeviceCalendarInstance>
+
+    /**
      * Suggests device-event titles starting with [prefix], grouped case-insensitively with use
      * count and last-used time, for the event-form autocomplete.
      *
@@ -380,6 +400,12 @@ interface CalendarProviderRepository {
     suspend fun getAttendees(eventId: Long): List<DeviceAttendee>
 
     /**
+     * Returns the `Attendees` rows of [eventIds] by event id, in batched queries, for the search
+     * reason line; events with no guests are absent. A failed read returns what it read so far.
+     */
+    suspend fun getAttendeesForEvents(eventIds: Collection<Long>): Map<Long, List<DeviceAttendee>>
+
+    /**
      * Sets the user's own RSVP by updating only the `Attendees` row whose `_ID` is
      * [attendeeId], so no guest's synced status is overwritten. Fails with `EventNotFound`
      * when no row matched.
@@ -453,6 +479,14 @@ interface CalendarProviderRepository {
         nowMs: Long,
         limit: Int,
     ): DeviceReminderBatch
+
+    /**
+     * Returns how many occurrences of [enabledCalendarIds] have a reminder triggering in
+     * [fromMs]..[toMs], with the trigger times and declined skips of [getDueAndNextReminders] and
+     * its 30-day read past [toMs], so a long-lead reminder counts. Zero when the read is denied or
+     * fails.
+     */
+    suspend fun countReminderOccurrences(enabledCalendarIds: Set<Long>, fromMs: Long, toMs: Long): Int
 
     /**
      * Returns true if the Events row exists with `DELETED = 0`; false when it's missing, the

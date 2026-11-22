@@ -1,0 +1,4 @@
+• Sign In Again: get a calendar account back after its saved password is lost, keeping its events (#371)
+• A failed sign-in no longer deletes an existing account (#370)
+• Undo a drag-to-reschedule in Week, 3-day and Day
+• Accounts with sync turned off now show a "Sync off" badge

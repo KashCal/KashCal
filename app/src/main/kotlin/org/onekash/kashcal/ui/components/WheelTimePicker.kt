@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,8 +32,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
@@ -76,12 +77,26 @@ internal fun actualToNearestVirtualIndex(
 }
 
 /**
+ * Sets how a wheel fades the rows away from its center: [nearAlpha] for the rows next to it,
+ * [farAlpha] for the rest, under a fade to the surface [edgeRows] rows deep at each edge.
+ */
+data class WheelFade(val edgeRows: Float, val nearAlpha: Float, val farAlpha: Float) {
+    companion object {
+        /** The fade every wheel uses unless it passes another. */
+        val Default = WheelFade(edgeRows = 1.5f, nearAlpha = 0.6f, farAlpha = 0.3f)
+    }
+}
+
+/**
  * Shows a vertical wheel that snaps to its center item and reports the centered item through
  * [onItemSelected], mid-fling included.
  *
+ * A change of [visibleItems] while shown (the date and time sheet's wheel on a rotation) starts
+ * the wheel afresh on [selectedItem]; the kept scroll position would otherwise put a different
+ * item at the new center and report it as a pick (WheelRowsChangeTest).
+ *
  * @param isCircular wraps around endlessly; ignored for fewer than two items.
  */
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun <T> VerticalWheelPicker(
     items: List<T>,
@@ -91,6 +106,28 @@ fun <T> VerticalWheelPicker(
     itemHeight: Dp = 36.dp,
     visibleItems: Int = 5,
     isCircular: Boolean = false,
+    fade: WheelFade = WheelFade.Default,
+    itemContent: @Composable (item: T, isSelected: Boolean) -> Unit
+) {
+    key(visibleItems) {
+        WheelPickerBody(
+            items, selectedItem, onItemSelected, modifier,
+            itemHeight, visibleItems, isCircular, fade, itemContent,
+        )
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun <T> WheelPickerBody(
+    items: List<T>,
+    selectedItem: T,
+    onItemSelected: (T) -> Unit,
+    modifier: Modifier,
+    itemHeight: Dp,
+    visibleItems: Int,
+    isCircular: Boolean,
+    fade: WheelFade,
     itemContent: @Composable (item: T, isSelected: Boolean) -> Unit
 ) {
     val effectiveCircular = isCircular && items.size >= 2
@@ -231,21 +268,25 @@ fun <T> VerticalWheelPicker(
             ) { virtualIndex ->
                 val actualIndex = virtualToActualIndex(virtualIndex, items.size, effectiveCircular)
                 val item = items[actualIndex]
-                val distanceFromCenter = abs(virtualIndex - centerIndex)
-                val alpha = when (distanceFromCenter) {
-                    0 -> 1f
-                    1 -> 0.6f
-                    else -> 0.3f
-                }
+                // A center change recomposes only the rows that gain or lose it; the fade is read
+                // when the row is drawn (WheelRecompositionTest).
+                val isCenter by remember(virtualIndex) { derivedStateOf { centerIndex == virtualIndex } }
 
                 Box(
                     modifier = Modifier
                         .height(itemHeight)
                         .fillMaxWidth()
-                        .alpha(alpha),
+                        .graphicsLayer {
+                            alpha = when (abs(virtualIndex - centerIndex)) {
+                                0 -> 1f
+                                1 -> fade.nearAlpha
+                                else -> fade.farAlpha
+                            }
+                            clip = alpha < 1f
+                        },
                     contentAlignment = Alignment.Center
                 ) {
-                    itemContent(item, distanceFromCenter == 0)
+                    itemContent(item, isCenter)
                 }
             }
         }
@@ -265,7 +306,7 @@ fun <T> VerticalWheelPicker(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
-                .height(itemHeight * 1.5f)
+                .height(itemHeight * fade.edgeRows)
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
@@ -280,7 +321,7 @@ fun <T> VerticalWheelPicker(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .height(itemHeight * 1.5f)
+                .height(itemHeight * fade.edgeRows)
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
@@ -292,6 +333,8 @@ fun <T> VerticalWheelPicker(
         )
     }
 }
+
+private fun twoDigits(value: Int): String = String.format(java.util.Locale.ROOT, "%02d", value)
 
 /**
  * Shows circular wheels for hour, minute and, in 12-hour mode, AM/PM, reporting each change as
@@ -312,11 +355,15 @@ fun WheelTimePicker(
     use24Hour: Boolean = false,
     minuteInterval: Int = 5,
     visibleItems: Int = 5,
-    itemHeight: Dp = 36.dp
+    itemHeight: Dp = 36.dp,
+    fade: WheelFade = WheelFade.Default,
 ) {
     var currentMinute by remember(selectedMinute) { mutableIntStateOf(selectedMinute) }
 
-    val minuteOptions = (0..55 step minuteInterval).toList()
+    // Kept across recompositions: a fresh list each time would recompose every wheel's rows
+    // (WheelRecompositionTest).
+    val minuteOptions = remember(minuteInterval) { (0..55 step minuteInterval).toList() }
+    val minuteLabels = remember(minuteInterval) { minuteOptions.associateWith { twoDigits(it) } }
     val closestMinute = minuteOptions.minByOrNull { abs(it - currentMinute) } ?: 0
 
     LaunchedEffect(selectedMinute) {
@@ -327,7 +374,8 @@ fun WheelTimePicker(
 
     if (use24Hour) {
         var currentHour24 by remember(selectedHour) { mutableIntStateOf(selectedHour) }
-        val hourOptions = (0..23).toList()
+        val hourOptions = remember { (0..23).toList() }
+        val hourLabels = remember { hourOptions.associateWith { twoDigits(it) } }
 
         fun notifyTimeChange() {
             onTimeSelected(currentHour24, currentMinute)
@@ -354,10 +402,11 @@ fun WheelTimePicker(
                     modifier = Modifier.weight(1f),
                     visibleItems = visibleItems,
                     itemHeight = itemHeight,
-                    isCircular = true
+                    isCircular = true,
+                    fade = fade
                 ) { hour, isSelected ->
                     Text(
-                        text = String.format(java.util.Locale.ROOT, "%02d", hour),
+                        text = hourLabels.getValue(hour),
                         fontSize = if (isSelected) 18.sp else 14.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                         color = if (isSelected) MaterialTheme.colorScheme.primary
@@ -383,10 +432,11 @@ fun WheelTimePicker(
                     modifier = Modifier.weight(1f),
                     visibleItems = visibleItems,
                     itemHeight = itemHeight,
-                    isCircular = true
+                    isCircular = true,
+                    fade = fade
                 ) { minute, isSelected ->
                     Text(
-                        text = String.format(java.util.Locale.ROOT, "%02d", minute),
+                        text = minuteLabels.getValue(minute),
                         fontSize = if (isSelected) 18.sp else 14.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                         color = if (isSelected) MaterialTheme.colorScheme.primary
@@ -407,10 +457,10 @@ fun WheelTimePicker(
         var currentHour12 by remember(selectedHour) { mutableIntStateOf(hour12) }
         var currentIsPM by remember(selectedHour) { mutableStateOf(isPM) }
 
-        val hourOptions = (1..12).toList()
+        val hourOptions = remember { (1..12).toList() }
         // The locale's AM/PM labels
         val amPmStrings = remember { java.text.DateFormatSymbols.getInstance().amPmStrings }
-        val amPmOptions = amPmStrings.toList()
+        val amPmOptions = remember { amPmStrings.toList() }
 
         fun notifyTimeChange() {
             val hour24 = when {
@@ -443,7 +493,8 @@ fun WheelTimePicker(
                     modifier = Modifier.weight(1f),
                     visibleItems = visibleItems,
                     itemHeight = itemHeight,
-                    isCircular = true
+                    isCircular = true,
+                    fade = fade
                 ) { hour, isSelected ->
                     Text(
                         text = hour.toString(),
@@ -472,10 +523,11 @@ fun WheelTimePicker(
                     modifier = Modifier.weight(1f),
                     visibleItems = visibleItems,
                     itemHeight = itemHeight,
-                    isCircular = true
+                    isCircular = true,
+                    fade = fade
                 ) { minute, isSelected ->
                     Text(
-                        text = String.format(java.util.Locale.ROOT, "%02d", minute),
+                        text = minuteLabels.getValue(minute),
                         fontSize = if (isSelected) 18.sp else 14.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                         color = if (isSelected) MaterialTheme.colorScheme.primary
@@ -495,7 +547,8 @@ fun WheelTimePicker(
                     modifier = Modifier.weight(0.8f),
                     visibleItems = visibleItems,
                     itemHeight = itemHeight,
-                    isCircular = true
+                    isCircular = true,
+                    fade = fade
                 ) { amPm, isSelected ->
                     Text(
                         text = amPm,

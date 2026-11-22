@@ -29,98 +29,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.data.preferences.DefaultCalendar
-import org.onekash.kashcal.ui.components.CalendarSelectionMode
-import org.onekash.kashcal.ui.components.GroupedCalendarList
 import org.onekash.kashcal.ui.model.CalendarGroup
+import org.onekash.kashcal.ui.model.toPickerSections
 
 /**
- * Shows every calendar grouped by account, with a checkbox that toggles its visibility.
- *
- * @param onToggleCalendar called with the calendar id and its new visibility
- * @param onShowAllCalendars never called; the sheet has no show-all control
- * @param onHideAllCalendars never called; the sheet has no hide-all control
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun VisibleCalendarsSheet(
-    sheetState: SheetState,
-    calendarGroups: List<CalendarGroup>,
-    onToggleCalendar: (Long, Boolean) -> Unit,
-    onShowAllCalendars: () -> Unit,
-    onHideAllCalendars: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    val allCalendars = remember(calendarGroups) {
-        calendarGroups.flatMap { it.calendars }
-    }
-    val visibleCount = allCalendars.count { it.isVisible }
-    val totalCount = allCalendars.size
-    val visibleCalendarIds = remember(calendarGroups) {
-        allCalendars.filter { it.isVisible }.map { it.id }.toSet()
-    }
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 32.dp)
-        ) {
-            Text(
-                stringResource(R.string.settings_visible_calendars),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-            )
-
-            Text(
-                stringResource(R.string.label_visible_count, visibleCount, totalCount),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-            )
-
-            HorizontalDivider(
-                modifier = Modifier.padding(top = 8.dp),
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-            )
-
-            if (calendarGroups.isEmpty() || allCalendars.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        stringResource(R.string.empty_no_calendars),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            } else {
-                GroupedCalendarList(
-                    groups = calendarGroups,
-                    selectionMode = CalendarSelectionMode.CHECKBOX,
-                    selectedCalendarIds = visibleCalendarIds,
-                    onCalendarClick = { calendar ->
-                        onToggleCalendar(calendar.id, !calendar.isVisible)
-                    }
-                )
-            }
-        }
-    }
-}
-
-/**
- * Shows the calendars to pick the default from, grouped by account: Room calendars first, then
- * device calendars under their own header. Picking one calls [onSelectDefault], then [onDismiss].
+ * Shows the calendars to pick the default from, grouped by account in
+ * [org.onekash.kashcal.ui.model.PickerSections] order. Picking one calls [onSelectDefault], then
+ * [onDismiss].
  *
  * @param calendarGroups Room calendars (local, iCloud, CalDAV) grouped by account
  * @param deviceCalendarGroups device calendars grouped by account, read from
@@ -136,141 +59,180 @@ fun DefaultCalendarSheet(
     onSelectDefault: (DefaultCalendar) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val allRoomCalendars = remember(calendarGroups) {
-        calendarGroups.flatMap { it.calendars }
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState
+    ) {
+        DefaultCalendarSheetContent(
+            calendarGroups = calendarGroups,
+            deviceCalendarGroups = deviceCalendarGroups,
+            currentDefault = currentDefault,
+            onSelectDefault = onSelectDefault,
+            onDismiss = onDismiss,
+        )
     }
-    val allDeviceCalendars = remember(deviceCalendarGroups) {
-        deviceCalendarGroups.flatMap { it.pickerCalendars }
+}
+
+/** Tags the divider above the Default calendar sheet's device calendars section. */
+internal const val TAG_DEFAULT_CALENDAR_DEVICE_DIVIDER = "default_calendar_device_divider"
+
+/** Tags the divider above the Default calendar sheet's Offline section. */
+internal const val TAG_DEFAULT_CALENDAR_OFFLINE_DIVIDER = "default_calendar_offline_divider"
+
+/** Draws the body of [DefaultCalendarSheet]: its title, hint and calendar list. */
+@Composable
+internal fun DefaultCalendarSheetContent(
+    calendarGroups: List<CalendarGroup>,
+    deviceCalendarGroups: List<CalendarGroup>,
+    currentDefault: DefaultCalendar?,
+    onSelectDefault: (DefaultCalendar) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val sections = remember(calendarGroups, deviceCalendarGroups) {
+        calendarGroups.toPickerSections(deviceCalendarGroups)
     }
-    val hasAnyCalendars = allRoomCalendars.isNotEmpty() || allDeviceCalendars.isNotEmpty()
 
     // A Room and a device calendar can share an id, so the selection keeps the type.
     val selectedRoomId = (currentDefault as? DefaultCalendar.Room)?.calendarId
     val selectedDeviceId = (currentDefault as? DefaultCalendar.Device)?.calendarId
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 32.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 32.dp)
-        ) {
-            Text(
-                stringResource(R.string.settings_default_calendar),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-            )
+        Text(
+            stringResource(R.string.settings_default_calendar),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+        )
 
-            Text(
-                stringResource(R.string.label_default_calendar_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-            )
+        Text(
+            stringResource(R.string.label_default_calendar_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+        )
 
-            HorizontalDivider(
-                modifier = Modifier.padding(top = 8.dp),
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-            )
+        HorizontalDivider(
+            modifier = Modifier.padding(top = 8.dp),
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+        )
 
-            if (!hasAnyCalendars) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        stringResource(R.string.empty_no_calendars),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+        if (sections.isEmpty) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(32.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    stringResource(R.string.empty_no_calendars),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            return@Column
+        }
+
+        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+            fun roomGroup(group: CalendarGroup) {
+                item(key = "room_header_${group.accountId}", contentType = "account_header") {
+                    AccountHeader(group.accountName, topPadding = 8.dp)
+                }
+                items(
+                    items = group.calendars,
+                    key = { "room_cal_${it.id}" },
+                    contentType = { "calendar_item" }
+                ) { calendar ->
+                    DefaultCalendarItem(
+                        name = calendar.displayName,
+                        color = calendar.color,
+                        isSelected = selectedRoomId == calendar.id,
+                        onClick = {
+                            onSelectDefault(DefaultCalendar.Room(calendar.id))
+                            onDismiss()
+                        }
                     )
                 }
-            } else {
-                LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                    calendarGroups.forEach { group ->
-                        item(key = "room_header_${group.accountId}", contentType = "account_header") {
-                            Text(
-                                text = group.accountName,
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                                    .padding(top = 8.dp)
-                            )
+            }
+
+            sections.accounts.forEach { roomGroup(it) }
+
+            if (sections.device.isNotEmpty()) {
+                item(key = "device_section_header", contentType = "section_header") {
+                    Column {
+                        if (sections.dividerBeforeDevice) {
+                            SectionDivider(TAG_DEFAULT_CALENDAR_DEVICE_DIVIDER)
                         }
-                        items(
-                            items = group.calendars,
-                            key = { "room_cal_${it.id}" },
-                            contentType = { "calendar_item" }
-                        ) { calendar ->
-                            DefaultCalendarItem(
-                                name = calendar.displayName,
-                                color = calendar.color,
-                                isSelected = selectedRoomId == calendar.id,
-                                onClick = {
-                                    onSelectDefault(DefaultCalendar.Room(calendar.id))
-                                    onDismiss()
-                                }
-                            )
-                        }
+                        Text(
+                            text = stringResource(R.string.label_device_calendars),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
                     }
+                }
 
-                    if (allDeviceCalendars.isNotEmpty()) {
-                        item(key = "device_section_header", contentType = "section_header") {
-                            Column {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(horizontal = 16.dp),
-                                    color = MaterialTheme.colorScheme.outlineVariant
-                                )
-                                Text(
-                                    text = stringResource(R.string.label_device_calendars),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                                )
+                sections.device.forEach { group ->
+                    item(key = "device_header_${group.accountName}", contentType = "account_header") {
+                        AccountHeader(group.accountName, topPadding = 4.dp)
+                    }
+                    items(
+                        items = group.pickerCalendars,
+                        key = { "device_cal_${it.id}" },
+                        contentType = { "calendar_item" }
+                    ) { pickerCal ->
+                        DefaultCalendarItem(
+                            name = pickerCal.displayName,
+                            color = pickerCal.color,
+                            isSelected = selectedDeviceId == pickerCal.id,
+                            onClick = {
+                                onSelectDefault(DefaultCalendar.Device(pickerCal.id))
+                                onDismiss()
                             }
-                        }
-
-                        deviceCalendarGroups.forEach { group ->
-                            item(key = "device_header_${group.accountName}", contentType = "account_header") {
-                                Text(
-                                    text = group.accountName,
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                                        .padding(top = 4.dp)
-                                )
-                            }
-                            items(
-                                items = group.pickerCalendars,
-                                key = { "device_cal_${it.id}" },
-                                contentType = { "calendar_item" }
-                            ) { pickerCal ->
-                                DefaultCalendarItem(
-                                    name = pickerCal.displayName,
-                                    color = pickerCal.color,
-                                    isSelected = selectedDeviceId == pickerCal.id,
-                                    onClick = {
-                                        onSelectDefault(DefaultCalendar.Device(pickerCal.id))
-                                        onDismiss()
-                                    }
-                                )
-                            }
-                        }
+                        )
                     }
                 }
             }
+
+            if (sections.dividerBeforeOffline) {
+                item(key = "offline_divider", contentType = "section_divider") {
+                    SectionDivider(TAG_DEFAULT_CALENDAR_OFFLINE_DIVIDER)
+                }
+            }
+            sections.offline.forEach { roomGroup(it) }
         }
+    }
+}
+
+/** Draws an account header above that account's calendars. */
+@Composable
+private fun AccountHeader(name: String, topPadding: Dp) {
+    Text(
+        text = name,
+        style = MaterialTheme.typography.labelMedium,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(top = topPadding)
+    )
+}
+
+/** Separates the device calendars or the Offline section from what is listed above it. */
+@Composable
+private fun SectionDivider(tag: String) {
+    Column {
+        Spacer(modifier = Modifier.height(8.dp))
+        HorizontalDivider(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .testTag(tag),
+            color = MaterialTheme.colorScheme.outlineVariant
+        )
     }
 }
 

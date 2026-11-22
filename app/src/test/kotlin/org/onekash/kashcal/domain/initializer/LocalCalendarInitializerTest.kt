@@ -1,7 +1,6 @@
 package org.onekash.kashcal.domain.initializer
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -16,8 +15,10 @@ import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.onekash.kashcal.testutil.insertOfflineCalendar
 
 /**
  * Tests [LocalCalendarInitializer] over an in-memory Room database.
@@ -25,8 +26,9 @@ import org.robolectric.annotation.Config
  * Covers:
  * - the first call creates the local account and calendar, leaving other calendars untouched
  * - later calls, and [LocalCalendarInitializer.getLocalCalendarId], return the same calendar
- * - [LocalCalendarInitializer.isLocalAccount] needs both the LOCAL provider and the local email
- * - [LocalCalendarInitializer.isLocalCalendar] matches the local calendar only
+ * - [LocalCalendarInitializer.isLocalAccount] follows the LOCAL provider alone
+ * - [LocalCalendarInitializer.isLocalCalendar] matches every calendar of a LOCAL account, at any
+ *   URL
  * - the calendar's color, default, writable and sort-order values, and an enabled account
  */
 @RunWith(RobolectricTestRunner::class)
@@ -39,7 +41,7 @@ class LocalCalendarInitializerTest {
     @Before
     fun setup() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
         localCalendarInitializer = LocalCalendarInitializer(database)
@@ -169,46 +171,27 @@ class LocalCalendarInitializerTest {
         )!!
 
         // Assert
-        assertTrue(localCalendarInitializer.isLocalAccount(localAccount))
+        assertTrue(LocalCalendarInitializer.isLocalAccount(localAccount))
     }
 
     @Test
-    fun `isLocalAccount returns false for non-local account`() = runTest {
-        // Setup
-        val otherAccount = Account(
-            provider = AccountProvider.ICLOUD,
-            email = "test@example.com",
-            displayName = "iCloud"
-        )
-
-        // Assert
-        assertFalse(localCalendarInitializer.isLocalAccount(otherAccount))
+    fun `isLocalAccount returns false for every other provider`() {
+        AccountProvider.entries.filter { it != AccountProvider.LOCAL }.forEach { provider ->
+            val account = Account(provider = provider, email = LocalCalendarInitializer.LOCAL_EMAIL)
+            assertFalse("$provider", LocalCalendarInitializer.isLocalAccount(account))
+        }
     }
 
     @Test
-    fun `isLocalAccount returns false for account with same provider but different email`() {
-        // Setup
-        val account = Account(
-            provider = AccountProvider.LOCAL,
-            email = "different@example.com",
-            displayName = "Different"
-        )
+    fun `isLocalAccount follows the provider, not the email`() {
+        val account = Account(provider = AccountProvider.LOCAL, email = "different@example.test")
 
-        // Assert
-        assertFalse(localCalendarInitializer.isLocalAccount(account))
+        assertTrue(LocalCalendarInitializer.isLocalAccount(account))
     }
 
     @Test
-    fun `isLocalAccount returns false for account with same email but different provider`() {
-        // Setup
-        val account = Account(
-            provider = AccountProvider.ICLOUD,
-            email = LocalCalendarInitializer.LOCAL_EMAIL,
-            displayName = "Different"
-        )
-
-        // Assert
-        assertFalse(localCalendarInitializer.isLocalAccount(account))
+    fun `isLocalAccount returns false for a missing account`() {
+        assertFalse(LocalCalendarInitializer.isLocalAccount(null))
     }
 
     // ========== isLocalCalendar ==========
@@ -221,6 +204,17 @@ class LocalCalendarInitializerTest {
 
         // Assert
         assertTrue(localCalendarInitializer.isLocalCalendar(localCalendar))
+    }
+
+    @Test
+    fun `isLocalCalendar returns true for a second calendar of the local account`() = runTest {
+        val builtInId = localCalendarInitializer.ensureLocalCalendarExists()
+
+        val second = database.calendarsDao().getById(database.insertOfflineCalendar())!!
+
+        assertTrue(second.caldavUrl.startsWith(LocalCalendarInitializer.NEW_CALENDAR_URL_PREFIX))
+        assertEquals(database.calendarsDao().getById(builtInId)!!.accountId, second.accountId)
+        assertTrue(localCalendarInitializer.isLocalCalendar(second))
     }
 
     @Test
@@ -238,6 +232,43 @@ class LocalCalendarInitializerTest {
 
         // Assert
         assertFalse(localCalendarInitializer.isLocalCalendar(otherCalendar))
+    }
+
+    @Test
+    fun `isLocalCalendar returns false for a contact calendar at a local URL`() = runTest {
+        val accountId = database.accountsDao().insert(
+            Account(provider = AccountProvider.CONTACTS, email = "contacts")
+        )
+        val birthdays = Calendar(
+            accountId = accountId,
+            caldavUrl = "local://contact_birthdays",
+            displayName = "Birthdays",
+            color = 0
+        )
+
+        assertFalse(localCalendarInitializer.isLocalCalendar(birthdays))
+    }
+
+    @Test
+    fun `isLocalCalendar returns false for a feed calendar`() = runTest {
+        val accountId = database.accountsDao().insert(
+            Account(provider = AccountProvider.ICS, email = "ics")
+        )
+        val feed = Calendar(
+            accountId = accountId,
+            caldavUrl = "ics://feed/1",
+            displayName = "Holidays",
+            color = 0
+        )
+
+        assertFalse(localCalendarInitializer.isLocalCalendar(feed))
+    }
+
+    @Test
+    fun `isLocalCalendar returns false when the account is missing`() = runTest {
+        val orphan = Calendar(accountId = 999L, caldavUrl = "local://calendar/orphan", displayName = "Gone", color = 0)
+
+        assertFalse(localCalendarInitializer.isLocalCalendar(orphan))
     }
 
     // ========== Edge Cases ==========

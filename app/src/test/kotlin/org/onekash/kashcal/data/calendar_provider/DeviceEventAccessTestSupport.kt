@@ -23,9 +23,10 @@ fun deviceChangeNotifier(): CalendarProviderManager = mockk {
 
 /**
  * Returns a strict [CalendarProviderManager] for the settings and backup-restore ViewModel tests:
- * it accepts the master switch (onEnabled, onDisabled), the settings-change hook, the restore
- * re-apply ([CalendarProviderManager.applyDeviceCalendarsSetting]) and the change signal, and
- * throws on anything else. Assert calls with `verify` or `coVerify`.
+ * it accepts the device calendars switch (onEnabled, onDisabled), the device reminders switch
+ * (onRemindersEnabled, onRemindersDisabled), the settings-change hook, the restore re-apply
+ * ([CalendarProviderManager.applyDeviceCalendarsSetting]) and the change signal, and throws on
+ * anything else. Assert calls with `verify` or `coVerify`.
  */
 fun settingsManagerMock(): CalendarProviderManager = mockk {
     justRun { onEnabled() }
@@ -33,6 +34,8 @@ fun settingsManagerMock(): CalendarProviderManager = mockk {
     justRun { notifyDeviceCalendarChanged() }
     coJustRun { onDeviceCalendarSettingsChanged() }
     coJustRun { applyDeviceCalendarsSetting() }
+    coJustRun { onRemindersEnabled() }
+    coJustRun { onRemindersDisabled() }
 }
 
 /** The real device reader over [this] repository (usually [FakeCalendarProviderRepository]). */

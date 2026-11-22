@@ -574,4 +574,220 @@ class VCardWriterTest {
             "inline photo bytes must round-trip unchanged",
         )
     }
+
+    // ========== Dates with no year ==========
+
+    private fun yearless(birthday: ContactDate? = null, anniversary: ContactDate? = null) = Contact(
+        version = "3.0",
+        uid = "yearless-writer",
+        structuredName = StructuredName(family = "Doe", given = "Jane"),
+        displayName = "Jane Doe",
+        birthday = birthday,
+        anniversary = anniversary,
+        rawVCard = "",
+    )
+
+    /** Returns the unfolded lines of [body] whose property name (after any group) is [name]. */
+    private fun propertyLines(body: String, name: String): List<String> =
+        body.replace(Regex("\r?\n[ \t]"), "").lines()
+            .filter { it.substringBefore(':').substringBefore(';').substringAfter('.') == name }
+
+    @Test
+    fun `a 3-0 birthday without a year goes out as 1604 with the omit-year parameter`() {
+        for (input in listOf(ContactDate(text = "--03-15"), ContactDate(text = "--0315"),
+            ContactDate(text = "--3-15"), ContactDate(date = LocalDate.of(1604, 3, 15)))) {
+            val body = writer.write(yearless(birthday = input), "3.0")
+            assertEquals(listOf("BDAY;X-APPLE-OMIT-YEAR=1604:1604-03-15"), propertyLines(body, "BDAY"), "$input")
+        }
+    }
+
+    @Test
+    fun `a 3-0 birthday on February 29 fits the 1604 leap year`() {
+        val body = writer.write(yearless(birthday = ContactDate(text = "--02-29")), "3.0")
+        assertEquals(listOf("BDAY;X-APPLE-OMIT-YEAR=1604:1604-02-29"), propertyLines(body, "BDAY"))
+    }
+
+    @Test
+    fun `an impossible month and day is written as free text and does not throw`() {
+        // vCard 3.0 BDAY has no text form, so ez-vcard writes free text as an empty value.
+        for (text in listOf("--02-30", "--13-01", "circa 1990")) {
+            val body = writer.write(yearless(birthday = ContactDate(text = text)), "3.0")
+            assertEquals(listOf("BDAY:"), propertyLines(body, "BDAY"), text)
+        }
+    }
+
+    @Test
+    fun `a 3-0 anniversary without a year goes out as a 1604 X-ABDATE with the parameter`() {
+        for (input in listOf(ContactDate(text = "--09-22"), ContactDate(date = LocalDate.of(1604, 9, 22)))) {
+            val body = writer.write(yearless(anniversary = input), "3.0")
+            val line = propertyLines(body, "X-ABDATE").single()
+            assertEquals("X-APPLE-OMIT-YEAR=1604:1604-09-22", line.substringAfter(';'), "$input")
+            val group = line.substringBefore('.')
+            assertTrue(
+                propertyLines(body, "X-ABLabel").any { it.startsWith("$group.") && it.contains("Anniversary") },
+                "the date keeps its Anniversary label group",
+            )
+        }
+    }
+
+    @Test
+    fun `a 4-0 date without a year goes out as an RFC 6350 partial date`() {
+        // RFC 6350 §4.3.1 truncated form. Cyrus refuses VALUE=text here with a 403 and keeps
+        // none of the contact.
+        for (input in listOf(ContactDate(text = "--03-15"), ContactDate(text = "--0315"),
+            ContactDate(text = "--3-15"), ContactDate(date = LocalDate.of(1604, 3, 15)))) {
+            val body = writer.write(yearless(birthday = input), "4.0")
+            assertEquals(listOf("BDAY:--0315"), propertyLines(body, "BDAY"), "$input")
+            assertFalse(body.contains("1604"), "$input: a 1604 year is never sent as a real year")
+        }
+        for (input in listOf(ContactDate(text = "--09-22"), ContactDate(date = LocalDate.of(1604, 9, 22)))) {
+            val body = writer.write(yearless(anniversary = input), "4.0")
+            assertEquals(listOf("ANNIVERSARY:--0922"), propertyLines(body, "ANNIVERSARY"), "$input")
+        }
+    }
+
+    @Test
+    fun `a 4-0 free-text date is written as text as before`() {
+        for (text in listOf("circa 1990", "--02-30")) {
+            val body = writer.write(yearless(birthday = ContactDate(text = text)), "4.0")
+            assertEquals(listOf("BDAY;VALUE=text:$text"), propertyLines(body, "BDAY"), text)
+        }
+    }
+
+    @Test
+    fun `a 4-0 partial date reads back without a year and stays stable`() {
+        val served = parser.parse(
+            "BEGIN:VCARD\r\nVERSION:4.0\r\nUID:served\r\nFN:Jane Doe\r\nBDAY:--0315\r\nEND:VCARD\r\n",
+        ).single().birthday
+        for (input in listOf(ContactDate(text = "--03-15"), ContactDate(date = LocalDate.of(1604, 3, 15)))) {
+            val first = writer.write(yearless(birthday = input), "4.0")
+            val once = parser.parse(first).single()
+            assertEquals(ContactDate(text = "--03-15"), once.birthday, "$input")
+            assertEquals(served, once.birthday)
+            val second = writer.write(once.copy(rawVCard = ""), "4.0")
+            assertEquals(propertyLines(first, "BDAY"), propertyLines(second, "BDAY"), "$input")
+        }
+    }
+
+    @Test
+    fun `a 4-0 text birthday stored by an earlier build keeps its line on an edit to another field`() {
+        val base = "BEGIN:VCARD\r\nVERSION:4.0\r\nUID:yearless-text\r\nFN:Jane Doe\r\n" +
+            "TEL:+15550000001\r\nBDAY;VALUE=text:--03-15\r\nEND:VCARD\r\n"
+        val original = parser.parse(base).single()
+        val edited = original.copy(
+            phones = listOf(Phone(number = "+15559999999")),
+            birthday = ContactDate(text = "--03-15"),
+        )
+        assertEquals(listOf("BDAY;VALUE=text:--03-15"), propertyLines(writer.write(edited, "4.0"), "BDAY"))
+    }
+
+    @Test
+    fun `dated birthdays and anniversaries are written as before`() {
+        val c = yearless(
+            birthday = ContactDate(date = LocalDate.of(1985, 3, 14)),
+            anniversary = ContactDate(date = LocalDate.of(2010, 9, 22)),
+        )
+        val v3 = writer.write(c, "3.0")
+        assertEquals(listOf("BDAY:1985-03-14"), propertyLines(v3, "BDAY"))
+        assertEquals("2010-09-22", propertyLines(v3, "X-ABDATE").single().substringAfter(':'))
+        assertFalse(v3.contains("OMIT-YEAR"))
+        val v4 = writer.write(c, "4.0")
+        assertEquals(listOf("BDAY:19850314"), propertyLines(v4, "BDAY"))
+        assertEquals(listOf("ANNIVERSARY:20100922"), propertyLines(v4, "ANNIVERSARY"))
+    }
+
+    @Test
+    fun `an unchanged 1604 birthday keeps its line on an edit to another field`() {
+        // X-KEEP survives ez-vcard re-serializing an untouched property but not a rewrite of
+        // the birthday, so it shows the facet was left alone.
+        val base = "BEGIN:VCARD\r\nVERSION:3.0\r\nUID:yearless-patch\r\nFN:Jane Doe\r\n" +
+            "N:Doe;Jane;;;\r\nTEL:+15550000001\r\nBDAY;X-APPLE-OMIT-YEAR=1604;X-KEEP=1:1604-03-15\r\nEND:VCARD\r\n"
+        val original = parser.parse(base).single()
+        val edited = original.copy(
+            phones = listOf(Phone(number = "+15559999999")),
+            birthday = ContactDate(text = "--03-15"),
+        )
+        val body = writer.write(edited, "3.0")
+        assertEquals(listOf("BDAY;X-APPLE-OMIT-YEAR=1604;X-KEEP=1:1604-03-15"), propertyLines(body, "BDAY"))
+    }
+
+    @Test
+    fun `a phone still holding a 1604 birthday never sends 1604 as a birth year`() {
+        // A phone that pulled the 1604 form before the year was read as missing holds 1604-03-15.
+        val base = "BEGIN:VCARD\r\nVERSION:3.0\r\nUID:yearless-patch\r\nFN:Jane Doe\r\n" +
+            "N:Doe;Jane;;;\r\nTEL:+15550000001\r\nBDAY;X-APPLE-OMIT-YEAR=1604:1604-03-15\r\nEND:VCARD\r\n"
+        val original = parser.parse(base).single()
+        val edited = original.copy(
+            phones = listOf(Phone(number = "+15559999999")),
+            birthday = ContactDate(date = LocalDate.of(1604, 3, 15)),
+        )
+        val line = propertyLines(writer.write(edited, "3.0"), "BDAY").single()
+        assertTrue(line.contains("X-APPLE-OMIT-YEAR=1604") && line.endsWith(":1604-03-15"), line)
+    }
+
+    @Test
+    fun `a phone date without a year in another spelling leaves the server lines alone on an unrelated edit`() {
+        // The parser reads the server's 1604 form as --03-15, while a phone that pulled it earlier
+        // holds 1604-03-15 (or a contacts app wrote --0315): the same date, so no rewrite. X-KEEP
+        // survives ez-vcard re-serializing an untouched property but not a rewrite.
+        val base = "BEGIN:VCARD\r\nVERSION:3.0\r\nUID:yearless-patch\r\nFN:Jane Doe\r\n" +
+            "N:Doe;Jane;;;\r\nTEL:+15550000001\r\nBDAY;X-APPLE-OMIT-YEAR=1604;X-KEEP=1:1604-03-15\r\n" +
+            "item1.X-ABDATE;X-APPLE-OMIT-YEAR=1604;X-KEEP=1:1604-09-22\r\n" +
+            "item1.X-ABLabel:_\$!<Anniversary>!\$_\r\nEND:VCARD\r\n"
+        val original = parser.parse(base).single()
+        for ((birthday, anniversary) in listOf(
+            ContactDate(date = LocalDate.of(1604, 3, 15)) to ContactDate(date = LocalDate.of(1604, 9, 22)),
+            ContactDate(text = "--0315") to ContactDate(text = "--9-22"),
+        )) {
+            val edited = original.copy(
+                phones = listOf(Phone(number = "+15559999999")),
+                birthday = birthday,
+                anniversary = anniversary,
+            )
+            val body = writer.write(edited, "3.0")
+            assertEquals(listOf("BDAY;X-APPLE-OMIT-YEAR=1604;X-KEEP=1:1604-03-15"), propertyLines(body, "BDAY"), "$birthday")
+            assertEquals(
+                listOf("item1.X-ABDATE;X-APPLE-OMIT-YEAR=1604;X-KEEP=1:1604-09-22"),
+                propertyLines(body, "X-ABDATE"),
+                "$anniversary",
+            )
+        }
+    }
+
+    @Test
+    fun `every 1604 date written carries the omit-year parameter`() {
+        val inputs = listOf(ContactDate(text = "--03-15"), ContactDate(text = "--02-29"),
+            ContactDate(date = LocalDate.of(1604, 3, 15)))
+        for (input in inputs) for (version in listOf("3.0", "4.0")) {
+            val body = writer.write(yearless(birthday = input, anniversary = input), version)
+            val lines = listOf("BDAY", "X-ABDATE", "ANNIVERSARY").flatMap { propertyLines(body, it) }
+            for (line in lines.filter { it.substringAfterLast(':').startsWith("1604") }) {
+                assertTrue(line.contains("X-APPLE-OMIT-YEAR=1604"), "$version $input: $line")
+            }
+        }
+    }
+
+    @Test
+    fun `a 3-0 date without a year reads back without a year and stays stable`() {
+        val inputs = listOf(ContactDate(text = "--03-15"), ContactDate(text = "--02-29"),
+            ContactDate(date = LocalDate.of(1604, 3, 15)))
+        for (input in inputs) {
+            val first = writer.write(yearless(birthday = input, anniversary = input), "3.0")
+            val once = parser.parse(first).single()
+            val expected = ContactDate(text = "--" + (input.text?.removePrefix("--") ?: "03-15"))
+            assertEquals(expected, once.birthday, "$input")
+            assertEquals(expected, once.anniversary, "$input")
+
+            val second = writer.write(once.copy(rawVCard = ""), "3.0")
+            val twice = parser.parse(second).single()
+            assertEquals(propertyLines(first, "BDAY"), propertyLines(second, "BDAY"), "$input")
+            assertEquals(
+                propertyLines(first, "X-ABDATE").map { it.substringAfter('.') },
+                propertyLines(second, "X-ABDATE").map { it.substringAfter('.') },
+                "$input",
+            )
+            assertEquals(once.birthday, twice.birthday)
+            assertEquals(once.anniversary, twice.anniversary)
+        }
+    }
 }

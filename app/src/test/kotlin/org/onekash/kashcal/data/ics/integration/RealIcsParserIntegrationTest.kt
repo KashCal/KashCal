@@ -48,7 +48,7 @@ class RealIcsParserIntegrationTest {
             "UK" to "https://www.thunderbird.net/media/caldata/autogen/UKHolidays.ics",
             "Germany" to "https://www.thunderbird.net/media/caldata/autogen/GermanHolidays.ics",
             "France" to "https://www.thunderbird.net/media/caldata/autogen/FrenchHolidays.ics",
-            "Italy" to "https://www.thunderbird.net/media/caldata/autogen/ItalyHolidays.ics",
+            "Italy" to "https://www.thunderbird.net/media/caldata/autogen/ItalianHolidays.ics",
             "Spain" to "https://www.thunderbird.net/media/caldata/autogen/SpainHolidays.ics",
             "Netherlands" to "https://www.thunderbird.net/media/caldata/autogen/DutchHolidays.ics",
             "Poland" to "https://www.thunderbird.net/media/caldata/autogen/PolishHolidays.ics",
@@ -68,7 +68,7 @@ class RealIcsParserIntegrationTest {
             "Turkey" to "https://www.thunderbird.net/media/caldata/autogen/TurkeyHolidays.ics",
 
             // Other
-            "Russia" to "https://www.thunderbird.net/media/caldata/autogen/RussianHolidays.ics",
+            "Russia" to "https://www.thunderbird.net/media/caldata/autogen/RussiaHolidays.ics",
             "Ukraine" to "https://www.thunderbird.net/media/caldata/autogen/UkraineHolidays.ics",
             "Switzerland" to "https://www.thunderbird.net/media/caldata/autogen/SwissHolidays.ics"
         )
@@ -168,7 +168,7 @@ class RealIcsParserIntegrationTest {
                     ParseResult.InvalidFormat
                 } else {
                     val events = IcsParserService.parseIcsContent(content, CALENDAR_ID, SUBSCRIPTION_ID)
-                    ParseResult.Success(events.size)
+                    ParseResult.Success(events.size, content.split("BEGIN:VEVENT").size - 1)
                 }
             } catch (e: Exception) {
                 ParseResult.ParseError(e.message ?: "Unknown error")
@@ -198,9 +198,15 @@ class RealIcsParserIntegrationTest {
             successRate >= 0.8
         )
 
-        // Every feed that parsed must yield at least one event.
-        results.values.filterIsInstance<ParseResult.Success>().forEach { result ->
-            assertTrue("Calendar should have at least 1 event", result.eventCount > 0)
+        // A feed with events must yield events; an empty VCALENDAR is valid (Ukraine's served
+        // none in October 2026) and refreshes to an empty calendar.
+        results.filterValues { it is ParseResult.Success }.forEach { (country, result) ->
+            result as ParseResult.Success
+            if (result.veventCount == 0) return@forEach
+            assertTrue(
+                "$country: ${result.veventCount} VEVENTs parsed to no events",
+                result.eventCount > 0,
+            )
         }
     }
 
@@ -232,9 +238,9 @@ class RealIcsParserIntegrationTest {
     @Test
     fun `calendar names extracted correctly`() = runBlocking {
         val calendarsWithNames = listOf(
-            "USA" to "https://www.thunderbird.net/media/caldata/autogen/UnitedStatesHolidays.ics",
+            "USA" to "https://www.thunderbird.net/media/caldata/autogen/USHolidays.ics",
             "Germany" to "https://www.thunderbird.net/media/caldata/autogen/GermanHolidays.ics",
-            "Japan" to "https://www.thunderbird.net/media/caldata/autogen/JapaneseHolidays.ics"
+            "Japan" to "https://www.thunderbird.net/media/caldata/autogen/JapanHolidays.ics"
         )
 
         for ((country, url) in calendarsWithNames) {
@@ -330,7 +336,7 @@ class RealIcsParserIntegrationTest {
     }
 
     private sealed class ParseResult {
-        data class Success(val eventCount: Int) : ParseResult()
+        data class Success(val eventCount: Int, val veventCount: Int = 0) : ParseResult()
         data object FetchFailed : ParseResult()
         data object InvalidFormat : ParseResult()
         data class ParseError(val message: String) : ParseResult()

@@ -1,7 +1,6 @@
 package org.onekash.kashcal.data.db.dao
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import app.cash.turbine.test
 import kotlinx.coroutines.test.runTest
@@ -16,6 +15,7 @@ import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.SyncLog
 import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -40,7 +40,7 @@ class SyncLogsDaoTest {
     @Before
     fun setup() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
 

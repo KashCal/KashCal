@@ -53,6 +53,7 @@ class WhatsNewBannerTest {
 
     private val featureNotes = ALL_RELEASE_NOTES.filter { it.versionCode == 772 }
     private val supporterNote = ALL_RELEASE_NOTES.single { it.versionCode == 732 }
+    private val notes803 = ALL_RELEASE_NOTES.filter { it.versionCode == 803 }
     private var dismissCount = 0
 
     private fun render(
@@ -203,10 +204,27 @@ class WhatsNewBannerTest {
         render(fontScale = 2f)
         next()
         next()
-        // mdpi, so one px is one dp. The title and the last chip share the setting's name.
+        // The title and the last chip share the setting's name, so a label can match twice.
+        assertLabelsInsideSheet(
+            listOf(R.string.hub_accounts_and_settings, R.string.settings_section_sync, R.string.settings_change_notifications),
+        )
+    }
+
+    @Test
+    fun `the 803 paths stay inside the sheet at large text`() {
+        assertEquals(3, notes803.size)
+        render(releases = notes803, fontScale = 2f)
+        notes803.forEachIndexed { page, note ->
+            if (page > 0) next()
+            assertLabelsInsideSheet(note.findInRes)
+        }
+    }
+
+    /** Asserts each of [ids] is shown on the current page, with width, inside the sheet. */
+    private fun assertLabelsInsideSheet(ids: List<Int>) {
+        // mdpi, so one px is one dp.
         val sheetRight = composeTestRule.onNodeWithTag(WHATS_NEW_PAGER_TAG).getBoundsInRoot().right.value
-        val labels = listOf(R.string.hub_accounts_and_settings, R.string.settings_section_sync, R.string.settings_change_notifications)
-        labels.forEach { id ->
+        ids.forEach { id ->
             val nodes = composeTestRule.onAllNodes(shown(text(id)), useUnmergedTree = true).fetchSemanticsNodes()
             assertTrue("no node for ${text(id)}", nodes.isNotEmpty())
             nodes.forEach { node ->

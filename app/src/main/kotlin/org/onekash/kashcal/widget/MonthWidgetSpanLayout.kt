@@ -5,15 +5,13 @@ import org.onekash.kashcal.widget.WidgetDataRepository.WidgetEvent
 /**
  * Week-slot layout for the month widget's titles mode.
  *
- * A port of the in-app month view's
- * [org.onekash.kashcal.ui.screens.monthfull.computeMonthFullWeekRender] onto [WidgetEvent], as a
- * pure function: multi-day events become bars spanning their day columns in shared lanes,
- * single-day events fill the remaining per-cell slots, and what doesn't fit collapses into a
- * per-cell "+n more" slot. Unlike the app, a one-row week shows the top event instead of a "+n",
- * and trailing empty rows are dropped.
+ * A pure function over [WidgetEvent]: multi-day events become bars spanning their day columns
+ * in shared lanes, single-day events fill the remaining per-cell slots, and what doesn't fit
+ * collapses into a per-cell "+n more" slot. A one-row week shows the top event instead of a
+ * "+n", and trailing empty rows are dropped.
  *
- * Lanes win over cell events, as in the app: when bars fill a day column, that day's single-day
- * events are dropped silently; tapping the day still reaches them.
+ * Lanes win over cell events: when bars fill a day column, that day's single-day events are
+ * dropped silently; tapping the day still reaches them.
  */
 
 /** A multi-day event bar covering [startCol]..[endCol] of a week row. */

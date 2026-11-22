@@ -11,10 +11,17 @@ enum class SettingsDestination(val depth: Int) {
     BirthdaysAnniversaries(depth = 1),
     Subscriptions(depth = 1),
     Tags(depth = 1),
-    DeviceCalendars(depth = 1);
+    DeviceCalendars(depth = 1),
+    OfflineCalendars(depth = 1);
 
     /** True when navigating from this destination to [target] moves deeper (root -> detail). */
     fun isForwardTo(target: SettingsDestination): Boolean = target.depth > depth
+
+    /**
+     * True when backing out of this destination finishes the activity: Settings was launched
+     * straight onto it ([launchedOn]), so the root behind it was never opened.
+     */
+    fun closesActivity(launchedOn: SettingsDestination?): Boolean = this == launchedOn
 
     companion object {
         /**
@@ -27,12 +34,14 @@ enum class SettingsDestination(val depth: Int) {
             subscriptions: Boolean,
             tags: Boolean,
             deviceCalendars: Boolean,
+            offlineCalendars: Boolean,
         ): SettingsDestination = when {
             accounts -> Accounts
             birthdaysAnniversaries -> BirthdaysAnniversaries
             subscriptions -> Subscriptions
             tags -> Tags
             deviceCalendars -> DeviceCalendars
+            offlineCalendars -> OfflineCalendars
             else -> Root
         }
     }

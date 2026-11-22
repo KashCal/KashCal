@@ -89,41 +89,45 @@ class OkHttpIcsFetcher @Inject constructor() : IcsFetcher {
 
         repeat(MAX_RETRIES) { attempt ->
             try {
-                val response = httpClient.newCall(request).execute()
+                // Each response is closed before the next attempt or the return; an unclosed one
+                // holds its connection, so the next request can't reuse it.
+                val retryDelay: Long? = httpClient.newCall(request).execute().use { response ->
+                    when {
+                        // Retryable codes wait and retry, except on the last attempt.
+                        response.code == 429 && attempt < MAX_RETRIES - 1 -> {
+                            val retryAfter = parseRetryAfterHeader(response) ?: currentBackoff
+                            Log.w(TAG, "Rate limited (429), waiting ${retryAfter}ms before retry ${attempt + 1}")
+                            retryAfter
+                        }
 
-                // Retryable codes wait and retry, except on the last attempt.
-                when {
-                    response.code == 429 && attempt < MAX_RETRIES - 1 -> {
-                        val retryAfter = parseRetryAfterHeader(response) ?: currentBackoff
-                        Log.w(TAG, "Rate limited (429), waiting ${retryAfter}ms before retry ${attempt + 1}")
-                        delay(retryAfter)
-                        currentBackoff = (currentBackoff * BACKOFF_MULTIPLIER).toLong().coerceAtMost(MAX_BACKOFF_MS)
-                        return@repeat // next attempt
-                    }
+                        response.code == 503 && attempt < MAX_RETRIES - 1 -> {
+                            val retryAfter = parseRetryAfterHeader(response) ?: currentBackoff
+                            Log.w(TAG, "Service unavailable (503), waiting ${retryAfter}ms before retry ${attempt + 1}")
+                            retryAfter
+                        }
 
-                    response.code == 503 && attempt < MAX_RETRIES - 1 -> {
-                        val retryAfter = parseRetryAfterHeader(response) ?: currentBackoff
-                        Log.w(TAG, "Service unavailable (503), waiting ${retryAfter}ms before retry ${attempt + 1}")
-                        delay(retryAfter)
-                        currentBackoff = (currentBackoff * BACKOFF_MULTIPLIER).toLong().coerceAtMost(MAX_BACKOFF_MS)
-                        return@repeat
-                    }
+                        response.code in 500..599 && attempt < MAX_RETRIES - 1 -> {
+                            Log.w(TAG, "Server error (${response.code}), retry ${attempt + 1}/$MAX_RETRIES")
+                            currentBackoff
+                        }
 
-                    response.code in 500..599 && attempt < MAX_RETRIES - 1 -> {
-                        Log.w(TAG, "Server error (${response.code}), retry ${attempt + 1}/$MAX_RETRIES")
-                        delay(currentBackoff)
-                        currentBackoff = (currentBackoff * BACKOFF_MULTIPLIER).toLong().coerceAtMost(MAX_BACKOFF_MS)
-                        return@repeat
+                        else -> {
+                            val result = processResponse(response)
+                            if (result != null) {
+                                return result
+                            }
+                            // A retryable code on the last attempt; reported after the loop.
+                            lastResult = IcsFetcher.FetchResult.Error(IcsFeedErrors.http(response.code, response.message))
+                            null
+                        }
                     }
                 }
-
-                val result = processResponse(response)
-                if (result != null) {
-                    return result
+                if (retryDelay != null) {
+                    // The response is closed by now, so a long Retry-After holds no connection.
+                    delay(retryDelay)
+                    currentBackoff = (currentBackoff * BACKOFF_MULTIPLIER).toLong().coerceAtMost(MAX_BACKOFF_MS)
+                    return@repeat // next attempt
                 }
-
-                // A retryable code on the last attempt; reported after the loop.
-                lastResult = IcsFetcher.FetchResult.Error("HTTP ${response.code}: ${response.message}")
 
             } catch (e: SSLHandshakeException) {
                 // Some servers (e.g., Moodle) serve an incomplete chain: the intermediate is
@@ -140,17 +144,18 @@ class OkHttpIcsFetcher @Inject constructor() : IcsFetcher {
                     is AiaCertificateChainCompleter.Result.Success -> {
                         Log.i(TAG, "AIA succeeded, retrying fetch")
                         return try {
-                            val retryResponse = aiaResult.client.newCall(request).execute()
-                            processResponse(retryResponse)
-                                ?: IcsFetcher.FetchResult.Error("HTTP ${retryResponse.code}: ${retryResponse.message}")
+                            aiaResult.client.newCall(request).execute().use { retryResponse ->
+                                processResponse(retryResponse)
+                                    ?: IcsFetcher.FetchResult.Error(IcsFeedErrors.http(retryResponse.code, retryResponse.message))
+                            }
                         } catch (retryEx: Exception) {
                             Log.e(TAG, "Retry after AIA failed: ${retryEx.message}", retryEx)
-                            IcsFetcher.FetchResult.Error("SSL error: ${e.message}")
+                            IcsFetcher.FetchResult.Error(IcsFeedErrors.ssl(e.message))
                         }
                     }
                     is AiaCertificateChainCompleter.Result.Failed -> {
                         Log.e(TAG, "AIA chain completion failed: ${aiaResult.reason}")
-                        return IcsFetcher.FetchResult.Error("SSL error: ${e.message}")
+                        return IcsFetcher.FetchResult.Error(IcsFeedErrors.ssl(e.message))
                     }
                 }
 
@@ -159,17 +164,17 @@ class OkHttpIcsFetcher @Inject constructor() : IcsFetcher {
                     Log.w(TAG, "Retryable error, retry ${attempt + 1}/$MAX_RETRIES: ${e.javaClass.simpleName} - ${e.message}")
                     delay(currentBackoff)
                     currentBackoff = (currentBackoff * BACKOFF_MULTIPLIER).toLong().coerceAtMost(MAX_BACKOFF_MS)
-                    lastResult = IcsFetcher.FetchResult.Error("Network error: ${e.message}")
+                    lastResult = IcsFetcher.FetchResult.Error(IcsFeedErrors.network(e.message))
                 } else {
                     Log.e(TAG, "Network error fetching ICS: ${e.javaClass.simpleName} - ${e.message}", e)
-                    return IcsFetcher.FetchResult.Error("Network error: ${e.message}")
+                    return IcsFetcher.FetchResult.Error(IcsFeedErrors.network(e.message))
                 }
             }
         }
 
         // Reached only when the last attempt got 429, 503 or another 5xx.
         Log.e(TAG, "All $MAX_RETRIES retries exhausted for ${subscription.url}")
-        return lastResult ?: IcsFetcher.FetchResult.Error("Failed after $MAX_RETRIES retries")
+        return lastResult ?: IcsFetcher.FetchResult.Error(IcsFeedErrors.retriesExhausted(MAX_RETRIES))
     }
 
     /**
@@ -189,12 +194,12 @@ class OkHttpIcsFetcher @Inject constructor() : IcsFetcher {
                 } catch (e: ResponseTooLargeException) {
                     // Reported like the server's 413, not as a network error.
                     Log.w(TAG, "ICS feed too large: ${e.message}")
-                    return IcsFetcher.FetchResult.Error("Calendar too large")
+                    return IcsFetcher.FetchResult.Error(IcsFeedErrors.TOO_LARGE)
                 }
                 if (content.isBlank()) {
-                    IcsFetcher.FetchResult.Error("Empty response from server")
+                    IcsFetcher.FetchResult.Error(IcsFeedErrors.EMPTY_RESPONSE)
                 } else if (!IcsParserService.isValidIcs(content)) {
-                    IcsFetcher.FetchResult.Error("Invalid ICS format")
+                    IcsFetcher.FetchResult.Error(IcsFeedErrors.INVALID_FORMAT)
                 } else {
                     IcsFetcher.FetchResult.Success(
                         content = content,
@@ -205,15 +210,15 @@ class OkHttpIcsFetcher @Inject constructor() : IcsFetcher {
             }
 
             response.code == 401 || response.code == 403 -> {
-                IcsFetcher.FetchResult.Error("Authentication required")
+                IcsFetcher.FetchResult.Error(IcsFeedErrors.ACCESS_DENIED)
             }
 
             response.code == 404 -> {
-                IcsFetcher.FetchResult.Error("Calendar not found (404)")
+                IcsFetcher.FetchResult.Error(IcsFeedErrors.NOT_FOUND)
             }
 
             response.code == 413 -> {
-                IcsFetcher.FetchResult.Error("Calendar too large (413)")
+                IcsFetcher.FetchResult.Error(IcsFeedErrors.TOO_LARGE_413)
             }
 
             response.code == 429 || response.code == 503 || response.code in 500..599 -> {
@@ -221,7 +226,7 @@ class OkHttpIcsFetcher @Inject constructor() : IcsFetcher {
             }
 
             else -> {
-                IcsFetcher.FetchResult.Error("HTTP ${response.code}: ${response.message}")
+                IcsFetcher.FetchResult.Error(IcsFeedErrors.http(response.code, response.message))
             }
         }
     }

@@ -1,0 +1,4 @@
+• Moving a repeating event keeps its changed and deleted occurrences
+• Time zone search in the event form
+• Search by tag with #tag (#348)
+• Microsoft 365 / Exchange feeds show their events (#441)

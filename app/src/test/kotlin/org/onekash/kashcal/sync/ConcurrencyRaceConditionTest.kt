@@ -1,8 +1,6 @@
 package org.onekash.kashcal.sync
 
 import android.content.Context
-import androidx.room.Room
-import androidx.room.withTransaction
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -16,6 +14,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.KashCalDatabase
+import org.onekash.kashcal.data.db.PendingOperationTriggers
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
@@ -25,6 +24,7 @@ import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.util.UUID
@@ -52,7 +52,8 @@ class ConcurrencyRaceConditionTest {
     @Before
     fun setup() = runTest {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
+            .addCallback(PendingOperationTriggers.callback())
             .allowMainThreadQueries()
             .build()
 
@@ -190,9 +191,9 @@ class ConcurrencyRaceConditionTest {
         // Delete the event (a user action during sync)
         database.eventsDao().deleteById(eventId)
 
-        // No foreign key ties the op to the event, so it stays queued; the push then fails it
-        // with "Event not found for MOVE"
+        // A MOVE needs its row, so the delete trigger on events drops it with the row.
         val pendingOps = database.pendingOperationsDao().getForEvent(eventId)
+        assertTrue(pendingOps.isEmpty())
 
         // Verify event is deleted
         val deletedEvent = database.eventsDao().getById(eventId)
@@ -355,7 +356,7 @@ class ConcurrencyRaceConditionTest {
         val eventId = event.id
 
         try {
-            database.withTransaction {
+            database.runInTransaction {
                 // Update event
                 database.eventsDao().update(event.copy(title = "Updated"))
 
@@ -390,10 +391,10 @@ class ConcurrencyRaceConditionTest {
     fun `nested transactions should maintain consistency`() = runTest {
         val event = createAndInsertEvent("Nested Transaction Test")
 
-        database.withTransaction {
+        database.runInTransaction {
             database.eventsDao().update(event.copy(title = "Outer Update"))
 
-            database.withTransaction {
+            database.runInTransaction {
                 database.eventsDao().update(event.copy(title = "Inner Update"))
             }
         }

@@ -1,18 +1,19 @@
 package org.onekash.kashcal.data.db
 
-import android.util.Log
-import androidx.room.AutoMigration
-import androidx.room.Database
-import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
-import androidx.room.withTransaction
-import androidx.sqlite.db.SupportSQLiteDatabase
+import androidx.room3.AutoMigration
+import androidx.room3.Database
+import androidx.room3.RoomDatabase
+import androidx.room3.Transactor
+import androidx.room3.ColumnTypeConverters
+import androidx.room3.immediateTransaction
+import androidx.room3.useWriterConnection
 import org.onekash.kashcal.data.db.converter.Converters
 import org.onekash.kashcal.data.db.dao.AccountsDao
 import org.onekash.kashcal.data.db.dao.AddressBookDao
 import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.CategoryDao
+import org.onekash.kashcal.data.db.dao.EventIcsDao
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.IcsSubscriptionsDao
 import org.onekash.kashcal.data.db.dao.OccurrencesDao
@@ -27,7 +28,7 @@ import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Category
 import org.onekash.kashcal.data.db.entity.Event
-import org.onekash.kashcal.data.db.entity.EventFts
+import org.onekash.kashcal.data.db.entity.EventIcsPart
 import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.PendingCancel
@@ -35,6 +36,13 @@ import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.RecentChange
 import org.onekash.kashcal.data.db.entity.ScheduledReminder
 import org.onekash.kashcal.data.db.entity.SyncLog
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
 
 /**
  * Stores the Room-backed calendar data offline-first: local, iCloud, CalDAV and ICS
@@ -48,7 +56,7 @@ import org.onekash.kashcal.data.db.entity.SyncLog
  * - calendars: calendar collections
  * - categories: per-tag color and recency
  * - events: masters and exceptions
- * - events_fts: FTS4 search index over events
+ * - event_ics: stored ICS of events, in pieces ([EventIcsStore])
  * - ics_subscriptions: ICS feed subscriptions
  * - occurrences: materialized RRULE expansions
  * - pending_cancels: removed attendees awaiting an iTIP CANCEL
@@ -67,7 +75,7 @@ import org.onekash.kashcal.data.db.entity.SyncLog
         Calendar::class,
         Category::class,
         Event::class,
-        EventFts::class,
+        EventIcsPart::class,
         IcsSubscription::class,
         Occurrence::class,
         PendingCancel::class,
@@ -76,13 +84,13 @@ import org.onekash.kashcal.data.db.entity.SyncLog
         ScheduledReminder::class,
         SyncLog::class
     ],
-    version = 26,
+    version = 29,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 3, to = 4)
     ]
 )
-@TypeConverters(Converters::class)
+@ColumnTypeConverters(Converters::class)
 abstract class KashCalDatabase : RoomDatabase() {
 
     abstract fun accountsDao(): AccountsDao
@@ -94,6 +102,9 @@ abstract class KashCalDatabase : RoomDatabase() {
     abstract fun eventsDao(): EventsDao
 
     abstract fun occurrencesDao(): OccurrencesDao
+
+    /** Use [EventIcsStore]; only it reads or writes the pieces. */
+    abstract fun eventIcsDao(): EventIcsDao
 
     abstract fun attendeesDao(): AttendeesDao
 
@@ -112,78 +123,61 @@ abstract class KashCalDatabase : RoomDatabase() {
     abstract fun recentChangesDao(): RecentChangesDao
 
     /**
-     * Runs [block] in a transaction and returns its result.
+     * Runs [block] in a transaction and returns its result. App code opens its transactions
+     * here; DAO `@Transaction` methods open their own. A failure thrown out of [block] rolls back
+     * everything it wrote; a nested call joins the outer transaction on the same connection.
      *
-     * Room's `withTransaction` is inline, so unit tests can't mock it; this open wrapper can be
-     * mocked and behaves the same in production.
+     * A cancellation of the caller seen before the commit rolls the transaction back: the
+     * outermost call checks the caller's job before it commits, because the writer connection
+     * runs under Room's own job, not the caller's (`TransactionAtomicityTest`). A cancelled block
+     * still runs to its end first. The connection is confined to this coroutine, so
+     * [block] must not hand database work to another coroutine (`launch`, `async`). Open so unit
+     * tests can stub it.
      */
-    open suspend fun <R> runInTransaction(block: suspend () -> R): R = withTransaction(block)
+    open suspend fun <R> runInTransaction(block: suspend () -> R): R {
+        val context = currentCoroutineContext()
+        // A nested call uses the outer transaction's Transactor directly: going through
+        // useWriterConnection again would start an invalidation refresh that waits for the
+        // writer the outer transaction holds.
+        context[AppTransaction]?.takeIf { it.database === this }?.let { outer ->
+            return outer.transactor.immediateTransaction { block() }
+        }
+        val caller = context[Job]
+        caller?.ensureActive()
+        return try {
+            useWriterConnection { transactor ->
+                transactor.immediateTransaction {
+                    withContext(AppTransaction(this@KashCalDatabase, transactor)) {
+                        block().also { caller?.ensureActive() }
+                    }
+                }
+            }
+        } catch (e: CancellationException) {
+            // A cancellation that lands after the commit skips the refresh useWriterConnection
+            // runs on return, so observers would miss the committed rows until the next write.
+            invalidationTracker.refreshAsync()
+            throw e
+        }
+    }
+
+    /** Returns whether the calling coroutine runs inside this database's [runInTransaction]. */
+    open suspend fun isInAppTransaction(): Boolean = currentCoroutineContext()[AppTransaction]?.database === this
+
+    /** Marks a coroutine inside [runInTransaction] of [database], holding its [transactor]. */
+    private class AppTransaction(
+        val database: KashCalDatabase,
+        val transactor: Transactor,
+    ) : AbstractCoroutineContextElement(AppTransaction) {
+        companion object Key : CoroutineContext.Key<AppTransaction>
+    }
 
     companion object {
-        private const val TAG = "KashCalDatabase"
-
         const val DATABASE_NAME = "kashcal.db"
 
         /**
-         * Returns a create callback for test databases: it installs the triggers that keep a
-         * master's uid unique per calendar and seeds the default tags. Production uses its own
-         * copy in [org.onekash.kashcal.di.DatabaseModule]; keep the two in step.
-         *
-         * Triggers stand in for a partial unique index because Room doesn't validate triggers.
+         * Returns the [DatabaseCreateCallback] production applies through
+         * [kashCalProductionConfig], for tests that build Room with their own options.
          */
-        fun testCallback(): RoomDatabase.Callback = databaseCallback
-
-        private val databaseCallback = object : RoomDatabase.Callback() {
-            override fun onCreate(db: SupportSQLiteDatabase) {
-                super.onCreate(db)
-                Log.d(TAG, "Creating triggers for master event deduplication")
-                createMasterEventUniqueTriggers(db)
-                seedDefaultCategories(db)
-            }
-        }
-
-        /** Seeds [Category.DEFAULT_SEEDS], like the production create callback. */
-        private fun seedDefaultCategories(db: SupportSQLiteDatabase) {
-            val now = System.currentTimeMillis()
-            for ((name, color) in Category.DEFAULT_SEEDS) {
-                db.execSQL(
-                    "INSERT OR IGNORE INTO categories (name, color, last_used_at) VALUES (?, ?, ?)",
-                    arrayOf<Any?>(name, color, now)
-                )
-            }
-        }
-
-        private fun createMasterEventUniqueTriggers(db: SupportSQLiteDatabase) {
-            db.execSQL("""
-                CREATE TRIGGER IF NOT EXISTS trigger_master_event_unique_insert
-                BEFORE INSERT ON events
-                WHEN NEW.original_event_id IS NULL
-                BEGIN
-                    SELECT RAISE(ABORT, 'UNIQUE constraint failed: duplicate master event uid in calendar')
-                    WHERE EXISTS (
-                        SELECT 1 FROM events
-                        WHERE uid = NEW.uid
-                        AND calendar_id = NEW.calendar_id
-                        AND original_event_id IS NULL
-                    );
-                END
-            """.trimIndent())
-
-            db.execSQL("""
-                CREATE TRIGGER IF NOT EXISTS trigger_master_event_unique_update
-                BEFORE UPDATE ON events
-                WHEN NEW.original_event_id IS NULL
-                BEGIN
-                    SELECT RAISE(ABORT, 'UNIQUE constraint failed: duplicate master event uid in calendar')
-                    WHERE EXISTS (
-                        SELECT 1 FROM events
-                        WHERE uid = NEW.uid
-                        AND calendar_id = NEW.calendar_id
-                        AND original_event_id IS NULL
-                        AND id != NEW.id
-                    );
-                END
-            """.trimIndent())
-        }
+        fun testCallback(): RoomDatabase.Callback = DatabaseCreateCallback
     }
 }

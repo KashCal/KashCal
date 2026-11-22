@@ -621,9 +621,8 @@ object RfcExamplesCorpus {
             description = "every Friday 13th forever with EXDATE on DTSTART",
             rrule = "FREQ=MONTHLY;BYDAY=FR;BYMONTHDAY=13",
             dtstartMs = et9(1997, 9, 2),
-            // EXDATE format: DTSTART's local date/time as YYYYMMDDTHHMMSS. lib-recur keeps only
-            // the date and applies DTSTART's time (quirk g); the ical4j path reads the time in the
-            // JVM default zone, not the TZID.
+            // EXDATE format: DTSTART's local date/time as YYYYMMDDTHHMMSS, which both engines read
+            // as that wall time in the series zone, so it names DTSTART's instant.
             exdateStrings = "19970902T090000",
             rangeStartMs = et9(1997, 9, 1),
             rangeEndMs = et9(2000, 10, 14),

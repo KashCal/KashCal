@@ -63,6 +63,21 @@ fun BetaBadge(modifier: Modifier = Modifier) {
     )
 }
 
+/** Marks an account whose sync is turned off, in the warning tone so it stands out. */
+@Composable
+fun SyncOffBadge(modifier: Modifier = Modifier) {
+    Text(
+        stringResource(R.string.badge_sync_off),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onErrorContainer,
+        maxLines = 1,
+        softWrap = false,
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(4.dp))
+            .padding(horizontal = 6.dp, vertical = 2.dp)
+    )
+}
+
 @Composable
 fun NewBadge(modifier: Modifier = Modifier) {
     Text(

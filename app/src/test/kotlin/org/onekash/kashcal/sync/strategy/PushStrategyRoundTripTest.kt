@@ -18,20 +18,24 @@ import org.robolectric.annotation.Config
 /**
  * Tests the push serialization choice through [IcsPatcher], the serializer [PushStrategy] calls.
  *
- * - A one-off event goes through [IcsPatcher.serialize], which patches rawIcal when there is one
- *   and generates fresh ICS when it's missing or unparseable.
+ * - A one-off event goes through [IcsPatcher.serialize], which patches the stored ICS when there
+ *   is one and generates fresh ICS when it's missing or unparseable.
  * - A recurring master goes through [IcsPatcher.serializeWithExceptions] with its exceptions.
  * - The result parses back as valid ICS with the expected alarms, attendees and EXDATEs, for
  *   create, update and move.
  *
  * No database and no [PushStrategy]: [simulateSerializeEventWithExceptions] copies the branch
- * `serializeEventWithExceptions` takes, without its attendee lookup.
+ * `serializeEventWithExceptions` takes, without its attendee lookup, and [storedIcs] stands in for
+ * the stored ICS a series row has.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
 class PushStrategyRoundTripTest {
 
     private lateinit var parser: ICalParser
+
+    /** Each event's stored ICS by UID, as the store would hold it on the series row. */
+    private val storedIcs = mutableMapOf<String, String>()
 
     @Before
     fun setup() {
@@ -42,7 +46,7 @@ class PushStrategyRoundTripTest {
 
     @Test
     fun `CREATE local event uses generateFresh - produces valid ICS`() {
-        // Created in the app, so no rawIcal.
+        // Created in the app, so no stored ICS.
         val localEvent = createLocalEvent(
             title = "New Local Event",
             reminders = listOf("-PT15M", "-PT30M", "-PT1H")
@@ -303,7 +307,7 @@ class PushStrategyRoundTripTest {
         val parsedMaster = parsed.find { it.recurrenceId == null }!!
         val parsedException = parsed.find { it.recurrenceId != null }!!
 
-        // The master keeps its 2 alarms from rawIcal.
+        // The master keeps its 2 alarms from the stored ICS.
         assertEquals("Master keeps 2 alarms from rawIcal", 2, parsedMaster.alarms.size)
 
         // The exception has its own alarm.
@@ -368,7 +372,7 @@ class PushStrategyRoundTripTest {
             END:VCALENDAR
         """.trimIndent()
 
-        // The row after a move: rawIcal kept, caldavUrl and etag cleared, as
+        // The row after a move: stored ICS kept, caldavUrl and etag cleared, as
         // EventWriter.moveEventToCalendar leaves it.
         val movedEvent = createServerEvent(originalServerIcs).copy(
             calendarId = 2L,  // new calendar
@@ -381,7 +385,7 @@ class PushStrategyRoundTripTest {
 
         val parsed = parser.parseAllEvents(icalData).getOrNull()!!.first()
 
-        // Everything kept from rawIcal.
+        // Everything kept from the stored ICS.
         assertEquals(3, parsed.alarms.size)
         assertEquals(2, parsed.attendees.size)
         assertNotNull(parsed.organizer)
@@ -485,9 +489,9 @@ class PushStrategyRoundTripTest {
             title = "Exception Only"
         )
 
-        // Serializing an exception alone still works: with no rawIcal, IcsPatcher.serialize
+        // Serializing an exception alone still works: with no stored ICS, IcsPatcher.serialize
         // generates fresh ICS.
-        val icalData = IcsPatcher.serialize(exception)
+        val icalData = IcsPatcher.serialize(exception, ics = null)
 
         val parsed = parser.parseAllEvents(icalData).getOrNull()!!.first()
 
@@ -505,12 +509,12 @@ class PushStrategyRoundTripTest {
             startTs = 1735120800000L,
             endTs = 1735124400000L,
             reminders = listOf("-PT15M"),
-            rawIcal = "THIS IS NOT VALID ICS",
             syncStatus = SyncStatus.PENDING_UPDATE,
             dtstamp = System.currentTimeMillis(),
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
+        storedIcs[event.uid] = "THIS IS NOT VALID ICS"
 
         val (icalData, _) = simulateSerializeEventWithExceptions(event, emptyList())
 
@@ -530,12 +534,12 @@ class PushStrategyRoundTripTest {
             startTs = 1735120800000L,
             endTs = 1735124400000L,
             reminders = listOf("-PT15M", "-PT30M"),
-            rawIcal = "",
             syncStatus = SyncStatus.PENDING_UPDATE,
             dtstamp = System.currentTimeMillis(),
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
+        storedIcs[event.uid] = ""
 
         val (icalData, _) = simulateSerializeEventWithExceptions(event, emptyList())
 
@@ -553,7 +557,7 @@ class PushStrategyRoundTripTest {
      *
      * The production function also passes each row's attendees from the attendees table, or
      * null when there are none. This copy passes null for every row, so the master or one-off
-     * event keeps its rawIcal ATTENDEE block and each exception is generated with none.
+     * event keeps its stored ATTENDEE block and each exception is generated with none.
      */
     private fun simulateSerializeEventWithExceptions(
         event: Event,
@@ -561,11 +565,11 @@ class PushStrategyRoundTripTest {
     ): Pair<String, List<Event>> {
         return if (event.rrule != null && event.originalEventId == null) {
             // Recurring master: include the exceptions.
-            val icalData = IcsPatcher.serializeWithExceptions(event, exceptions)
+            val icalData = IcsPatcher.serializeWithExceptions(event, storedIcs[event.uid], exceptions)
             icalData to exceptions
         } else {
             // One-off event or exception.
-            IcsPatcher.serialize(event) to emptyList()
+            IcsPatcher.serialize(event, storedIcs[event.uid]) to emptyList()
         }
     }
 
@@ -587,7 +591,7 @@ class PushStrategyRoundTripTest {
             endTs = endTs,
             rrule = rrule,
             reminders = reminders,
-            rawIcal = null,  // created in the app, so no rawIcal
+            // Created in the app, so no stored ICS.
             syncStatus = SyncStatus.PENDING_CREATE,
             dtstamp = now,
             createdAt = now,
@@ -597,7 +601,7 @@ class PushStrategyRoundTripTest {
 
     private fun createServerEvent(rawIcal: String): Event {
         val now = System.currentTimeMillis()
-        // Reminders from rawIcal's START-relative alarms, roughly as ICalEventMapper.toEntity
+        // Reminders from the body's START-relative alarms, roughly as ICalEventMapper.toEntity
         // derives them (no sort or cap here).
         val parsed = parser.parseAllEvents(rawIcal).getOrNull()?.firstOrNull()
         val reminders = parsed?.alarms
@@ -606,14 +610,15 @@ class PushStrategyRoundTripTest {
                 alarm.trigger?.let { org.onekash.icaldav.util.DurationUtils.format(it) }
             }
             ?.takeIf { it.isNotEmpty() }
+        val uid = "server-${System.nanoTime()}@server.com"
+        storedIcs[uid] = rawIcal
         return Event(
-            uid = "server-${System.nanoTime()}@server.com",
+            uid = uid,
             calendarId = 1L,
             title = "Server Event",
             startTs = 1735120800000L,
             endTs = 1735124400000L,
-            rawIcal = rawIcal,
-            reminders = reminders,  // from rawIcal, as above
+            reminders = reminders,  // from the body, as above
             syncStatus = SyncStatus.SYNCED,
             caldavUrl = "https://server.com/event.ics",
             etag = "\"v1\"",
@@ -647,7 +652,6 @@ class PushStrategyRoundTripTest {
             originalEventId = masterId,
             originalInstanceTime = originalInstanceTime,
             reminders = reminders,
-            rawIcal = null,  // these fixture exceptions have no rawIcal
             rrule = null,  // an exception has no RRULE
             syncStatus = SyncStatus.SYNCED,
             dtstamp = now,

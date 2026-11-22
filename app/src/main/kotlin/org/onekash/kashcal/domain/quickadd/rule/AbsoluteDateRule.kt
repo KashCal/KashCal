@@ -7,6 +7,9 @@ import java.time.Month
 object AbsoluteDateRule : ParseRule {
 
     override fun apply(tokens: List<Token>, context: ParseContext) {
+        // A range already set the start and its end ("Aug 3 to 5", "Friday to Sunday"); a second
+        // date must not move the start past the end.
+        if (context.endDate != null) return
         // The first pattern that matches ends the rule, even when its date doesn't exist
         // (Feb 30), which then sets nothing:
         // 1. NUMBER "of" MONTH [YEAR]: "15th of March 2027"

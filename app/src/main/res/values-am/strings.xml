@@ -43,6 +43,8 @@
     <string name="channel_event_invitations">የክስተት ግብዣዎች</string>
     <string name="channel_event_invitations_desc">አዲስ የቀን መቁጠሪያ ግብዣ ሲደርስዎ ማሳወቂያዎች</string>
     <string name="channel_calendar_updates">የቀን መቁጠሪያ ለውጦች</string>
+    <string name="channel_calendar_backup">ራስ-ሰር የቀን መቁጠሪያ ምትኬ</string>
+    <string name="channel_calendar_backup_description">የቀን መቁጠሪያ ምትኬ ሳይሳካ ሲቀር ያሳውቅዎታል</string>
     <string name="invite_notification_body">ከ%1$s · ለመመለስ ይንኩ</string>
 
     <!-- ==================== App Shortcuts ==================== -->
@@ -88,7 +90,6 @@
     <string name="action_discard">አጥፋ</string>
     <string name="action_discard_confirm">ይጣል?</string>
     <string name="action_dismiss">አሰናብት</string>
-    <string name="action_show_all">ሁሉንም አሳይ</string>
     <string name="action_connect">አገናኝ</string>
     <string name="action_duplicate">ቅዳ</string>
     <string name="action_share">አጋራ</string>
@@ -119,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d ተጨማሪ</string>
     <string name="tags_autocomplete_create_new">\"%1$s\"ን ፍጠር</string>
     <string name="cd_tag">መለያ፦ %1$s</string>
+    <string name="tags_show_events_click_label">በዚህ መለያ የተለጠፉ ክስተቶችን አሳይ</string>
+    <string name="tags_show_events">ክስተቶችን አሳይ</string>
     <string name="cd_tags_move_menu">መለያዎችን አንቀሳቅስ</string>
     <string name="tags_move_above_notes">ከማስታወሻዎች በላይ አንቀሳቅስ</string>
     <string name="tags_move_below_notes">ከማስታወሻዎች በታች አንቀሳቅስ</string>
@@ -148,7 +151,6 @@
     <string name="label_enter_hex">6 hex ቁምፊዎች ያስገቡ (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">ሁሉም</string>
     <string name="view_week">ሳምንት</string>
     <string name="view_month">ወር</string>
     <string name="label_all_day">ሙሉ ቀን</string>
@@ -190,17 +192,38 @@
     <string name="settings_event_emojis_info">በርዕሱ ላይ ተመስርቶ ለክስተቶች ኢሞጂ ያክላል፣ ለምሳሌ ለ\"የልደት ቀን\" 🎂።</string>
     <string name="settings_force_sync">ሙሉ ማመሳሰል አስገድድ</string>
     <string name="settings_force_sync_subtitle">ሁሉንም የቀን መቁጠሪያ ውሂብ እንደገና አውርድ</string>
+    <string name="settings_force_sync_no_account">ምንም የማመሳሰል መለያ አልተዋቀረም</string>
+    <string name="force_sync_confirm">%1$sን ከ%2$s እንደገና አውርድ። እስካሁን ያልተመሳሰሉ ለውጦች ይጠበቃሉ።</string>
+    <string name="action_start">ጀምር</string>
     <string name="settings_sync_history">የማመሳሰል ታሪክ</string>
     <string name="settings_sync_history_subtitle">የማመሳሰል ክፍለ ጊዜዎችን ተመልከት (ባለፉት 48 ሰዓታት)</string>
     <string name="settings_import_subtitle">ከ ICS ፋይል ወደ ማንኛውም ቀን መቁጠሪያ ክስተቶችን ጨምር</string>
-    <string name="settings_export_subtitle">ክስተቶችን ወደ ICS ፋይል አስቀምጥ</string>
     <string name="settings_birthday_reminder">የልደት ቀን ማስታወሻ</string>
-    <string name="settings_use_device_timezone">የመሳሪያ ሰዓት ክልል ተጠቀም</string>
     <string name="settings_section_calendars">የቀን መቁጠሪያዎች እና መለያዎች</string>
     <string name="settings_section_appearance">መልክ</string>
     <string name="settings_section_creating_events">የክስተት ምርጫዎች</string>
     <string name="settings_section_sync">ማመሳሰል</string>
     <string name="settings_section_data">ምትኬ እና መልሶ ማስቀመጥ</string>
+    <string name="settings_section_troubleshooting">መላ መፈለግ</string>
+
+    <!-- ==================== Debug report (Settings > Troubleshooting) ==================== -->
+    <string name="debug_report_row_label">የማረሚያ ሪፖርት ላክ</string>
+    <string name="debug_report_row_subtitle">ከስህተት ሪፖርት ጋር የሚላኩ የብልሽት፣ የማመሳሰል እና የማዋቀር ዝርዝሮች</string>
+    <string name="debug_report_sheet_title">የማረሚያ ሪፖርት</string>
+    <string name="debug_report_sheet_body">ከስህተት ሪፖርት ጋር የሚላክ የጽሑፍ ፋይል። ችግሩ ከተከሰተ በኋላ ቶሎ ይላኩት፦ የመተግበሪያው ምዝግብ ማስታወሻ የቅርብ ጊዜ እንቅስቃሴን ብቻ ይይዛል።</string>
+    <string name="debug_report_item_exits">መተግበሪያው በቅርቡ ለምን እንደተዘጋ</string>
+    <string name="debug_report_item_exits_detail">ብልሽቶች፣ ምላሽ አለመስጠት፣ ዝቅተኛ ማህደረ ትውስታ</string>
+    <string name="debug_report_item_log">የመተግበሪያ ምዝግብ ማስታወሻ</string>
+    <string name="debug_report_item_log_detail">የKashCal የራሱ መልዕክቶች፣ የብልሽት ዝርዝሮችን ጨምሮ</string>
+    <string name="debug_report_item_sync_detail">የቅርብ ጊዜ ማመሳሰሎች፣ እስከ 48 ሰዓታት ወደኋላ</string>
+    <string name="debug_report_item_pending">በመጠባበቅ ላይ ያሉ ለውጦች</string>
+    <string name="debug_report_item_pending_detail">ገና ወደ አገልጋይዎ ያልተላኩ አርትዖቶች</string>
+    <string name="debug_report_item_setup">ማዋቀር</string>
+    <string name="debug_report_item_setup_detail">የመተግበሪያ እና የAndroid ስሪት፣ ፈቃዶች፣ የባትሪ ቅንብሮች፣ የመለያ አይነቶች</string>
+    <string name="debug_report_privacy_note">የኢሜይል አድራሻዎች፣ የድር አድራሻዎች እና ቶከኖች ተደብቀዋል። የክስተት ርዕሶች፣ የቀን መቁጠሪያ ስሞች እና የእውቂያ ስሞች አልተደበቁም። በይፋዊ ልጥፍ ሳይሆን በኢሜይል ይላኩት።</string>
+    <string name="debug_report_share">ሪፖርት አጋራ</string>
+    <string name="debug_report_chooser_title">የማረሚያ ሪፖርት አጋራ</string>
+    <string name="debug_report_failed">የማረሚያ ሪፖርቱን መፍጠር አልተቻለም</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">የመተግበሪያ መቆለፊያ</string>
@@ -236,9 +259,37 @@
     <string name="backup_error_read_failed">ፋይሉን ማንበብ አልተቻለም</string>
 
     <!-- ==================== Onboarding ==================== -->
-    <string name="onboarding_apple_calendar">Apple Calendar?</string>
-    <string name="onboarding_got_you">እኛ ከጎንህ ነን።</string>
-    <string name="onboarding_connect_prompt">ክስተቶችህን እዚህ ለማየት iCloud አገናኝ</string>
+    <string name="onboarding_title">የቀን መቁጠሪያዎችዎ የት ናቸው?</string>
+    <string name="onboarding_subtitle">ለማገናኘት አንዱን ይምረጡ።</string>
+    <string name="onboarding_icloud_detail">Apple ID እና የመተግበሪያ የይለፍ ቃል</string>
+    <string name="onboarding_caldav_title">CalDAV አገልጋይ</string>
+    <string name="onboarding_caldav_detail">Nextcloud፣ Fastmail፣ Radicale እና ሌሎች</string>
+    <string name="onboarding_device_title">በዚህ መሳሪያ ላይ</string>
+    <string name="onboarding_phone_detail">Google፣ Outlook እና የማመሳሰያ መተግበሪያዎች</string>
+    <string name="onboarding_use_offline">ከመስመር ውጭ የቀን መቁጠሪያ ይጠቀሙ</string>
+    <string name="onboarding_trust">ክፍት ምንጭ። ማስታወቂያ የለም። ክትትል የለም።</string>
+
+    <!-- ==================== Reminders are off ==================== -->
+    <string name="reminders_off_title">አስታዋሾች ጠፍተዋል</string>
+    <plurals name="reminders_off_body">
+        <item quantity="one">በዚህ ሳምንት %d ክስተት አስታዋሽ አለው።</item>
+        <item quantity="other">በዚህ ሳምንት %d ክስተቶች አስታዋሾች አሏቸው።</item>
+    </plurals>
+    <string name="reminders_off_not_now">አሁን አይደለም</string>
+    <string name="reminders_off_turn_on">አብራ</string>
+    <string name="reminders_on_snackbar">አስታዋሾች በርተዋል</string>
+
+    <!-- ==================== About ==================== -->
+    <string name="about_tagline">ሁሉም የቀን መቁጠሪያዎችዎ በአንድ የግል መተግበሪያ ውስጥ።</string>
+    <string name="about_help_title">እገዛ እና መመሪያዎች</string>
+    <string name="about_help_detail">ማዋቀር፣ ማመሳሰል እና ጥያቄዎች</string>
+    <string name="about_source_title">የምንጭ ኮድ</string>
+    <string name="about_source_detail">Apache 2.0፣ በ GitHub ላይ</string>
+    <string name="about_support_title">KashCal ይደግፉ</string>
+    <string name="about_support_detail">አስቀድመው ለሚደግፉ ሁሉ እናመሰግናለን</string>
+    <string name="about_link_failed">ይህን አገናኝ ሊከፍት የሚችል መተግበሪያ የለም።</string>
+    <string name="about_built_in_austin">በ Austin በ❤️ የተሰራ</string>
+    <string name="about_version">ስሪት %1$s</string>
 
     <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">ዝለል</string>
@@ -257,22 +308,32 @@
     <string name="whats_new_v772_changes_title">ምን እንደተቀየረ ይመልከቱ</string>
     <string name="whats_new_v772_changes_body">ከiCloud እና CalDAV ቀን መቁጠሪያዎችዎ የመጡ አዲስ፣ የተስተካከሉ እና የተወገዱ ክስተቶች ለ7 ቀናት በ«የቅርብ ጊዜ ለውጦች» ውስጥ ይሰበሰባሉ። ለመክፈት አንዱን ይንኩ።</string>
     <string name="whats_new_v772_notifications_body">ከበስተጀርባ የሚደረግ ማመሳሰል በiCloud ወይም CalDAV ክስተቶችዎ ላይ ለውጦችን ሲያገኝ ማሳወቂያ ያግኙ። እስኪያበሩት ድረስ ጠፍቶ ይቆያል።</string>
+    <string name="whats_new_v803_offline_title">በስልክዎ ላይ የሚቆዩ የቀን መቁጠሪያዎች</string>
+    <string name="whats_new_v803_offline_body">አንዳንድ ዕቅዶች በአገልጋይ ላይ መሆን የለባቸውም። የፈለጉትን ያህል የራሳቸው ከመስመር ውጭ የቀን መቁጠሪያዎች ይስጧቸው።</string>
+    <string name="whats_new_v803_backup_title">ሊረሱት የሚችሉት ምትኬ</string>
+    <string name="whats_new_v803_backup_body">አቃፊ አንድ ጊዜ ይምረጡ፣ KashCal የከመስመር ውጭ የቀን መቁጠሪያዎችዎን አዲስ ቅጂ እዚያ ያስቀምጣል።</string>
+    <string name="whats_new_v803_print_title">ሳምንትዎ፣ በወረቀት ላይ</string>
+    <string name="whats_new_v803_print_body">የሚመለከቱትን ሳምንት ያትሙ። በየትኛው ፍሪጅ ላይ እንደሚለጠፍ የእርስዎ ምርጫ ነው።</string>
     <string name="whats_new_hero_sample_lunch">የቡድን ምሳ</string>
     <string name="whats_new_hero_sample_review">የንድፍ ግምገማ</string>
     <string name="whats_new_hero_sample_book_club">የመጽሐፍ ክበብ</string>
+    <string name="whats_new_hero_sample_dentist">የጥርስ ሐኪም</string>
+    <string name="whats_new_hero_sample_yoga">ዮጋ</string>
     <string name="whats_new_hero_sample_calendar">ሥራ</string>
+    <string name="whats_new_hero_sample_family">ቤተሰብ</string>
+    <string name="whats_new_hero_sample_garden">የአትክልት ቦታ</string>
+    <string name="whats_new_hero_sample_folder">የቀን መቁጠሪያ ምትኬዎች</string>
     <string name="whats_new_hero_now">አሁን</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud አገናኝ</string>
     <string name="signin_caldav_title">CalDAV መለያ አክል</string>
+    <string name="signin_caldav_sign_in_again_title">እንደገና ግባ</string>
     <string name="signin_connected_to">ከ%1$s ጋር ተገናኝቷል</string>
 
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">አዲስ ክስተት</string>
     <string name="dialog_edit_event_title">ክስተት አርትዕ</string>
-    <string name="dialog_force_sync_title">ሙሉ ማመሳሰል ያስገድዱ?</string>
-    <string name="dialog_force_sync_message">ይህ ሁሉንም የቀን መቁጠሪያ ውሂብ ከአገልጋዩ እንደገና ያወርዳል። የአካባቢ ለውጦች ይጠበቃሉ።</string>
     <string name="dialog_enable_notifications">ማሳወቂያዎችን ያንቁ?</string>
     <string name="dialog_action_required">ለመቀጠል ይህ እርምጃ ያስፈልጋል።</string>
     <string name="dialog_add_to_calendar">ወደ ቀን መቁጠሪያ አክል</string>
@@ -285,6 +346,7 @@
     <string name="status_no_events_week">በዚህ ሳምንት ምንም ክስተቶች የሉም</string>
     <string name="status_more_events">+%1$d ተጨማሪ</string>
     <string name="status_no_sync_sessions">ምንም የማመሳሰል ክፍለ ጊዜዎች እስካሁን የሉም።\n\nበቀን መቁጠሪያ እይታ ላይ ወደ ታች በመሳብ ማመሳሰልን ያስጀምሩ።</string>
+    <string name="status_no_sync_account">ምንም የማመሳሰል መለያ አልተዋቀረም። ከመስመር ውጭ የቀን መቁጠሪያዎች በዚህ መሳሪያ ላይ ይቆያሉ፤ የመሳሪያ ቀን መቁጠሪያዎች በራሳቸው መለያ ይመሳሰላሉ።</string>
     <string name="status_no_writable_calendars">ሊፃፍባቸው የሚችሉ ቀን መቁጠሪያዎች የሉም</string>
     <string name="status_events_count">%1$d ክስተቶች</string>
     <string name="status_sync_history">የማመሳሰል ታሪክ</string>
@@ -333,6 +395,7 @@
     <string name="caldav_error_unexpected">ያልተጠበቀ ስህተት። እባክዎ እንደገና ይሞክሩ።</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nይህ በአካባቢዎ አውታረ መረብ ላይ ያለ አገልጋይ ከሆነ፣ ለመገናኘት የአካባቢ አውታረ መረብ መዳረሻን ይፍቀዱ።</string>
     <string name="caldav_error_connection_refused_insecure">አገልጋዩ ግንኙነቱን KashCal ወደማይከተለው ቦታ አዙሮታል (ያልተመሰጠረ አድራሻ ወይም የማዞሪያ ዑደት)፣ ስለዚህ KashCal የይለፍ ቃልዎን ከመላኩ በፊት ቆሟል። የአገልጋዩን አድራሻ ያረጋግጡ።</string>
+    <string name="caldav_error_sign_in_again_mismatch">ይህ የተለየ መለያ ነው። ይህ መለያ በሚጠቀመው የተጠቃሚ ስም እና አገልጋይ ይግቡ።</string>
     <string name="local_network_banner_title">የአካባቢ አውታረ መረብ መዳረሻ ያስፈልጋል</string>
     <string name="local_network_banner_body">ይህ አገልጋይ በአካባቢዎ አውታረ መረብ ላይ ያለ ይመስላል። KashCal ከእሱ ጋር መገናኘት እንዲችል የአካባቢ አውታረ መረብ መዳረሻን ይፍቀዱ።</string>
     <string name="local_network_banner_allow">መዳረሻ ፍቀድ</string>
@@ -374,7 +437,6 @@
     <string name="error_device_calendar_title">የቀን መቁጠሪያ ስህተት</string>
     <string name="error_device_calendar_write_failed">ወደ የመሳሪያ ቀን መቁጠሪያ ማስቀመጥ አልተሳካም። እባክዎ እንደገና ይሞክሩ።</string>
     <string name="error_device_calendar_permission">የቀን መቁጠሪያ የፅሁፍ ፈቃድ ያስፈልጋል። እባክዎ በቅንብሮች ውስጥ ፈቃድ ይስጡ።</string>
-    <string name="error_device_calendar_permission_denied">የመፃፍ መዳረሻ ለመስጠት በቅንብሮች ውስጥ የቀን መቁጠሪያ ፈቃድን ያጥፉ/ያብሩ</string>
     <string name="error_device_calendar_not_found">ቀን መቁጠሪያ አልተገኘም። ተወግዶ ሊሆን ይችላል።</string>
     <string name="error_device_event_not_found">ክስተት አልተገኘም። ተሰርዞ ሊሆን ይችላል።</string>
     <string name="error_device_calendar_read_only">ይህ ቀን መቁጠሪያ የንባብ ብቻ ነው።</string>
@@ -401,12 +463,11 @@
     <string name="cd_recurring">ተደጋጋሚ</string>
     <string name="cd_enabled">ነቅቷል</string>
     <string name="cd_sync_error">የማመሳሰል ስህተት</string>
-    <string name="cd_select_label">%1$s ምረጥ</string>
     <string name="cd_wheel_picker">%1$d አማራጮች ያሉት ጎማ መምረጫ</string>
     <string name="cd_time_entry_keyboard">ትክክለኛውን ሰዓት ያስገቡ</string>
     <string name="time_entry_dialog_title">ሰዓት ያስገቡ</string>
     <string name="time_entry_tap_to_edit">ለማስተካከል ይንኩ</string>
-    <string name="cd_version_info">KashCal ስሪት %1$s። ለማረም አማራጮች ረዘም አድርገው ይጫኑ።</string>
+    <string name="cd_version_info">KashCal ስሪት %1$s</string>
     <string name="cd_about_setting">ስለ %1$s</string>
     <string name="cd_color_slider">የቀለም ተንሸራታች፣ አሁን %1$s</string>
     <string name="cd_color_slider_state">%1$s፣ %2$d ዲግሪ</string>
@@ -435,7 +496,6 @@
     <string name="label_recurrence_on_date">በቀን</string>
 
     <!-- ==================== Settings (Additional) ==================== -->
-    <string name="settings_visible_calendars">የሚታዩ ቀን መቁጠሪያዎች</string>
     <string name="settings_default_calendar">ነባሪ ቀን መቁጠሪያ</string>
     <string name="settings_default_event_length">ነባሪ የክስተት ርዝመት</string>
     <string name="settings_default_event_length_hint">ለአዲስ ክስተቶች ነባሪ ርዝመት</string>
@@ -455,7 +515,6 @@
     <string name="option_saturday">ቅዳሜ</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">ምንም ክስተቶች አልተገኙም</string>
     <string name="empty_no_upcoming_events">ምንም መጪ ክስተቶች የሉም</string>
     <string name="empty_no_calendars">ምንም ቀን መቁጠሪያዎች አይገኙም</string>
 
@@ -466,7 +525,15 @@
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">ቀን መቁጠሪያ አምጣ</string>
     <string name="action_import_from_file">ከፋይል ክስተቶችን አስገባ</string>
-    <string name="action_export_local_calendar">አካባቢያዊ ቀን መቁጠሪያ ላክ</string>
+    <string name="settings_export_calendars">የቀን መቁጠሪያዎችን ላክ</string>
+    <string name="settings_export_calendars_subtitle">የቀን መቁጠሪያን እንደ ICS ፋይል አስቀምጥ</string>
+    <string name="export_calendar_no_events">ምንም ክስተቶች የሉም</string>
+    <string name="export_calendar_preparing">በማዘጋጀት ላይ…</string>
+    <string name="cd_export_calendar">%1$s ላክ</string>
+    <string name="cd_export_calendar_preparing">%1$s በማዘጋጀት ላይ</string>
+    <string name="export_calendar_chooser_title">የቀን መቁጠሪያ ላክ</string>
+    <string name="export_event_chooser_title">ክስተት ላክ</string>
+    <string name="export_file_failed">ፋይሉን መፍጠር አልተቻለም።</string>
 
     <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
@@ -504,12 +571,14 @@
     <string name="accounts_cd_back">ተመለስ</string>
     <string name="accounts_sync_issue">የማመሳሰል ችግር</string>
     <string name="accounts_cd_sync_warning">የማመሳሰል ማስጠንቀቂያ</string>
+    <string name="accounts_cd_sync_off">ማመሳሰል ጠፍቷል</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">የቀን መቁጠሪያ ምግቦች</string>
     <string name="subscriptions_section_add">አክል</string>
     <string name="subscriptions_empty_ics">ምንም ICS ምዝገባዎች የሉም</string>
     <string name="subscriptions_empty_ics_hint">ክስተቶችን ለማየት የቀን መቁጠሪያ ምግብ ያክሉ</string>
+    <string name="subscriptions_swipe_hint">ለመሰረዝ ምግቡን ያንሸራትቱ።</string>
     <string name="subscriptions_add_ics">ICS ቀን መቁጠሪያ አክል</string>
     <string name="qs_tile_label">አክል</string>
     <string name="holiday_catalog_add">የበዓል ቀን መቁጠሪያ አክል</string>
@@ -519,6 +588,11 @@
     <string name="holiday_catalog_empty_hint">የተለየ ስም ይሞክሩ</string>
     <string name="holiday_catalog_validate_error">ይህን ቀን መቁጠሪያ መድረስ አልተቻለም። ግንኙነትዎን ይፈትሹና እንደገና ይሞክሩ።</string>
     <string name="holiday_catalog_attribution">የበዓል ቀን መቁጠሪያዎች ከ Mozilla Thunderbird፣ በ%1$s ስር ፈቃድ ተሰጥቷቸዋል።</string>
+    <string name="account_feeds_add">ከመለያ አክል</string>
+    <string name="account_feeds_note">በiCloud እና CalDAV መለያዎችዎ ላይ የተቀመጡትን የቀን መቁጠሪያ ምግቦች ይዘረዝራል። ወደ የቀን መቁጠሪያ ምግቦች ለማከል ያብሩ።</string>
+    <string name="account_feeds_checking">በመፈተሽ ላይ…</string>
+    <string name="account_feeds_none">ምንም የቀን መቁጠሪያ ምግቦች አልተገኙም</string>
+    <string name="account_feeds_failed">የቀን መቁጠሪያ ምግቦችን መጫን አልተቻለም</string>
     <string name="subscriptions_row_label">የቀን መቁጠሪያ ምግቦች (ICS)</string>
     <string name="subscriptions_row_hint">ለምሳሌ በዓላት፣ ስፖርት፣ ትምህርት ቤት</string>
 
@@ -564,6 +638,8 @@
     <string name="account_detail_discovering">በማግኘት ላይ…</string>
     <string name="account_detail_discover_calendars">አዲስ ቀን መቁጠሪያዎችን ፈልግ</string>
     <string name="account_detail_change_password">የይለፍ ቃል ቀይር</string>
+    <string name="account_detail_sign_in_again">እንደገና ግባ</string>
+    <string name="account_detail_sign_in_again_subtitle">KashCal የዚህን መለያ የይለፍ ቃል ከአሁን በኋላ የለውም። እንደገና ለማመሳሰል ይግቡ። የቀን መቁጠሪያዎችዎ እና ክስተቶችዎ ይቆያሉ።</string>
     <string name="account_detail_sign_out">ውጣ</string>
     <string name="account_detail_never_synced">ፈጽሞ አልተመሳሰለም</string>
     <string name="account_detail_last_success">የመጨረሻ ስኬት: %1$s</string>
@@ -587,6 +663,107 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">የመሳሪያ ቀን መቁጠሪያዎች</string>
     <string name="settings_device_calendars_hint">ከሌሎች መተግበሪያዎች የቀን መቁጠሪያዎች</string>
+    <string name="offline_calendars_row_label">ከመስመር ውጭ የቀን መቁጠሪያዎች</string>
+    <string name="offline_calendars_row_hint">በዚህ መሳሪያ ላይ የሚቆዩ የቀን መቁጠሪያዎች</string>
+    <string name="offline_calendars_manage_note">ለመሰረዝ የቀን መቁጠሪያውን ያንሸራትቱ።</string>
+    <string name="offline_calendars_info">በዚህ መሳሪያ ላይ ይቀመጣሉ፣ በጭራሽ አይሰምሩም።</string>
+    <string name="offline_calendars_info_cd">ስለ ከመስመር ውጭ የቀን መቁጠሪያዎች</string>
+    <string name="offline_calendar_default_state">ነባሪ</string>
+    <string name="offline_calendar_new">አዲስ የቀን መቁጠሪያ</string>
+    <string name="offline_calendar_new_in_picker">አዲስ ከመስመር ውጭ የቀን መቁጠሪያ</string>
+    <string name="action_create">ፍጠር</string>
+    <string name="offline_calendar_rename">እንደገና ሰይም</string>
+    <string name="offline_calendar_color">ቀለም</string>
+    <string name="offline_calendar_export">የቀን መቁጠሪያ ላክ</string>
+    <string name="offline_calendar_builtin_info">አብሮ የተሰራው የቀን መቁጠሪያ እንደገና ሊሰየም ወይም ሊሰረዝ አይችልም። ምንም የቀን መቁጠሪያ ካልተመረጠ አዲስ ክስተቶች ወደዚህ ይሄዳሉ።</string>
+    <string name="offline_calendar_builtin_info_cd">ስለ አብሮ የተሰራው የቀን መቁጠሪያ</string>
+    <string name="offline_calendar_rename_cancel_cd">እንደገና መሰየምን ሰርዝ</string>
+    <string name="offline_calendar_rename_save_cd">ስም አስቀምጥ</string>
+    <string name="offline_calendar_delete_cd">%1$s ሰርዝ</string>
+    <plurals name="offline_calendar_delete_confirm">
+        <item quantity="one">\"%2$s\" እና %1$d ክስተቱ ለዘለቄታው ይሰረዙ? መቀልበስ አይቻልም።</item>
+        <item quantity="other">\"%2$s\" እና %1$d ክስተቶቹ ለዘለቄታው ይሰረዙ? መቀልበስ አይቻልም።</item>
+    </plurals>
+    <string name="offline_calendar_delete_empty">\"%1$s\" ለዘለቄታው ይሰረዝ? ምንም ክስተቶች የሉትም።</string>
+    <plurals name="offline_calendar_delete_also">
+        <item quantity="one">%1$d ክስተትንም ሰርዝ</item>
+        <item quantity="other">%1$d ክስተቶችንም ሰርዝ</item>
+    </plurals>
+    <string name="offline_calendar_deleted">%1$s ተሰርዟል</string>
+    <string name="offline_calendar_duplicate_name">\"%1$s\" የተባለ ከመስመር ውጭ የቀን መቁጠሪያ አስቀድሞ አለ</string>
+    <string name="offline_calendar_similar_name">ከ\"%1$s\" ጋር በጣም ተመሳሳይ ነው። የተለየ ስም ይምረጡ።</string>
+    <string name="calendar_backup_title">ራስ-ሰር የቀን መቁጠሪያ ምትኬ</string>
+    <string name="calendar_backup_row_off">ጠፍቷል</string>
+    <string name="calendar_backup_row_on">%1$s · %2$s</string>
+    <string name="calendar_backup_row_problem">የምትኬ አቃፊው ሊደረስበት አልተቻለም</string>
+    <string name="calendar_backup_intro">እያንዳንዱን ከመስመር ውጭ የቀን መቁጠሪያ በመረጡት አቃፊ ውስጥ እንደ ICS ፋይል ያስቀምጣል።</string>
+    <string name="calendar_backup_choose_folder">አቃፊ ምረጥ</string>
+    <string name="calendar_backup_choose_folder_hint">አቃፊ ይምረጡ ወይም ይፍጠሩ፣ ለምሳሌ በDocuments ውስጥ። Android የማከማቻውን ከፍተኛ ደረጃ ወይም የDownload አቃፊን ራሱን አይፈቅድም።</string>
+    <string name="calendar_backup_folder">አቃፊ</string>
+    <string name="calendar_backup_change">ቀይር</string>
+    <string name="calendar_backup_frequency">ድግግሞሽ</string>
+    <string name="calendar_backup_frequency_info">ምትኬዎች ሊዘገዩ ይችላሉ፦ ስልኩ ስራ ፈት ሲሆን ወይም KashCal ለተወሰነ ጊዜ ካልተከፈተ Android የጀርባ ስራን ያዘገያል።</string>
+    <string name="calendar_backup_copies">የሚቀመጡ ቅጂዎች</string>
+    <string name="calendar_backup_copies_explained">እያንዳንዱ ምትኬ የቀደመውን ፋይል ቀን የተጻፈበት ቅጂ አድርጎ ያቆየዋል። ቅጂዎቹ ከዚህ ቁጥር በላይ ሲሆኑ በጣም የቆዩት ይሰረዛሉ። አዲሱ ፋይል ሁልጊዜ የቀን መቁጠሪያውን ስም ይይዛል።</string>
+    <string name="calendar_backup_copies_fewer">ያነሱ ቅጂዎችን አቆይ</string>
+    <string name="calendar_backup_copies_more">ተጨማሪ ቅጂዎችን አቆይ</string>
+    <plurals name="calendar_backup_copies_state">
+        <item quantity="one">%d ቅጂ</item>
+        <item quantity="other">%d ቅጂዎች</item>
+    </plurals>
+    <plurals name="calendar_backup_deletes">
+        <item quantity="one">%d የቆየ ቅጂ ይሰርዛል። ይህ ሊቀለበስ አይችልም።</item>
+        <item quantity="other">%d የቆዩ ቅጂዎችን ይሰርዛል። ይህ ሊቀለበስ አይችልም።</item>
+    </plurals>
+    <string name="calendar_backup_deletes_unknown">ከዚህ ቁጥር በላይ ያሉትን የቆዩ ቅጂዎች ይሰርዛል። ይህ ሊቀለበስ አይችልም።</string>
+    <string name="calendar_backup_calendars">ከመስመር ውጭ የቀን መቁጠሪያዎች</string>
+    <string name="calendar_backup_calendar_nothing_saved">%1$s · ምንም ክስተቶች የሉም፣ ምንም አልተቀመጠም</string>
+    <string name="calendar_backup_calendar_save_failed">%1$s · ማስቀመጥ አልተቻለም። በሚቀጥለው ምትኬ እንደገና ይሞከራል።</string>
+    <string name="calendar_backup_status">የመጨረሻ ምትኬ %1$s</string>
+    <plurals name="calendar_backup_status_failed">
+        <item quantity="one">የመጨረሻ ምትኬ %1$s · %2$d የቀን መቁጠሪያ አልተሳካም</item>
+        <item quantity="other">የመጨረሻ ምትኬ %1$s · %2$d የቀን መቁጠሪያዎች አልተሳኩም</item>
+    </plurals>
+    <string name="calendar_backup_now">አሁን ምትኬ አስቀምጥ</string>
+    <string name="calendar_backup_running">ምትኬ በማስቀመጥ ላይ…</string>
+    <string name="calendar_backup_footer_overwrites">KashCal በእያንዳንዱ ምትኬ እነዚህን ፋይሎች ይተካቸዋል፣ ስለዚህ በሌሎች መተግበሪያዎች የተደረጉባቸው ለውጦች አይቆዩም። የቀን መቁጠሪያን ወደነበረበት ለመመለስ “ከፋይል ክስተቶችን አስገባ”ን ይጠቀሙ።</string>
+    <string name="calendar_backup_off_files_stay">ያሉት ፋይሎች በ%1$s ውስጥ ይቆያሉ።</string>
+    <string name="calendar_backup_folder_unreachable">%1$s ሊደረስበት አልተቻለም። ተንቀሳቅሶ፣ ተሰርዞ ወይም ተቋርጦ ሊሆን ይችላል።</string>
+    <string name="calendar_backup_error_unsupported">በ%1$s ውስጥ ፋይሎችን ማስቀመጥ አልተቻለም። ሌላ አቃፊ ይምረጡ።</string>
+    <string name="calendar_backup_choose_again">እንደገና ምረጥ</string>
+    <string name="calendar_backup_pick_refused">KashCal ያንን አቃፊ መጠቀም አይችልም። ሌላ ይምረጡ።</string>
+    <string name="calendar_backup_pick_cannot_create">KashCal በዚያ አቃፊ ውስጥ ፋይሎችን መፍጠር አይችልም። ሌላ ይምረጡ።</string>
+    <string name="calendar_backup_failed_title">የቀን መቁጠሪያ ምትኬ አልተሳካም</string>
+    <string name="calendar_backup_folder_unnamed">የምትኬ አቃፊው</string>
+    <string name="calendar_backup_alert_unreachable">%1$s ሊደረስበት አልተቻለም። እንደገና ለመምረጥ መታ ያድርጉ።</string>
+    <string name="calendar_backup_alert_unsupported">በ%1$s ውስጥ ፋይሎችን ማስቀመጥ አልተቻለም። ሌላ አቃፊ ለመምረጥ መታ ያድርጉ።</string>
+    <string name="calendar_backup_alert_file_retry">%1$s ማስቀመጥ አልተቻለም። KashCal በሚቀጥለው ምትኬ እንደገና ይሞክራል።</string>
+    <string name="calendar_backup_every_hour">በየሰዓቱ</string>
+    <string name="calendar_backup_every_day">በየቀኑ</string>
+    <plurals name="calendar_backup_every_hours">
+        <item quantity="one">በየ%d ሰዓቱ</item>
+        <item quantity="other">በየ%d ሰዓቱ</item>
+    </plurals>
+    <plurals name="calendar_backup_every_days">
+        <item quantity="one">በየ%d ቀኑ</item>
+        <item quantity="other">በየ%d ቀኑ</item>
+    </plurals>
+    <string name="calendar_backup_every_day_hours">በየቀኑ %1$s</string>
+    <string name="calendar_backup_every_days_hours">በየ%1$s %2$s</string>
+    <string name="calendar_backup_interval_too_short">ቢያንስ 1 ሰዓት ይምረጡ።</string>
+    <string name="calendar_backup_interval_too_long">30 ቀናት ወይም ከዚያ ያነሰ ይምረጡ።</string>
+    <plurals name="calendar_backup_alert_files_retry">
+        <item quantity="one">%d የቀን መቁጠሪያ ማስቀመጥ አልተቻለም። KashCal በሚቀጥለው ምትኬ እንደገና ይሞክራል።</item>
+        <item quantity="other">%d የቀን መቁጠሪያዎችን ማስቀመጥ አልተቻለም። KashCal በሚቀጥለው ምትኬ እንደገና ይሞክራል።</item>
+    </plurals>
+    <string name="calendar_backup_notifications_app_off">ለKashCal ማሳወቂያዎች ጠፍተዋል፣ ስለዚህ ምትኬ ካልተሳካ ሊያሳውቅዎ አይችልም።</string>
+    <string name="calendar_backup_notifications_channel_off">የምትኬ ማሳወቂያዎች ጠፍተዋል፣ ስለዚህ KashCal ምትኬ ካልተሳካ ሊያሳውቅዎ አይችልም።</string>
+    <string name="calendar_backup_open_settings">ቅንብሮችን ክፈት</string>
+    <string name="calendar_backup_not_now">አሁን አይደለም</string>
+    <plurals name="calendar_backup_row_calendars_failed">
+        <item quantity="one">%d የቀን መቁጠሪያ አልተሳካም</item>
+        <item quantity="other">%d የቀን መቁጠሪያዎች አልተሳኩም</item>
+    </plurals>
     <string name="settings_quick_event_add">ብልጥ ክስተት ማከል</string>
     <string name="settings_quick_event_add_info">በተፈጥሮ በመተየብ ክስተቶችን ይፍጠሩ። \"ከ Sam ጋር ምሳ አርብ 1pm\" ርዕሱን፣ ቀኑን እና ሰዓቱን ለእርስዎ ይሞላል።</string>
     <string name="settings_suggest_titles">የክስተት ርዕሶችን ጠቁም</string>
@@ -646,6 +823,8 @@
     <string name="cd_pick_month_year">ወር እና ዓመት ምረጥ</string>
     <string name="cd_previous_month">ያለፈው ወር</string>
     <string name="cd_next_month">ቀጣዩ ወር</string>
+    <string name="cd_previous_day">ያለፈው ቀን</string>
+    <string name="cd_next_day">ቀጣዩ ቀን</string>
     <string name="cd_month_year_picker">የወር እና ዓመት መምረጫ</string>
     <string name="cd_remove_alert">ማንቂያ አስወግድ</string>
     <string name="cd_warning">ማስጠንቀቂያ</string>
@@ -655,7 +834,25 @@
     <string name="label_on_days">በቀናት</string>
     <string name="label_pattern">ጥለት</string>
     <string name="label_ends">ያበቃል</string>
+    <string name="sheet_hint_change_end">መጨረሻውን ለመቀየር ቀን ይንኩ</string>
     <string name="label_timezone">የሰዓት ክልል</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s፣ %2$s፣ %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s፣ %2$s</string>
+    <string name="timezone_search_hint">ከተማ፣ አገር ወይም ክልል ይፈልጉ</string>
+    <string name="timezone_section_this_event">ይህ ክስተት</string>
+    <string name="timezone_section_device">የመሣሪያ የሰዓት ክልል</string>
+    <string name="timezone_section_recent">የቅርብ ጊዜ</string>
+    <string name="timezone_section_all">ሁሉም የሰዓት ክልሎች</string>
+    <string name="timezone_offsets_on">ልዩነቶች በ%1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">ከቀን መቁጠሪያው፦ %1$s</string>
+    <string name="timezone_shown_in_device_time">በመሣሪያ ሰዓት ይታያል</string>
+    <string name="timezone_loading">የሰዓት ክልሎችን በመጫን ላይ…</string>
+    <string name="timezone_no_match">ምንም የሰዓት ክልል አይዛመድም</string>
+    <string name="timezone_no_match_hint">ከተማ፣ አገር ወይም እንደ +5:30 ያለ ልዩነት ይሞክሩ</string>
+    <string name="cd_timezone_join">%1$s፣ %2$s</string>
     <string name="label_alerts">ማንቂያዎች</string>
     <string name="label_add_alert">ማንቂያ አክል</string>
     <string name="label_recurrence_never">ፈጽሞ</string>
@@ -663,11 +860,8 @@
     <string name="label_yesterday">ትናንት</string>
     <string name="label_device_calendars">የመሳሪያ ቀን መቁጠሪያዎች</string>
     <string name="label_default_calendar_hint">አዲስ ክስተቶች በዚህ ቀን መቁጠሪያ ውስጥ ይፈጠራሉ</string>
-    <string name="label_visible_count">%1$d / %2$d የሚታይ</string>
     <string name="label_reminders_truncated">%1$d አልታየም (%2$d ጠቅላላ፣ ከፍተኛ %3$d ሊስተካከል የሚችል)</string>
     <string name="label_found_events">ተገኝቷል: %1$d ክስተቶች</string>
-    <string name="label_open_debug_menu">የማረም ምናሌ ክፈት</string>
-    <string name="placeholder_search">ፈልግ…</string>
     <string name="settings_search_placeholder">ቅንብሮችን ይፈልጉ…</string>
     <string name="settings_search_no_results">ለ\"%1$s\" ምንም ቅንብር አልተገኘም</string>
     <string name="cd_search_settings">ቅንብሮችን ይፈልጉ</string>
@@ -678,16 +872,13 @@
     <string name="status_hours_ago">ከ%1$dሰ በፊት</string>
 
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
-    <string name="device_calendars_description">ከመሳሪያዎ ላይ ከሌሎች የቀን መቁጠሪያ መተግበሪያዎች ክስተቶችን አሳይ (የማመሳሰል አስማሚዎች፣ አካባቢያዊ ቀን መቁጠሪያዎች)።</string>
-    <string name="device_calendars_permission_required">የቀን መቁጠሪያ ፈቃድ ያስፈልጋል። መዳረሻ ለመስጠት አንቃ የሚለውን ይንኩ።</string>
-    <string name="device_calendars_read_only_access">የንባብ ብቻ መዳረሻ</string>
-    <string name="device_calendars_grant_write">የመሳሪያ ቀን መቁጠሪያ ክስተቶችን ለማርትዕ የፅሁፍ ፈቃድ ይስጡ</string>
-    <string name="device_calendars_grant">ስጥ</string>
-    <string name="device_calendars_none_found">ምንም የመሳሪያ ቀን መቁጠሪያዎች አልተገኙም።</string>
+    <string name="device_calendars_intro">በዚህ መሳሪያ ላይ ካሉ Google፣ Outlook እና የማመሳሰያ መተግበሪያዎች የቀን መቁጠሪያዎችን አሳይ።</string>
+    <string name="device_calendars_show_switch">የመሳሪያ ቀን መቁጠሪያዎችን አሳይ</string>
+    <string name="device_calendars_access_off">ለKashCal የቀን መቁጠሪያ መዳረሻ ጠፍቷል።</string>
+    <string name="device_calendars_pick_hint">የሚታዩ የቀን መቁጠሪያዎችን ይምረጡ።</string>
+    <string name="device_calendars_empty">ምንም የቀን መቁጠሪያ አልተገኘም።</string>
     <string name="device_calendars_local">አካባቢያዊ</string>
-    <string name="device_calendars_read_only_no_write">የንባብ ብቻ (የፅሁፍ ፈቃድ የለም)</string>
     <string name="device_calendars_read_only_calendar">የንባብ ብቻ (ቀን መቁጠሪያ የንባብ ብቻ ነው)</string>
-    <string name="settings_developer_options">የገንቢ አማራጮች</string>
     <string name="settings_sync_frequency">የማመሳሰል ድግግሞሽ</string>
     <string name="settings_sync_frequency_hint">ከበስተጀርባ ምን ያህል ጊዜ እንደሚያመሳስል</string>
 
@@ -817,6 +1008,9 @@
     <string name="ics_import_reason_this_and_future">በዚህ እና በኋላ ባሉ ድግግሞሾች ላይ የሚደረጉ ለውጦች አይደገፉም</string>
     <string name="ics_import_reason_own_cancel">ይህን ስብሰባ የሚያዘጋጁት እርስዎ ነዎት፣ ስለዚህ ከክስተቱ ይሰርዙት</string>
     <string name="ics_import_reason_on_another_calendar">አስቀድሞ በዚህ መለያ ሌላ ቀን መቁጠሪያ ውስጥ አለ</string>
+    <string name="ics_import_reason_calendar_keeps_copy">ይህ ቀን መቁጠሪያ የክስተቱን የራሱ ቅጂ ይይዛል</string>
+    <string name="ics_import_reason_own_update">ይህን ስብሰባ የሚያዘጋጁት እርስዎ ነዎት፣ ስለዚህ ከክስተቱ ይቀይሩት</string>
+    <string name="ics_import_reason_change_waiting">ክስተቱ ለማመሳሰል የሚጠብቅ ለውጥ አለው፤ ከተመሳሰለ በኋላ እንደገና ያስገቡ</string>
     <string name="ics_import_notice_unverified">የግብዣ ፋይል ላኪን ማረጋገጥ አይቻልም። ከአዘጋጁ መምጣቱን ያረጋግጡ።</string>
     <string name="ics_import_notice_answer_notifies">ለዚህ ግብዣ መመለስ ለአዘጋጁ ማሳወቂያ ሊልክ ይችላል።</string>
     <string name="ics_import_notice_guests_again">እርስዎ አዘጋጁ ነዎት፣ ስለዚህ እንግዶች ይህን ግብዣ እንደገና ሊቀበሉ ይችላሉ።</string>
@@ -847,13 +1041,17 @@
     </plurals>
     <string name="ics_import_summary_separator">"፣ "</string>
     <string name="ics_import_summary_nothing">የሚገባ ምንም ነገር የለም</string>
-    <plurals name="exported_events">
-        <item quantity="one">%1$d ክስተት ተልኳል</item>
-        <item quantity="other">%1$d ክስተቶች ተልከዋል</item>
-    </plurals>
     <plurals name="event_count">
         <item quantity="one">%1$d ክስተት</item>
         <item quantity="other">%1$d ክስተቶች</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d ቀን መቁጠሪያ</item>
+        <item quantity="other">%1$d ቀን መቁጠሪያዎች</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d መለያ</item>
+        <item quantity="other">%1$d መለያዎች</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d ቀን መቁጠሪያ</item>
@@ -887,10 +1085,6 @@
         <item quantity="one">%1$d ዓመት</item>
         <item quantity="other">%1$d ዓመታት</item>
     </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d ሰከ</item>
-        <item quantity="other">%1$d ሰከ</item>
-    </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d ደቂቃ በፊት</item>
         <item quantity="other">%1$d ደቂቃዎች በፊት</item>
@@ -914,8 +1108,13 @@
     <string name="dialog_move_recurring_title">አንቀሳቅስ</string>
     <string name="snackbar_event_rescheduled">ክስተቱ እንደገና ታቅዷል</string>
     <string name="snackbar_reschedule_failed">ክስተቱን እንደገና ማቀድ አልተቻለም</string>
+    <string name="snackbar_move_failed">\"%1$s\"ን ማንቀሳቀስ አልተቻለም</string>
+    <string name="snackbar_move_changed_elsewhere">\"%1$s\" በሌላ ቦታ ስለተቀየረ አልተንቀሳቀሰም</string>
+    <string name="event_untitled">ርዕስ የሌለው ክስተት</string>
     <string name="recurring_this_event">ይህ ክስተት</string>
     <string name="recurring_all_events">ሁሉም ክስተቶች</string>
+    <string name="recurring_scope_move_not_expressible">የመድገም ደንቡ ይህን ለውጥ መከተል አይችልም</string>
+    <string name="event_form_move_not_expressible">የመድገም ደንቡ ይህን ለውጥ መከተል አይችልም። ምንም አልተቀመጠም።</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">ተሳታፊዎች</string>
@@ -979,8 +1178,67 @@
     <string name="empty_no_events_day_3">ስጦታ፦ ባዶ ቀን።</string>
     <string name="empty_no_events_day_4">የቀን መቁጠሪያ ሁኔታ፦ በሚያምር ሁኔታ ባዶ።</string>
     <string name="empty_no_events_day_5">ምንም አልታቀደም። መረጋጋቱን ይደሰቱበት።</string>
-    <string name="cd_empty_no_events_day">የተረጋጋ ቀን፣ ምንም አልታቀደም</string>
     <string name="filter_date">ቀን</string>
+    <string name="search_tab_upcoming">መጪ</string>
+    <string name="search_tab_past">ያለፈ</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s፣ %2$d ክስተት</item>
+        <item quantity="other">%1$s፣ %2$d ክስተቶች</item>
+    </plurals>
+    <string name="search_date_this_week">በዚህ ሳምንት</string>
+    <string name="search_date_this_month">በዚህ ወር</string>
+    <string name="search_date_pick">ቀኖችን ይምረጡ…</string>
+    <string name="search_next">ቀጣይ: %1$s</string>
+    <string name="search_last">የመጨረሻ: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">ስፍራ:</string>
+    <string name="search_reason_notes">ማስታወሻዎች:</string>
+    <string name="search_reason_guest">እንግዳ:</string>
+    <string name="search_keep_typing">ለመፈለግ መተየብዎን ይቀጥሉ</string>
+    <string name="search_no_matches">ከ“%1$s” ጋር የሚዛመድ ክስተት የለም</string>
+    <string name="search_no_events_tagged">በ“%1$s” የተለጠፉ ክስተቶች የሉም</string>
+    <string name="search_lookback_line">የማመሳሰል ወደ ኋላ መመልከት: %1$s</string>
+    <string name="search_sync_settings">የማመሳሰል ቅንብሮች</string>
+    <string name="cd_search_sync_settings">የማመሳሰል ወደ ኋላ መመልከት ቅንብርን ክፈት</string>
+    <plurals name="search_show_past">
+        <item quantity="one">%d ያለፈ ክስተት አሳይ</item>
+        <item quantity="other">%d ያለፉ ክስተቶችን አሳይ</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">በተደበቀ የቀን መቁጠሪያ ውስጥ %d ተጨማሪ</item>
+        <item quantity="other">በተደበቁ የቀን መቁጠሪያዎች ውስጥ %d ተጨማሪ</item>
+    </plurals>
+    <string name="search_show">አሳይ</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">በተደበቀ የቀን መቁጠሪያ ውስጥ ያለ %d ተዛማጅ አሳይ</item>
+        <item quantity="other">በተደበቁ የቀን መቁጠሪያዎች ውስጥ ያሉ %d ተዛማጆችን አሳይ</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">በተደበቀ የቀን መቁጠሪያ ውስጥ %d አሳይ</item>
+        <item quantity="other">በተደበቁ የቀን መቁጠሪያዎች ውስጥ %d አሳይ</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">%d የተደበቀ የቀን መቁጠሪያን ጨምሮ</item>
+        <item quantity="other">%d የተደበቁ የቀን መቁጠሪያዎችን ጨምሮ</item>
+    </plurals>
+    <string name="search_leave_out">ተው</string>
+    <string name="cd_search_leave_out">የተደበቁ የቀን መቁጠሪያዎችን ተው</string>
+    <string name="search_hidden_calendar">%1$s · ተደብቋል</string>
+    <string name="cd_search_date_this_week">የዚህ ሳምንት ተዛማጆችን አሳይ</string>
+    <string name="cd_search_date_this_month">የዚህ ወር ተዛማጆችን አሳይ</string>
+    <string name="cd_search_date_pick">ለመፈለግ ቀኖችን ይምረጡ</string>
+    <string name="search_announce">%1$s፣ %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d መጪ</item>
+        <item quantity="other">%d መጪ</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d ያለፈ</item>
+        <item quantity="other">%d ያለፉ</item>
+    </plurals>
+    <string name="search_no_past_events">ምንም ያለፉ ክስተቶች የሉም</string>
+    <string name="search_no_events_in_dates">በእነዚህ ቀኖች ምንም ክስተቶች የሉም</string>
     <string name="label_select_date">ቀን ምረጥ</string>
     <string name="hint_tap_date_range">ለአንድ ቀን ተመሳሳይ ቀን ይንኩ፣ ወይም ለክልል ሌላ ቀን</string>
     <string name="cd_clear">አጽዳ</string>
@@ -1072,7 +1330,6 @@
     <string name="reminder_none">ምንም ማስታወሻ የለም</string>
     <string name="reminder_at_time_of_event">በክስተቱ ሰዓት</string>
     <string name="reminder_time_before">%1$s በፊት</string>
-    <string name="reminder_time_after">%1$s በኋላ</string>
     <string name="reminder_day_of_event_12h">9 AM የክስተቱ ቀን</string>
     <string name="reminder_day_of_event_24h">09:00 የክስተቱ ቀን</string>
     <string name="reminder_day_of_event">Day of event</string>
@@ -1204,6 +1461,7 @@
     <!-- ==================== i18n: Round 2 audit gaps ==================== -->
     <string name="action_save_event">ክስተት አስቀምጥ</string>
     <string name="badge_beta">ቅድመ-ልቀት</string>
+    <string name="badge_sync_off">ማመሳሰል ጠፍቷል</string>
     <string name="badge_new">አዲስ</string>
     <string name="color_red">ቀይ</string>
     <string name="color_orange">ብርቱካናማ</string>
@@ -1232,6 +1490,19 @@
     <string name="ics_fetch_error_http">አገልጋዩ ስህተት መልሷል (%1$d)። እባክዎ URL ን ያረጋግጡ።</string>
     <string name="ics_fetch_error_empty">የቀን መቁጠሪያ ምግቡ ባዶ ነው።</string>
     <string name="ics_fetch_error_not_calendar">ያ URL እንደ የቀን መቁጠሪያ ምግብ አይመስልም።</string>
+    <string name="ics_feed_error_empty_response">አገልጋዩ ትክክለኛ ምግብ አልላከም።</string>
+    <string name="ics_feed_error_access_denied">የዚህ ምግብ አገልጋይ መዳረሻ ከልክሏል።</string>
+    <string name="ics_feed_error_too_large">ይህ የቀን መቁጠሪያ ምግብ ለማውረድ በጣም ትልቅ ነው።</string>
+    <string name="ics_feed_error_unreadable">የዚህ ምግብ ክስተቶች ሊታዩ አልቻሉም።</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s” አልተቀመጠም።</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d ክስተት አልተቀመጠም።</item>
+        <item quantity="other">%1$d ክስተቶች አልተቀመጡም።</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d ክስተት አልተቀመጠም፣ “%2$s”ን ጨምሮ።</item>
+        <item quantity="other">%1$d ክስተቶች አልተቀመጡም፣ “%2$s”ን ጨምሮ።</item>
+    </plurals>
     <string name="insights_title">ግንዛቤዎች</string>
     <string name="insights_period_this_week">ሳምንት</string>
     <string name="insights_period_last_week">ያለፈው ሳምንት</string>
@@ -1359,7 +1630,7 @@
         <item quantity="other">በቀጣዮቹ %1$d ቀናት ነፃ (%2$s – %3$s):</item>
     </plurals>
     <string name="share_availability_day_line">%1$s: %2$s</string>
-    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_block_separator">", "</string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">በተመረጠው ክልል ውስጥ ቢያንስ የአንድ ሰዓት ነፃ ብሎኮች የሉም።</string>
     <string name="share_from_kashcal_footer">ከKashCal ተጋርቷል</string>
@@ -1381,5 +1652,31 @@
     <string name="share_as_card_all_day">ሙሉ ቀን</string>
     <string name="share_as_card_chooser_title">ክስተት አጋራ</string>
     <string name="share_as_card_share_failed">ካርዱን ማጋራት አልተቻለም</string>
+    <string name="print_your_week">ሳምንትዎን ያትሙ</string>
+    <string name="print_options_title">የህትመት አማራጮችን ይምረጡ</string>
+    <string name="print_pages_header">ገጾች</string>
+    <string name="print_page_week">የሳምንት ቀን መቁጠሪያ</string>
+    <string name="print_page_week_detail">ሳምንቱ እንደ ሰንጠረዥ</string>
+    <string name="print_page_details">ዝርዝሮች</string>
+    <string name="print_page_details_detail">እያንዳንዱ ክስተት ሙሉ በሙሉ</string>
+    <string name="print_action">አትም</string>
+    <string name="cd_print_previous_week">ያለፈው ሳምንት</string>
+    <string name="cd_print_next_week">ቀጣዩ ሳምንት</string>
+    <plurals name="print_summary_pages">
+        <item quantity="one">%d ገጽ</item>
+        <item quantity="other">%d ገጾች</item>
+    </plurals>
+    <plurals name="print_summary_calendars">
+        <item quantity="one">%1$d ከ%2$d ቀን መቁጠሪያ</item>
+        <item quantity="other">%1$d ከ%2$d ቀን መቁጠሪያዎች</item>
+    </plurals>
+    <string name="print_summary">%1$s · %2$s</string>
+    <string name="print_job_name">%1$s – የ%2$s ሳምንት</string>
+    <string name="print_failed">ማተም አልተቻለም። እንደገና ሞክር።</string>
+    <string name="print_doc_week">ሳምንት</string>
+    <string name="print_doc_printed">የታተመው፦ %1$s</string>
+    <string name="print_doc_page_of">ገጽ %1$s ከ%2$s</string>
+    <string name="print_doc_numbers_note">ቁጥሮቹ ከዝርዝሮቹ ጋር ይዛመዳሉ፤ ዝርዝሮቹ እያንዳንዱን ክስተት ሙሉ በሙሉ ይዘረዝራሉ።</string>
+    <string name="print_doc_times_in">ሰዓቶች በ%1$s ይታያሉ</string>
 
 </resources>

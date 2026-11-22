@@ -1,6 +1,8 @@
 package org.onekash.kashcal.ui.screens.settings
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNull
 import org.junit.Test
 import org.onekash.kashcal.data.db.entity.Account
@@ -33,6 +35,12 @@ class AccountDetailUiModelTest {
         lastSuccessfulSyncAt = lastSuccessfulSyncAt,
         consecutiveSyncFailures = consecutiveSyncFailures
     )
+
+    @Test
+    fun `needsSignIn defaults false and carries through when set`() {
+        assertFalse(createAccount().toDetailUiModel(calendarCount = 1).needsSignIn)
+        assertTrue(createAccount().toDetailUiModel(calendarCount = 1, needsSignIn = true).needsSignIn)
+    }
 
     @Test
     fun `maps all fields correctly`() {

@@ -61,6 +61,7 @@ class IcsImportSheetTest {
 
     private fun render(
         target: Calendar = calendar,
+        offlineCalendarIds: Set<Long> = setOf(calendar.id),
         plans: List<GroupPlan> = emptyList(),
         loadPreview: suspend (Long, Boolean) -> List<GroupPlan> = { _, _ -> plans },
         onImport: (Long, Boolean) -> Unit = { _, _ -> },
@@ -74,6 +75,7 @@ class IcsImportSheetTest {
                     defaultCalendarId = target.id,
                     deviceCalendarGroups = emptyList(),
                     defaultDeviceCalendarId = null,
+                    offlineCalendarIds = offlineCalendarIds,
                     loadPreview = loadPreview,
                     onDismiss = {},
                     onImport = onImport,
@@ -140,6 +142,19 @@ class IcsImportSheetTest {
     @Test
     fun `the on-phone calendar shows no notices`() {
         render(plans = listOf(plan(ImportAction.Create(ImportGroup("a", listOf(invitation), emptyList()), false))))
+
+        composeTestRule.onAllNodesWithContentDescription("Dismiss notice").assertCountEquals(0)
+    }
+
+    @Test
+    fun `a second offline calendar shows no notices`() {
+        val second = calendar.copy(id = 3L, caldavUrl = "local://calendar/9b2e7c1d-4f3a-4e8b-a1c2-d3e4f5a6b7c8", displayName = "Work")
+
+        render(
+            target = second,
+            offlineCalendarIds = setOf(calendar.id, second.id),
+            plans = listOf(plan(ImportAction.Create(ImportGroup("a", listOf(invitation), emptyList()), false))),
+        )
 
         composeTestRule.onAllNodesWithContentDescription("Dismiss notice").assertCountEquals(0)
     }

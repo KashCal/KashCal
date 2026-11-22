@@ -8,6 +8,8 @@ import org.onekash.kashcal.data.calendar_provider.AndroidCalendarProviderReposit
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.credential.CredentialManager
 import org.onekash.kashcal.data.credential.UnifiedCredentialManager
+import org.onekash.kashcal.data.db.EventIcsSource
+import org.onekash.kashcal.data.db.EventIcsStore
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.repository.AccountRepositoryImpl
 import org.onekash.kashcal.data.repository.CalendarRepository
@@ -16,7 +18,10 @@ import org.onekash.kashcal.sync.contacts.AndroidContactsProviderRepository
 import org.onekash.kashcal.sync.contacts.ContactsProviderRepository
 import javax.inject.Singleton
 
-/** Binds the credential manager and the account, calendar and device-provider repositories. */
+/**
+ * Binds the credential manager, the stored-ICS source and the account, calendar and
+ * device-provider repositories.
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
@@ -49,4 +54,8 @@ abstract class RepositoryModule {
     abstract fun bindContactsProviderRepository(
         impl: AndroidContactsProviderRepository
     ): ContactsProviderRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindEventIcsSource(impl: EventIcsStore): EventIcsSource
 }

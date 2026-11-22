@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -20,17 +21,20 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
+import org.onekash.kashcal.ui.components.RevealedRow
 import org.onekash.kashcal.ui.components.SettingsTopAppBar
 import org.onekash.kashcal.ui.permission.LocalNetworkPermissionState
 import org.onekash.kashcal.ui.shared.EventColorPalette
@@ -39,9 +43,12 @@ import org.onekash.kashcal.ui.theme.KashCalTheme
 /**
  * Shows the ICS subscriptions detail screen.
  *
- * Each subscription is a [SwipeableSubscriptionItem]: swipe to delete, tap to edit in
- * [EditSubscriptionDialog]. Below the list, one button opens [HolidayCatalogPicker] and one
- * opens [AddSubscriptionDialog].
+ * Each subscription is a [SwipeableSubscriptionItem]: a swipe reveals Delete, a tap edits in
+ * [EditSubscriptionDialog]. One row is open at a time ([RevealedRow]). Scrolling closes it. While
+ * one is open, a tap on a row, its switch or its refresh button only closes it; the Delete button
+ * and the add buttons close it and then act. While there are feeds, a line above the list names the
+ * swipe. Below the list, buttons open [HolidayCatalogPicker], the "Add from account" sheet and
+ * [AddSubscriptionDialog].
  *
  * @param onAddSubscription called with (url, name, color) from either add path; a holiday feed
  *   gets a random palette color.
@@ -63,11 +70,25 @@ fun SubscriptionsScreen(
         LocalNetworkPermissionState.NotRequired,
     onRequestLocalNetwork: () -> Unit = {},
     onSubscriptionDialogOpened: () -> Unit = {},
+    // "Add from account": shown while a feed account exists; the sheet's state is the
+    // ViewModel's, null while closed. Defaulted so previews and other hosts render nothing.
+    showAddFromAccount: Boolean = false,
+    onOpenAccountFeeds: () -> Unit = {},
+    accountFeedsSheet: AccountFeedsSheetState? = null,
+    onAccountFeedSwitch: (accountId: Long, url: String, on: Boolean) -> Unit = { _, _, _ -> },
+    onRetryAccountFeeds: (accountId: Long) -> Unit = {},
+    onCloseAccountFeeds: () -> Unit = {},
 ) {
     // rememberSaveable keeps the open dialog across configuration changes.
     var showAddDialog by rememberSaveable { mutableStateOf(false) }
     var showHolidayCatalog by rememberSaveable { mutableStateOf(false) }
     var editingSubscriptionId by rememberSaveable { mutableLongStateOf(-1L) }
+
+    val revealed = remember { RevealedRow() }
+    val listState = rememberLazyListState()
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.isScrollInProgress }.collect { if (it) revealed.close() }
+    }
 
     // Only the id is saveable; the subscription is looked up from it.
     val editingSubscription = remember(editingSubscriptionId, subscriptions) {
@@ -85,6 +106,7 @@ fun SubscriptionsScreen(
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
+            state = listState,
             contentPadding = PaddingValues(
                 top = paddingValues.calculateTopPadding(),
                 bottom = paddingValues.calculateBottomPadding() + 16.dp
@@ -114,6 +136,14 @@ fun SubscriptionsScreen(
                     }
                 }
             } else {
+                item(key = "swipe_hint", contentType = "hint") {
+                    Text(
+                        stringResource(R.string.subscriptions_swipe_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 8.dp),
+                    )
+                }
                 items(
                     items = subscriptions,
                     key = { it.id ?: 0L },
@@ -122,10 +152,15 @@ fun SubscriptionsScreen(
                     Column(modifier = Modifier.animateItem()) {
                         SwipeableSubscriptionItem(
                             subscription = subscription,
-                            onToggle = onToggleSubscription,
-                            onDelete = onDeleteSubscription,
-                            onRefresh = onRefreshSubscription,
-                            onEdit = { editingSubscriptionId = it.id ?: -1L }
+                            onToggle = { id, on -> revealed.closeOr { onToggleSubscription(id, on) } },
+                            onDelete = { id ->
+                                revealed.close()
+                                onDeleteSubscription(id)
+                            },
+                            onRefresh = { id -> revealed.closeOr { onRefreshSubscription(id) } },
+                            onEdit = { revealed.closeOr { editingSubscriptionId = it.id ?: -1L } },
+                            open = revealed.openId == subscription.id,
+                            onOpenChange = { isOpen -> subscription.id?.let { revealed.set(it, isOpen) } },
                         )
                         HorizontalDivider(
                             modifier = Modifier.padding(start = 32.dp),
@@ -141,41 +176,36 @@ fun SubscriptionsScreen(
             }
 
             item(key = "holiday_catalog_button", contentType = "add_button") {
-                OutlinedButton(
-                    onClick = { showHolidayCatalog = true },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Text(
-                        stringResource(R.string.holiday_catalog_add),
-                        modifier = Modifier.padding(start = 8.dp)
+                AddSourceButton(
+                    stringResource(R.string.holiday_catalog_add),
+                    onClick = {
+                        revealed.close()
+                        showHolidayCatalog = true
+                    },
+                )
+            }
+
+            if (showAddFromAccount) {
+                item(key = "add_from_account_button", contentType = "add_button") {
+                    AddSourceButton(
+                        stringResource(R.string.account_feeds_add),
+                        onClick = {
+                            revealed.close()
+                            onOpenAccountFeeds()
+                        },
                     )
                 }
             }
 
             item(key = "add_button", contentType = "add_button") {
-                OutlinedButton(
-                    onClick = { showAddDialog = true },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = stringResource(R.string.subscriptions_cd_add),
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Text(
-                        stringResource(R.string.subscriptions_add_ics),
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
-                }
+                AddSourceButton(
+                    stringResource(R.string.subscriptions_add_ics),
+                    onClick = {
+                        revealed.close()
+                        showAddDialog = true
+                    },
+                    iconDescription = stringResource(R.string.subscriptions_cd_add),
+                )
             }
         }
     }
@@ -191,6 +221,15 @@ fun SubscriptionsScreen(
                 showHolidayCatalog = false
             },
             onDismiss = { showHolidayCatalog = false }
+        )
+    }
+
+    if (accountFeedsSheet != null) {
+        AccountFeedsSheet(
+            state = accountFeedsSheet,
+            onSwitch = onAccountFeedSwitch,
+            onRetry = onRetryAccountFeeds,
+            onDismiss = onCloseAccountFeeds,
         )
     }
 
@@ -223,6 +262,24 @@ fun SubscriptionsScreen(
 }
 
 // ==================== Previews ====================
+
+/** One of Calendar Feeds' add buttons: an outlined, full-width button with a leading plus. */
+@Composable
+internal fun AddSourceButton(label: String, onClick: () -> Unit, iconDescription: String? = null) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Icon(
+            Icons.Default.Add,
+            contentDescription = iconDescription,
+            modifier = Modifier.size(18.dp)
+        )
+        Text(label, modifier = Modifier.padding(start = 8.dp))
+    }
+}
 
 @Preview(showBackground = true)
 @Composable

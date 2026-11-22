@@ -6,6 +6,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,32 +33,43 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
+import org.onekash.kashcal.ui.components.InlineNote
 import org.onekash.kashcal.ui.components.SettingsTopAppBar
+
+/** Test tag of the "Show device calendars" switch. */
+const val DEVICE_CALENDARS_SWITCH_TAG = "device_calendars_switch"
 
 /**
  * Shows the device calendars settings; stateless. The host (SettingsRoute, in
- * SettingsActivity) owns the permission launchers, so turning Enable on without
- * READ_CALENDAR through [onToggle] prompts for the calendar permissions, and the
- * host enables the feature once READ is granted.
+ * SettingsActivity) owns the permission launcher, so turning the switch on without calendar
+ * access through [onToggle] asks for it, and the host turns the feature on once read access is
+ * granted. The switch shows on only while the feature is on and read access is held.
+ *
+ * Without read access a note above the switch says calendar access is off, whatever the feature
+ * setting; its Allow calls [onAllowCalendarAccess], which the host wires to the same request as
+ * the switch. The note has no dismiss: it leaves once read access is held.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeviceCalendarsScreen(
     isEnabled: Boolean,
     hasReadPermission: Boolean,
-    hasWritePermission: Boolean,
     deviceCalendars: List<DeviceCalendar>,
     enabledCalendarIds: Set<Long>,
     onNavigateBack: () -> Unit,
     onToggle: (Boolean) -> Unit,
     onToggleCalendar: (Long, Boolean) -> Unit,
-    onRequestWritePermission: () -> Unit,
+    onAllowCalendarAccess: () -> Unit,
     onRefresh: () -> Unit = {}
 ) {
+    // On only while the feature is on and read access is held.
+    val shownOn = isEnabled && hasReadPermission
     Scaffold(
         topBar = {
             SettingsTopAppBar(
@@ -86,7 +98,7 @@ fun DeviceCalendarsScreen(
                     text = stringResource(R.string.label_device_calendars),
                     modifier = Modifier
                 )
-                if (isEnabled && hasReadPermission) {
+                if (shownOn) {
                     IconButton(onClick = onRefresh) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
@@ -102,81 +114,52 @@ fun DeviceCalendarsScreen(
             )
 
             Text(
-                stringResource(R.string.device_calendars_description),
+                stringResource(R.string.device_calendars_intro),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
+            AnimatedVisibility(
+                visible = !hasReadPermission,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
+                InlineNote(
+                    text = stringResource(R.string.device_calendars_access_off),
+                    action = stringResource(R.string.action_allow),
+                    onAction = onAllowCalendarAccess,
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                )
+            }
+
+            // The label and switch form one control, so a tap on either toggles it and TalkBack
+            // reads them together.
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .toggleable(
+                        value = shownOn,
+                        onValueChange = onToggle,
+                        role = Role.Switch
+                    )
+                    .testTag(DEVICE_CALENDARS_SWITCH_TAG)
                     .padding(vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    stringResource(R.string.action_enable),
+                    stringResource(R.string.device_calendars_show_switch),
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Switch(
-                    checked = isEnabled,
-                    onCheckedChange = onToggle
+                    checked = shownOn,
+                    onCheckedChange = null
                 )
             }
 
-            // Enabled without READ_CALENDAR.
             AnimatedVisibility(
-                visible = isEnabled && !hasReadPermission,
-                enter = expandVertically(),
-                exit = shrinkVertically()
-            ) {
-                Text(
-                    stringResource(R.string.device_calendars_permission_required),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
-
-            // READ_CALENDAR without WRITE_CALENDAR; tapping calls [onRequestWritePermission].
-            AnimatedVisibility(
-                visible = isEnabled && hasReadPermission && !hasWritePermission,
-                enter = expandVertically(),
-                exit = shrinkVertically()
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            MaterialTheme.colorScheme.secondaryContainer,
-                            MaterialTheme.shapes.small
-                        )
-                        .clickable { onRequestWritePermission() }
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            stringResource(R.string.device_calendars_read_only_access),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                        Text(
-                            stringResource(R.string.device_calendars_grant_write),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
-                        )
-                    }
-                    Text(
-                        stringResource(R.string.device_calendars_grant),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                }
-            }
-
-            AnimatedVisibility(
-                visible = isEnabled && hasReadPermission,
+                visible = shownOn,
                 enter = expandVertically(),
                 exit = shrinkVertically()
             ) {
@@ -185,11 +168,18 @@ fun DeviceCalendarsScreen(
                 ) {
                     if (deviceCalendars.isEmpty()) {
                         Text(
-                            stringResource(R.string.device_calendars_none_found),
+                            stringResource(R.string.device_calendars_empty),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     } else {
+                        if (deviceCalendars.none { it.id in enabledCalendarIds }) {
+                            Text(
+                                stringResource(R.string.device_calendars_pick_hint),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                         val grouped = remember(deviceCalendars) {
                             deviceCalendars.groupBy { it.accountName }
                         }
@@ -236,11 +226,9 @@ fun DeviceCalendarsScreen(
                                             }
                                         )
                                     }
-                                    val isWritable = hasWritePermission && calendar.isWritable
-                                    if (!isWritable) {
+                                    if (!calendar.isWritable) {
                                         Text(
-                                            if (!hasWritePermission) stringResource(R.string.device_calendars_read_only_no_write)
-                                            else stringResource(R.string.device_calendars_read_only_calendar),
+                                            stringResource(R.string.device_calendars_read_only_calendar),
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.padding(start = 24.dp)

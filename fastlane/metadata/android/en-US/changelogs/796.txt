@@ -1,0 +1,3 @@
+• Calendar Feeds: Add from account lists the feeds saved on your iCloud and CalDAV accounts; turn one on to subscribe (#68)
+• Calendar Feeds: swiping a feed reveals Delete instead of deleting at once
+• Birthdays: dates saved with a placeholder year now show every year (#395)

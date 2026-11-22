@@ -30,6 +30,13 @@ object PreferencesKeys {
     /** Render the event form's tag row above the notes/attendees block. */
     val TAGS_ABOVE_NOTES = booleanPreferencesKey("tags_above_notes")
 
+    /**
+     * Zones picked in the event form's time zone sheet, newest first, joined with commas (a zone
+     * id never contains one); read by [KashCalDataStore.recentTimeZones], written by
+     * [KashCalDataStore.addRecentTimeZone].
+     */
+    val RECENT_TIME_ZONES = stringPreferencesKey("recent_time_zones")
+
     /** Shows events the user declined. */
     val SHOW_DECLINED_EVENTS = booleanPreferencesKey("show_declined_events")
 
@@ -189,6 +196,12 @@ object PreferencesKeys {
      */
     val PLANNER_ZOOM = floatPreferencesKey("planner_zoom")
 
+    /**
+     * Pinch-to-zoom scale of the full-height month view's day cells, restored on cold launch and
+     * clamped by `clampMonthFullZoom` on restore. Absent means no zoom.
+     */
+    val MONTH_FULL_ZOOM = floatPreferencesKey("month_full_zoom")
+
     // ========== Migration Flags ==========
 
     /** Data migration from v1 completed. Nothing reads it today. */
@@ -199,7 +212,7 @@ object PreferencesKeys {
 
     // ========== Onboarding ==========
 
-    /** Onboarding completed. */
+    /** The first-launch calendars sheet was answered, by a row, its button or a dismissal. */
     val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
 
     /** The local calendar intro has been shown. */
@@ -207,9 +220,6 @@ object PreferencesKeys {
 
     /** The coach mark for the share-as-card Share icon has been shown. */
     val SHOWN_SHARE_CARD_TOOLTIP = booleanPreferencesKey("shown_share_card_tooltip")
-
-    /** Onboarding sheet dismissed. */
-    val ONBOARDING_DISMISSED = booleanPreferencesKey("onboarding_dismissed")
 
     /** The user declined contact suggestions in the attendee picker; never re-prompt. */
     val CONTACT_SUGGESTIONS_DECLINED = booleanPreferencesKey("contact_suggestions_declined")
@@ -227,6 +237,13 @@ object PreferencesKeys {
 
     /** Times the notification permission was denied; decides rationale vs permanently denied. */
     val NOTIFICATION_PERMISSION_DENIED_COUNT = intPreferencesKey("notification_permission_denied_count")
+
+    /**
+     * The app asked for notification permission and got an answer, the user answered the
+     * "Reminders are off" banner, or the app saw the permission granted; the banner then never
+     * shows. Device-local like [NOTIFICATION_PERMISSION_DENIED_COUNT].
+     */
+    val NOTIFICATION_ASK_DONE = booleanPreferencesKey("notification_ask_done")
 
     /**
      * Contact sync lacks its permission ([KashCalDataStore.contactSyncPermissionNeeded]).
@@ -317,6 +334,22 @@ object PreferencesKeys {
      * regional iCloud URLs (p180-caldav.icloud.com) to the canonical host (caldav.icloud.com).
      */
     val ICLOUD_URL_MIGRATION_COMPLETED = booleanPreferencesKey("icloud_url_migration_completed")
+
+    // ========== UTC Series Zone Repair ==========
+
+    /**
+     * Set once [org.onekash.kashcal.domain.initializer.UtcSeriesZoneRepair] has gone over every
+     * candidate row with none failing; left unset while a row failed, so the next launch retries
+     * it.
+     */
+    val UTC_SERIES_ZONE_REPAIRED = booleanPreferencesKey("utc_series_zone_repaired")
+
+    /**
+     * Set once [org.onekash.kashcal.domain.initializer.UtcSeriesZoneRepair] has dropped every
+     * feed's cached ETag and Last-Modified, so each feed's next refresh downloads and maps it
+     * again.
+     */
+    val FEED_VALIDATORS_CLEARED_FOR_UTC_SERIES = booleanPreferencesKey("feed_validators_cleared_for_utc_series")
 
     // ========== Share Availability ==========
 

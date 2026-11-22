@@ -8,12 +8,37 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests the Settings models [ICloudConnectionState], [IcsSubscriptionUiModel] and
+ * Tests the Settings models [ICloudConnectionState] (including its
+ * [ICloudConnectionState.Connected.toAccountUiModel] row mapping), [IcsSubscriptionUiModel] and
  * [FetchCalendarState], and filtering and lookup over a subscription list.
  */
 class SettingsModelsTest {
 
     // ==================== ICloudConnectionState Tests ====================
+
+    @Test
+    fun `Connected maps to the account row model, enabled state included`() {
+        val row = ICloudConnectionState.Connected(
+            accountId = 4L,
+            appleId = "user@example.test",
+            lastSyncTime = 1_800_000_000_000L,
+            calendarCount = 3,
+            consecutiveSyncFailures = 2,
+            isEnabled = false
+        ).toAccountUiModel()
+
+        assertEquals(
+            ICloudAccountUiModel(
+                accountId = 4L,
+                email = "user@example.test",
+                calendarCount = 3,
+                consecutiveSyncFailures = 2,
+                lastSuccessfulSyncAt = 1_800_000_000_000L,
+                isEnabled = false
+            ),
+            row
+        )
+    }
 
     @Test
     fun `ICloudConnectionState NotConnected has default empty fields`() {

@@ -55,7 +55,6 @@ class IcsPatcherRfc5545Test {
         classification: String = "PUBLIC",
         reminders: List<String>? = null,
         sequence: Int = 0,
-        rawIcal: String? = null,
         originalEventId: Long? = null,
         originalInstanceTime: Long? = null,
         priority: Int = 0,
@@ -81,7 +80,6 @@ class IcsPatcherRfc5545Test {
             classification = classification,
             reminders = reminders,
             sequence = sequence,
-            rawIcal = rawIcal,
             originalEventId = originalEventId,
             originalInstanceTime = originalInstanceTime,
             priority = priority,
@@ -290,7 +288,6 @@ class IcsPatcherRfc5545Test {
             uid = "seq-test@kashcal.test",
             title = "Updated Title",
             sequence = 3, // Stored sequence, emitted as is
-            rawIcal = originalIcs
         )
 
         val patched = IcsPatcher.patch(originalIcs, event)
@@ -372,7 +369,7 @@ class IcsPatcherRfc5545Test {
                 .toInstant().toEpochMilli()
         )
 
-        val ics = IcsPatcher.serializeWithExceptions(master, listOf(exception))
+        val ics = IcsPatcher.serializeWithExceptions(master, null, listOf(exception))
 
         assertEquals("Should have one BEGIN:VCALENDAR", 1,
             ics.split("BEGIN:VCALENDAR").size - 1)
@@ -402,7 +399,7 @@ class IcsPatcherRfc5545Test {
                 .toInstant().toEpochMilli()
         )
 
-        val ics = IcsPatcher.serializeWithExceptions(master, listOf(exception))
+        val ics = IcsPatcher.serializeWithExceptions(master, null, listOf(exception))
 
         val events = parser.parseAllEvents(ics).getOrNull()
         if (events != null) {
@@ -427,7 +424,7 @@ class IcsPatcherRfc5545Test {
                 .toInstant().toEpochMilli()
         )
 
-        val ics = IcsPatcher.serializeWithExceptions(master, listOf(exception))
+        val ics = IcsPatcher.serializeWithExceptions(master, null, listOf(exception))
 
         val events = parser.parseAllEvents(ics).getOrNull()
         if (events != null) {
@@ -632,7 +629,6 @@ class IcsPatcherRfc5545Test {
             isAllDay = true,
             timezone = null,
             sequence = 0,
-            rawIcal = originalIcs
         )
 
         val patched = IcsPatcher.patch(originalIcs, event)
@@ -703,7 +699,7 @@ class IcsPatcherRfc5545Test {
             originalInstanceTime = exceptionTs
         )
 
-        val ics = IcsPatcher.serializeWithExceptions(master, listOf(exception))
+        val ics = IcsPatcher.serializeWithExceptions(master, null, listOf(exception))
 
         assertTrue(
             "Combined ICS should include VTIMEZONE for America/New_York.\n" +
@@ -738,7 +734,6 @@ class IcsPatcherRfc5545Test {
         val event = createEvent(
             uid = "attendee-test@kashcal.test",
             title = "Updated Meeting",
-            rawIcal = originalIcs
         )
 
         val patched = IcsPatcher.patch(originalIcs, event)
@@ -769,7 +764,6 @@ class IcsPatcherRfc5545Test {
             uid = "rrule-preserve@kashcal.test",
             title = "Weekly Event Updated",
             rrule = "FREQ=WEEKLY;BYDAY=TH",
-            rawIcal = originalIcs
         )
 
         val patched = IcsPatcher.patch(originalIcs, event)
@@ -801,12 +795,11 @@ class IcsPatcherRfc5545Test {
             uid = "serialize-raw@kashcal.test",
             title = "Updated",
             sequence = 2,
-            rawIcal = originalIcs
         )
 
-        val ics = IcsPatcher.serialize(event)
+        val ics = IcsPatcher.serialize(event, originalIcs)
 
-        // Patched, not fresh, since rawIcal is set. SEQUENCE is written as is; EventWriter
+        // Patched, not fresh, since a stored ICS is given. SEQUENCE is written as is; EventWriter
         // decides any bump (SequenceBumper).
         assertTrue("Should serialize stored SEQUENCE verbatim", ics.contains("SEQUENCE:2"))
         assertTrue("Should have updated title", ics.contains("SUMMARY:Updated"))
@@ -817,10 +810,9 @@ class IcsPatcherRfc5545Test {
         val event = createEvent(
             uid = "serialize-fresh@kashcal.test",
             title = "Fresh Event",
-            rawIcal = null
         )
 
-        val ics = IcsPatcher.serialize(event)
+        val ics = IcsPatcher.serialize(event, null)
 
         assertTrue("Should have VCALENDAR", ics.contains("BEGIN:VCALENDAR"))
         assertTrue("Should have title", ics.contains("SUMMARY:Fresh Event"))

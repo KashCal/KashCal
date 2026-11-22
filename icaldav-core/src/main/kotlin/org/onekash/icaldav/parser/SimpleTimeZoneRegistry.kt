@@ -3,16 +3,20 @@ package org.onekash.icaldav.parser
 import net.fortuna.ical4j.model.TimeZone
 import net.fortuna.ical4j.model.TimeZoneRegistry
 import org.onekash.icaldav.model.ICalDateTime
+import java.time.DateTimeException
 import java.time.ZoneId
 import java.time.zone.ZoneRules
 
 /**
- * Resolves timezones without ZoneRulesProvider, so iCalendar parsing works on Android.
+ * Resolves timezones without a custom ZoneRulesProvider, so iCalendar parsing works on Android.
  *
- * ical4j 4.x's TimeZoneRegistryImpl uses ZoneRulesProvider, which isn't available on Android
- * via desugaring. This registry instead:
+ * ical4j 4.x's TimeZoneRegistryImpl builds zone rules through a custom ZoneRulesProvider, and
+ * Android blocks installing one (its constructor and `registerProvider` are hidden APIs). This
+ * registry instead:
  * - returns null from [getTimeZone], so ical4j uses the data's embedded VTIMEZONE definitions
- * - resolves IDs in [getZoneId] with ZoneId.of, which Android supports, plus alias tables
+ * - resolves IDs in [getZoneId] with ZoneId.of, which Android supports, plus alias tables;
+ *   ical4j's `TzId.toZoneId` skips this registry while [getZoneRules] is empty, so only direct
+ *   callers reach it
  * - ignores register and clear
  */
 class SimpleTimeZoneRegistry : TimeZoneRegistry {
@@ -21,13 +25,13 @@ class SimpleTimeZoneRegistry : TimeZoneRegistry {
      * Returns null, so ical4j handles dates with the embedded VTIMEZONE definitions in the data
      * or falls back to system timezone handling.
      */
-    override fun getTimeZone(id: String?): TimeZone? = null
+    override fun getTimeZone(id: String): TimeZone? = null
 
-    override fun register(timezone: TimeZone?) {
+    override fun register(timezone: TimeZone) {
         // A no-op: this registry keeps no custom timezones.
     }
 
-    override fun register(timezone: TimeZone?, update: Boolean) {
+    override fun register(timezone: TimeZone, update: Boolean) {
         // A no-op: this registry keeps no custom timezones.
     }
 
@@ -40,11 +44,14 @@ class SimpleTimeZoneRegistry : TimeZoneRegistry {
 
     /**
      * Resolves [tzId] with ZoneId.of (supported on Android via desugaring), then the aliases in
-     * [normalizeTimezoneId], then [ICalDateTime.timezoneAliases]. Returns null for a blank or
-     * unrecognized ID.
+     * [normalizeTimezoneId], then [ICalDateTime.timezoneAliases]. Throws [DateTimeException] for a
+     * blank or unrecognized ID, as ical4j's own registry does.
      */
-    override fun getZoneId(tzId: String?): ZoneId? {
-        if (tzId.isNullOrBlank()) return null
+    override fun getZoneId(tzId: String): ZoneId =
+        resolve(tzId) ?: throw DateTimeException("Unknown timezone identifier [$tzId]")
+
+    private fun resolve(tzId: String): ZoneId? {
+        if (tzId.isBlank()) return null
         return try {
             ZoneId.of(tzId)
         } catch (_: Exception) {
@@ -60,7 +67,7 @@ class SimpleTimeZoneRegistry : TimeZoneRegistry {
     }
 
     /** Returns [zoneId] unchanged. */
-    override fun getTzId(zoneId: String?): String? = zoneId
+    override fun getTzId(zoneId: String): String = zoneId
 
     /**
      * Maps four US Windows timezone names and GMT, in any case, to IANA IDs. Returns null for any

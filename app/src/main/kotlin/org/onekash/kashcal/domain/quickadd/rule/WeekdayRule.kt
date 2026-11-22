@@ -4,6 +4,8 @@ import org.onekash.kashcal.domain.quickadd.tokenizer.Token
 import org.onekash.kashcal.domain.quickadd.tokenizer.TokenType
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
+import java.time.temporal.TemporalAdjusters
 
 object WeekdayRule : ParseRule {
 
@@ -17,17 +19,24 @@ object WeekdayRule : ParseRule {
             // A next, this or last keyword before the weekday.
             val modifier = findModifier(tokens, index, context)
 
-            val date = when (modifier?.first) {
-                "LAST" -> resolveLastWeekday(context.reference.toLocalDate(), targetDay)
-                "NEXT" -> resolveNextWeekday(context.reference.toLocalDate(), targetDay)
-                "THIS" -> resolveThisWeekday(context.reference.toLocalDate(), targetDay)
-                else -> resolveBareWeekday(context.reference.toLocalDate(), targetDay)
+            val week = findWeekSuffix(tokens, index, context)
+            val refDate = context.reference.toLocalDate()
+            val date = when {
+                // "<weekday> this week" is the coming such day, today included, whatever the
+                // week start; "next week" is the calendar week after this one.
+                week != null && !week.first -> resolveThisWeekday(refDate, targetDay)
+                week != null -> weekdayNextWeek(context, targetDay)
+                modifier?.first == "LAST" -> resolveLastWeekday(refDate, targetDay)
+                modifier?.first == "NEXT" -> resolveNextWeekday(refDate, targetDay)
+                modifier?.first == "THIS" -> resolveThisWeekday(refDate, targetDay)
+                else -> resolveBareWeekday(refDate, targetDay)
             }
 
             context.weekdayDate = date
             context.dateSet = true
             context.consume(index)
             modifier?.let { context.consume(it.second) }
+            week?.let { context.consume(it.second) }
 
             // "<weekday> to <weekday>" makes a multi-day event ending on the second weekday.
             val toIdx = context.findNextUnconsumed(tokens, index + 1)
@@ -71,6 +80,38 @@ object WeekdayRule : ParseRule {
             "LAST" -> "LAST" to (weekdayIndex - 1)
             else -> null
         }
+    }
+
+    /**
+     * Finds "[of] next week" or "[of] this week" right after the weekday at [weekdayIndex] and
+     * returns whether it is next week with the indices to consume, or null.
+     */
+    private fun findWeekSuffix(
+        tokens: List<Token>,
+        weekdayIndex: Int,
+        context: ParseContext,
+    ): Pair<Boolean, List<Int>>? {
+        fun keyword(i: Int) =
+            tokens.getOrNull(i)?.takeIf { !context.isConsumed(i) && it.type == TokenType.KEYWORD }?.value
+        var cursor = weekdayIndex + 1
+        val indices = mutableListOf<Int>()
+        if (keyword(cursor) == "OF") indices.add(cursor++)
+        val which = keyword(cursor)
+        if (which != "NEXT" && which != "THIS") return null
+        indices.add(cursor++)
+        val unit = tokens.getOrNull(cursor)?.takeIf { !context.isConsumed(cursor) && it.type == TokenType.UNIT }
+        if (unit?.value != ChronoUnit.WEEKS) return null
+        indices.add(cursor)
+        return (which == "NEXT") to indices
+    }
+
+    /**
+     * Returns [target] in the calendar week after the reference's. Weeks start on the first day of
+     * the week setting ([ParseContext.firstDayOfWeek]).
+     */
+    private fun weekdayNextWeek(context: ParseContext, target: DayOfWeek): LocalDate {
+        val nextWeek = weekStart(context.reference.toLocalDate(), context.firstDayOfWeek).plusWeeks(1)
+        return nextWeek.with(TemporalAdjusters.nextOrSame(target))
     }
 
     /** Resolves "this [weekday]": the next such day, or today if it is that day. */

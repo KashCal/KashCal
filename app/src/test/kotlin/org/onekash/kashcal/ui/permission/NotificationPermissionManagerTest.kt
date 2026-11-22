@@ -247,6 +247,14 @@ class NotificationPermissionManagerTest {
         coVerify { userPreferences.incrementNotificationPermissionDeniedCount() }
     }
 
+    @Test
+    fun `a grant or a refusal records that the app asked`() = runTest {
+        manager.onPermissionGranted()
+        manager.onPermissionDenied()
+
+        coVerify(exactly = 2) { userPreferences.setNotificationAskDone() }
+    }
+
     // ==================== Convenience Method Tests ====================
 
     @Test

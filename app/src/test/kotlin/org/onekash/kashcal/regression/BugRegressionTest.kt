@@ -1,7 +1,6 @@
 package org.onekash.kashcal.regression
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -27,6 +26,7 @@ import org.onekash.kashcal.error.ErrorMapper
 import org.onekash.kashcal.error.ErrorPresentation
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.net.SocketTimeoutException
@@ -55,7 +55,7 @@ class BugRegressionTest {
     @Before
     fun setup() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
 

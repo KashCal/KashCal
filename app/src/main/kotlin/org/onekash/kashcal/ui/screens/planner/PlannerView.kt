@@ -4,10 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.calculateCentroidSize
-import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,27 +31,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.SubcomposeLayout
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -63,13 +50,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -79,12 +63,13 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.model.isStripItem
 import org.onekash.kashcal.domain.planner.MovedCue
-import org.onekash.kashcal.domain.planner.PinchZoomAccumulator
 import org.onekash.kashcal.domain.planner.PlannerSummaryItem
 import org.onekash.kashcal.domain.planner.PlannerSummaryKind
 import org.onekash.kashcal.domain.planner.PlannerWeekState
+import org.onekash.kashcal.domain.planner.clampPlannerZoom
 import org.onekash.kashcal.domain.planner.differentThisWeek
 import org.onekash.kashcal.domain.planner.movedCue
+import org.onekash.kashcal.ui.components.DEEMPHASIZED_ALPHA
 import org.onekash.kashcal.ui.components.declinedCardAlpha
 import org.onekash.kashcal.ui.components.declinedTitleDecoration
 import org.onekash.kashcal.ui.components.eventStateDescription
@@ -93,15 +78,17 @@ import org.onekash.kashcal.ui.components.formatDisplayEventTitle
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
 import org.onekash.kashcal.ui.screens.monthfull.SpanStyle
 import org.onekash.kashcal.ui.screens.monthfull.spanStyleFor
+import org.onekash.kashcal.ui.shared.ClippedTitle
+import org.onekash.kashcal.ui.shared.Zoomed
+import org.onekash.kashcal.ui.shared.pinchZoom
 import org.onekash.kashcal.ui.util.DayPagerUtils
 import org.onekash.kashcal.ui.util.plannerShownWeekStart
 import org.onekash.kashcal.util.DateTimeUtils
-import java.text.Bidi
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import kotlin.math.abs
+import org.onekash.kashcal.ui.util.LocalDisplayZone
 
 /**
  * Draws the Planner: one week as seven day boxes plus a "Different this week" box, paged
@@ -168,9 +155,6 @@ internal fun PlannerView(
 
     val locale = LocalLocale.current.platformLocale
     val formats = remember(locale) { PlannerFormats(locale) }
-    val currentZoom by rememberUpdatedState(zoom)
-    val currentOnZoomChange by rememberUpdatedState(onZoomChange)
-    val touchSlop = LocalViewConfiguration.current.touchSlop * 0.5f
     val shape = plannerGridShape(widthDp, isCompactHeight)
     val today = remember(todayDayCode) { DayPagerUtils.dayCodeToLocalDate(todayDayCode) }
 
@@ -185,39 +169,7 @@ internal fun PlannerView(
         modifier = modifier
             .fillMaxSize()
             .scrollable(orientation = Orientation.Vertical, state = scrollDonor)
-            .pointerInput(touchSlop) {
-                // The Initial pass sees a pinch before the pager does; consuming it keeps the
-                // pager from scrolling, while a one-finger gesture is left to the pager.
-                awaitEachGesture {
-                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-                    var accumulator: PinchZoomAccumulator? = null
-                    var lastEmitted = currentZoom
-                    // Zoom gathered before the slop is passed, gathered across frames as
-                    // detectTransformGestures does: a steady pinch moves only a few percent per
-                    // frame, which a per-frame check would never let past the slop.
-                    var slopZoom = 1f
-                    do {
-                        val event = awaitPointerEvent(PointerEventPass.Initial)
-                        if (event.changes.count { it.pressed } < 2) continue
-                        val zoomChange = event.calculateZoom()
-                        val active = accumulator
-                        val next = if (active == null) {
-                            slopZoom *= zoomChange
-                            val centroidSize = event.calculateCentroidSize(useCurrent = false).coerceAtLeast(48f)
-                            if (abs(1 - slopZoom) * centroidSize <= touchSlop) continue
-                            // The frame that passes the slop applies everything gathered so far.
-                            PinchZoomAccumulator(currentZoom).also { accumulator = it }.apply(slopZoom)
-                        } else {
-                            active.apply(zoomChange)
-                        }
-                        event.changes.forEach { it.consume() }
-                        if (next != lastEmitted) {
-                            lastEmitted = next
-                            currentOnZoomChange(next)
-                        }
-                    } while (event.changes.any { it.pressed })
-                }
-            },
+            .pinchZoom(currentZoom = { zoom }, clamp = ::clampPlannerZoom, onZoomChange = onZoomChange),
     ) { page ->
         PlannerWeekPage(
             plannerState = plannerState,
@@ -275,7 +227,8 @@ private fun PlannerWeekPage(
     onDayHeaderClick: (LocalDate) -> Unit,
 ) {
     val days = remember(weekStart) { (0..6).map { weekStart.plusDays(it.toLong()) } }
-    val model = remember(plannerState, days, todayDayCode) {
+    // The moved cues and the week summary read the device zone; the key re-runs them on a change.
+    val model = remember(plannerState, days, todayDayCode, LocalDisplayZone.current) {
         val dayCodes = days.map(DayPagerUtils::localDateToDayCode)
         if (plannerState == null || !dayCodes.all { plannerState.covers(it) }) {
             PlannerPageModel(dayCodes, loaded = false, summary = emptyList(), cues = emptyMap())
@@ -345,14 +298,6 @@ private fun PlannerWeekPage(
     }
 }
 
-/** Provides [LocalDensity] scaled by [zoom], so dp and sp inside grow together. */
-@Composable
-private fun Zoomed(zoom: Float, content: @Composable () -> Unit) {
-    val density = LocalDensity.current
-    val scaled = remember(density, zoom) { Density(density.density * zoom, density.fontScale) }
-    CompositionLocalProvider(LocalDensity provides scaled, content = content)
-}
-
 @Composable
 private fun PlannerDayBox(
     date: LocalDate,
@@ -398,7 +343,7 @@ private fun PlannerDayBox(
                     .clickable { onDayHeaderClick(date) }
                     .then(if (isToday) Modifier.semantics { stateDescription = todayLabel } else Modifier)
                     .padding(horizontal = 8.dp, vertical = 3.dp)
-                    .alpha(if (isPastDay) 0.6f else 1f),
+                    .alpha(if (isPastDay) DEEMPHASIZED_ALPHA else 1f),
             ) {
                 Text(
                     text = formats.dayLabel(date),
@@ -588,43 +533,6 @@ private fun PlannerFreeDay(modifier: Modifier = Modifier) {
 }
 
 /**
- * Draws [text] on one line cut at the edge, with no ellipsis, so every letter that fits shows.
- * A title that fits sits at the layout's start edge. One that doesn't is set at its full width
- * and cut at the end of its own script's direction, so a right-to-left title in a left-to-right
- * layout, or the reverse, still shows its first letters.
- */
-@Composable
-private fun PlannerClippedTitle(
-    text: String,
-    style: TextStyle,
-    color: Color,
-    textDecoration: TextDecoration?,
-    modifier: Modifier = Modifier,
-) {
-    val rightToLeftText = remember(text) { !Bidi(text, Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT).baseIsLeftToRight() }
-    Layout(
-        modifier = modifier.clipToBounds(),
-        content = {
-            Text(text = text, style = style, color = color, textDecoration = textDecoration, maxLines = 1, softWrap = false)
-        },
-    ) { measurables, constraints ->
-        val line = measurables.single()
-        // At exactly its own width: unbounded, a right-to-left line is set at the far end of an
-        // endless line and draws nowhere.
-        val natural = line.maxIntrinsicWidth(constraints.maxHeight)
-        val placeable = line.measure(Constraints(maxWidth = natural))
-        val width = placeable.width.coerceIn(constraints.minWidth, constraints.maxWidth)
-        layout(width, placeable.height) {
-            when {
-                placeable.width <= width -> placeable.placeRelative(0, 0)
-                rightToLeftText -> placeable.place(width - placeable.width, 0)
-                else -> placeable.place(0, 0)
-            }
-        }
-    }
-}
-
-/**
  * Draws a timed event as a time line over its title, or with [oneLine] as one line of short
  * start time and title, the form a full box's last line takes ([PlannerFitColumn]). The
  * one-line form leaves out the end time, which the day sheet shows, and [cue]; "Different this
@@ -647,7 +555,9 @@ private fun PlannerEventRow(
     val resources = LocalResources.current
     val title = remember(event, showEventEmojis) { formatDisplayEventTitle(event, showEventEmojis, resources) }
     val rangeTemplate = stringResource(R.string.planner_time_range)
-    val time = remember(event, dayMs, timePattern, rangeTemplate, formats, oneLine) {
+    // The block reads the device zone; the key re-runs it when the zone changes.
+    val zone = LocalDisplayZone.current
+    val time = remember(event, dayMs, timePattern, rangeTemplate, formats, oneLine, zone) {
         if (oneLine) {
             if (event.startDay == DayPagerUtils.msToDayCode(dayMs)) {
                 plannerTime(event.startTs, timePattern, formats.locale, ZoneId.systemDefault())
@@ -663,7 +573,7 @@ private fun PlannerEventRow(
             )
         }
     }
-    val cueText = cue?.let { stringResource(R.string.planner_moved_was, cueLabel(it, timePattern, formats)) }
+    val cueText = cue?.let { stringResource(R.string.planner_moved_was, movedCueLabel(it, timePattern, formats.locale, formats.weekday, formats.shortDate, ZoneId.systemDefault())) }
     val isPast = DateTimeUtils.isEventPast(event.endTs, event.endDay, event.isAllDay, nowMs, todayDayCode)
     val isDeclined = event.isDeclinedByMe
     val isCancelled = event.isCancelled
@@ -703,7 +613,7 @@ private fun PlannerEventRow(
                     modifier = Modifier.padding(end = 4.dp),
                 )
             }
-            PlannerClippedTitle(
+            ClippedTitle(
                 text = title,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -732,7 +642,7 @@ private fun PlannerEventRow(
                         )
                     }
                 }
-                PlannerClippedTitle(
+                ClippedTitle(
                     text = title,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -741,13 +651,6 @@ private fun PlannerEventRow(
             }
         }
     }
-}
-
-/** Returns where a moved occurrence was: a time, a short weekday, or a short date. */
-private fun cueLabel(cue: MovedCue, timePattern: String, formats: PlannerFormats): String = when (cue) {
-    is MovedCue.Time -> plannerTime(cue.originalMs, timePattern, formats.locale, ZoneId.systemDefault())
-    is MovedCue.Day -> formats.weekday.format(DayPagerUtils.dayCodeToLocalDate(cue.originalDayCode))
-    is MovedCue.Date -> formats.shortDate.format(DayPagerUtils.dayCodeToLocalDate(cue.originalDayCode))
 }
 
 @Composable
@@ -797,7 +700,7 @@ private fun PlannerRibbon(
             if (style is SpanStyle.TimedSpan && !leftFlush) {
                 Box(modifier = Modifier.width(3.dp).height(18.dp).background(Color(style.stripeColor)))
             }
-            PlannerClippedTitle(
+            ClippedTitle(
                 text = title,
                 style = MaterialTheme.typography.labelSmall,
                 color = textColor,

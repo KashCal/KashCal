@@ -43,6 +43,8 @@
     <string name="channel_event_invitations">इवेंट आमंत्रण</string>
     <string name="channel_event_invitations_desc">जब आपको कोई नया कैलेंडर आमंत्रण प्राप्त हो तो सूचनाएं</string>
     <string name="channel_calendar_updates">कैलेंडर में बदलाव</string>
+    <string name="channel_calendar_backup">स्वचालित कैलेंडर बैकअप</string>
+    <string name="channel_calendar_backup_description">कैलेंडर बैकअप विफल होने पर आपको सूचित करता है</string>
     <string name="invite_notification_body">%1$s से · जवाब देने के लिए टैप करें</string>
 
     <!-- ==================== App Shortcuts ==================== -->
@@ -88,7 +90,6 @@
     <string name="action_discard">छोड़ें</string>
     <string name="action_discard_confirm">बदलाव छोड़ दें?</string>
     <string name="action_dismiss">खारिज करें</string>
-    <string name="action_show_all">सभी दिखाएँ</string>
     <string name="action_connect">कनेक्ट करें</string>
     <string name="action_duplicate">डुप्लिकेट</string>
     <string name="action_share">शेयर करें</string>
@@ -119,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d और</string>
     <string name="tags_autocomplete_create_new">\"%1$s\" बनाएँ</string>
     <string name="cd_tag">टैग: %1$s</string>
+    <string name="tags_show_events_click_label">इस टैग वाले इवेंट दिखाएँ</string>
+    <string name="tags_show_events">इवेंट दिखाएँ</string>
     <string name="cd_tags_move_menu">टैग ले जाएँ</string>
     <string name="tags_move_above_notes">नोट्स के ऊपर ले जाएँ</string>
     <string name="tags_move_below_notes">नोट्स के नीचे ले जाएँ</string>
@@ -148,7 +151,6 @@
     <string name="label_enter_hex">6 hex अक्षर दर्ज करें (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">सभी</string>
     <string name="view_week">सप्ताह</string>
     <string name="view_month">माह</string>
     <string name="label_all_day">पूरा दिन</string>
@@ -190,17 +192,38 @@
     <string name="settings_event_emojis_info">शीर्षक के आधार पर इवेंट में इमोजी जोड़ता है, जैसे \"जन्मदिन\" के लिए 🎂.</string>
     <string name="settings_force_sync">फ़ोर्स फ़ुल सिंक</string>
     <string name="settings_force_sync_subtitle">सर्वर से सभी कैलेंडर डेटा फिर से डाउनलोड करें</string>
+    <string name="settings_force_sync_no_account">कोई सिंक खाता सेटअप नहीं है</string>
+    <string name="force_sync_confirm">%2$s से %1$s को फिर से डाउनलोड करें। जो बदलाव अभी सिंक नहीं हुए हैं, वे सुरक्षित रहेंगे।</string>
+    <string name="action_start">शुरू करें</string>
     <string name="settings_sync_history">सिंक इतिहास</string>
     <string name="settings_sync_history_subtitle">सिंक सत्र देखें (पिछले 48 घंटे)</string>
     <string name="settings_import_subtitle">किसी भी कैलेंडर में ICS फ़ाइल से इवेंट जोड़ें</string>
-    <string name="settings_export_subtitle">इवेंट ICS फ़ाइल में सहेजें</string>
     <string name="settings_birthday_reminder">जन्मदिन रिमाइंडर</string>
-    <string name="settings_use_device_timezone">डिवाइस टाइमज़ोन का उपयोग करें</string>
     <string name="settings_section_calendars">कैलेंडर और खाते</string>
     <string name="settings_section_appearance">दिखावट</string>
     <string name="settings_section_creating_events">इवेंट प्राथमिकताएँ</string>
     <string name="settings_section_sync">सिंक</string>
     <string name="settings_section_data">बैकअप और रीस्टोर</string>
+    <string name="settings_section_troubleshooting">समस्या निवारण</string>
+
+    <!-- ==================== Debug report (Settings > Troubleshooting) ==================== -->
+    <string name="debug_report_row_label">डीबग रिपोर्ट निर्यात करें</string>
+    <string name="debug_report_row_subtitle">बग रिपोर्ट के साथ भेजने के लिए क्रैश, सिंक और सेटअप की जानकारी</string>
+    <string name="debug_report_sheet_title">डीबग रिपोर्ट</string>
+    <string name="debug_report_sheet_body">बग रिपोर्ट के साथ भेजने के लिए एक टेक्स्ट फ़ाइल। समस्या के तुरंत बाद भेजें: ऐप लॉग में केवल हाल की गतिविधि रहती है।</string>
+    <string name="debug_report_item_exits">ऐप हाल ही में क्यों बंद हुआ</string>
+    <string name="debug_report_item_exits_detail">क्रैश, ऐप का अटक जाना, कम मेमोरी</string>
+    <string name="debug_report_item_log">ऐप लॉग</string>
+    <string name="debug_report_item_log_detail">KashCal के अपने संदेश, क्रैश की जानकारी सहित</string>
+    <string name="debug_report_item_sync_detail">हाल के सिंक, 48 घंटे पहले तक</string>
+    <string name="debug_report_item_pending">भेजे जाने बाकी बदलाव</string>
+    <string name="debug_report_item_pending_detail">वे बदलाव जो अभी आपके सर्वर पर नहीं भेजे गए</string>
+    <string name="debug_report_item_setup">सेटअप</string>
+    <string name="debug_report_item_setup_detail">ऐप और Android संस्करण, अनुमतियाँ, बैटरी सेटिंग्स, अकाउंट के प्रकार</string>
+    <string name="debug_report_privacy_note">ईमेल पते, वेब पते और टोकन छिपा दिए जाते हैं। इवेंट के शीर्षक, कैलेंडर के नाम और संपर्कों के नाम नहीं छिपाए जाते। इसे ईमेल से भेजें, किसी सार्वजनिक पोस्ट में नहीं।</string>
+    <string name="debug_report_share">रिपोर्ट शेयर करें</string>
+    <string name="debug_report_chooser_title">डीबग रिपोर्ट शेयर करें</string>
+    <string name="debug_report_failed">डीबग रिपोर्ट नहीं बनाई जा सकी</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">ऐप लॉक</string>
@@ -236,9 +259,37 @@
     <string name="backup_error_read_failed">फ़ाइल नहीं पढ़ सके</string>
 
     <!-- ==================== Onboarding ==================== -->
-    <string name="onboarding_apple_calendar">Apple Calendar?</string>
-    <string name="onboarding_got_you">हम आपकी मदद करेंगे।</string>
-    <string name="onboarding_connect_prompt">अपने इवेंट यहाँ देखने के लिए iCloud कनेक्ट करें</string>
+    <string name="onboarding_title">आपके कैलेंडर कहाँ हैं?</string>
+    <string name="onboarding_subtitle">कनेक्ट करने के लिए एक चुनें।</string>
+    <string name="onboarding_icloud_detail">Apple ID और ऐप पासवर्ड</string>
+    <string name="onboarding_caldav_title">CalDAV सर्वर</string>
+    <string name="onboarding_caldav_detail">Nextcloud, Fastmail, Radicale और अन्य</string>
+    <string name="onboarding_device_title">इस डिवाइस पर</string>
+    <string name="onboarding_phone_detail">Google, Outlook और सिंक ऐप्स</string>
+    <string name="onboarding_use_offline">ऑफ़लाइन कैलेंडर इस्तेमाल करें</string>
+    <string name="onboarding_trust">ओपन सोर्स। कोई विज्ञापन नहीं। कोई ट्रैकिंग नहीं।</string>
+
+    <!-- ==================== Reminders are off ==================== -->
+    <string name="reminders_off_title">रिमाइंडर बंद हैं</string>
+    <plurals name="reminders_off_body">
+        <item quantity="one">इस सप्ताह %d इवेंट में रिमाइंडर है।</item>
+        <item quantity="other">इस सप्ताह %d इवेंट में रिमाइंडर हैं।</item>
+    </plurals>
+    <string name="reminders_off_not_now">अभी नहीं</string>
+    <string name="reminders_off_turn_on">चालू करें</string>
+    <string name="reminders_on_snackbar">रिमाइंडर चालू</string>
+
+    <!-- ==================== About ==================== -->
+    <string name="about_tagline">आपके सभी कैलेंडर, एक निजी ऐप में।</string>
+    <string name="about_help_title">मदद और गाइड</string>
+    <string name="about_help_detail">सेटअप, सिंक और सवाल</string>
+    <string name="about_source_title">सोर्स कोड</string>
+    <string name="about_source_detail">Apache 2.0, GitHub पर</string>
+    <string name="about_support_title">KashCal का समर्थन करें</string>
+    <string name="about_support_detail">पहले से समर्थन करने वाले सभी लोगों का धन्यवाद</string>
+    <string name="about_link_failed">कोई भी ऐप यह लिंक नहीं खोल सकता।</string>
+    <string name="about_built_in_austin">Austin में ❤️ से बनाया गया</string>
+    <string name="about_version">संस्करण %1$s</string>
 
     <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">छोड़ें</string>
@@ -257,22 +308,32 @@
     <string name="whats_new_v772_changes_title">देखें क्या बदला</string>
     <string name="whats_new_v772_changes_body">आपके iCloud और CalDAV कैलेंडर के नए, संपादित और हटाए गए इवेंट 7 दिनों तक हाल के बदलाव में इकट्ठा होते हैं। किसी को खोलने के लिए उस पर टैप करें।</string>
     <string name="whats_new_v772_notifications_body">जब बैकग्राउंड सिंक को आपके iCloud या CalDAV इवेंट में बदलाव मिलें, तो सूचना पाएँ। जब तक आप इसे चालू नहीं करते, यह बंद रहता है।</string>
+    <string name="whats_new_v803_offline_title">कैलेंडर, जो आपके फ़ोन पर ही रहें</string>
+    <string name="whats_new_v803_offline_body">कुछ योजनाएँ सर्वर पर रखने के लिए नहीं होतीं। उनके लिए अलग ऑफ़लाइन कैलेंडर बनाएँ, जितने चाहें।</string>
+    <string name="whats_new_v803_backup_title">बैकअप की चिंता छोड़ें</string>
+    <string name="whats_new_v803_backup_body">बस एक बार फ़ोल्डर चुनें, और KashCal वहाँ आपके ऑफ़लाइन कैलेंडर की ताज़ा कॉपी रखता रहेगा।</string>
+    <string name="whats_new_v803_print_title">आपका सप्ताह, कागज़ पर</string>
+    <string name="whats_new_v803_print_body">जो सप्ताह आप देख रहे हैं, उसे प्रिंट करें। किस फ़्रिज पर चिपकाना है, यह आपकी मर्ज़ी।</string>
     <string name="whats_new_hero_sample_lunch">टीम लंच</string>
     <string name="whats_new_hero_sample_review">डिज़ाइन समीक्षा</string>
     <string name="whats_new_hero_sample_book_club">बुक क्लब</string>
+    <string name="whats_new_hero_sample_dentist">डेंटिस्ट</string>
+    <string name="whats_new_hero_sample_yoga">योग</string>
     <string name="whats_new_hero_sample_calendar">काम</string>
+    <string name="whats_new_hero_sample_family">परिवार</string>
+    <string name="whats_new_hero_sample_garden">बगीचा</string>
+    <string name="whats_new_hero_sample_folder">कैलेंडर बैकअप</string>
     <string name="whats_new_hero_now">अभी</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud कनेक्ट करें</string>
     <string name="signin_caldav_title">CalDAV अकाउंट जोड़ें</string>
+    <string name="signin_caldav_sign_in_again_title">फिर से साइन इन करें</string>
     <string name="signin_connected_to">%1$s से कनेक्ट किया</string>
 
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">नया इवेंट</string>
     <string name="dialog_edit_event_title">इवेंट संपादित करें</string>
-    <string name="dialog_force_sync_title">फ़ोर्स फ़ुल सिंक?</string>
-    <string name="dialog_force_sync_message">इससे सर्वर से सभी कैलेंडर डेटा फिर से डाउनलोड होगा। स्थानीय बदलाव सुरक्षित रहेंगे।</string>
     <string name="dialog_enable_notifications">सूचनाएँ चालू करें?</string>
     <string name="dialog_action_required">जारी रखने के लिए यह कार्रवाई आवश्यक है।</string>
     <string name="dialog_add_to_calendar">कैलेंडर में जोड़ें</string>
@@ -285,6 +346,7 @@
     <string name="status_no_events_week">इस सप्ताह कोई इवेंट नहीं</string>
     <string name="status_more_events">+%1$d और</string>
     <string name="status_no_sync_sessions">अभी तक कोई सिंक सत्र नहीं।\n\nकैलेंडर दृश्य पर नीचे खींचकर रिफ़्रेश करें।</string>
+    <string name="status_no_sync_account">कोई सिंक खाता सेटअप नहीं है। ऑफ़लाइन कैलेंडर इस डिवाइस पर रहते हैं; डिवाइस कैलेंडर अपने खाते से सिंक होते हैं।</string>
     <string name="status_no_writable_calendars">कोई लिखने योग्य कैलेंडर उपलब्ध नहीं</string>
     <string name="status_events_count">%1$d इवेंट</string>
     <string name="status_sync_history">सिंक इतिहास</string>
@@ -333,6 +395,7 @@
     <string name="caldav_error_unexpected">अप्रत्याशित त्रुटि। कृपया पुनः प्रयास करें।</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nयदि यह आपके स्थानीय नेटवर्क पर कोई सर्वर है, तो कनेक्ट करने के लिए स्थानीय नेटवर्क एक्सेस की अनुमति दें।</string>
     <string name="caldav_error_connection_refused_insecure">सर्वर ने कनेक्शन को ऐसी जगह भेजा जहाँ KashCal नहीं जाता (बिना एन्क्रिप्शन वाला पता, या रीडायरेक्ट लूप), इसलिए आपका पासवर्ड भेजने से पहले KashCal रुक गया। सर्वर का पता जाँचें।</string>
+    <string name="caldav_error_sign_in_again_mismatch">यह एक अलग अकाउंट है। इस अकाउंट के उपयोगकर्ता नाम और सर्वर से साइन इन करें।</string>
     <string name="local_network_banner_title">स्थानीय नेटवर्क एक्सेस आवश्यक है</string>
     <string name="local_network_banner_body">यह सर्वर आपके स्थानीय नेटवर्क पर प्रतीत होता है। स्थानीय नेटवर्क एक्सेस की अनुमति दें ताकि KashCal इससे कनेक्ट हो सके।</string>
     <string name="local_network_banner_allow">एक्सेस की अनुमति दें</string>
@@ -374,7 +437,6 @@
     <string name="error_device_calendar_title">कैलेंडर त्रुटि</string>
     <string name="error_device_calendar_write_failed">डिवाइस कैलेंडर में सहेजने में विफल। कृपया पुनः प्रयास करें।</string>
     <string name="error_device_calendar_permission">कैलेंडर लिखने की अनुमति आवश्यक। कृपया सेटिंग्स में अनुमति दें।</string>
-    <string name="error_device_calendar_permission_denied">लिखने की पहुँच देने के लिए सेटिंग्स में कैलेंडर अनुमति को बंद करके फिर से चालू करें</string>
     <string name="error_device_calendar_not_found">कैलेंडर नहीं मिला। शायद इसे हटा दिया गया है।</string>
     <string name="error_device_event_not_found">इवेंट नहीं मिला। शायद इसे हटा दिया गया है।</string>
     <string name="error_device_calendar_read_only">यह कैलेंडर केवल पठन योग्य है।</string>
@@ -401,12 +463,11 @@
     <string name="cd_recurring">आवर्ती</string>
     <string name="cd_enabled">चालू</string>
     <string name="cd_sync_error">सिंक त्रुटि</string>
-    <string name="cd_select_label">%1$s चुनें</string>
     <string name="cd_wheel_picker">%1$d विकल्पों के साथ व्हील पिकर</string>
     <string name="cd_time_entry_keyboard">सटीक समय दर्ज करें</string>
     <string name="time_entry_dialog_title">समय दर्ज करें</string>
     <string name="time_entry_tap_to_edit">संपादित करने के लिए टैप करें</string>
-    <string name="cd_version_info">KashCal संस्करण %1$s। डीबग विकल्पों के लिए देर तक दबाएँ।</string>
+    <string name="cd_version_info">KashCal संस्करण %1$s</string>
     <string name="cd_about_setting">%1$s के बारे में</string>
     <string name="cd_color_slider">रंग स्लाइडर, वर्तमान में %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d डिग्री</string>
@@ -435,7 +496,6 @@
     <string name="label_recurrence_on_date">तारीख पर</string>
 
     <!-- ==================== Settings (Additional) ==================== -->
-    <string name="settings_visible_calendars">दृश्य कैलेंडर</string>
     <string name="settings_default_calendar">डिफ़ॉल्ट कैलेंडर</string>
     <string name="settings_default_event_length">डिफ़ॉल्ट इवेंट अवधि</string>
     <string name="settings_default_event_length_hint">नए इवेंट के लिए डिफ़ॉल्ट अवधि</string>
@@ -455,7 +515,6 @@
     <string name="option_saturday">शनिवार</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">कोई इवेंट नहीं मिला</string>
     <string name="empty_no_upcoming_events">कोई आगामी इवेंट नहीं</string>
     <string name="empty_no_calendars">कोई कैलेंडर उपलब्ध नहीं</string>
 
@@ -466,7 +525,15 @@
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">कैलेंडर लाएँ</string>
     <string name="action_import_from_file">फ़ाइल से इवेंट आयात करें</string>
-    <string name="action_export_local_calendar">स्थानीय कैलेंडर निर्यात करें</string>
+    <string name="settings_export_calendars">कैलेंडर निर्यात करें</string>
+    <string name="settings_export_calendars_subtitle">कैलेंडर को ICS फ़ाइल के रूप में सहेजें</string>
+    <string name="export_calendar_no_events">कोई इवेंट नहीं</string>
+    <string name="export_calendar_preparing">तैयारी हो रही है…</string>
+    <string name="cd_export_calendar">%1$s निर्यात करें</string>
+    <string name="cd_export_calendar_preparing">%1$s की तैयारी हो रही है</string>
+    <string name="export_calendar_chooser_title">कैलेंडर निर्यात करें</string>
+    <string name="export_event_chooser_title">इवेंट निर्यात करें</string>
+    <string name="export_file_failed">फ़ाइल नहीं बनाई जा सकी।</string>
 
     <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
@@ -504,12 +571,14 @@
     <string name="accounts_cd_back">वापस जाएँ</string>
     <string name="accounts_sync_issue">सिंक समस्या</string>
     <string name="accounts_cd_sync_warning">सिंक चेतावनी</string>
+    <string name="accounts_cd_sync_off">सिंक बंद</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">कैलेंडर फ़ीड</string>
     <string name="subscriptions_section_add">जोड़ें</string>
     <string name="subscriptions_empty_ics">कोई ICS सदस्यता नहीं</string>
     <string name="subscriptions_empty_ics_hint">इवेंट देखने के लिए कैलेंडर फ़ीड जोड़ें</string>
+    <string name="subscriptions_swipe_hint">हटाने के लिए फ़ीड को स्वाइप करें।</string>
     <string name="subscriptions_add_ics">ICS कैलेंडर जोड़ें</string>
     <string name="qs_tile_label">इवेंट जोड़ें</string>
     <string name="holiday_catalog_add">छुट्टी कैलेंडर जोड़ें</string>
@@ -519,6 +588,11 @@
     <string name="holiday_catalog_empty_hint">कोई दूसरा नाम आज़माएँ</string>
     <string name="holiday_catalog_validate_error">इस कैलेंडर तक नहीं पहुँचा जा सका। अपना कनेक्शन जाँचें और फिर से प्रयास करें।</string>
     <string name="holiday_catalog_attribution">Mozilla Thunderbird से छुट्टी कैलेंडर, %1$s के अंतर्गत लाइसेंस प्राप्त।</string>
+    <string name="account_feeds_add">खाते से जोड़ें</string>
+    <string name="account_feeds_note">आपके iCloud और CalDAV खातों में सहेजे गए कैलेंडर फ़ीड की सूची। कैलेंडर फ़ीड में जोड़ने के लिए चालू करें।</string>
+    <string name="account_feeds_checking">जाँच रहा है…</string>
+    <string name="account_feeds_none">कोई कैलेंडर फ़ीड नहीं मिला</string>
+    <string name="account_feeds_failed">कैलेंडर फ़ीड लोड नहीं हो सके</string>
     <string name="subscriptions_row_label">कैलेंडर फ़ीड (ICS)</string>
     <string name="subscriptions_row_hint">जैसे छुट्टियाँ, खेल, स्कूल</string>
 
@@ -564,6 +638,8 @@
     <string name="account_detail_discovering">खोज रहा है…</string>
     <string name="account_detail_discover_calendars">नए कैलेंडर खोजें</string>
     <string name="account_detail_change_password">पासवर्ड बदलें</string>
+    <string name="account_detail_sign_in_again">फिर से साइन इन करें</string>
+    <string name="account_detail_sign_in_again_subtitle">KashCal के पास अब इस अकाउंट का पासवर्ड नहीं है। फिर से सिंक करने के लिए साइन इन करें। आपके कैलेंडर और इवेंट सुरक्षित रहेंगे।</string>
     <string name="account_detail_sign_out">साइन आउट</string>
     <string name="account_detail_never_synced">कभी सिंक नहीं हुआ</string>
     <string name="account_detail_last_success">अंतिम सफल: %1$s</string>
@@ -587,6 +663,107 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">डिवाइस कैलेंडर</string>
     <string name="settings_device_calendars_hint">अन्य ऐप्स के कैलेंडर</string>
+    <string name="offline_calendars_row_label">ऑफ़लाइन कैलेंडर</string>
+    <string name="offline_calendars_row_hint">इस डिवाइस पर रहने वाले कैलेंडर</string>
+    <string name="offline_calendars_manage_note">हटाने के लिए कैलेंडर को स्वाइप करें।</string>
+    <string name="offline_calendars_info">इस डिवाइस पर रखे जाते हैं और कभी सिंक नहीं होते।</string>
+    <string name="offline_calendars_info_cd">ऑफ़लाइन कैलेंडर के बारे में</string>
+    <string name="offline_calendar_default_state">डिफ़ॉल्ट</string>
+    <string name="offline_calendar_new">नया कैलेंडर</string>
+    <string name="offline_calendar_new_in_picker">नया ऑफ़लाइन कैलेंडर</string>
+    <string name="action_create">बनाएँ</string>
+    <string name="offline_calendar_rename">नाम बदलें</string>
+    <string name="offline_calendar_color">रंग</string>
+    <string name="offline_calendar_export">कैलेंडर निर्यात करें</string>
+    <string name="offline_calendar_builtin_info">अंतर्निहित कैलेंडर का नाम नहीं बदला जा सकता और न ही उसे हटाया जा सकता है। कोई कैलेंडर न चुनने पर नए इवेंट यहीं जाते हैं।</string>
+    <string name="offline_calendar_builtin_info_cd">अंतर्निहित कैलेंडर के बारे में</string>
+    <string name="offline_calendar_rename_cancel_cd">नाम बदलना रद्द करें</string>
+    <string name="offline_calendar_rename_save_cd">नाम सहेजें</string>
+    <string name="offline_calendar_delete_cd">%1$s हटाएँ</string>
+    <plurals name="offline_calendar_delete_confirm">
+        <item quantity="one">\"%2$s\" और उसका %1$d इवेंट हमेशा के लिए हटाएँ? इसे पूर्ववत नहीं किया जा सकता।</item>
+        <item quantity="other">\"%2$s\" और उसके %1$d इवेंट हमेशा के लिए हटाएँ? इसे पूर्ववत नहीं किया जा सकता।</item>
+    </plurals>
+    <string name="offline_calendar_delete_empty">\"%1$s\" हमेशा के लिए हटाएँ? इसमें कोई इवेंट नहीं है।</string>
+    <plurals name="offline_calendar_delete_also">
+        <item quantity="one">%1$d इवेंट भी हटाएँ</item>
+        <item quantity="other">%1$d इवेंट भी हटाएँ</item>
+    </plurals>
+    <string name="offline_calendar_deleted">%1$s हटाया गया</string>
+    <string name="offline_calendar_duplicate_name">\"%1$s\" नाम का ऑफ़लाइन कैलेंडर पहले से मौजूद है</string>
+    <string name="offline_calendar_similar_name">\"%1$s\" से बहुत मिलता-जुलता है। कोई दूसरा नाम चुनें।</string>
+    <string name="calendar_backup_title">स्वचालित कैलेंडर बैकअप</string>
+    <string name="calendar_backup_row_off">बंद</string>
+    <string name="calendar_backup_row_on">%1$s · %2$s</string>
+    <string name="calendar_backup_row_problem">बैकअप फ़ोल्डर तक नहीं पहुँच सके</string>
+    <string name="calendar_backup_intro">हर ऑफ़लाइन कैलेंडर को आपके चुने हुए फ़ोल्डर में ICS फ़ाइल के रूप में सहेजता है।</string>
+    <string name="calendar_backup_choose_folder">फ़ोल्डर चुनें</string>
+    <string name="calendar_backup_choose_folder_hint">कोई फ़ोल्डर चुनें या बनाएँ, जैसे Documents में। Android स्टोरेज के सबसे ऊपरी स्तर या खुद Download फ़ोल्डर की अनुमति नहीं देता।</string>
+    <string name="calendar_backup_folder">फ़ोल्डर</string>
+    <string name="calendar_backup_change">बदलें</string>
+    <string name="calendar_backup_frequency">कितनी बार</string>
+    <string name="calendar_backup_frequency_info">बैकअप देर से चल सकते हैं: फ़ोन निष्क्रिय होने पर या कुछ समय से KashCal न खोले जाने पर Android बैकग्राउंड का काम रोक देता है।</string>
+    <string name="calendar_backup_copies">रखी जाने वाली कॉपी</string>
+    <string name="calendar_backup_copies_explained">हर बैकअप पिछली फ़ाइल को तारीख वाली कॉपी के रूप में रखता है। जब कॉपी की संख्या इससे ज़्यादा हो जाती है, तो सबसे पुरानी कॉपी हटा दी जाती हैं। सबसे नई फ़ाइल का नाम हमेशा कैलेंडर के नाम पर होता है।</string>
+    <string name="calendar_backup_copies_fewer">कम कॉपी रखें</string>
+    <string name="calendar_backup_copies_more">ज़्यादा कॉपी रखें</string>
+    <plurals name="calendar_backup_copies_state">
+        <item quantity="one">%d कॉपी</item>
+        <item quantity="other">%d कॉपी</item>
+    </plurals>
+    <plurals name="calendar_backup_deletes">
+        <item quantity="one">%d पुरानी कॉपी हटा देता है। इसे पूर्ववत नहीं किया जा सकता।</item>
+        <item quantity="other">%d पुरानी कॉपी हटा देता है। इसे पूर्ववत नहीं किया जा सकता।</item>
+    </plurals>
+    <string name="calendar_backup_deletes_unknown">इस संख्या से ज़्यादा पुरानी कॉपी हटा देता है। इसे पूर्ववत नहीं किया जा सकता।</string>
+    <string name="calendar_backup_calendars">ऑफ़लाइन कैलेंडर</string>
+    <string name="calendar_backup_calendar_nothing_saved">%1$s · कोई इवेंट नहीं, कुछ भी सहेजा नहीं गया</string>
+    <string name="calendar_backup_calendar_save_failed">%1$s · सहेजा नहीं जा सका। अगले बैकअप पर फिर से कोशिश की जाएगी।</string>
+    <string name="calendar_backup_status">पिछला बैकअप %1$s</string>
+    <plurals name="calendar_backup_status_failed">
+        <item quantity="one">पिछला बैकअप %1$s · %2$d कैलेंडर विफल रहा</item>
+        <item quantity="other">पिछला बैकअप %1$s · %2$d कैलेंडर विफल रहे</item>
+    </plurals>
+    <string name="calendar_backup_now">अभी बैकअप लें</string>
+    <string name="calendar_backup_running">बैकअप हो रहा है…</string>
+    <string name="calendar_backup_footer_overwrites">KashCal हर बैकअप पर इन फ़ाइलों को ओवरराइट करता है, इसलिए दूसरे ऐप में इनमें किए गए बदलाव टिकते नहीं। किसी कैलेंडर को वापस लाने के लिए \"फ़ाइल से इवेंट आयात करें\" का उपयोग करें।</string>
+    <string name="calendar_backup_off_files_stay">मौजूदा फ़ाइलें %1$s में रहेंगी।</string>
+    <string name="calendar_backup_folder_unreachable">%1$s तक नहीं पहुँच सके। हो सकता है इसे कहीं और ले जाया गया हो, हटा दिया गया हो या डिस्कनेक्ट कर दिया गया हो।</string>
+    <string name="calendar_backup_error_unsupported">%1$s में फ़ाइलें सहेजी नहीं जा सकतीं। दूसरा फ़ोल्डर चुनें।</string>
+    <string name="calendar_backup_choose_again">फिर से चुनें</string>
+    <string name="calendar_backup_pick_refused">KashCal उस फ़ोल्डर का उपयोग नहीं कर सकता। कोई दूसरा चुनें।</string>
+    <string name="calendar_backup_pick_cannot_create">KashCal उस फ़ोल्डर में फ़ाइलें नहीं बना सकता। कोई दूसरा चुनें।</string>
+    <string name="calendar_backup_failed_title">कैलेंडर बैकअप विफल रहा</string>
+    <string name="calendar_backup_folder_unnamed">बैकअप फ़ोल्डर</string>
+    <string name="calendar_backup_alert_unreachable">%1$s तक नहीं पहुँच सके। इसे फिर से चुनने के लिए टैप करें।</string>
+    <string name="calendar_backup_alert_unsupported">%1$s में फ़ाइलें सहेजी नहीं जा सकतीं। दूसरा फ़ोल्डर चुनने के लिए टैप करें।</string>
+    <string name="calendar_backup_alert_file_retry">%1$s सहेजी नहीं जा सकी। KashCal अगले बैकअप पर फिर से कोशिश करेगा।</string>
+    <string name="calendar_backup_every_hour">हर घंटे</string>
+    <string name="calendar_backup_every_day">हर दिन</string>
+    <plurals name="calendar_backup_every_hours">
+        <item quantity="one">हर %d घंटे</item>
+        <item quantity="other">हर %d घंटे</item>
+    </plurals>
+    <plurals name="calendar_backup_every_days">
+        <item quantity="one">हर %d दिन</item>
+        <item quantity="other">हर %d दिन</item>
+    </plurals>
+    <string name="calendar_backup_every_day_hours">हर 1 दिन %1$s</string>
+    <string name="calendar_backup_every_days_hours">हर %1$s %2$s</string>
+    <string name="calendar_backup_interval_too_short">कम से कम 1 घंटा चुनें।</string>
+    <string name="calendar_backup_interval_too_long">30 दिन या उससे कम चुनें।</string>
+    <plurals name="calendar_backup_alert_files_retry">
+        <item quantity="one">%d कैलेंडर सहेजा नहीं जा सका। KashCal अगले बैकअप पर फिर से कोशिश करेगा।</item>
+        <item quantity="other">%d कैलेंडर सहेजे नहीं जा सके। KashCal अगले बैकअप पर फिर से कोशिश करेगा।</item>
+    </plurals>
+    <string name="calendar_backup_notifications_app_off">KashCal के लिए सूचनाएं बंद हैं, इसलिए बैकअप विफल होने पर यह आपको सूचित नहीं कर सकता।</string>
+    <string name="calendar_backup_notifications_channel_off">बैकअप सूचनाएं बंद हैं, इसलिए बैकअप विफल होने पर KashCal आपको सूचित नहीं कर सकता।</string>
+    <string name="calendar_backup_open_settings">सेटिंग्स खोलें</string>
+    <string name="calendar_backup_not_now">अभी नहीं</string>
+    <plurals name="calendar_backup_row_calendars_failed">
+        <item quantity="one">%d कैलेंडर विफल रहा</item>
+        <item quantity="other">%d कैलेंडर विफल रहे</item>
+    </plurals>
     <string name="settings_quick_event_add">स्मार्ट इवेंट जोड़ें</string>
     <string name="settings_quick_event_add_info">स्वाभाविक रूप से टाइप करके इवेंट बनाएँ. \"शुक्रवार दोपहर 1 बजे Sam के साथ लंच\" आपके लिए शीर्षक, तारीख और समय भर देता है.</string>
     <string name="settings_suggest_titles">इवेंट शीर्षक सुझाएँ</string>
@@ -646,6 +823,8 @@
     <string name="cd_pick_month_year">माह और वर्ष चुनें</string>
     <string name="cd_previous_month">पिछला माह</string>
     <string name="cd_next_month">अगला माह</string>
+    <string name="cd_previous_day">पिछला दिन</string>
+    <string name="cd_next_day">अगला दिन</string>
     <string name="cd_month_year_picker">माह और वर्ष चयनकर्ता</string>
     <string name="cd_remove_alert">अलर्ट हटाएँ</string>
     <string name="cd_warning">चेतावनी</string>
@@ -655,7 +834,25 @@
     <string name="label_on_days">दिनों पर</string>
     <string name="label_pattern">पैटर्न</string>
     <string name="label_ends">समाप्ति</string>
+    <string name="sheet_hint_change_end">अंत बदलने के लिए किसी दिन पर टैप करें</string>
     <string name="label_timezone">समय क्षेत्र</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">शहर, देश या समय क्षेत्र खोजें</string>
+    <string name="timezone_section_this_event">यह इवेंट</string>
+    <string name="timezone_section_device">डिवाइस का समय क्षेत्र</string>
+    <string name="timezone_section_recent">हाल के</string>
+    <string name="timezone_section_all">सभी समय क्षेत्र</string>
+    <string name="timezone_offsets_on">%1$s को ऑफ़सेट</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">कैलेंडर से: %1$s</string>
+    <string name="timezone_shown_in_device_time">डिवाइस के समय में दिखाया गया</string>
+    <string name="timezone_loading">समय क्षेत्र लोड हो रहे हैं…</string>
+    <string name="timezone_no_match">कोई समय क्षेत्र मेल नहीं खाता</string>
+    <string name="timezone_no_match_hint">कोई शहर, देश या +5:30 जैसा ऑफ़सेट आज़माएं</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">अलर्ट</string>
     <string name="label_add_alert">अलर्ट जोड़ें</string>
     <string name="label_recurrence_never">कभी नहीं</string>
@@ -663,11 +860,8 @@
     <string name="label_yesterday">कल</string>
     <string name="label_device_calendars">डिवाइस कैलेंडर</string>
     <string name="label_default_calendar_hint">नए इवेंट इस कैलेंडर में बनाए जाएँगे</string>
-    <string name="label_visible_count">%1$d / %2$d दृश्य</string>
     <string name="label_reminders_truncated">%1$d नहीं दिखाए (%2$d कुल, अधिकतम %3$d संपादन योग्य)</string>
     <string name="label_found_events">मिले: %1$d इवेंट</string>
-    <string name="label_open_debug_menu">डीबग मेन्यू खोलें</string>
-    <string name="placeholder_search">खोजें…</string>
     <string name="settings_search_placeholder">सेटिंग्स खोजें…</string>
     <string name="settings_search_no_results">\"%1$s\" के लिए कोई सेटिंग नहीं मिली</string>
     <string name="cd_search_settings">सेटिंग्स खोजें</string>
@@ -678,16 +872,13 @@
     <string name="status_hours_ago">%1$d घं. पहले</string>
 
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
-    <string name="device_calendars_description">अपने डिवाइस पर अन्य कैलेंडर ऐप्स से इवेंट दिखाएँ (सिंक अडैप्टर, स्थानीय कैलेंडर)।</string>
-    <string name="device_calendars_permission_required">कैलेंडर अनुमति आवश्यक। एक्सेस देने के लिए चालू करें पर टैप करें।</string>
-    <string name="device_calendars_read_only_access">केवल पठन एक्सेस</string>
-    <string name="device_calendars_grant_write">डिवाइस कैलेंडर इवेंट संपादित करने के लिए लिखने की अनुमति दें</string>
-    <string name="device_calendars_grant">अनुमति दें</string>
-    <string name="device_calendars_none_found">कोई डिवाइस कैलेंडर नहीं मिला।</string>
+    <string name="device_calendars_intro">इस डिवाइस पर Google, Outlook और सिंक ऐप्स के कैलेंडर दिखाएँ।</string>
+    <string name="device_calendars_show_switch">डिवाइस कैलेंडर दिखाएँ</string>
+    <string name="device_calendars_access_off">KashCal के लिए कैलेंडर एक्सेस बंद है।</string>
+    <string name="device_calendars_pick_hint">दिखाने के लिए कैलेंडर चुनें।</string>
+    <string name="device_calendars_empty">कोई कैलेंडर नहीं मिला।</string>
     <string name="device_calendars_local">स्थानीय</string>
-    <string name="device_calendars_read_only_no_write">केवल पठन (लिखने की अनुमति नहीं)</string>
     <string name="device_calendars_read_only_calendar">केवल पठन (कैलेंडर केवल पठन योग्य)</string>
-    <string name="settings_developer_options">डेवलपर विकल्प</string>
     <string name="settings_sync_frequency">सिंक आवृत्ति</string>
     <string name="settings_sync_frequency_hint">बैकग्राउंड में कितनी बार सिंक करें</string>
 
@@ -817,6 +1008,9 @@
     <string name="ics_import_reason_this_and_future">इस और बाद के दोहरावों में बदलाव समर्थित नहीं हैं</string>
     <string name="ics_import_reason_own_cancel">आप इस मीटिंग के आयोजक हैं, इसलिए इसे इवेंट से ही रद्द करें</string>
     <string name="ics_import_reason_on_another_calendar">यह इस खाते के किसी अन्य कैलेंडर में पहले से है</string>
+    <string name="ics_import_reason_calendar_keeps_copy">यह कैलेंडर इवेंट की अपनी कॉपी रखता है</string>
+    <string name="ics_import_reason_own_update">आप इस मीटिंग के आयोजक हैं, इसलिए इसे इवेंट से ही बदलें</string>
+    <string name="ics_import_reason_change_waiting">इवेंट में एक बदलाव सिंक होने की प्रतीक्षा में है; सिंक होने के बाद फिर से आयात करें</string>
     <string name="ics_import_notice_unverified">आमंत्रण फ़ाइल भेजने वाले की पुष्टि नहीं की जा सकती। जाँच लें कि यह आयोजक की ओर से आई है।</string>
     <string name="ics_import_notice_answer_notifies">इस आमंत्रण का जवाब देने पर आयोजक को सूचना जा सकती है।</string>
     <string name="ics_import_notice_guests_again">आप आयोजक हैं, इसलिए अतिथियों को यह आमंत्रण फिर से मिल सकता है।</string>
@@ -847,13 +1041,17 @@
     </plurals>
     <string name="ics_import_summary_separator">", "</string>
     <string name="ics_import_summary_nothing">आयात करने के लिए कुछ नहीं</string>
-    <plurals name="exported_events">
-        <item quantity="one">%1$d इवेंट निर्यात हुआ</item>
-        <item quantity="other">%1$d इवेंट निर्यात हुए</item>
-    </plurals>
     <plurals name="event_count">
         <item quantity="one">%1$d इवेंट</item>
         <item quantity="other">%1$d इवेंट</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d कैलेंडर</item>
+        <item quantity="other">%1$d कैलेंडर</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d खाते</item>
+        <item quantity="other">%1$d खातों</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d कैलेंडर</item>
@@ -887,10 +1085,6 @@
         <item quantity="one">%1$d वर्ष</item>
         <item quantity="other">%1$d वर्ष</item>
     </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d से.</item>
-        <item quantity="other">%1$d से.</item>
-    </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d मिनट पहले</item>
         <item quantity="other">%1$d मिनट पहले</item>
@@ -914,8 +1108,13 @@
     <string name="dialog_move_recurring_title">स्थानांतरित करें</string>
     <string name="snackbar_event_rescheduled">इवेंट का समय बदल दिया गया</string>
     <string name="snackbar_reschedule_failed">इवेंट का समय नहीं बदला जा सका</string>
+    <string name="snackbar_move_failed">\"%1$s\" को स्थानांतरित नहीं किया जा सका</string>
+    <string name="snackbar_move_changed_elsewhere">\"%1$s\" कहीं और बदला गया, इसलिए स्थानांतरित नहीं किया गया</string>
+    <string name="event_untitled">बिना शीर्षक वाला इवेंट</string>
     <string name="recurring_this_event">यह इवेंट</string>
     <string name="recurring_all_events">सभी इवेंट</string>
+    <string name="recurring_scope_move_not_expressible">दोहराव का नियम इस बदलाव को नहीं अपना सकता</string>
+    <string name="event_form_move_not_expressible">दोहराव का नियम इस बदलाव को नहीं अपना सकता। कुछ भी सेव नहीं हुआ।</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">उपस्थित</string>
@@ -979,8 +1178,67 @@
     <string name="empty_no_events_day_3">एक तोहफा: एक खाली दिन।</string>
     <string name="empty_no_events_day_4">कैलेंडर की स्थिति: बिल्कुल खाली, वाह!</string>
     <string name="empty_no_events_day_5">कुछ तय नहीं है। सुकून का आनंद लें।</string>
-    <string name="cd_empty_no_events_day">शांत दिन, कुछ भी तय नहीं</string>
     <string name="filter_date">तारीख</string>
+    <string name="search_tab_upcoming">आगामी</string>
+    <string name="search_tab_past">पिछले</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d इवेंट</item>
+        <item quantity="other">%1$s, %2$d इवेंट</item>
+    </plurals>
+    <string name="search_date_this_week">इस हफ़्ते</string>
+    <string name="search_date_this_month">इस महीने</string>
+    <string name="search_date_pick">तारीखें चुनें…</string>
+    <string name="search_next">अगला: %1$s</string>
+    <string name="search_last">पिछला: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">स्थान:</string>
+    <string name="search_reason_notes">नोट्स:</string>
+    <string name="search_reason_guest">अतिथि:</string>
+    <string name="search_keep_typing">खोजने के लिए टाइप करते रहें</string>
+    <string name="search_no_matches">“%1$s” से कोई इवेंट मेल नहीं खाता</string>
+    <string name="search_no_events_tagged">“%1$s” टैग वाले कोई इवेंट नहीं</string>
+    <string name="search_lookback_line">सिंक लुकबैक: %1$s</string>
+    <string name="search_sync_settings">सिंक सेटिंग्स</string>
+    <string name="cd_search_sync_settings">सिंक लुकबैक सेटिंग खोलें</string>
+    <plurals name="search_show_past">
+        <item quantity="one">%d पिछला इवेंट दिखाएँ</item>
+        <item quantity="other">%d पिछले इवेंट दिखाएँ</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">छिपे कैलेंडर में %d और</item>
+        <item quantity="other">छिपे कैलेंडरों में %d और</item>
+    </plurals>
+    <string name="search_show">दिखाएँ</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">छिपे कैलेंडर में %d मिलान दिखाएँ</item>
+        <item quantity="other">छिपे कैलेंडरों में %d मिलान दिखाएँ</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">छिपे कैलेंडर में %d दिखाएँ</item>
+        <item quantity="other">छिपे कैलेंडरों में %d दिखाएँ</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">%d छिपा कैलेंडर शामिल</item>
+        <item quantity="other">%d छिपे कैलेंडर शामिल</item>
+    </plurals>
+    <string name="search_leave_out">छोड़ें</string>
+    <string name="cd_search_leave_out">छिपे कैलेंडर छोड़ें</string>
+    <string name="search_hidden_calendar">%1$s · छिपा</string>
+    <string name="cd_search_date_this_week">इस हफ़्ते के मिलान दिखाएँ</string>
+    <string name="cd_search_date_this_month">इस महीने के मिलान दिखाएँ</string>
+    <string name="cd_search_date_pick">खोजने के लिए तारीखें चुनें</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d आगामी</item>
+        <item quantity="other">%d आगामी</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d पिछला</item>
+        <item quantity="other">%d पिछले</item>
+    </plurals>
+    <string name="search_no_past_events">कोई पिछला इवेंट नहीं</string>
+    <string name="search_no_events_in_dates">इन तारीखों पर कोई इवेंट नहीं</string>
     <string name="label_select_date">तारीख चुनें</string>
     <string name="hint_tap_date_range">एक दिन के लिए वही तारीख टैप करें, या सीमा के लिए कोई अन्य तारीख</string>
     <string name="cd_clear">साफ़ करें</string>
@@ -1072,7 +1330,6 @@
     <string name="reminder_none">कोई रिमाइंडर नहीं</string>
     <string name="reminder_at_time_of_event">इवेंट के समय</string>
     <string name="reminder_time_before">%1$s पहले</string>
-    <string name="reminder_time_after">%1$s बाद</string>
     <string name="reminder_day_of_event_12h">इवेंट के दिन 9 AM</string>
     <string name="reminder_day_of_event_24h">इवेंट के दिन 09:00</string>
     <string name="reminder_day_of_event">इवेंट के दिन</string>
@@ -1204,6 +1461,7 @@
     <!-- ==================== i18n: Round 2 audit gaps ==================== -->
     <string name="action_save_event">इवेंट सहेजें</string>
     <string name="badge_beta">Beta</string>
+    <string name="badge_sync_off">सिंक बंद</string>
     <string name="badge_new">नया</string>
     <string name="color_red">लाल</string>
     <string name="color_orange">नारंगी</string>
@@ -1232,6 +1490,19 @@
     <string name="ics_fetch_error_http">सर्वर ने एक त्रुटि लौटाई (%1$d)। कृपया URL जाँचें।</string>
     <string name="ics_fetch_error_empty">कैलेंडर फ़ीड खाली है।</string>
     <string name="ics_fetch_error_not_calendar">यह URL कैलेंडर फ़ीड जैसा नहीं लगता।</string>
+    <string name="ics_feed_error_empty_response">सर्वर ने कोई मान्य फ़ीड नहीं भेजा।</string>
+    <string name="ics_feed_error_access_denied">इस फ़ीड के सर्वर ने एक्सेस अस्वीकार कर दिया।</string>
+    <string name="ics_feed_error_too_large">यह कैलेंडर फ़ीड डाउनलोड करने के लिए बहुत बड़ा है।</string>
+    <string name="ics_feed_error_unreadable">इस फ़ीड के इवेंट नहीं दिखाए जा सके।</string>
+    <string name="ics_feed_error_event_not_saved">“%1$s” सहेजा नहीं गया।</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d इवेंट सहेजा नहीं गया।</item>
+        <item quantity="other">%1$d इवेंट सहेजे नहीं गए।</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d इवेंट सहेजा नहीं गया, जिसमें “%2$s” शामिल है।</item>
+        <item quantity="other">%1$d इवेंट सहेजे नहीं गए, जिनमें “%2$s” शामिल है।</item>
+    </plurals>
     <string name="insights_title">अंतर्दृष्टि</string>
     <string name="insights_period_this_week">सप्ताह</string>
     <string name="insights_period_last_week">पिछला सप्ताह</string>
@@ -1359,7 +1630,7 @@
         <item quantity="other">अगले %1$d दिनों में खाली (%2$s – %3$s):</item>
     </plurals>
     <string name="share_availability_day_line">%1$s: %2$s</string>
-    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_block_separator">", "</string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">चयनित श्रेणी में कम से कम एक घंटे का कोई खाली ब्लॉक नहीं है।</string>
     <string name="share_from_kashcal_footer">KashCal से साझा किया गया</string>
@@ -1381,5 +1652,31 @@
     <string name="share_as_card_all_day">पूरा दिन</string>
     <string name="share_as_card_chooser_title">इवेंट साझा करें</string>
     <string name="share_as_card_share_failed">कार्ड साझा नहीं किया जा सका</string>
+    <string name="print_your_week">अपना सप्ताह प्रिंट करें</string>
+    <string name="print_options_title">प्रिंट विकल्प चुनें</string>
+    <string name="print_pages_header">पेज</string>
+    <string name="print_page_week">सप्ताह कैलेंडर</string>
+    <string name="print_page_week_detail">ग्रिड के रूप में सप्ताह</string>
+    <string name="print_page_details">विवरण</string>
+    <string name="print_page_details_detail">हर इवेंट पूरे विवरण के साथ</string>
+    <string name="print_action">प्रिंट करें</string>
+    <string name="cd_print_previous_week">पिछला सप्ताह</string>
+    <string name="cd_print_next_week">अगला सप्ताह</string>
+    <plurals name="print_summary_pages">
+        <item quantity="one">%d पेज</item>
+        <item quantity="other">%d पेज</item>
+    </plurals>
+    <plurals name="print_summary_calendars">
+        <item quantity="one">%2$d में से %1$d कैलेंडर</item>
+        <item quantity="other">%2$d में से %1$d कैलेंडर</item>
+    </plurals>
+    <string name="print_summary">%1$s · %2$s</string>
+    <string name="print_job_name">%1$s – %2$s का सप्ताह</string>
+    <string name="print_failed">प्रिंट नहीं हो सका। फिर से प्रयास करें।</string>
+    <string name="print_doc_week">सप्ताह</string>
+    <string name="print_doc_printed">%1$s को प्रिंट किया गया</string>
+    <string name="print_doc_page_of">%2$s में से पेज %1$s</string>
+    <string name="print_doc_numbers_note">संख्याएँ विवरण पेज से मेल खाती हैं, जहाँ हर इवेंट पूरा दिया गया है।</string>
+    <string name="print_doc_times_in">समय %1$s में दिखाया गया है</string>
 
 </resources>

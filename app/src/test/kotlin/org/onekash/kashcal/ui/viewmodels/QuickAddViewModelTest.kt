@@ -352,6 +352,34 @@ class QuickAddViewModelTest {
         assertTrue(event.rrule!!.contains("FREQ=WEEKLY"))
     }
 
+    @Test
+    fun `save and expand keep the named last day of an until series`() = runTest {
+        viewModel.onInputChanged("class every monday at 9am until june 15")
+        advanceUntilIdle()
+
+        // 23:59:59 on Jun 15 in New York, the zone save() writes the start in.
+        val expected = "FREQ=WEEKLY;BYDAY=MO;UNTIL=20260616T035959Z"
+        assertEquals(expected, viewModel.toCalendarIntentData().rrule)
+        val event = viewModel.save().getOrNull()!!
+        advanceUntilIdle()
+        assertEquals(expected, event.rrule)
+    }
+
+    @Test
+    fun `the first day of the week setting reaches the parser`() = runTest {
+        // Monday-first weeks under a Sunday-first locale: "sunday next week" is the Sunday that
+        // ends next week (Apr 26), not the one that starts it (Apr 19).
+        every { dataStore.firstDayOfWeek } returns flowOf(java.util.Calendar.MONDAY)
+        val mondayFirst = QuickAddViewModel(eventCoordinator, dataStore, testDispatcher)
+        mondayFirst.setReferenceTime(reference)
+        advanceUntilIdle()
+
+        mondayFirst.onInputChanged("brunch sunday next week")
+        advanceUntilIdle()
+
+        assertEquals(LocalDate.of(2026, 4, 26), mondayFirst.parseResult.value.startDate)
+    }
+
     // ==================== Multi-day events (#194) ====================
 
     @Test

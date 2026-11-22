@@ -1,9 +1,11 @@
 package org.onekash.kashcal.ui.components
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.performClick
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -58,12 +60,13 @@ class DeviceEventQuickViewSheetTagsTest {
         return DisplayEvent.Device(instance)
     }
 
-    private fun render(categories: List<String>) {
+    private fun render(categories: List<String>, onTagClick: ((String) -> Unit)? = null) {
         composeTestRule.setContent {
             MaterialTheme {
                 DeviceEventQuickViewSheet(
                     displayEvent = deviceEvent(categories),
                     onDismiss = {},
+                    onTagClick = onTagClick,
                 )
             }
         }
@@ -96,5 +99,15 @@ class DeviceEventQuickViewSheetTagsTest {
         // "New tag" content description appears; the untagged add chip carries
         // its label as text (not asserted here).
         composeTestRule.onNodeWithContentDescription("New tag").assertDoesNotExist()
+    }
+
+    @Test
+    fun tapping_a_device_tag_passes_its_name_to_the_host() {
+        val tapped = mutableListOf<String>()
+        render(listOf("Work"), onTagClick = { tapped += it })
+
+        composeTestRule.onNode(hasContentDescription("Tag: Work")).performClick()
+
+        assertEquals(listOf("Work"), tapped)
     }
 }

@@ -6,6 +6,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -82,5 +84,31 @@ class AgendaWeekBarTest {
         }
         composeTestRule.onNodeWithContentDescription("Saturday, July 18, Today").performClick()
         assertEquals(20260718, clicked)
+    }
+
+    private fun firstCircleCentre(horizontalPadding: androidx.compose.ui.unit.Dp?): Float {
+        composeTestRule.setContent {
+            MaterialTheme {
+                if (horizontalPadding == null) {
+                    AgendaWeekBar(weekDates = weekDates, selectedDayCode = null, todayDayCode = 20260718, onDayClick = {},
+                        modifier = androidx.compose.ui.Modifier.fillMaxWidth())
+                } else {
+                    AgendaWeekBar(weekDates = weekDates, selectedDayCode = null, todayDayCode = 20260718, onDayClick = {},
+                        modifier = androidx.compose.ui.Modifier.fillMaxWidth(), horizontalPadding = horizontalPadding)
+                }
+            }
+        }
+        return composeTestRule.onNodeWithContentDescription("Sunday, July 12").fetchSemanticsNode().boundsInRoot.center.x
+    }
+
+    @Test
+    fun the_agenda_strip_keeps_8dp_sides() {
+        // mdpi, 360px wide: seven columns over 360 - 16, the first centred at 8 + 344 / 14.
+        assertEquals(8f + 344f / 14f, firstCircleCentre(horizontalPadding = null), 1f)
+    }
+
+    @Test
+    fun a_strip_without_side_padding_starts_at_its_edge() {
+        assertEquals(360f / 14f, firstCircleCentre(horizontalPadding = 0.dp), 1f)
     }
 }

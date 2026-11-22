@@ -1,6 +1,7 @@
 package org.onekash.kashcal.domain.coordinator
 
 import io.mockk.coEvery
+import io.mockk.coJustRun
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -146,8 +147,8 @@ class EventCoordinatorTest {
         // Default local calendar setup
         coEvery { localCalendarInitializer.ensureLocalCalendarExists() } returns localCalendarId
         coEvery { localCalendarInitializer.getLocalCalendarId() } returns localCalendarId
-        every { localCalendarInitializer.isLocalCalendar(localCalendar) } returns true
-        every { localCalendarInitializer.isLocalCalendar(iCloudCalendar) } returns false
+        coEvery { localCalendarInitializer.isLocalCalendar(localCalendar) } returns true
+        coEvery { localCalendarInitializer.isLocalCalendar(iCloudCalendar) } returns false
 
         // Default calendar lookups
         coEvery { eventReader.getCalendarById(localCalendarId) } returns localCalendar
@@ -199,7 +200,7 @@ class EventCoordinatorTest {
     }
 
     @Test
-    fun `isLocalCalendar correctly identifies local calendar`() {
+    fun `isLocalCalendar correctly identifies local calendar`() = runTest {
         assertTrue(coordinator.isLocalCalendar(localCalendar))
         assertFalse(coordinator.isLocalCalendar(iCloudCalendar))
     }
@@ -211,7 +212,7 @@ class EventCoordinatorTest {
         val newEvent = testEvent.copy(id = 0L)
         val createdEvent = testEvent.copy()
         coEvery { eventWriter.createEvent(any(), any()) } returns createdEvent
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) } returns emptyList()
 
         val result = coordinator.createEvent(newEvent, localCalendarId)
 
@@ -224,7 +225,7 @@ class EventCoordinatorTest {
         val newEvent = testEvent.copy(id = 0L, calendarId = 999L) // Wrong calendar
         val createdEvent = testEvent.copy()
         coEvery { eventWriter.createEvent(any(), any()) } returns createdEvent
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) } returns emptyList()
 
         coordinator.createEvent(newEvent, null) // No calendar specified
 
@@ -235,7 +236,7 @@ class EventCoordinatorTest {
     fun `createEvent in local calendar does not trigger sync`() = runTest {
         val newEvent = testEvent.copy(id = 0L)
         coEvery { eventWriter.createEvent(any(), any()) } returns testEvent
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) } returns emptyList()
 
         coordinator.createEvent(newEvent, localCalendarId)
 
@@ -246,7 +247,7 @@ class EventCoordinatorTest {
     fun `createEvent in iCloud calendar triggers sync`() = runTest {
         val newEvent = testEvent.copy(id = 0L, calendarId = iCloudCalendarId)
         coEvery { eventWriter.createEvent(any(), any()) } returns newEvent.copy(id = 100L)
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) } returns emptyList()
 
         coordinator.createEvent(newEvent, iCloudCalendarId)
 
@@ -257,7 +258,7 @@ class EventCoordinatorTest {
     fun `createEvent schedules reminders when event has reminders`() = runTest {
         val eventWithReminders = testEvent.copy(reminders = listOf("-PT15M", "-PT1H"))
         coEvery { eventWriter.createEvent(any(), any()) } returns eventWithReminders
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns listOf(
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) } returns listOf(
             Occurrence(
                 id = 1L,
                 eventId = eventWithReminders.id,
@@ -307,7 +308,7 @@ class EventCoordinatorTest {
     @Test
     fun `createRecurringEvent delegates to createEvent`() = runTest {
         coEvery { eventWriter.createEvent(any(), any()) } returns recurringEvent
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) } returns emptyList()
 
         val result = coordinator.createRecurringEvent(recurringEvent.copy(id = 0L))
 
@@ -318,7 +319,7 @@ class EventCoordinatorTest {
     fun `createRecurringEvent forwards attendees to the writer`() = runTest {
         val attSlot = slot<List<Attendee>>()
         coEvery { eventWriter.createEvent(any(), any(), capture(attSlot)) } answers { firstArg<Event>() }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) } returns emptyList()
 
         coordinator.createRecurringEvent(
             recurringEvent.copy(id = 0L, calendarId = iCloudCalendarId),
@@ -335,7 +336,7 @@ class EventCoordinatorTest {
     fun `updateEvent updates and triggers sync for iCloud`() = runTest {
         val updatedEvent = testEvent.copy(calendarId = iCloudCalendarId, title = "Updated")
         coEvery { eventWriter.updateEvent(any(), any()) } returns updatedEvent
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) } returns emptyList()
 
         val result = coordinator.updateEvent(updatedEvent)
 
@@ -347,11 +348,11 @@ class EventCoordinatorTest {
     fun `updateEvent reschedules reminders`() = runTest {
         val updatedEvent = testEvent.copy(reminders = listOf("-PT30M"))
         coEvery { eventWriter.updateEvent(any(), any()) } returns updatedEvent
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) } returns emptyList()
 
         coordinator.updateEvent(updatedEvent)
 
-        coVerify { reminderScheduler.cancelRemindersForEvent(updatedEvent.id) }
+        coVerify { reminderScheduler.reconcileRemindersForEvent(updatedEvent) }
         coVerify { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
     }
 
@@ -359,7 +360,7 @@ class EventCoordinatorTest {
     fun `updateEvent succeeds when reminder scheduling throws`() = runTest {
         val updatedEvent = testEvent.copy(title = "Updated", reminders = listOf("-PT15M"))
         coEvery { eventWriter.updateEvent(any(), any()) } returns updatedEvent
-        coEvery { reminderScheduler.cancelRemindersForEvent(any()) } throws RuntimeException("DB locked")
+        coEvery { reminderScheduler.reconcileRemindersForEvent(any()) } throws RuntimeException("DB locked")
 
         val result = coordinator.updateEvent(updatedEvent)
 
@@ -380,7 +381,7 @@ class EventCoordinatorTest {
         )
         coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
         coEvery { eventWriter.editSingleOccurrence(any(), any(), any(), any()) } returns exceptionEvent
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) } returns emptyList()
 
         val result = coordinator.editSingleOccurrence(
             masterEventId = recurringEvent.id,
@@ -579,17 +580,6 @@ class EventCoordinatorTest {
         verify { eventReader.getAllCalendars() }
     }
 
-    @Test
-    fun `searchEvents delegates to reader`() = runTest {
-        val query = "meeting"
-        val results = listOf(testEvent, recurringEvent)
-        coEvery { eventReader.searchEvents(query) } returns results
-
-        val result = coordinator.searchEvents(query)
-
-        assertEquals(2, result.size)
-    }
-
     // ==================== Occurrence Generation Tests ====================
 
     @Test
@@ -603,73 +593,17 @@ class EventCoordinatorTest {
     }
 
     @Test
-    fun `extendOccurrences extends range`() = runTest {
-        val extendTo = 1735689600000L // Jan 1, 2025
-        coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
-        coEvery { occurrenceGenerator.extendOccurrences(recurringEvent, extendTo) } returns 26
+    fun `ensureOccurrenceHorizon renews series ending within a year to the window ahead, forward only`() = runTest {
+        coJustRun { occurrenceGenerator.ensureCovered(any(), any(), any(), any(), any()) }
 
-        val count = coordinator.extendOccurrences(recurringEvent.id, extendTo)
+        coordinator.ensureOccurrenceHorizon(5_000L)
 
-        assertEquals(26, count)
-    }
-
-    @Test
-    fun `extendPastOccurrences extends past range`() = runTest {
-        val extendTo = 1672531200000L // Jan 1, 2023
-        coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
-        coEvery { occurrenceGenerator.extendPastOccurrences(recurringEvent, extendTo) } returns 15
-
-        val count = coordinator.extendPastOccurrences(recurringEvent.id, extendTo)
-
-        assertEquals(15, count)
-        coVerify { occurrenceGenerator.extendPastOccurrences(recurringEvent, extendTo) }
-    }
-
-    @Test
-    fun `extendPastOccurrencesIfNeeded finds and extends events`() = runTest {
-        val targetMs = 1672531200000L // Jan 1, 2023
-        val bufferMs = 6 * 30L * 24 * 60 * 60 * 1000
-        val extendToMs = targetMs - bufferMs
-
-        coEvery { eventReader.getRecurringEventsNeedingPastExtension(extendToMs) } returns listOf(recurringEvent.id)
-        coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
-        coEvery { occurrenceGenerator.extendPastOccurrences(recurringEvent, extendToMs) } returns 20
-
-        val count = coordinator.extendPastOccurrencesIfNeeded(targetMs)
-
-        assertEquals(20, count)
-        coVerify { eventReader.getRecurringEventsNeedingPastExtension(extendToMs) }
-        coVerify { occurrenceGenerator.extendPastOccurrences(recurringEvent, extendToMs) }
-    }
-
-    @Test
-    fun `extendPastOccurrencesIfNeeded returns 0 when no events need extension`() = runTest {
-        val targetMs = 1672531200000L
-        val bufferMs = 6 * 30L * 24 * 60 * 60 * 1000
-        val extendToMs = targetMs - bufferMs
-
-        coEvery { eventReader.getRecurringEventsNeedingPastExtension(extendToMs) } returns emptyList()
-
-        val count = coordinator.extendPastOccurrencesIfNeeded(targetMs)
-
-        assertEquals(0, count)
-    }
-
-    @Test
-    fun `extendOccurrencesIfNeeded finds and extends events`() = runTest {
-        val targetMs = 1767225600000L // Jan 1, 2026
-        val bufferMs = 6 * 30L * 24 * 60 * 60 * 1000
-        val extendToMs = targetMs + bufferMs
-
-        coEvery { eventReader.getRecurringEventsNeedingExtension(extendToMs) } returns listOf(recurringEvent.id)
-        coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
-        coEvery { occurrenceGenerator.extendOccurrences(recurringEvent, extendToMs) } returns 30
-
-        val count = coordinator.extendOccurrencesIfNeeded(targetMs)
-
-        assertEquals(30, count)
-        coVerify { eventReader.getRecurringEventsNeedingExtension(extendToMs) }
-        coVerify { occurrenceGenerator.extendOccurrences(recurringEvent, extendToMs) }
+        coVerify(exactly = 1) {
+            occurrenceGenerator.ensureCovered(
+                5_000L, 5_000L + 365L * 24 * 60 * 60 * 1000, false,
+                5_000L + OccurrenceGenerator.EXPANSION_WINDOW_MS, any(),
+            )
+        }
     }
 
     @Test
@@ -1083,7 +1017,7 @@ class EventCoordinatorTest {
         )
         coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
         coEvery { eventWriter.splitSeries(any(), any(), any(), any(), any()) } returns newSeries
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(newSeries.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS) } returns listOf(testOccurrence)
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(newSeries.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS, ReminderScheduler.STARTED_LOOKBACK_MS) } returns listOf(testOccurrence)
 
         coordinator.editThisAndFuture(
             masterEventId = recurringEvent.id,
@@ -1113,7 +1047,7 @@ class EventCoordinatorTest {
         )
         coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
         coEvery { eventWriter.splitSeries(any(), any(), any(), any(), any()) } returns newSeries
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(newSeries.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS) } returns listOf(testOccurrence)
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(newSeries.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS, ReminderScheduler.STARTED_LOOKBACK_MS) } returns listOf(testOccurrence)
 
         coordinator.editThisAndFuture(
             masterEventId = recurringEvent.id,
@@ -1214,8 +1148,8 @@ class EventCoordinatorTest {
             callCount++
             if (callCount == 1) createdEvent1 else createdEvent2
         }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent1.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS) } returns listOf(testOccurrence1)
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent2.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS) } returns listOf(testOccurrence2)
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent1.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS, ReminderScheduler.STARTED_LOOKBACK_MS) } returns listOf(testOccurrence1)
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent2.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS, ReminderScheduler.STARTED_LOOKBACK_MS) } returns listOf(testOccurrence2)
 
         val count = coordinator.importIcsFile(plainImportFile(eventsToImport), localCalendarId).created
 
@@ -1246,7 +1180,7 @@ class EventCoordinatorTest {
         )
 
         coEvery { eventWriter.createEvent(any(), any(), any()) } returns createdEvent
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS) } returns listOf(testOccurrence)
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS, ReminderScheduler.STARTED_LOOKBACK_MS) } returns listOf(testOccurrence)
 
         val count = coordinator.importIcsFile(plainImportFile(listOf(timedEventNoReminders)), localCalendarId).created
 
@@ -1283,7 +1217,7 @@ class EventCoordinatorTest {
         )
 
         coEvery { eventWriter.createEvent(any(), any(), any()) } returns createdEvent
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS) } returns listOf(testOccurrence)
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS, ReminderScheduler.STARTED_LOOKBACK_MS) } returns listOf(testOccurrence)
 
         coordinator.importIcsFile(plainImportFile(listOf(allDayEventNoReminders)), localCalendarId).created
 
@@ -1316,7 +1250,7 @@ class EventCoordinatorTest {
         )
 
         coEvery { eventWriter.createEvent(any(), any(), any()) } returns createdEvent
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS) } returns listOf(testOccurrence)
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS, ReminderScheduler.STARTED_LOOKBACK_MS) } returns listOf(testOccurrence)
 
         coordinator.importIcsFile(plainImportFile(listOf(eventWithIcsReminders)), localCalendarId).created
 
@@ -1385,7 +1319,7 @@ class EventCoordinatorTest {
             val exs = exceptionsSlot.captured.mapIndexed { i, e -> e.copy(id = 600L + i, originalEventId = 500L) }
             EventWriter.ImportedSeries(m, exs)
         }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) } returns emptyList()
         coEvery { eventReader.getOccurrenceByExceptionEventId(any()) } returns null
 
         val count = coordinator.importIcsFile(plainImportFile(listOf(master, exception1, exception2)), localCalendarId).created
@@ -1413,7 +1347,7 @@ class EventCoordinatorTest {
             rrule = null, originalInstanceTime = 1704067200000L + 7 * 86400000L, reminders = null
         )
         coEvery { eventWriter.createEvent(any(), any(), any()) } returns orphan.copy(id = 700L, uid = "new@kashcal.onekash.org")
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) } returns emptyList()
 
         val count = coordinator.importIcsFile(plainImportFile(listOf(orphan)), localCalendarId).created
 
@@ -1436,7 +1370,7 @@ class EventCoordinatorTest {
             uidsSeen += e.uid
             e.copy(id = (800L + uidsSeen.size))
         }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) } returns emptyList()
 
         val count = coordinator.importIcsFile(plainImportFile(listOf(masterA, masterB)), localCalendarId).created
 
@@ -1456,7 +1390,7 @@ class EventCoordinatorTest {
         val orphanEx = testEvent.copy(id = 0L, uid = uid, title = "Orphan", rrule = null, originalInstanceTime = 1704067200000L + 86400000L, reminders = null)
 
         coEvery { eventWriter.createEvent(any(), any(), any()) } answers { firstArg<Event>().copy(id = 900L) }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) } returns emptyList()
 
         val count = coordinator.importIcsFile(plainImportFile(listOf(plain, orphanEx)), localCalendarId).created
 
@@ -1481,7 +1415,7 @@ class EventCoordinatorTest {
         } answers {
             EventWriter.ImportedSeries(seriesSlot.captured.copy(id = 500L), exceptionsSlot.captured.mapIndexed { i, e -> e.copy(id = 600L + i, originalEventId = 500L) })
         }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) } returns emptyList()
         coEvery { eventReader.getOccurrenceByExceptionEventId(any()) } returns null
 
         coordinator.importIcsFile(plainImportFile(listOf(master, exception)), localCalendarId).created
@@ -1502,7 +1436,7 @@ class EventCoordinatorTest {
         } answers {
             EventWriter.ImportedSeries(firstArg<Event>().copy(id = 500L), exceptionsSlot.captured.mapIndexed { i, e -> e.copy(id = 600L + i, originalEventId = 500L) })
         }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) } returns emptyList()
         coEvery { eventReader.getOccurrenceByExceptionEventId(any()) } returns null
 
         coordinator.importIcsFile(plainImportFile(listOf(master, exception)), localCalendarId).created
@@ -1562,15 +1496,15 @@ class EventCoordinatorTest {
         // The coordinator reads the event after the move, so this is the moved event.
         coEvery { eventReader.getEventById(eventWithReminders.id) } returns movedEvent
         coEvery { eventReader.getCalendarById(targetCalendar.id) } returns targetCalendar
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) } returns emptyList()
         coEvery { eventWriter.moveEventToCalendar(eventWithReminders.id, targetCalendar.id) } returns Unit
 
         coordinator.moveEventToCalendar(eventWithReminders.id, targetCalendar.id)
 
         coVerify { eventWriter.moveEventToCalendar(eventWithReminders.id, targetCalendar.id) }
 
-        // Reminders are rescheduled: cancel, then schedule.
-        coVerify { reminderScheduler.cancelRemindersForEvent(eventWithReminders.id) }
+        // Reminders are rescheduled: reconcile, then schedule.
+        coVerify { reminderScheduler.reconcileRemindersForEvent(movedEvent) }
         coVerify { reminderScheduler.scheduleRemindersForEvent(movedEvent, any(), any()) }
     }
 
@@ -1581,7 +1515,7 @@ class EventCoordinatorTest {
 
         coEvery { eventWriter.moveEventToCalendar(eventToMove.id, iCloudCalendarId) } returns Unit
         coEvery { eventReader.getEventById(eventToMove.id) } returns movedEvent
-        coEvery { reminderScheduler.cancelRemindersForEvent(any()) } throws RuntimeException("DB locked")
+        coEvery { reminderScheduler.reconcileRemindersForEvent(any()) } throws RuntimeException("DB locked")
 
         // A reminder failure must not fail the move.
         coordinator.moveEventToCalendar(eventToMove.id, iCloudCalendarId)
@@ -1609,22 +1543,28 @@ class EventCoordinatorTest {
                 200L to listOf(exception1a, exception1b),
                 201L to listOf(exception2a)
             )
+        val guests = mapOf(300L to listOf(Attendee(eventId = 300L, address = "mailto:guest@example.test")))
+        coEvery { eventReader.getAttendeesForEventsOnce(listOf(200L, 201L, 202L, 300L, 301L, 302L)) } returns guests
 
         val result = coordinator.getCalendarEventsForExport(iCloudCalendarId)
 
         assertEquals(3, result.size)
 
         // master1 has 2 exceptions
-        assertEquals(master1, result[0].first)
-        assertEquals(listOf(exception1a, exception1b), result[0].second)
+        assertEquals(master1, result[0].event)
+        assertEquals(listOf(exception1a, exception1b), result[0].exceptions)
 
         // master2 has 1 exception
-        assertEquals(master2, result[1].first)
-        assertEquals(listOf(exception2a), result[1].second)
+        assertEquals(master2, result[1].event)
+        assertEquals(listOf(exception2a), result[1].exceptions)
 
         // standalone has no exceptions
-        assertEquals(standalone, result[2].first)
-        assertEquals(emptyList<Event>(), result[2].second)
+        assertEquals(standalone, result[2].event)
+        assertEquals(emptyList<Event>(), result[2].exceptions)
+
+        // Every row's attendees come from one batch read of masters and exceptions.
+        result.forEach { assertEquals(guests, it.attendeesByEventId) }
+        coVerify(exactly = 1) { eventReader.getAttendeesForEventsOnce(any()) }
 
         // One batch query for the recurring masters' ids, no per-master query.
         coVerify(exactly = 1) { eventReader.getExceptionsForMasters(listOf(200L, 201L)) }
@@ -1638,12 +1578,13 @@ class EventCoordinatorTest {
 
         coEvery { eventReader.getAllMasterEventsForCalendar(localCalendarId) } returns
             listOf(standalone1, standalone2)
+        coEvery { eventReader.getAttendeesForEventsOnce(listOf(200L, 201L)) } returns emptyMap()
 
         val result = coordinator.getCalendarEventsForExport(localCalendarId)
 
         assertEquals(2, result.size)
-        assertEquals(emptyList<Event>(), result[0].second)
-        assertEquals(emptyList<Event>(), result[1].second)
+        assertEquals(emptyList<Event>(), result[0].exceptions)
+        assertEquals(emptyList<Event>(), result[1].exceptions)
 
         // No recurring events, so no exception query.
         coVerify(exactly = 0) { eventReader.getExceptionsForMasters(any()) }
@@ -1772,7 +1713,7 @@ class EventCoordinatorTest {
     }
 
     @Test
-    fun `replyRsvp ACCEPTED reschedules alarms via cancel + schedule`() = runTest {
+    fun `replyRsvp ACCEPTED reschedules alarms via reconcile + schedule`() = runTest {
         coEvery { eventReader.getEventById(rsvpEvent.id) } returns rsvpEvent
         coEvery { eventReader.getCalendarById(rsvpCalendar.id) } returns rsvpCalendar
         coEvery { accountRepository.getAccountById(rsvpAccount.id) } returns rsvpAccount
@@ -1780,16 +1721,16 @@ class EventCoordinatorTest {
 
         coordinator.replyRsvp(rsvpEvent.id, "ACCEPTED")
 
-        // rescheduleRemindersForEvent cancels, then schedules.
-        coVerify { reminderScheduler.cancelRemindersForEvent(rsvpEvent.id) }
+        // rescheduleRemindersForEvent reconciles, then schedules.
+        coVerify { reminderScheduler.reconcileRemindersForEvent(match { it.id == rsvpEvent.id }) }
         // rsvpEvent has no reminders, so scheduling returns before reaching the scheduler;
-        // the cancel alone shows the reschedule path ran.
+        // the reconcile alone shows the reschedule path ran.
     }
 
     @Test
     fun `replyRsvp ACCEPTED with configured reminder arms scheduleRemindersForEvent`() = runTest {
         // With reminders configured, an accept reaches the alarm scheduler, not only the
-        // cancel side of rescheduleRemindersForEvent.
+        // reconcile side of rescheduleRemindersForEvent.
         val eventWithReminder = rsvpEvent.copy(reminders = listOf("-PT15M"))
         val occurrence = Occurrence(
             id = 1L,
@@ -1804,13 +1745,13 @@ class EventCoordinatorTest {
         coEvery { eventReader.getCalendarById(rsvpCalendar.id) } returns rsvpCalendar
         coEvery { accountRepository.getAccountById(rsvpAccount.id) } returns rsvpAccount
         coEvery {
-            eventReader.getOccurrencesForEventInScheduleWindow(eventWithReminder.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS)
+            eventReader.getOccurrencesForEventInScheduleWindow(eventWithReminder.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS, ReminderScheduler.STARTED_LOOKBACK_MS)
         } returns listOf(occurrence)
         coEvery { eventWriter.replyRsvp(eventWithReminder.id, rsvpAccount, "ACCEPTED") } returns true
 
         coordinator.replyRsvp(eventWithReminder.id, "ACCEPTED")
 
-        coVerify { reminderScheduler.cancelRemindersForEvent(eventWithReminder.id) }
+        coVerify { reminderScheduler.reconcileRemindersForEvent(match { it.id == eventWithReminder.id }) }
         coVerify(exactly = 1) {
             reminderScheduler.scheduleRemindersForEvent(
                 event = eventWithReminder,
@@ -1829,7 +1770,7 @@ class EventCoordinatorTest {
 
         coordinator.replyRsvp(rsvpEvent.id, "TENTATIVE")
 
-        coVerify { reminderScheduler.cancelRemindersForEvent(rsvpEvent.id) }
+        coVerify { reminderScheduler.reconcileRemindersForEvent(match { it.id == rsvpEvent.id }) }
     }
 
     @Test
@@ -1842,6 +1783,7 @@ class EventCoordinatorTest {
         coordinator.replyRsvp(rsvpEvent.id, "DECLINED")
 
         coVerify(exactly = 0) { reminderScheduler.cancelRemindersForEvent(any()) }
+        coVerify(exactly = 0) { reminderScheduler.reconcileRemindersForEvent(any()) }
         coVerify(exactly = 0) { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
     }
 
@@ -1870,7 +1812,7 @@ class EventCoordinatorTest {
         val eventSlot = slot<Event>()
         val attSlot = slot<List<Attendee>>()
         coEvery { eventWriter.createEvent(capture(eventSlot), any(), capture(attSlot)) } answers { firstArg<Event>() }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) } returns emptyList()
         coEvery { accountRepository.getAccountById(2L) } returns Account(
             id = 2L, provider = AccountProvider.ICLOUD, email = "alice@icloud.com",
             calendarUserAddresses = listOf("mailto:alice@icloud.com", "/123/principal/")
@@ -1893,7 +1835,7 @@ class EventCoordinatorTest {
     fun `createEvent with no attendees does not force an organizer`() = runTest {
         val eventSlot = slot<Event>()
         coEvery { eventWriter.createEvent(capture(eventSlot), any(), any()) } answers { firstArg<Event>() }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) } returns emptyList()
 
         coordinator.createEvent(testEvent.copy(id = 0L, calendarId = iCloudCalendarId, organizerEmail = null), iCloudCalendarId)
 
@@ -1904,7 +1846,7 @@ class EventCoordinatorTest {
     fun `organizer degrades to null when account has no usable address`() = runTest {
         val eventSlot = slot<Event>()
         coEvery { eventWriter.createEvent(capture(eventSlot), any(), any()) } answers { firstArg<Event>() }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) } returns emptyList()
         coEvery { accountRepository.getAccountById(2L) } returns Account(
             // The login isn't email-shaped.
             id = 2L, provider = AccountProvider.CALDAV, email = "nextcloud-login",
@@ -1929,7 +1871,7 @@ class EventCoordinatorTest {
         // no invite is delivered.
         val eventSlot = slot<Event>()
         coEvery { eventWriter.createEvent(capture(eventSlot), any(), any()) } answers { firstArg<Event>() }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) } returns emptyList()
         coEvery { accountRepository.getAccountById(2L) } returns Account(
             id = 2L, provider = AccountProvider.CALDAV, email = "organizer@example.com",
             calendarUserAddresses = listOf(
@@ -1954,7 +1896,7 @@ class EventCoordinatorTest {
         // would mangle a non-mailto ORGANIZER, so none is set.
         val eventSlot = slot<Event>()
         coEvery { eventWriter.createEvent(capture(eventSlot), any(), any()) } answers { firstArg<Event>() }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any(), any()) } returns emptyList()
         coEvery { accountRepository.getAccountById(2L) } returns Account(
             id = 2L, provider = AccountProvider.CALDAV, email = "alice",
             calendarUserAddresses = listOf("/123/principal/", "urn:uuid:abc")

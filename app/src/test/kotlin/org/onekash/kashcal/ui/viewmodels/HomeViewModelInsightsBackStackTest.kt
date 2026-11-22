@@ -93,7 +93,7 @@ class HomeViewModelInsightsBackStackTest {
         every { dataStore.defaultCalendarView } returns flowOf(KashCalDataStore.VIEW_MONTH)
         coEvery { dataStore.getDefaultCalendarView() } returns KashCalDataStore.VIEW_MONTH
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
-        every { dataStore.onboardingDismissed } returns flowOf(true)
+        every { dataStore.onboardingCompleted } returns flowOf(true)
     }
 
     @After
@@ -115,6 +115,7 @@ class HomeViewModelInsightsBackStackTest {
         contactEmailReader = mockk(relaxed = true),
         context = mockk(relaxed = true),
         ioDispatcher = testDispatcher,
+        applicationScope = kotlinx.coroutines.CoroutineScope(testDispatcher),
         currentDayCodeProvider = { DayPagerUtils.msToDayCode(System.currentTimeMillis()) }
     )
 

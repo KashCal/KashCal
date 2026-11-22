@@ -2303,6 +2303,67 @@ class CalDavAccountDiscoveryServiceTest {
         coVerify { accountRepository.deleteAccount(1L) }
     }
 
+    @Test
+    fun `discoverAndCreateAccount leaves an existing account untouched when credentials fail to save`() = runTest {
+        setupSuccessfulDiscovery()
+        val existingAccount = Account(
+            id = 7L,
+            provider = AccountProvider.CALDAV,
+            email = "user",
+            homeSetUrl = "https://nextcloud.example.com/dav/calendars/user/",
+            isEnabled = false
+        )
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns existingAccount
+        coEvery { accountRepository.saveCredentials(any(), any()) } returns false
+
+        val result = discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://nextcloud.example.com",
+            username = "user",
+            password = "pass"
+        )
+
+        assertTrue("Expected Error, got $result", result is DiscoveryResult.Error)
+        coVerify(exactly = 0) { accountRepository.deleteAccount(any()) }
+        coVerify(exactly = 0) { accountRepository.updateAccount(any()) }
+        coVerify(exactly = 0) { accountRepository.createAccount(any()) }
+        coVerify(exactly = 0) { calendarRepository.createCalendar(any()) }
+    }
+
+    @Test
+    fun `createAccountWithSelectedCalendars leaves an existing account untouched when credentials fail to save`() = runTest {
+        val existingAccount = Account(
+            id = 7L,
+            provider = AccountProvider.CALDAV,
+            email = "user",
+            homeSetUrl = "https://nextcloud.example.com/dav/calendars/user/",
+            isEnabled = false
+        )
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns existingAccount
+        coEvery { accountRepository.saveCredentials(any(), any()) } returns false
+
+        val result = discoveryService.createAccountWithSelectedCalendars(
+            serverUrl = "https://nextcloud.example.com",
+            username = "user",
+            password = "pass",
+            trustInsecure = false,
+            principalUrl = "https://nextcloud.example.com/dav/principals/user/",
+            calendarHomeUrl = "https://nextcloud.example.com/dav/calendars/user/",
+            selectedCalendars = listOf(
+                org.onekash.kashcal.sync.discovery.DiscoveredCalendar(
+                    href = "/dav/calendars/user/personal/",
+                    displayName = "Personal",
+                    color = 0xFF0000
+                )
+            )
+        )
+
+        assertTrue("Expected Error, got $result", result is DiscoveryResult.Error)
+        coVerify(exactly = 0) { accountRepository.deleteAccount(any()) }
+        coVerify(exactly = 0) { accountRepository.updateAccount(any()) }
+        coVerify(exactly = 0) { accountRepository.createAccount(any()) }
+        coVerify(exactly = 0) { calendarRepository.createCalendar(any()) }
+    }
+
     // ==================== SSL Error Message Tests (Issue #56) ====================
 
     @Test
@@ -2431,5 +2492,173 @@ class CalDavAccountDiscoveryServiceTest {
         )
 
         coVerify { mockClient.discoverPrincipal("https://example.com") }
+    }
+
+    // ==================== Sign in again to an existing account (#371) ====================
+
+    private val signInAgainHome = "https://nextcloud.example.com/dav/calendars/user/"
+
+    private fun signInAgainAccount(
+        id: Long = 7L,
+        provider: AccountProvider = AccountProvider.CALDAV,
+        email: String = "user",
+        homeSetUrl: String? = signInAgainHome,
+        isEnabled: Boolean = false,
+    ) = Account(id = id, provider = provider, email = email, homeSetUrl = homeSetUrl, isEnabled = isEnabled)
+
+    private suspend fun signInAgain(expectedAccountId: Long?, username: String = "user") =
+        discoveryService.createAccountWithSelectedCalendars(
+            serverUrl = "https://nextcloud.example.com",
+            username = username,
+            password = "new-pass",
+            trustInsecure = false,
+            principalUrl = "https://nextcloud.example.com/dav/principals/user/",
+            calendarHomeUrl = signInAgainHome,
+            selectedCalendars = listOf(
+                org.onekash.kashcal.sync.discovery.DiscoveredCalendar(
+                    href = "${signInAgainHome}personal/",
+                    displayName = "Personal",
+                    color = 0xFF0000
+                )
+            ),
+            expectedAccountId = expectedAccountId
+        )
+
+    private fun stubNoCalendars() {
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+    }
+
+    private fun assertMismatchWithoutWrites(result: DiscoveryResult) {
+        assertTrue("Expected Error, got $result", result is DiscoveryResult.Error)
+        assertEquals(DiscoveryErrorReason.ACCOUNT_MISMATCH, (result as DiscoveryResult.Error).reason)
+        coVerify(exactly = 0) { accountRepository.createAccount(any()) }
+        coVerify(exactly = 0) { accountRepository.updateAccount(any()) }
+        coVerify(exactly = 0) { accountRepository.saveCredentials(any(), any()) }
+        coVerify(exactly = 0) { accountRepository.deleteAccount(any()) }
+        coVerify(exactly = 0) { accountRepository.updateCalendarUserAddresses(any(), any()) }
+        coVerify(exactly = 0) { calendarRepository.createCalendar(any()) }
+        coVerify(exactly = 0) { calendarRepository.updateCalendar(any()) }
+    }
+
+    @Test
+    fun `sign in again to the expected account saves credentials and keeps it disabled`() = runTest {
+        val expected = signInAgainAccount(isEnabled = false)
+        coEvery { accountRepository.getAccountById(7L) } returns expected
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns expected
+        stubNoCalendars()
+
+        val result = signInAgain(expectedAccountId = 7L)
+
+        assertTrue("Expected Success, got $result", result is DiscoveryResult.Success)
+        assertEquals(7L, (result as DiscoveryResult.Success).account.id)
+        coVerify { accountRepository.saveCredentials(7L, match { it.username == "user" && it.password == "new-pass" }) }
+        coVerify {
+            accountRepository.updateAccount(match {
+                it.id == 7L && !it.isEnabled && it.homeSetUrl == signInAgainHome &&
+                    it.principalUrl == "https://nextcloud.example.com/dav/principals/user/"
+            })
+        }
+        coVerify(exactly = 0) { accountRepository.createAccount(any()) }
+    }
+
+    @Test
+    fun `sign in again matches an account whose stored home set is not normalized`() = runTest {
+        val expected = signInAgainAccount(homeSetUrl = "HTTPS://NextCloud.example.com:443/dav/calendars/user")
+        coEvery { accountRepository.getAccountById(7L) } returns expected
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns null
+        stubNoCalendars()
+
+        val result = signInAgain(expectedAccountId = 7L)
+
+        assertTrue("Expected Success, got $result", result is DiscoveryResult.Success)
+        coVerify { accountRepository.updateAccount(match { it.id == 7L && it.homeSetUrl == signInAgainHome }) }
+    }
+
+    @Test
+    fun `sign in again matches an account with no stored home set and stores the discovered one`() = runTest {
+        val expected = signInAgainAccount(homeSetUrl = null)
+        coEvery { accountRepository.getAccountById(7L) } returns expected
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns null
+        stubNoCalendars()
+
+        val result = signInAgain(expectedAccountId = 7L)
+
+        assertTrue("Expected Success, got $result", result is DiscoveryResult.Success)
+        coVerify { accountRepository.updateAccount(match { it.id == 7L && it.homeSetUrl == signInAgainHome }) }
+    }
+
+    @Test
+    fun `sign in again keeps the stored home set when another account already holds the discovered one`() = runTest {
+        val legacyHome = "https://nextcloud.example.com/dav/calendars/user"
+        val expected = signInAgainAccount(homeSetUrl = legacyHome)
+        coEvery { accountRepository.getAccountById(7L) } returns expected
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns
+            signInAgainAccount(id = 8L)
+        stubNoCalendars()
+
+        val result = signInAgain(expectedAccountId = 7L)
+
+        assertTrue("Expected Success, got $result", result is DiscoveryResult.Success)
+        coVerify { accountRepository.updateAccount(match { it.id == 7L && it.homeSetUrl == legacyHome }) }
+    }
+
+    @Test
+    fun `sign in again with no stored home set is a mismatch when another account holds the discovered one`() = runTest {
+        // Keeping the missing home set would leave an account sync can't build quirks for.
+        coEvery { accountRepository.getAccountById(7L) } returns signInAgainAccount(homeSetUrl = null)
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns
+            signInAgainAccount(id = 8L)
+
+        assertMismatchWithoutWrites(signInAgain(expectedAccountId = 7L))
+    }
+
+    @Test
+    fun `sign in again for a missing account is a mismatch and writes nothing`() = runTest {
+        coEvery { accountRepository.getAccountById(7L) } returns null
+
+        assertMismatchWithoutWrites(signInAgain(expectedAccountId = 7L))
+    }
+
+    @Test
+    fun `sign in again with a different username is a mismatch and writes nothing`() = runTest {
+        coEvery { accountRepository.getAccountById(7L) } returns signInAgainAccount()
+
+        assertMismatchWithoutWrites(signInAgain(expectedAccountId = 7L, username = "someone-else"))
+    }
+
+    @Test
+    fun `sign in again on a different server is a mismatch and writes nothing`() = runTest {
+        coEvery { accountRepository.getAccountById(7L) } returns
+            signInAgainAccount(homeSetUrl = "https://other.example.com/dav/calendars/user/")
+
+        assertMismatchWithoutWrites(signInAgain(expectedAccountId = 7L))
+    }
+
+    @Test
+    fun `sign in again for an account of another provider is a mismatch and writes nothing`() = runTest {
+        coEvery { accountRepository.getAccountById(7L) } returns signInAgainAccount(provider = AccountProvider.ICLOUD)
+
+        assertMismatchWithoutWrites(signInAgain(expectedAccountId = 7L))
+    }
+
+    @Test
+    fun `sign in again with an unparsable stored home set is a mismatch and writes nothing`() = runTest {
+        coEvery { accountRepository.getAccountById(7L) } returns signInAgainAccount(homeSetUrl = "https://bad host/ calendars")
+
+        assertMismatchWithoutWrites(signInAgain(expectedAccountId = 7L))
+    }
+
+    @Test
+    fun `a failed save during sign in again leaves the expected account untouched`() = runTest {
+        coEvery { accountRepository.getAccountById(7L) } returns signInAgainAccount()
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns signInAgainAccount()
+        coEvery { accountRepository.saveCredentials(any(), any()) } returns false
+
+        val result = signInAgain(expectedAccountId = 7L)
+
+        assertTrue("Expected Error, got $result", result is DiscoveryResult.Error)
+        coVerify(exactly = 0) { accountRepository.updateAccount(any()) }
+        coVerify(exactly = 0) { accountRepository.deleteAccount(any()) }
     }
 }

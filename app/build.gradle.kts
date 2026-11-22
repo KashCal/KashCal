@@ -58,7 +58,6 @@ android {
         // Room schema export for migrations
         ksp {
             arg("room.schemaLocation", "$projectDir/schemas")
-            arg("room.incremental", "true")
             arg("room.generateKotlin", "true")
         }
     }
@@ -218,9 +217,39 @@ android {
                     // Month-widget translation fuzz: -Pmonthwidget.fuzz.seed / .iterations.
                     "monthwidget.fuzz.seed",
                     "monthwidget.fuzz.iterations",
+                    // Quick Add random-phrase test: -Pquickadd.fuzz.seed / .iterations.
+                    "quickadd.fuzz.seed",
+                    "quickadd.fuzz.iterations",
+                    // Print sample documents for a browser's print preview: -Pprint.dumpDir=<dir>.
+                    "print.dumpDir",
+                    // Migration reference fixtures: -Pkashcal.migrationDumps.record=true rewrites
+                    // them; -Pkashcal.migrationSeeds.dir=<dir> writes each schema version's seed
+                    // SQL for the emulator upgrade check; -Pkashcal.dump.dir=<dir> dumps every
+                    // database pulled from the emulator into that directory.
+                    "kashcal.migrationDumps.record",
+                    "kashcal.migrationSeeds.dir",
+                    "kashcal.dump.dir",
                 ).forEach { key ->
                     if (project.hasProperty(key)) {
                         it.systemProperty(key, project.property(key).toString())
+                    }
+                }
+                // The migration tooling switches write files (reference dumps, seed SQL, dumps of
+                // pulled databases), so a run with one set is never up to date or taken from the
+                // build cache; otherwise a repeated run would skip writing them.
+                val toolingKeys =
+                    listOf("kashcal.migrationDumps.record", "kashcal.migrationSeeds.dir", "kashcal.dump.dir")
+                if (toolingKeys.any { key -> project.hasProperty(key) }) {
+                    it.outputs.upToDateWhen { false }
+                    it.outputs.cacheIf { false }
+                }
+                // Property tests (PropertyRuns): -Pkashcal.propertySeed=<seed>|random replays a
+                // printed seed or draws a new one, -Pkashcal.propertyIterations=<n> multiplies the
+                // iterations. Never up to date while set, so a repeated random run draws again.
+                listOf("kashcal.propertySeed", "kashcal.propertyIterations").forEach { key ->
+                    if (project.hasProperty(key)) {
+                        it.systemProperty(key, project.property(key).toString())
+                        it.outputs.upToDateWhen { false }
                     }
                 }
             }
@@ -254,9 +283,17 @@ dependencies {
     // Material (XML themes for edge-to-edge)
     implementation(libs.google.material)
 
-    // Room (room-ktx merged into room-runtime in 2.7.0)
-    implementation(libs.androidx.room.runtime)
-    ksp(libs.androidx.room.compiler)
+    // Room 3
+    implementation(libs.androidx.room3.runtime)
+    // AndroidSQLiteDriver: Room opens the database on the phone's own SQLite through it.
+    implementation(libs.androidx.sqlite.framework)
+    ksp(libs.androidx.room3.compiler)
+    // WorkManager keeps its own database on Room 2 (work-runtime declares an older
+    // room-runtime). Room 3 lives in another package, so both can sit in the app; this raises
+    // WorkManager's copy to at least the Room 2 release the app has shipped with.
+    constraints {
+        implementation(libs.androidx.room2.runtime)
+    }
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)
@@ -273,7 +310,7 @@ dependencies {
     // JSON
     implementation(libs.kotlinx.serialization.json)
 
-    // iCal Parsing (RFC 5545): in-tree subproject that wraps ical4j 4.3.0
+    // iCal Parsing (RFC 5545): in-tree subproject that wraps ical4j
     implementation(project(":icaldav-core"))
 
     // vCard Parsing (RFC 2426 / RFC 6350): in-tree pure-JVM subproject that
@@ -316,7 +353,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.arch.core.testing)
     testImplementation(libs.robolectric)
-    testImplementation(libs.androidx.room.testing)
+    testImplementation(libs.androidx.room3.testing)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.androidx.work.testing)
     testImplementation(libs.okhttp.mockwebserver)
@@ -339,6 +376,20 @@ dependencies {
     // to the AGP variant API on this bleeding-edge toolchain.
     testImplementation(libs.roborazzi)
     testImplementation(libs.roborazzi.compose)
+
+    // Property tests (checkAll, generators, shrinking), run from JUnit 4 tests through
+    // PropertyRuns. The excluded modules aren't needed by checkAll: a bytecode agent with native
+    // access (kotlinx-coroutines-debug pulls byte-buddy and jna), classpath scanning
+    // (classgraph), an XML serialization stack (xmlutil), regex-driven generators (rgxgen, for
+    // Arb.stringPattern) and assertion diffs (java-diff-utils, for Kotest's matchers).
+    testImplementation(libs.kotest.property) {
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-debug")
+        exclude(group = "io.github.pdvrieze.xmlutil")
+        exclude(group = "io.github.classgraph")
+        exclude(group = "com.github.curious-odd-man")
+        exclude(group = "community.flock.kotlinx.rgxgen")
+        exclude(group = "io.github.java-diff-utils")
+    }
 
     // Testing - Instrumented
     androidTestImplementation(libs.androidx.junit)

@@ -1,7 +1,6 @@
 package org.onekash.kashcal.sync.provider.icloud
 
 import android.util.Log
-import androidx.room.withTransaction
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.model.AccountProvider
@@ -45,7 +44,7 @@ class ICloudUrlMigration @Inject constructor(
         var operationCount = 0
 
         // Verification runs after commit; re-runs skip already-migrated URLs.
-        database.withTransaction {
+        database.runInTransaction {
             accountCount = migrateAccounts()
             calendarCount = migrateCalendars()
             eventCount = migrateEvents()

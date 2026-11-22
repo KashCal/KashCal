@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.integration.multiserver
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.every
 import io.mockk.mockk
@@ -33,6 +33,7 @@ import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.sync.strategy.PushResult
 import org.onekash.kashcal.sync.strategy.PushStrategy
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.net.URI
@@ -156,7 +157,7 @@ class MultiServerOverrideOrderTest(private val config: CalDavServerConfig) {
         val pulled = settled { pullStrategy(db).pull(calendar, forceFullSync = true, client = c); db.eventsDao().getByUid(uid) }
         val master = pulled.firstOrNull { it.originalEventId == null }
             ?: return "pull: no series row (server order $servedOrder, rows ${pulled.size})"
-        val storedOrder = master.rawIcal?.let { order(it) } ?: "none"
+        val storedOrder = EventIcsStore(db).read(master)?.let { order(it) } ?: "none"
         val exceptions = pulled.count { it.originalEventId != null }
 
         // Rename the whole series, as a user editing "All events" does, and push it.
@@ -252,7 +253,7 @@ class MultiServerOverrideOrderTest(private val config: CalDavServerConfig) {
 
     private fun newDatabase(): KashCalDatabase {
         val context: Context = ApplicationProvider.getApplicationContext()
-        return Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java).allowMainThreadQueries().build()
+        return TestDatabases.inMemory(context).allowMainThreadQueries().build()
             .also { databases += it }
     }
 
@@ -293,6 +294,7 @@ class MultiServerOverrideOrderTest(private val config: CalDavServerConfig) {
         accountRepository = accountRepository(db),
         attendeesDao = db.attendeesDao(),
         pendingCancelsDao = db.pendingCancelsDao(),
+        icsSource = EventIcsStore(db),
     )
 
     private fun pullStrategy(db: KashCalDatabase): PullStrategy {
@@ -311,6 +313,7 @@ class MultiServerOverrideOrderTest(private val config: CalDavServerConfig) {
             inviteNotifier = mockk(relaxed = true),
             accountRepository = accountRepository(db),
             reminderScheduler = mockk(relaxed = true),
+            icsSource = EventIcsStore(db),
         )
     }
 

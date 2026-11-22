@@ -125,4 +125,38 @@ class SearchHighlightTest {
             assertTrue("span end in range", span.end in span.start..source.length)
         }
     }
+
+    // ---- several words, as search matches them ----
+
+    private fun spans(text: String, vararg words: String) =
+        highlighted(text, words.toList(), highlightStyle).spanStyles.map { text.substring(it.start, it.end) }
+
+    @Test
+    fun `each word is highlighted wherever it appears, ignoring case`() {
+        assertEquals(listOf("Dent", "dent"), spans("Dentist and dentures", "dent"))
+        assertEquals(listOf("Amara", "Lee"), spans("Dr. Amara Lee", "lee", "AMARA"))
+    }
+
+    @Test
+    fun `overlapping words make one span`() {
+        assertEquals(listOf("Dentist"), spans("Dentist", "dent", "tist"))
+    }
+
+    @Test
+    fun `spans stay in place around İ and ß`() {
+        assertEquals(listOf("straße"), spans("İzmir straße", "STRAßE"))
+        assertEquals(listOf("İzmir"), spans("İzmir straße", "İzmir"))
+    }
+
+    @Test
+    fun `accents are not folded`() {
+        assertEquals(emptyList<String>(), spans("Café Nero", "cafe"))
+        assertEquals(listOf("Café"), spans("Café Nero", "CAFÉ"))
+    }
+
+    @Test
+    fun `no words give no spans`() {
+        assertEquals(emptyList<String>(), spans("Dentist"))
+        assertEquals("Dentist", highlighted("Dentist", listOf(" "), highlightStyle).text)
+    }
 }

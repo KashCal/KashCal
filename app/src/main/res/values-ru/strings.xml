@@ -43,6 +43,8 @@
     <string name="channel_event_invitations">Приглашения на события</string>
     <string name="channel_event_invitations_desc">Уведомления о новых приглашениях в календаре</string>
     <string name="channel_calendar_updates">Изменения в календаре</string>
+    <string name="channel_calendar_backup">Автоматическое резервное копирование календарей</string>
+    <string name="channel_calendar_backup_description">Сообщает, если не удалось создать резервную копию календаря</string>
     <string name="invite_notification_body">От %1$s · Нажмите, чтобы ответить</string>
 
     <!-- ==================== App Shortcuts ==================== -->
@@ -88,7 +90,6 @@
     <string name="action_discard">Отклонить</string>
     <string name="action_discard_confirm">Отклонить?</string>
     <string name="action_dismiss">Закрыть</string>
-    <string name="action_show_all">Показать все</string>
     <string name="action_connect">Подключить</string>
     <string name="action_duplicate">Дублировать</string>
     <string name="action_share">Поделиться</string>
@@ -119,6 +120,8 @@
     <string name="tags_hint_n_more">+ещё %1$d</string>
     <string name="tags_autocomplete_create_new">Создать «%1$s»</string>
     <string name="cd_tag">Тег: %1$s</string>
+    <string name="tags_show_events_click_label">Показать события с этим тегом</string>
+    <string name="tags_show_events">Показать события</string>
     <string name="cd_tags_move_menu">Переместить теги</string>
     <string name="tags_move_above_notes">Переместить над заметками</string>
     <string name="tags_move_below_notes">Переместить под заметки</string>
@@ -148,7 +151,6 @@
     <string name="label_enter_hex">Введите 6 hex-символов (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Все</string>
     <string name="view_week">Неделя</string>
     <string name="view_month">Месяц</string>
     <string name="label_all_day">Весь день</string>
@@ -190,17 +192,38 @@
     <string name="settings_event_emojis_info">Добавляет к событиям эмодзи по названию, например 🎂 для \"День рождения\".</string>
     <string name="settings_force_sync">Полная синхронизация</string>
     <string name="settings_force_sync_subtitle">Загрузить все данные заново</string>
+    <string name="settings_force_sync_no_account">Не настроен аккаунт синхронизации</string>
+    <string name="force_sync_confirm">Загрузить заново %1$s из %2$s. Несинхронизированные изменения сохранятся.</string>
+    <string name="action_start">Начать</string>
     <string name="settings_sync_history">История синхронизации</string>
     <string name="settings_sync_history_subtitle">Показать сеансы синхронизации (за 48 часов)</string>
     <string name="settings_import_subtitle">Добавить события из файла ICS в любой календарь</string>
-    <string name="settings_export_subtitle">Сохранить события в файл ICS</string>
     <string name="settings_birthday_reminder">Напоминание о дне рождения</string>
-    <string name="settings_use_device_timezone">Часовой пояс устройства</string>
     <string name="settings_section_calendars">Календари и аккаунты</string>
     <string name="settings_section_appearance">Оформление</string>
     <string name="settings_section_creating_events">Настройки событий</string>
     <string name="settings_section_sync">Синхронизация</string>
     <string name="settings_section_data">Резервное копирование и восстановление</string>
+    <string name="settings_section_troubleshooting">Устранение неполадок</string>
+
+    <!-- ==================== Debug report (Settings > Troubleshooting) ==================== -->
+    <string name="debug_report_row_label">Экспорт отладочного отчёта</string>
+    <string name="debug_report_row_subtitle">Сведения о сбоях, синхронизации и настройке для отчёта об ошибке</string>
+    <string name="debug_report_sheet_title">Отладочный отчёт</string>
+    <string name="debug_report_sheet_body">Текстовый файл, который можно приложить к отчёту об ошибке. Отправь его вскоре после проблемы: журнал приложения хранит только недавние действия.</string>
+    <string name="debug_report_item_exits">Почему приложение недавно закрывалось</string>
+    <string name="debug_report_item_exits_detail">Сбои, зависания, нехватка памяти</string>
+    <string name="debug_report_item_log">Журнал приложения</string>
+    <string name="debug_report_item_log_detail">Собственные сообщения KashCal, включая сведения о сбоях</string>
+    <string name="debug_report_item_sync_detail">Последние синхронизации, до 48 часов назад</string>
+    <string name="debug_report_item_pending">Неотправленные изменения</string>
+    <string name="debug_report_item_pending_detail">Правки, ещё не отправленные на твой сервер</string>
+    <string name="debug_report_item_setup">Конфигурация</string>
+    <string name="debug_report_item_setup_detail">Версии приложения и Android, разрешения, настройки батареи, типы аккаунтов</string>
+    <string name="debug_report_privacy_note">Адреса e-mail, веб-адреса и токены скрыты. Названия событий, календарей и имена контактов не скрыты. Отправляй отчёт по e-mail, а не в публичном посте.</string>
+    <string name="debug_report_share">Поделиться отчётом</string>
+    <string name="debug_report_chooser_title">Поделиться отладочным отчётом</string>
+    <string name="debug_report_failed">Не удалось создать отладочный отчёт</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Блокировка приложения</string>
@@ -236,9 +259,39 @@
     <string name="backup_error_read_failed">Не удалось прочитать файл</string>
 
     <!-- ==================== Onboarding ==================== -->
-    <string name="onboarding_apple_calendar">Календарь Apple?</string>
-    <string name="onboarding_got_you">Поможем разобраться.</string>
-    <string name="onboarding_connect_prompt">Подключите iCloud, чтобы видеть свои события здесь</string>
+    <string name="onboarding_title">Где твои календари?</string>
+    <string name="onboarding_subtitle">Выбери, что подключить.</string>
+    <string name="onboarding_icloud_detail">Apple ID и пароль приложения</string>
+    <string name="onboarding_caldav_title">Сервер CalDAV</string>
+    <string name="onboarding_caldav_detail">Nextcloud, Fastmail, Radicale и другие</string>
+    <string name="onboarding_device_title">На этом устройстве</string>
+    <string name="onboarding_phone_detail">Google, Outlook и приложения синхронизации</string>
+    <string name="onboarding_use_offline">Использовать календарь без сети</string>
+    <string name="onboarding_trust">Открытый код. Без рекламы. Без слежки.</string>
+
+    <!-- ==================== Reminders are off ==================== -->
+    <string name="reminders_off_title">Напоминания выключены</string>
+    <plurals name="reminders_off_body">
+        <item quantity="one">%d событие на этой неделе имеет напоминание.</item>
+        <item quantity="few">%d события на этой неделе имеют напоминания.</item>
+        <item quantity="many">%d событий на этой неделе имеют напоминания.</item>
+        <item quantity="other">%d событий на этой неделе имеют напоминания.</item>
+    </plurals>
+    <string name="reminders_off_not_now">Не сейчас</string>
+    <string name="reminders_off_turn_on">Включить</string>
+    <string name="reminders_on_snackbar">Напоминания включены</string>
+
+    <!-- ==================== About ==================== -->
+    <string name="about_tagline">Все твои календари в одном приватном приложении.</string>
+    <string name="about_help_title">Справка и руководства</string>
+    <string name="about_help_detail">Настройка, синхронизация и вопросы</string>
+    <string name="about_source_title">Исходный код</string>
+    <string name="about_source_detail">Apache 2.0, на GitHub</string>
+    <string name="about_support_title">Поддержать KashCal</string>
+    <string name="about_support_detail">Спасибо всем, кто уже поддерживает</string>
+    <string name="about_link_failed">Нет приложения, которое может открыть эту ссылку.</string>
+    <string name="about_built_in_austin">Сделано с ❤️ в Austin</string>
+    <string name="about_version">Версия %1$s</string>
 
     <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Пропустить</string>
@@ -257,22 +310,32 @@
     <string name="whats_new_v772_changes_title">Узнай, что изменилось</string>
     <string name="whats_new_v772_changes_body">Новые, изменённые и удалённые события из твоих календарей iCloud и CalDAV 7 дней хранятся в разделе «Последние изменения». Нажми на событие, чтобы открыть его.</string>
     <string name="whats_new_v772_notifications_body">Получай уведомление, когда фоновая синхронизация находит изменения в твоих событиях iCloud или CalDAV. Функция выключена, пока ты её не включишь.</string>
+    <string name="whats_new_v803_offline_title">Календари-домоседы</string>
+    <string name="whats_new_v803_offline_body">Некоторым планам не место на сервере. Создай для них отдельные календари без сети, сколько захочешь.</string>
+    <string name="whats_new_v803_backup_title">Резервные копии, о которых можно забыть</string>
+    <string name="whats_new_v803_backup_body">Выбери папку один раз, и KashCal будет хранить там свежую копию твоих календарей без сети.</string>
+    <string name="whats_new_v803_print_title">Твоя неделя на бумаге</string>
+    <string name="whats_new_v803_print_body">Распечатай неделю, которая перед тобой. А на какой холодильник её повесить, решать тебе.</string>
     <string name="whats_new_hero_sample_lunch">Обед с командой</string>
     <string name="whats_new_hero_sample_review">Обзор дизайна</string>
     <string name="whats_new_hero_sample_book_club">Книжный клуб</string>
+    <string name="whats_new_hero_sample_dentist">Стоматолог</string>
+    <string name="whats_new_hero_sample_yoga">Йога</string>
     <string name="whats_new_hero_sample_calendar">Работа</string>
+    <string name="whats_new_hero_sample_family">Семья</string>
+    <string name="whats_new_hero_sample_garden">Сад</string>
+    <string name="whats_new_hero_sample_folder">Резервные копии календарей</string>
     <string name="whats_new_hero_now">сейчас</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Подключить iCloud</string>
     <string name="signin_caldav_title">Добавить учётную запись CalDAV</string>
+    <string name="signin_caldav_sign_in_again_title">Войти снова</string>
     <string name="signin_connected_to">Подключено к %1$s</string>
 
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Новое событие</string>
     <string name="dialog_edit_event_title">Редактирование события</string>
-    <string name="dialog_force_sync_title">Полная синхронизация?</string>
-    <string name="dialog_force_sync_message">Все данные будут загружены с сервера заново. Локальные изменения сохранятся.</string>
     <string name="dialog_enable_notifications">Включить уведомления?</string>
     <string name="dialog_action_required">Это действие необходимо для продолжения.</string>
     <string name="dialog_add_to_calendar">Добавить в календарь</string>
@@ -285,6 +348,7 @@
     <string name="status_no_events_week">Нет событий на этой неделе</string>
     <string name="status_more_events">+%1$d ещё</string>
     <string name="status_no_sync_sessions">Нет сеансов синхронизации.\n\nПотяните вниз на экране календаря, чтобы запустить синхронизацию.</string>
+    <string name="status_no_sync_account">Не настроен аккаунт синхронизации. Календари без сети остаются на этом устройстве; календари устройства синхронизируются через собственный аккаунт.</string>
     <string name="status_no_writable_calendars">Нет доступных для записи календарей</string>
     <string name="status_events_count">Событий: %1$d</string>
     <string name="status_sync_history">История синхронизации</string>
@@ -333,6 +397,7 @@
     <string name="caldav_error_unexpected">Непредвиденная ошибка. Повторите попытку.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nЕсли это сервер в локальной сети, разреши доступ к локальной сети для подключения.</string>
     <string name="caldav_error_connection_refused_insecure">Сервер перенаправил подключение туда, куда KashCal не переходит (на незашифрованный адрес или в цикл перенаправлений), поэтому KashCal остановился, не отправив твой пароль. Проверь адрес сервера.</string>
+    <string name="caldav_error_sign_in_again_mismatch">Это другая учётная запись. Войди с именем пользователя и сервером, которые использует эта учётная запись.</string>
     <string name="local_network_banner_title">Нужен доступ к локальной сети</string>
     <string name="local_network_banner_body">Похоже, этот сервер находится в твоей локальной сети. Разреши доступ к локальной сети, чтобы KashCal мог к нему подключиться.</string>
     <string name="local_network_banner_allow">Разрешить доступ</string>
@@ -374,7 +439,6 @@
     <string name="error_device_calendar_title">Ошибка календаря</string>
     <string name="error_device_calendar_write_failed">Не удалось сохранить в календарь устройства. Попробуйте снова.</string>
     <string name="error_device_calendar_permission">Требуется разрешение на запись в календарь. Предоставьте доступ в настройках.</string>
-    <string name="error_device_calendar_permission_denied">Отключите и снова включите разрешение «Календарь» в настройках, чтобы предоставить доступ на запись</string>
     <string name="error_device_calendar_not_found">Календарь не найден. Возможно, он был удалён.</string>
     <string name="error_device_event_not_found">Событие не найдено. Возможно, оно было удалено.</string>
     <string name="error_device_calendar_read_only">Этот календарь доступен только для чтения.</string>
@@ -401,12 +465,11 @@
     <string name="cd_recurring">Повторяющееся</string>
     <string name="cd_enabled">Включено</string>
     <string name="cd_sync_error">Ошибка синхронизации</string>
-    <string name="cd_select_label">Выбрать %1$s</string>
     <string name="cd_wheel_picker">Колёсико выбора, вариантов: %1$d</string>
     <string name="cd_time_entry_keyboard">Ввести точное время</string>
     <string name="time_entry_dialog_title">Ввод времени</string>
     <string name="time_entry_tap_to_edit">Нажми, чтобы изменить</string>
-    <string name="cd_version_info">KashCal версия %1$s. Долгое нажатие для отладки.</string>
+    <string name="cd_version_info">KashCal версия %1$s</string>
     <string name="cd_about_setting">О настройке %1$s</string>
     <string name="cd_color_slider">Ползунок цвета, сейчас %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d градусов</string>
@@ -435,7 +498,6 @@
     <string name="label_recurrence_on_date">До даты</string>
 
     <!-- ==================== Settings (Additional) ==================== -->
-    <string name="settings_visible_calendars">Видимые календари</string>
     <string name="settings_default_calendar">Календарь по умолчанию</string>
     <string name="settings_default_event_length">Длительность события по умолчанию</string>
     <string name="settings_default_event_length_hint">Длительность по умолчанию для новых событий</string>
@@ -455,7 +517,6 @@
     <string name="option_saturday">Суббота</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Событий не найдено</string>
     <string name="empty_no_upcoming_events">Нет предстоящих событий</string>
     <string name="empty_no_calendars">Нет доступных календарей</string>
 
@@ -466,7 +527,15 @@
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Загрузить календарь</string>
     <string name="action_import_from_file">Импортировать события из файла</string>
-    <string name="action_export_local_calendar">Экспортировать локальный календарь</string>
+    <string name="settings_export_calendars">Экспорт календарей</string>
+    <string name="settings_export_calendars_subtitle">Сохранить календарь как ICS-файл</string>
+    <string name="export_calendar_no_events">Нет событий</string>
+    <string name="export_calendar_preparing">Подготовка…</string>
+    <string name="cd_export_calendar">Экспортировать %1$s</string>
+    <string name="cd_export_calendar_preparing">Подготовка %1$s</string>
+    <string name="export_calendar_chooser_title">Экспортировать календарь</string>
+    <string name="export_event_chooser_title">Экспортировать событие</string>
+    <string name="export_file_failed">Не удалось создать файл.</string>
 
     <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
@@ -504,12 +573,14 @@
     <string name="accounts_cd_back">Назад</string>
     <string name="accounts_sync_issue">Проблема синхронизации</string>
     <string name="accounts_cd_sync_warning">Предупреждение синхронизации</string>
+    <string name="accounts_cd_sync_off">синхронизация отключена</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">Календарные ленты</string>
     <string name="subscriptions_section_add">Добавить</string>
     <string name="subscriptions_empty_ics">Нет подписок ICS</string>
     <string name="subscriptions_empty_ics_hint">Добавьте ленту календаря для просмотра событий</string>
+    <string name="subscriptions_swipe_hint">Проведи по ленте, чтобы удалить её.</string>
     <string name="subscriptions_add_ics">Добавить календарь ICS</string>
     <string name="qs_tile_label">Событие</string>
     <string name="holiday_catalog_add">Добавить календарь праздников</string>
@@ -519,6 +590,11 @@
     <string name="holiday_catalog_empty_hint">Попробуйте другое название</string>
     <string name="holiday_catalog_validate_error">Не удалось открыть этот календарь. Проверьте подключение и повторите попытку.</string>
     <string name="holiday_catalog_attribution">Календари праздников от Mozilla Thunderbird, лицензия %1$s.</string>
+    <string name="account_feeds_add">Добавить из аккаунта</string>
+    <string name="account_feeds_note">Здесь показаны календарные ленты, сохранённые в твоих аккаунтах iCloud и CalDAV. Включи ленту, чтобы добавить её в раздел «Календарные ленты».</string>
+    <string name="account_feeds_checking">Проверка…</string>
+    <string name="account_feeds_none">Календарные ленты не найдены</string>
+    <string name="account_feeds_failed">Не удалось загрузить календарные ленты</string>
     <string name="subscriptions_row_label">Календарные ленты (ICS)</string>
     <string name="subscriptions_row_hint">напр. праздники, спорт, школа</string>
 
@@ -564,6 +640,8 @@
     <string name="account_detail_discovering">Обнаружение…</string>
     <string name="account_detail_discover_calendars">Найти новые календари</string>
     <string name="account_detail_change_password">Изменить пароль</string>
+    <string name="account_detail_sign_in_again">Войти снова</string>
+    <string name="account_detail_sign_in_again_subtitle">У KashCal больше нет пароля от этой учётной записи. Войди, чтобы снова синхронизировать. Твои календари и события сохранятся.</string>
     <string name="account_detail_sign_out">Выйти</string>
     <string name="account_detail_never_synced">Не синхронизировано</string>
     <string name="account_detail_last_success">Последняя синхронизация: %1$s</string>
@@ -587,6 +665,125 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Календари устройства</string>
     <string name="settings_device_calendars_hint">Календари других приложений</string>
+    <string name="offline_calendars_row_label">Календари без сети</string>
+    <string name="offline_calendars_row_hint">Календари, которые хранятся на этом устройстве</string>
+    <string name="offline_calendars_manage_note">Проведи по календарю, чтобы удалить его.</string>
+    <string name="offline_calendars_info">Хранятся на этом устройстве и никогда не синхронизируются.</string>
+    <string name="offline_calendars_info_cd">О календарях без сети</string>
+    <string name="offline_calendar_default_state">По умолчанию</string>
+    <string name="offline_calendar_new">Новый календарь</string>
+    <string name="offline_calendar_new_in_picker">Новый календарь без сети</string>
+    <string name="action_create">Создать</string>
+    <string name="offline_calendar_rename">Переименовать</string>
+    <string name="offline_calendar_color">Цвет</string>
+    <string name="offline_calendar_export">Экспортировать календарь</string>
+    <string name="offline_calendar_builtin_info">Встроенный календарь нельзя переименовать или удалить. Новые события попадают сюда, если календарь не выбран.</string>
+    <string name="offline_calendar_builtin_info_cd">О встроенном календаре</string>
+    <string name="offline_calendar_rename_cancel_cd">Отменить переименование</string>
+    <string name="offline_calendar_rename_save_cd">Сохранить название</string>
+    <string name="offline_calendar_delete_cd">Удалить %1$s</string>
+    <plurals name="offline_calendar_delete_confirm">
+        <item quantity="one">Удалить \"%2$s\" и его %1$d событие навсегда? Это нельзя отменить.</item>
+        <item quantity="few">Удалить \"%2$s\" и его %1$d события навсегда? Это нельзя отменить.</item>
+        <item quantity="many">Удалить \"%2$s\" и его %1$d событий навсегда? Это нельзя отменить.</item>
+        <item quantity="other">Удалить \"%2$s\" и его %1$d события навсегда? Это нельзя отменить.</item>
+    </plurals>
+    <string name="offline_calendar_delete_empty">Удалить \"%1$s\" навсегда? В нём нет событий.</string>
+    <plurals name="offline_calendar_delete_also">
+        <item quantity="one">Также удалить %1$d событие</item>
+        <item quantity="few">Также удалить %1$d события</item>
+        <item quantity="many">Также удалить %1$d событий</item>
+        <item quantity="other">Также удалить %1$d события</item>
+    </plurals>
+    <string name="offline_calendar_deleted">Календарь %1$s удалён</string>
+    <string name="offline_calendar_duplicate_name">Календарь без сети с названием \"%1$s\" уже существует</string>
+    <string name="offline_calendar_similar_name">Слишком похоже на \"%1$s\". Выбери другое название.</string>
+    <string name="calendar_backup_title">Автоматическое резервное копирование календарей</string>
+    <string name="calendar_backup_row_off">Выключено</string>
+    <string name="calendar_backup_row_on">%1$s · %2$s</string>
+    <string name="calendar_backup_row_problem">Нет доступа к папке резервных копий</string>
+    <string name="calendar_backup_intro">Сохраняет каждый календарь без сети в файл ICS в выбранной тобой папке.</string>
+    <string name="calendar_backup_choose_folder">Выбрать папку</string>
+    <string name="calendar_backup_choose_folder_hint">Выбери или создай папку, например в Documents. Android не разрешает выбирать корень хранилища или саму папку Download.</string>
+    <string name="calendar_backup_folder">Папка</string>
+    <string name="calendar_backup_change">Изменить</string>
+    <string name="calendar_backup_frequency">Периодичность</string>
+    <string name="calendar_backup_frequency_info">Копирование может запускаться с опозданием: Android откладывает фоновую работу, когда телефон не используется или KashCal давно не открывали.</string>
+    <string name="calendar_backup_copies">Сколько копий хранить</string>
+    <string name="calendar_backup_copies_explained">При каждом копировании предыдущий файл сохраняется как копия с датой. Если копий больше этого числа, самые старые удаляются. Самый новый файл всегда называется как календарь.</string>
+    <string name="calendar_backup_copies_fewer">Хранить меньше копий</string>
+    <string name="calendar_backup_copies_more">Хранить больше копий</string>
+    <plurals name="calendar_backup_copies_state">
+        <item quantity="one">%d копия</item>
+        <item quantity="few">%d копии</item>
+        <item quantity="many">%d копий</item>
+        <item quantity="other">%d копий</item>
+    </plurals>
+    <plurals name="calendar_backup_deletes">
+        <item quantity="one">Удаляет %d старую копию. Это нельзя отменить.</item>
+        <item quantity="few">Удаляет %d старые копии. Это нельзя отменить.</item>
+        <item quantity="many">Удаляет %d старых копий. Это нельзя отменить.</item>
+        <item quantity="other">Удаляет %d старой копии. Это нельзя отменить.</item>
+    </plurals>
+    <string name="calendar_backup_deletes_unknown">Удаляет старые копии сверх этого числа. Это нельзя отменить.</string>
+    <string name="calendar_backup_calendars">Календари без сети</string>
+    <string name="calendar_backup_calendar_nothing_saved">%1$s · Нет событий, ничего не сохранено</string>
+    <string name="calendar_backup_calendar_save_failed">%1$s · Не удалось сохранить. Повторная попытка при следующем копировании.</string>
+    <string name="calendar_backup_status">Последняя копия: %1$s</string>
+    <plurals name="calendar_backup_status_failed">
+        <item quantity="one">Последняя копия: %1$s · ошибка в %2$d календаре</item>
+        <item quantity="few">Последняя копия: %1$s · ошибка в %2$d календарях</item>
+        <item quantity="many">Последняя копия: %1$s · ошибка в %2$d календарях</item>
+        <item quantity="other">Последняя копия: %1$s · ошибка в %2$d календарях</item>
+    </plurals>
+    <string name="calendar_backup_now">Создать копию сейчас</string>
+    <string name="calendar_backup_running">Резервное копирование…</string>
+    <string name="calendar_backup_footer_overwrites">KashCal перезаписывает эти файлы при каждом копировании, поэтому изменения, сделанные в других приложениях, не сохранятся. Чтобы восстановить календарь, используй «Импортировать события из файла».</string>
+    <string name="calendar_backup_off_files_stay">Существующие файлы останутся здесь: %1$s.</string>
+    <string name="calendar_backup_folder_unreachable">Нет доступа: %1$s. Возможно, папку переместили, удалили или отключили.</string>
+    <string name="calendar_backup_error_unsupported">Нельзя сохранять файлы: %1$s. Выбери другую папку.</string>
+    <string name="calendar_backup_choose_again">Выбрать заново</string>
+    <string name="calendar_backup_pick_refused">KashCal не может использовать эту папку. Выбери другую.</string>
+    <string name="calendar_backup_pick_cannot_create">KashCal не может создавать файлы в этой папке. Выбери другую.</string>
+    <string name="calendar_backup_failed_title">Не удалось создать резервную копию календаря</string>
+    <string name="calendar_backup_folder_unnamed">папка резервных копий</string>
+    <string name="calendar_backup_alert_unreachable">Нет доступа: %1$s. Нажми, чтобы выбрать папку заново.</string>
+    <string name="calendar_backup_alert_unsupported">Нельзя сохранять файлы: %1$s. Нажми, чтобы выбрать другую папку.</string>
+    <string name="calendar_backup_alert_file_retry">Не удалось сохранить %1$s. KashCal повторит попытку при следующем копировании.</string>
+    <string name="calendar_backup_every_hour">Каждый час</string>
+    <string name="calendar_backup_every_day">Каждый день</string>
+    <plurals name="calendar_backup_every_hours">
+        <item quantity="one">Раз в %d час</item>
+        <item quantity="few">Раз в %d часа</item>
+        <item quantity="many">Раз в %d часов</item>
+        <item quantity="other">Раз в %d часов</item>
+    </plurals>
+    <plurals name="calendar_backup_every_days">
+        <item quantity="one">Раз в %d день</item>
+        <item quantity="few">Раз в %d дня</item>
+        <item quantity="many">Раз в %d дней</item>
+        <item quantity="other">Раз в %d дней</item>
+    </plurals>
+    <string name="calendar_backup_every_day_hours">Раз в 1 день %1$s</string>
+    <string name="calendar_backup_every_days_hours">Раз в %1$s %2$s</string>
+    <string name="calendar_backup_interval_too_short">Выбери не менее 1 часа.</string>
+    <string name="calendar_backup_interval_too_long">Выбери не более 30 дней.</string>
+    <plurals name="calendar_backup_alert_files_retry">
+        <item quantity="one">Не удалось сохранить %d календарь. KashCal повторит попытку при следующем копировании.</item>
+        <item quantity="few">Не удалось сохранить %d календаря. KashCal повторит попытку при следующем копировании.</item>
+        <item quantity="many">Не удалось сохранить %d календарей. KashCal повторит попытку при следующем копировании.</item>
+        <item quantity="other">Не удалось сохранить %d календаря. KashCal повторит попытку при следующем копировании.</item>
+    </plurals>
+    <string name="calendar_backup_notifications_app_off">Уведомления для KashCal выключены, поэтому он не сможет сообщить о сбое резервного копирования.</string>
+    <string name="calendar_backup_notifications_channel_off">Уведомления о резервном копировании выключены, поэтому KashCal не сможет сообщить о сбое.</string>
+    <string name="calendar_backup_open_settings">Открыть настройки</string>
+    <string name="calendar_backup_not_now">Не сейчас</string>
+    <plurals name="calendar_backup_row_calendars_failed">
+        <item quantity="one">Ошибка в %d календаре</item>
+        <item quantity="few">Ошибка в %d календарях</item>
+        <item quantity="many">Ошибка в %d календарях</item>
+        <item quantity="other">Ошибка в %d календарях</item>
+    </plurals>
     <string name="settings_quick_event_add">Умное добавление событий</string>
     <string name="settings_quick_event_add_info">Создавайте события, вводя обычный текст. \"Обед с Sam в пятницу в 13:00\" заполнит название, дату и время.</string>
     <string name="settings_suggest_titles">Предлагать названия событий</string>
@@ -648,6 +845,8 @@
     <string name="cd_pick_month_year">Выбрать месяц и год</string>
     <string name="cd_previous_month">Предыдущий месяц</string>
     <string name="cd_next_month">Следующий месяц</string>
+    <string name="cd_previous_day">Предыдущий день</string>
+    <string name="cd_next_day">Следующий день</string>
     <string name="cd_month_year_picker">Выбор месяца и года</string>
     <string name="cd_remove_alert">Удалить напоминание</string>
     <string name="cd_warning">Предупреждение</string>
@@ -657,7 +856,25 @@
     <string name="label_on_days">По дням</string>
     <string name="label_pattern">Шаблон</string>
     <string name="label_ends">Заканчивается</string>
+    <string name="sheet_hint_change_end">Нажми на день, чтобы изменить окончание</string>
     <string name="label_timezone">Часовой пояс</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Поиск города, страны или пояса</string>
+    <string name="timezone_section_this_event">Это событие</string>
+    <string name="timezone_section_device">Часовой пояс устройства</string>
+    <string name="timezone_section_recent">Недавние</string>
+    <string name="timezone_section_all">Все часовые пояса</string>
+    <string name="timezone_offsets_on">Смещения на %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Из календаря: %1$s</string>
+    <string name="timezone_shown_in_device_time">Показано во времени устройства</string>
+    <string name="timezone_loading">Загрузка часовых поясов…</string>
+    <string name="timezone_no_match">Нет подходящих часовых поясов</string>
+    <string name="timezone_no_match_hint">Поиск по городу, стране или смещению, например +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Напоминания</string>
     <string name="label_add_alert">Добавить напоминание</string>
     <string name="label_recurrence_never">Никогда</string>
@@ -665,11 +882,8 @@
     <string name="label_yesterday">Вчера</string>
     <string name="label_device_calendars">Календари устройства</string>
     <string name="label_default_calendar_hint">Новые события создаются в этом календаре</string>
-    <string name="label_visible_count">%1$d / %2$d видимых</string>
     <string name="label_reminders_truncated">%1$d не показано (%2$d всего, макс. %3$d редактируемых)</string>
     <string name="label_found_events">Найдено: %1$d событий</string>
-    <string name="label_open_debug_menu">Открыть меню отладки</string>
-    <string name="placeholder_search">Поиск…</string>
     <string name="settings_search_placeholder">Поиск в настройках…</string>
     <string name="settings_search_no_results">Ничего не найдено по запросу \"%1$s\"</string>
     <string name="cd_search_settings">Поиск в настройках</string>
@@ -680,16 +894,13 @@
     <string name="status_hours_ago">%1$d ч. назад</string>
 
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
-    <string name="device_calendars_description">Показать события из других календарных приложений на устройстве.</string>
-    <string name="device_calendars_permission_required">Требуется разрешение на доступ к календарю. Нажмите «Включить» для предоставления доступа.</string>
-    <string name="device_calendars_read_only_access">Только чтение</string>
-    <string name="device_calendars_grant_write">Предоставьте разрешение на запись для редактирования событий</string>
-    <string name="device_calendars_grant">Разрешить</string>
-    <string name="device_calendars_none_found">Календари устройства не найдены.</string>
+    <string name="device_calendars_intro">Показывать календари из Google, Outlook и приложений синхронизации на этом устройстве.</string>
+    <string name="device_calendars_show_switch">Показывать календари устройства</string>
+    <string name="device_calendars_access_off">Доступ к календарю для KashCal отключён.</string>
+    <string name="device_calendars_pick_hint">Выбери календари для показа.</string>
+    <string name="device_calendars_empty">Календари не найдены.</string>
     <string name="device_calendars_local">Локальный</string>
-    <string name="device_calendars_read_only_no_write">Только чтение (нет разрешения на запись)</string>
     <string name="device_calendars_read_only_calendar">Только чтение (календарь доступен только для чтения)</string>
-    <string name="settings_developer_options">Для разработчиков</string>
     <string name="settings_sync_frequency">Частота синхронизации</string>
     <string name="settings_sync_frequency_hint">Как часто синхронизировать в фоне</string>
 
@@ -857,6 +1068,9 @@
     <string name="ics_import_reason_this_and_future">изменения этого и последующих повторений не поддерживаются</string>
     <string name="ics_import_reason_own_cancel">ты организатор этой встречи, поэтому отмени её в самом событии</string>
     <string name="ics_import_reason_on_another_calendar">оно уже есть в другом календаре этого аккаунта</string>
+    <string name="ics_import_reason_calendar_keeps_copy">этот календарь хранит собственную копию события</string>
+    <string name="ics_import_reason_own_update">ты организатор этой встречи, поэтому измени её в самом событии</string>
+    <string name="ics_import_reason_change_waiting">изменение события ещё ждёт синхронизации; импортируй снова после синхронизации</string>
     <string name="ics_import_notice_unverified">Отправителя файла приглашения нельзя проверить. Убедись, что файл пришёл от организатора.</string>
     <string name="ics_import_notice_answer_notifies">Ответ на это приглашение может уведомить организатора.</string>
     <string name="ics_import_notice_guests_again">Ты организатор, поэтому участники могут снова получить это приглашение.</string>
@@ -899,17 +1113,23 @@
     </plurals>
     <string name="ics_import_summary_separator">", "</string>
     <string name="ics_import_summary_nothing">Нечего импортировать</string>
-    <plurals name="exported_events">
-        <item quantity="one">Экспортировано %1$d событие</item>
-        <item quantity="few">Экспортировано %1$d события</item>
-        <item quantity="many">Экспортировано %1$d событий</item>
-        <item quantity="other">Экспортировано %1$d событий</item>
-    </plurals>
     <plurals name="event_count">
         <item quantity="one">%1$d событие</item>
         <item quantity="few">%1$d события</item>
         <item quantity="many">%1$d событий</item>
         <item quantity="other">%1$d событий</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d календарь</item>
+        <item quantity="few">%1$d календаря</item>
+        <item quantity="many">%1$d календарей</item>
+        <item quantity="other">%1$d календаря</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d аккаунта</item>
+        <item quantity="few">%1$d аккаунтов</item>
+        <item quantity="many">%1$d аккаунтов</item>
+        <item quantity="other">%1$d аккаунта</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d календарь</item>
@@ -959,12 +1179,6 @@
         <item quantity="many">%1$d лет</item>
         <item quantity="other">%1$d лет</item>
     </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d сек.</item>
-        <item quantity="few">%1$d сек.</item>
-        <item quantity="many">%1$d сек.</item>
-        <item quantity="other">%1$d сек.</item>
-    </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">За %1$d минуту</item>
         <item quantity="few">За %1$d минуты</item>
@@ -996,8 +1210,13 @@
     <string name="dialog_move_recurring_title">Переместить</string>
     <string name="snackbar_event_rescheduled">Событие перенесено</string>
     <string name="snackbar_reschedule_failed">Не удалось перенести событие</string>
+    <string name="snackbar_move_failed">Не удалось перенести событие «%1$s»</string>
+    <string name="snackbar_move_changed_elsewhere">Событие «%1$s» изменено в другом месте, поэтому не перенесено</string>
+    <string name="event_untitled">Событие без названия</string>
     <string name="recurring_this_event">Это событие</string>
     <string name="recurring_all_events">Все события</string>
+    <string name="recurring_scope_move_not_expressible">Правило повторения не может учесть это изменение</string>
+    <string name="event_form_move_not_expressible">Правило повторения не может учесть это изменение. Ничего не сохранено.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Участники</string>
@@ -1073,8 +1292,83 @@
     <string name="empty_no_events_day_3">Подарок: пустой день.</string>
     <string name="empty_no_events_day_4">Статус календаря: восхитительно пусто.</string>
     <string name="empty_no_events_day_5">Ничего не запланировано. Наслаждайся тишиной.</string>
-    <string name="cd_empty_no_events_day">Спокойный день, ничего не запланировано</string>
     <string name="filter_date">Дата</string>
+    <string name="search_tab_upcoming">Предстоящие</string>
+    <string name="search_tab_past">Прошедшие</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d событие</item>
+        <item quantity="few">%1$s, %2$d события</item>
+        <item quantity="many">%1$s, %2$d событий</item>
+        <item quantity="other">%1$s, %2$d события</item>
+    </plurals>
+    <string name="search_date_this_week">Эта неделя</string>
+    <string name="search_date_this_month">Этот месяц</string>
+    <string name="search_date_pick">Выбрать даты…</string>
+    <string name="search_next">Следующее: %1$s</string>
+    <string name="search_last">Последнее: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Место:</string>
+    <string name="search_reason_notes">Заметки:</string>
+    <string name="search_reason_guest">Гость:</string>
+    <string name="search_keep_typing">Продолжай вводить, чтобы начать поиск</string>
+    <string name="search_no_matches">Нет событий по запросу «%1$s»</string>
+    <string name="search_no_events_tagged">Нет событий с тегами «%1$s»</string>
+    <string name="search_lookback_line">Глубина синхронизации: %1$s</string>
+    <string name="search_sync_settings">Настройки синхронизации</string>
+    <string name="cd_search_sync_settings">Открыть настройку глубины синхронизации</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Показать %d прошедшее событие</item>
+        <item quantity="few">Показать %d прошедших события</item>
+        <item quantity="many">Показать %d прошедших событий</item>
+        <item quantity="other">Показать %d прошедшего события</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">Ещё %d в скрытом календаре</item>
+        <item quantity="few">Ещё %d в скрытых календарях</item>
+        <item quantity="many">Ещё %d в скрытых календарях</item>
+        <item quantity="other">Ещё %d в скрытых календарях</item>
+    </plurals>
+    <string name="search_show">Показать</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Показать %d совпадение в скрытом календаре</item>
+        <item quantity="few">Показать %d совпадения в скрытых календарях</item>
+        <item quantity="many">Показать %d совпадений в скрытых календарях</item>
+        <item quantity="other">Показать %d совпадения в скрытых календарях</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Показать %d в скрытом календаре</item>
+        <item quantity="few">Показать %d в скрытых календарях</item>
+        <item quantity="many">Показать %d в скрытых календарях</item>
+        <item quantity="other">Показать %d в скрытых календарях</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">С учётом %d скрытого календаря</item>
+        <item quantity="few">С учётом %d скрытых календарей</item>
+        <item quantity="many">С учётом %d скрытых календарей</item>
+        <item quantity="other">С учётом %d скрытого календаря</item>
+    </plurals>
+    <string name="search_leave_out">Убрать</string>
+    <string name="cd_search_leave_out">Убрать скрытые календари</string>
+    <string name="search_hidden_calendar">%1$s · скрыт</string>
+    <string name="cd_search_date_this_week">Показать совпадения за эту неделю</string>
+    <string name="cd_search_date_this_month">Показать совпадения за этот месяц</string>
+    <string name="cd_search_date_pick">Выбрать даты для поиска</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d предстоящее</item>
+        <item quantity="few">%d предстоящих</item>
+        <item quantity="many">%d предстоящих</item>
+        <item quantity="other">%d предстоящего</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d прошедшее</item>
+        <item quantity="few">%d прошедших</item>
+        <item quantity="many">%d прошедших</item>
+        <item quantity="other">%d прошедшего</item>
+    </plurals>
+    <string name="search_no_past_events">Нет прошедших событий</string>
+    <string name="search_no_events_in_dates">Нет событий в эти даты</string>
     <string name="label_select_date">Выбрать дату</string>
     <string name="hint_tap_date_range">Нажмите на ту же дату для одного дня или на другую для диапазона</string>
     <string name="cd_clear">Очистить</string>
@@ -1168,7 +1462,6 @@
     <string name="reminder_none">Без напоминания</string>
     <string name="reminder_at_time_of_event">В момент события</string>
     <string name="reminder_time_before">За %1$s до</string>
-    <string name="reminder_time_after">Через %1$s после</string>
     <string name="reminder_day_of_event_12h">9 AM в день события</string>
     <string name="reminder_day_of_event_24h">09:00 в день события</string>
     <string name="reminder_day_of_event">В день события</string>
@@ -1320,6 +1613,7 @@
     <!-- ==================== i18n: Round 2 audit gaps ==================== -->
     <string name="action_save_event">Сохранить событие</string>
     <string name="badge_beta">Бета</string>
+    <string name="badge_sync_off">Синхр. выкл.</string>
     <string name="badge_new">Новое</string>
     <string name="color_red">Красный</string>
     <string name="color_orange">Оранжевый</string>
@@ -1348,6 +1642,23 @@
     <string name="ics_fetch_error_http">Сервер вернул ошибку (%1$d). Проверьте URL.</string>
     <string name="ics_fetch_error_empty">Календарный канал пуст.</string>
     <string name="ics_fetch_error_not_calendar">Этот URL не похож на календарный канал.</string>
+    <string name="ics_feed_error_empty_response">Сервер не прислал корректный канал.</string>
+    <string name="ics_feed_error_access_denied">Сервер этого канала отказал в доступе.</string>
+    <string name="ics_feed_error_too_large">Этот календарный канал слишком большой для загрузки.</string>
+    <string name="ics_feed_error_unreadable">Не удалось показать события этого канала.</string>
+    <string name="ics_feed_error_event_not_saved">«%1$s» не сохранено.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d событие не сохранено.</item>
+        <item quantity="few">%1$d события не сохранены.</item>
+        <item quantity="many">%1$d событий не сохранено.</item>
+        <item quantity="other">%1$d событий не сохранено.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d событие не сохранено, включая «%2$s».</item>
+        <item quantity="few">%1$d события не сохранены, включая «%2$s».</item>
+        <item quantity="many">%1$d событий не сохранено, включая «%2$s».</item>
+        <item quantity="other">%1$d событий не сохранено, включая «%2$s».</item>
+    </plurals>
     <string name="insights_title">Аналитика</string>
     <string name="insights_period_this_week">Неделя</string>
     <string name="insights_period_last_week">Прошлая нед.</string>
@@ -1483,7 +1794,7 @@
         <item quantity="other">Свободно в следующие %1$d дней (%2$s – %3$s):</item>
     </plurals>
     <string name="share_availability_day_line">%1$s: %2$s</string>
-    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_block_separator">", "</string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">В выбранном диапазоне нет свободных блоков длительностью от часа.</string>
     <string name="share_from_kashcal_footer">Отправлено из KashCal</string>
@@ -1507,5 +1818,35 @@
     <string name="share_as_card_all_day">Весь день</string>
     <string name="share_as_card_chooser_title">Поделиться событием</string>
     <string name="share_as_card_share_failed">Не удалось поделиться карточкой</string>
+    <string name="print_your_week">Распечатать свою неделю</string>
+    <string name="print_options_title">Параметры печати</string>
+    <string name="print_pages_header">Страницы</string>
+    <string name="print_page_week">Календарь недели</string>
+    <string name="print_page_week_detail">Неделя в виде сетки</string>
+    <string name="print_page_details">Подробности</string>
+    <string name="print_page_details_detail">Все события полностью</string>
+    <string name="print_action">Распечатать</string>
+    <string name="cd_print_previous_week">Предыдущая неделя</string>
+    <string name="cd_print_next_week">Следующая неделя</string>
+    <plurals name="print_summary_pages">
+        <item quantity="one">%d страница</item>
+        <item quantity="few">%d страницы</item>
+        <item quantity="many">%d страниц</item>
+        <item quantity="other">%d страницы</item>
+    </plurals>
+    <plurals name="print_summary_calendars">
+        <item quantity="one">%1$d из %2$d календаря</item>
+        <item quantity="few">%1$d из %2$d календарей</item>
+        <item quantity="many">%1$d из %2$d календарей</item>
+        <item quantity="other">%1$d из %2$d календаря</item>
+    </plurals>
+    <string name="print_summary">%1$s · %2$s</string>
+    <string name="print_job_name">%1$s – неделя с %2$s</string>
+    <string name="print_failed">Не удалось распечатать. Попробуйте снова.</string>
+    <string name="print_doc_week">Неделя</string>
+    <string name="print_doc_printed">Распечатано %1$s</string>
+    <string name="print_doc_page_of">Страница %1$s из %2$s</string>
+    <string name="print_doc_numbers_note">Номера соответствуют подробностям, где все события указаны полностью.</string>
+    <string name="print_doc_times_in">Часовой пояс: %1$s</string>
 
 </resources>

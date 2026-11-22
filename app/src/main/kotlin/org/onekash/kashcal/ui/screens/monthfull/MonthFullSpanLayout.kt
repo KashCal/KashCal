@@ -2,6 +2,8 @@ package org.onekash.kashcal.ui.screens.monthfull
 
 import androidx.compose.ui.graphics.Color
 import org.onekash.kashcal.domain.model.DisplayEvent
+import org.onekash.kashcal.ui.components.DEEMPHASIZED_ALPHA
+import org.onekash.kashcal.ui.components.declinedCardAlpha
 import org.onekash.kashcal.ui.shared.contrastForegroundOn
 import org.onekash.kashcal.ui.shared.packSpansIntoLanes
 
@@ -21,7 +23,8 @@ data class WeekSpan(
 data class WeekSpanLayout(
     val lanes: List<List<WeekSpan>>,
     val multiDayEventKeys: Set<String>,
-    val overflowCount: Int,
+    /** Spans that got no lane; each counts in the hidden count of every column it covers. */
+    val hiddenSpans: List<WeekSpan>,
 )
 
 const val MAX_LANES = 3
@@ -60,12 +63,12 @@ fun computeWeekSpans(
     }
 
     val lanes = packSpansIntoLanes(rawSpans, maxLanes, startCol = { it.startCol }, endCol = { it.endCol })
-    val overflow = rawSpans.size - lanes.sumOf { it.size }
+    val laned = lanes.flatten().mapTo(HashSet()) { it.eventKey }
 
     return WeekSpanLayout(
         lanes = lanes,
         multiDayEventKeys = seen.keys,
-        overflowCount = overflow,
+        hiddenSpans = rawSpans.filter { it.eventKey !in laned },
     )
 }
 
@@ -129,7 +132,14 @@ private const val TIMED_SPAN_TINT_ALPHA = 0.18f
 // Per-cell slot rendering
 // ============================================================
 
-const val MAX_SNIPPETS = 3
+/**
+ * Returns how many one-line slots of [slotPx], [gapPx] apart, fit under a [stripPx] date strip
+ * in a week row [rowPx] tall, and never fewer than 1: the caller clips a slot that doesn't fit.
+ */
+fun monthFullFittedRows(rowPx: Int, stripPx: Int, slotPx: Int, gapPx: Int): Int {
+    val pitch = (slotPx + gapPx).coerceAtLeast(1)
+    return ((rowPx - stripPx + gapPx) / pitch).coerceAtLeast(1)
+}
 
 sealed interface SlotContent {
     data object Empty : SlotContent
@@ -139,22 +149,31 @@ sealed interface SlotContent {
         val isEndOfRun: Boolean,
     ) : SlotContent
     data class CellEvent(val displayEvent: DisplayEvent) : SlotContent
-    data class Overflow(val count: Int) : SlotContent
 }
 
 data class WeekSlotRender(
     val dayCodes: List<Int>,
     val slots: List<List<SlotContent>>, // [slotIndex][col]
+    /** Per column, the events the slots don't show: single-day events and unlaned bars. */
+    val hiddenCounts: List<Int>,
 )
 
+/**
+ * Lays out one week row as [rows] one-line slots per day (fewer than 1 counts as 1).
+ *
+ * Multi-day bars take the top lanes, at most [MAX_LANES] and at most [rows] - 1, so
+ * the bottom slot of every day is never a bar. Each day's single-day events then fill its free
+ * slots in [eventOrderRank] order, then by startTs. What doesn't fit, including a bar left
+ * without a lane, is counted in [WeekSlotRender.hiddenCounts] for every day it covers; no slot
+ * is held back for the count.
+ */
 fun computeMonthFullWeekRender(
     weekDayCodes: List<Int>,
     eventsByDayCode: Map<Int, List<DisplayEvent>>,
-    maxLanes: Int = MAX_LANES,
-    maxSnippets: Int = MAX_SNIPPETS,
+    rows: Int,
 ): WeekSlotRender {
-    val numSlots = maxOf(maxLanes, maxSnippets)
-    val layout = computeWeekSpans(weekDayCodes, eventsByDayCode, maxLanes)
+    val numSlots = rows.coerceAtLeast(1)
+    val layout = computeWeekSpans(weekDayCodes, eventsByDayCode, maxLanes = minOf(MAX_LANES, numSlots - 1))
 
     // [slotIndex][col]
     val grid: Array<Array<SlotContent>> = Array(numSlots) { Array(7) { SlotContent.Empty } }
@@ -172,9 +191,12 @@ fun computeMonthFullWeekRender(
         }
     }
 
-    // 2. Fill each column's free slots with its single-day events, ordered by
-    //    [eventOrderRank], then by startTs. When they don't fit, the last free slot
-    //    shows the overflow count.
+    val hidden = IntArray(7)
+    for (span in layout.hiddenSpans) {
+        for (col in span.startCol..span.endCol) hidden[col]++
+    }
+
+    // 2. Fill each column's free slots with its single-day events.
     for (col in 0..6) {
         val dayCode = weekDayCodes[col]
         val cellEvents = eventsByDayCode[dayCode].orEmpty()
@@ -184,29 +206,52 @@ fun computeMonthFullWeekRender(
             )
 
         val freeSlots = (0 until numSlots).filter { grid[it][col] === SlotContent.Empty }
-        val available = freeSlots.size
-        if (cellEvents.size <= available) {
-            for ((i, event) in cellEvents.withIndex()) {
-                grid[freeSlots[i]][col] = SlotContent.CellEvent(event)
-            }
-        } else {
-            val visibleCount = (available - 1).coerceAtLeast(0)
-            for (i in 0 until visibleCount) {
-                grid[freeSlots[i]][col] = SlotContent.CellEvent(cellEvents[i])
-            }
-            if (available > 0) {
-                val overflowCount = cellEvents.size - visibleCount
-                grid[freeSlots[available - 1]][col] = SlotContent.Overflow(overflowCount)
-            }
-            // With no free slot the day's single-day events are silently dropped: bars win.
+        val shown = minOf(cellEvents.size, freeSlots.size)
+        for (i in 0 until shown) {
+            grid[freeSlots[i]][col] = SlotContent.CellEvent(cellEvents[i])
         }
+        hidden[col] += cellEvents.size - shown
     }
 
     return WeekSlotRender(
         dayCodes = weekDayCodes,
         slots = grid.map { it.toList() },
+        hiddenCounts = hidden.toList(),
     )
 }
+
+/** Returns the events [col] shows, top to bottom: its laned bars and its placed events. */
+fun WeekSlotRender.shownEvents(col: Int): List<DisplayEvent> = slots.mapNotNull { row ->
+    when (val slot = row[col]) {
+        is SlotContent.BarSegment -> slot.span.displayEvent
+        is SlotContent.CellEvent -> slot.displayEvent
+        SlotContent.Empty -> null
+    }
+}
+
+/** Returns how many distinct events a day's bucket holds, keyed as [computeWeekSpans] keys bars. */
+fun dayEventCount(events: List<DisplayEvent>?): Int = events.orEmpty().distinctBy { it.spanIdentityKey() }.size
+
+/**
+ * Returns what a screen reader says for one day cell: [datePrefix] (its date, and "Today"),
+ * [countLabel], the [titles] it shows in order, then [moreLabel] for what it hides, joined with
+ * ", "; a null label is left out.
+ */
+fun monthFullDayDescription(datePrefix: String, countLabel: String?, titles: List<String>, moreLabel: String?): String =
+    (listOfNotNull(datePrefix, countLabel) + titles + listOfNotNull(moreLabel)).joinToString(", ")
+
+/** Returns an event row's alpha: 0.4 on a day outside the month, else [declinedCardAlpha]'s. */
+fun monthEventAlpha(isOutDate: Boolean, isPast: Boolean, isDeclined: Boolean, isCancelled: Boolean): Float =
+    if (isOutDate) OUT_OF_MONTH_EVENT_ALPHA else declinedCardAlpha(isPast, isDeclined, isCancelled)
+
+/**
+ * Returns a date number's alpha: [DEEMPHASIZED_ALPHA] for a past day unless it is the selected
+ * one, else 1.
+ */
+fun monthDateNumberAlpha(isPastDay: Boolean, isSelected: Boolean): Float =
+    if (isPastDay && !isSelected) DEEMPHASIZED_ALPHA else 1f
+
+private const val OUT_OF_MONTH_EVENT_ALPHA = 0.4f
 
 /** Ranks all-day busy 0, all-day free 1, timed 2; lower sorts first. */
 private fun eventOrderRank(event: DisplayEvent): Int = when {

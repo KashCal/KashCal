@@ -1,7 +1,6 @@
 package org.onekash.kashcal.domain.writer
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.every
@@ -16,6 +15,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.KashCalDatabase
+import org.onekash.kashcal.data.db.PendingOperationTriggers
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
@@ -26,8 +26,10 @@ import org.onekash.kashcal.domain.initializer.LocalCalendarInitializer
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.onekash.kashcal.testutil.insertOfflineCalendar
 
 /**
  * Tests [EventWriter.renameCategory] over an in-memory Room database. Renaming a tag re-uploads
@@ -48,12 +50,14 @@ class EventWriterRenameCategoryTest {
 
     private var caldavCalendarId: Long = 0
     private var localCalendarId: Long = 0
+    private var secondOfflineCalendarId: Long = 0
     private var readOnlyCalendarId: Long = 0
 
     @Before
     fun setup() = runTest {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
+            .addCallback(PendingOperationTriggers.callback())
             .allowMainThreadQueries()
             .build()
         occurrenceGenerator = OccurrenceGenerator(
@@ -87,6 +91,7 @@ class EventWriterRenameCategoryTest {
                 color = 0
             )
         )
+        secondOfflineCalendarId = database.insertOfflineCalendar()
     }
 
     @After
@@ -209,6 +214,20 @@ class EventWriterRenameCategoryTest {
         assertEquals("local event still rewritten locally", listOf("Job"), categoriesOf(id))
         assertEquals(0, queued)
         assertTrue("no op queued for a local event", pendingUpdateOps().isEmpty())
+    }
+
+    @Test
+    fun `rewrites an event on a second offline calendar but queues no operation for it`() = runTest {
+        val offline = seedEvent(secondOfflineCalendarId, listOf("Work"), syncStatus = SyncStatus.SYNCED, caldavUrl = null)
+        val synced = seedEvent(caldavCalendarId, listOf("Work"))
+
+        val queued = eventWriter.renameCategory("Work", "Job")
+
+        assertEquals(listOf("Job"), categoriesOf(offline))
+        assertEquals(SyncStatus.SYNCED, syncStatusOf(offline))
+        assertEquals(SyncStatus.PENDING_UPDATE, syncStatusOf(synced))
+        assertEquals("only the CalDAV event is queued", 1, queued)
+        assertEquals(listOf(synced), pendingUpdateOps().map { it.eventId })
     }
 
     @Test

@@ -2,9 +2,11 @@ package org.onekash.kashcal.domain.quickadd
 
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.domain.quickadd.normalizer.NormalizerChain
+import org.onekash.kashcal.domain.quickadd.normalizer.SpannedText
 import org.onekash.kashcal.domain.quickadd.rule.ParseContext
 import org.onekash.kashcal.domain.quickadd.rule.StructuredDateRule
 import org.onekash.kashcal.domain.quickadd.tokenizer.WordTokenizer
@@ -158,5 +160,30 @@ class StructuredDateRuleTest {
         // Japan's short pattern is "y/MM/dd": M comes before d, so the rule reads month first.
         val ctx = parse("5/10", locale = Locale.JAPAN)
         assertEquals(LocalDate.of(2026, 5, 10), ctx.resolveDate())
+    }
+
+    @Test
+    fun `a valid dotted time after at is left for the time rule`() {
+        val ctx = parse("meeting at 9.30")
+        assertNull(ctx.absoluteDate)
+        val oct = parse("meeting at 1.10")
+        assertNull(oct.absoluteDate)
+    }
+
+    @Test
+    fun `an invalid dotted time after at is still a date`() {
+        assertEquals(java.time.LocalDate.of(2026, 12, 25), parse("Party at 25.12").absoluteDate)
+    }
+
+    @Test
+    fun `a dashed number pair with an en dash is skipped and the next date is read`() {
+        val tokens = WordTokenizer.tokenize(
+            NormalizerChain().normalize(SpannedText.of("3\u20135 assembly 4/20")),
+            "3\u20135 assembly 4/20",
+            Locale.US
+        )
+        val ctx = ParseContext(reference)
+        StructuredDateRule.apply(tokens, ctx)
+        assertEquals(LocalDate.of(2026, 4, 20), ctx.absoluteDate)
     }
 }

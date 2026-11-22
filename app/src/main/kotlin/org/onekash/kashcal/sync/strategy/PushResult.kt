@@ -104,6 +104,14 @@ sealed class SinglePushResult {
     data object PhaseAdvanced : SinglePushResult()
 
     /**
+     * The operation changed in the database while it ran, and the caller leaves it as it now
+     * is. The user deleted a moved event: its MOVE became a DELETE, which this push pointed at
+     * the copy it had just made, or the delete took the operation with the row (a MOVE already
+     * running is not converted, so its copy stays on the server).
+     */
+    data object Requeued : SinglePushResult()
+
+    /**
      * An RSVP write hit a 412 and the GET-and-replay retry couldn't be built or also failed.
      * The caller marks the operation failed instead of retrying forever and adds a warning,
      * naming [eventTitle], that asks the user to respond again.

@@ -1,0 +1,4 @@
+• Time zones: events stay on their real day and length after you travel, including ones made before the update (#422)
+• Sync History no longer fills with failures when only offline and phone calendars are set up (#417)
+• CalDAV calendars at a /Tasks/ path are listed (#421)
+• White text on mid-tone calendar colors such as blue and red (#419)

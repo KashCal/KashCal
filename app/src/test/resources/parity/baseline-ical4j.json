@@ -13509,6 +13509,41 @@
       "name": "adversarial: BYMONTH=13 (invalid month)",
       "timestamps": [],
       "error": null
+    },
+    {
+      "name": "adversarial: EXDATE at another time of day than the series removes nothing",
+      "timestamps": [
+        1803913200000,
+        1803999600000,
+        1804086000000,
+        1804172400000,
+        1804258800000,
+        1804345200000
+      ],
+      "error": null
+    },
+    {
+      "name": "adversarial: RDATE at another time on a day with an occurrence adds one",
+      "timestamps": [
+        1803913200000,
+        1803999600000,
+        1804086000000,
+        1804172400000,
+        1804190400000,
+        1804258800000,
+        1804345200000
+      ],
+      "error": null
+    },
+    {
+      "name": "adversarial: weekly series in UTC across a DST change keeps its UTC time",
+      "timestamps": [
+        1804518000000,
+        1805122800000,
+        1805727600000,
+        1806332400000
+      ],
+      "error": null
     }
   ]
 }

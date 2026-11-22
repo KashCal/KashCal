@@ -1,12 +1,37 @@
 package org.onekash.kashcal.domain.quickadd.rule
 
+import org.onekash.kashcal.domain.quickadd.tokenizer.Token
+import org.onekash.kashcal.domain.quickadd.tokenizer.TokenType
+import org.onekash.kashcal.util.DateTimeUtils
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.temporal.TemporalAdjusters
 
 internal fun isDotOnly(text: String): Boolean =
     text.contains('.') && !text.contains('/') && !text.contains('-')
+
+/** True for the word joining the two ends of a range: "to", or a free-standing "-". */
+internal fun isRangeSeparator(token: Token): Boolean =
+    (token.type == TokenType.KEYWORD && token.value == "TO") ||
+        (token.type == TokenType.UNKNOWN && token.text == "-")
+
+/**
+ * Consumes an unconsumed KEYWORD [value] right before [first] ("from" before a range) and
+ * returns the phrase's first index.
+ */
+internal fun consumeKeywordBefore(tokens: List<Token>, first: Int, context: ParseContext, value: String): Int {
+    if (first == 0 || context.isConsumed(first - 1)) return first
+    val prev = tokens[first - 1]
+    if (prev.type != TokenType.KEYWORD || prev.value != value) return first
+    context.consume(first - 1)
+    return first - 1
+}
+
+/** Returns the first day of [refDate]'s week by the first-day-of-week setting [firstDayOfWeek]. */
+internal fun weekStart(refDate: LocalDate, firstDayOfWeek: Int): LocalDate =
+    refDate.with(TemporalAdjusters.previousOrSame(DateTimeUtils.resolveFirstDayOfWeekAsDow(firstDayOfWeek)))
 
 /**
  * Returns the next [target] after [refDate]; when [refDate] is already [target], the one a week
@@ -22,11 +47,15 @@ internal fun resolveBareWeekday(refDate: LocalDate, target: DayOfWeek): LocalDat
  * Collects what the rules extract from one input and which tokens they consumed.
  *
  * @param firstDayOfWeek a `java.util.Calendar` day constant, or 0 for the system default;
- *   [RecurrenceRule] uses it for the WKST of an "every N weeks on <weekday>" rule.
+ *   [RecurrenceRule] uses it for the WKST of an "every N weeks on <weekday>" rule and for "until
+ *   the end of the week", [WeekdayRule] for "<weekday> next week".
+ * @param source the typed text the tokens' spans point into, or null when the tokens carry no
+ *   spans; [LocationRule] cuts the location out of it and sets none without it.
  */
 class ParseContext(
     val reference: LocalDateTime,
     val firstDayOfWeek: Int = 0,
+    val source: String? = null,
 ) {
 
     // When several are set, resolveDate takes the first of these in declaration order.
@@ -43,9 +72,11 @@ class ParseContext(
 
     var location: String? = null
 
-    var timezone: String? = null
-
     var rrule: String? = null
+
+    // Last day an "until" phrase or a date range named for rrule. The rules leave rrule without
+    // an UNTIL; QuickAddParser appends it once the time is known.
+    var untilDate: LocalDate? = null
 
     // Whether a rule set the date or time explicitly.
     var dateSet: Boolean = false

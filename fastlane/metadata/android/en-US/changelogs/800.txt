@@ -1,0 +1,1 @@
+• Fixed repeating events written in UTC showing an hour off after daylight-saving changes

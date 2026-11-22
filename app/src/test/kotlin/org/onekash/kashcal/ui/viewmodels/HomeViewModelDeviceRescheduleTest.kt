@@ -48,8 +48,9 @@ import java.util.TimeZone
  * - the drag keeps colour and availability on a one-off, a modified
  *   occurrence, a new exception and a split, and invents no colour;
  * - an empty stored RRULE gets an end time and no duration;
- * - a failed or permission-revoked write shows the failure snackbar, and a
- *   successful device or Room drag the success one;
+ * - a failed or permission-revoked write names the event in a failure
+ *   snackbar once the drag's Undo window ends, and a successful device or
+ *   Room drag shows the success snackbar at the drop;
  * - an all-events drag of a series is refused without writing, while a
  *   one-off or modified occurrence still moves;
  * - both snackbars come from string resources, without exception details.
@@ -89,6 +90,7 @@ class HomeViewModelDeviceRescheduleTest {
     // snackbar from the failure one and catch a regression to hardcoded text.
     private val rescheduledMessage = "res:snackbar_event_rescheduled"
     private val rescheduleFailedMessage = "res:snackbar_reschedule_failed"
+    private val moveFailedMessage = "res:snackbar_move_failed"
 
     private lateinit var savedZone: TimeZone
 
@@ -110,6 +112,10 @@ class HomeViewModelDeviceRescheduleTest {
         context = mockk(relaxed = true)
         every { context.getString(R.string.snackbar_event_rescheduled) } returns rescheduledMessage
         every { context.getString(R.string.snackbar_reschedule_failed) } returns rescheduleFailedMessage
+        every { context.getString(R.string.snackbar_move_failed, *anyVararg()) } answers {
+            "$moveFailedMessage:${(args[1] as Array<*>).single()}"
+        }
+        every { context.getString(R.string.action_retry) } returns "res:action_retry"
 
         fakeCalendarProviderRepository = FakeCalendarProviderRepository()
 
@@ -129,7 +135,7 @@ class HomeViewModelDeviceRescheduleTest {
         coEvery { dataStore.defaultEventDuration } returns MutableStateFlow(20)
         coEvery { dataStore.timeFormat } returns MutableStateFlow("system")
         coEvery { dataStore.showEventEmojis } returns MutableStateFlow(true)
-        coEvery { dataStore.onboardingDismissed } returns MutableStateFlow(true)
+        coEvery { dataStore.onboardingCompleted } returns MutableStateFlow(true)
 
         every { eventCoordinator.getAllCalendars() } returns MutableStateFlow(emptyList())
         every { eventReader.getVisibleOccurrencesInRange(any(), any()) } returns MutableStateFlow(emptyList())
@@ -161,7 +167,8 @@ class HomeViewModelDeviceRescheduleTest {
         attendeeBackfill = mockk(relaxed = true),
         contactEmailReader = mockk(relaxed = true),
         context = context,
-        ioDispatcher = testDispatcher
+        ioDispatcher = testDispatcher,
+        applicationScope = kotlinx.coroutines.CoroutineScope(testDispatcher)
     )
 
     private fun deviceInstance(
@@ -212,7 +219,7 @@ class HomeViewModelDeviceRescheduleTest {
      * Drags a recurring occurrence: the drop opens the scope sheet, then the user picks [scope].
      */
     private fun HomeViewModel.dragRecurringAndChoose(instance: DeviceCalendarInstance, scope: EditScope) {
-        rescheduleEvent(DisplayEvent.Device(instance), targetDate, targetStartMinutes)
+        rescheduleEvent(DisplayEvent.Device(fakeCalendarProviderRepository.seedRowFor(instance)), targetDate, targetStartMinutes)
         assertNotNull(uiState.value.pendingDragReschedule)
         assertEquals(
             "a same-day device drop blocks no scope",
@@ -228,7 +235,8 @@ class HomeViewModelDeviceRescheduleTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.rescheduleEvent(DisplayEvent.Device(deviceInstance()), targetDate, targetStartMinutes)
+        viewModel.rescheduleEvent(DisplayEvent.Device(fakeCalendarProviderRepository.seedRowFor(deviceInstance())), targetDate, targetStartMinutes)
+        viewModel.endDragUndoWindow()
         advanceUntilIdle()
 
         val update = fakeCalendarProviderRepository.updatedEvents.single()
@@ -245,10 +253,11 @@ class HomeViewModelDeviceRescheduleTest {
         advanceUntilIdle()
 
         viewModel.rescheduleEvent(
-            DisplayEvent.Device(deviceInstance(hasRrule = false, rrule = "")),
+            DisplayEvent.Device(fakeCalendarProviderRepository.seedRowFor(deviceInstance(hasRrule = false, rrule = ""))),
             targetDate,
             targetStartMinutes,
         )
+        viewModel.endDragUndoWindow()
         advanceUntilIdle()
 
         val update = fakeCalendarProviderRepository.updatedEvents.single()
@@ -268,7 +277,8 @@ class HomeViewModelDeviceRescheduleTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.rescheduleEvent(DisplayEvent.Device(exception), targetDate, targetStartMinutes)
+        viewModel.rescheduleEvent(DisplayEvent.Device(fakeCalendarProviderRepository.seedRowFor(exception)), targetDate, targetStartMinutes)
+        viewModel.endDragUndoWindow()
         advanceUntilIdle()
 
         val update = fakeCalendarProviderRepository.updatedEvents.single()
@@ -283,6 +293,7 @@ class HomeViewModelDeviceRescheduleTest {
         advanceUntilIdle()
 
         viewModel.dragRecurringAndChoose(recurringInstance(), EditScope.THIS_EVENT)
+        viewModel.endDragUndoWindow()
         advanceUntilIdle()
 
         val exception = fakeCalendarProviderRepository.createdExceptions.single()
@@ -297,6 +308,7 @@ class HomeViewModelDeviceRescheduleTest {
         advanceUntilIdle()
 
         viewModel.dragRecurringAndChoose(recurringInstance(), EditScope.THIS_AND_FUTURE)
+        viewModel.endDragUndoWindow()
         advanceUntilIdle()
 
         val split = fakeCalendarProviderRepository.editedFutureSeries.single()
@@ -311,10 +323,11 @@ class HomeViewModelDeviceRescheduleTest {
         advanceUntilIdle()
 
         viewModel.rescheduleEvent(
-            DisplayEvent.Device(deviceInstance(eventColor = null, availability = availabilityTentative)),
+            DisplayEvent.Device(fakeCalendarProviderRepository.seedRowFor(deviceInstance(eventColor = null, availability = availabilityTentative))),
             targetDate,
             targetStartMinutes,
         )
+        viewModel.endDragUndoWindow()
         advanceUntilIdle()
 
         val update = fakeCalendarProviderRepository.updatedEvents.single()
@@ -331,10 +344,11 @@ class HomeViewModelDeviceRescheduleTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.rescheduleEvent(DisplayEvent.Device(deviceInstance()), targetDate, targetStartMinutes)
+        viewModel.rescheduleEvent(DisplayEvent.Device(fakeCalendarProviderRepository.seedRowFor(deviceInstance())), targetDate, targetStartMinutes)
+        viewModel.endDragUndoWindow()
         advanceUntilIdle()
 
-        assertEquals(rescheduleFailedMessage, viewModel.uiState.value.pendingSnackbarMessage)
+        assertEquals("$moveFailedMessage:Standup", viewModel.uiState.value.pendingSnackbarMessage)
     }
 
     @Test
@@ -344,9 +358,10 @@ class HomeViewModelDeviceRescheduleTest {
         advanceUntilIdle()
 
         viewModel.dragRecurringAndChoose(recurringInstance(), EditScope.THIS_EVENT)
+        viewModel.endDragUndoWindow()
         advanceUntilIdle()
 
-        assertEquals(rescheduleFailedMessage, viewModel.uiState.value.pendingSnackbarMessage)
+        assertEquals("$moveFailedMessage:Standup", viewModel.uiState.value.pendingSnackbarMessage)
     }
 
     @Test
@@ -356,9 +371,10 @@ class HomeViewModelDeviceRescheduleTest {
         advanceUntilIdle()
 
         viewModel.dragRecurringAndChoose(recurringInstance(), EditScope.THIS_AND_FUTURE)
+        viewModel.endDragUndoWindow()
         advanceUntilIdle()
 
-        assertEquals(rescheduleFailedMessage, viewModel.uiState.value.pendingSnackbarMessage)
+        assertEquals("$moveFailedMessage:Standup", viewModel.uiState.value.pendingSnackbarMessage)
     }
 
     @Test
@@ -367,10 +383,11 @@ class HomeViewModelDeviceRescheduleTest {
         advanceUntilIdle()
         fakeCalendarProviderRepository.shouldThrowSecurityException = true
 
-        viewModel.rescheduleEvent(DisplayEvent.Device(deviceInstance()), targetDate, targetStartMinutes)
+        viewModel.rescheduleEvent(DisplayEvent.Device(fakeCalendarProviderRepository.seedRowFor(deviceInstance())), targetDate, targetStartMinutes)
+        viewModel.endDragUndoWindow()
         advanceUntilIdle()
 
-        assertEquals(rescheduleFailedMessage, viewModel.uiState.value.pendingSnackbarMessage)
+        assertEquals("$moveFailedMessage:Standup", viewModel.uiState.value.pendingSnackbarMessage)
     }
 
     @Test
@@ -378,22 +395,28 @@ class HomeViewModelDeviceRescheduleTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.rescheduleEvent(DisplayEvent.Device(deviceInstance()), targetDate, targetStartMinutes)
+        // The success snackbar shows at the drop and offers Undo; once its window ends the
+        // move saves and no failure replaces it.
+        viewModel.rescheduleEvent(DisplayEvent.Device(fakeCalendarProviderRepository.seedRowFor(deviceInstance())), targetDate, targetStartMinutes)
+        assertEquals(rescheduledMessage, viewModel.uiState.value.pendingSnackbarMessage)
+        viewModel.endDragUndoWindow()
         advanceUntilIdle()
         assertNull(viewModel.uiState.value.currentError)
-        assertEquals(rescheduledMessage, viewModel.uiState.value.pendingSnackbarMessage)
+        assertNull(viewModel.uiState.value.pendingSnackbarMessage)
 
-        viewModel.clearSnackbar()
         viewModel.dragRecurringAndChoose(recurringInstance(), EditScope.THIS_EVENT)
+        assertEquals(rescheduledMessage, viewModel.uiState.value.pendingSnackbarMessage)
+        viewModel.endDragUndoWindow()
         advanceUntilIdle()
         assertNull(viewModel.uiState.value.currentError)
-        assertEquals(rescheduledMessage, viewModel.uiState.value.pendingSnackbarMessage)
+        assertNull(viewModel.uiState.value.pendingSnackbarMessage)
 
-        viewModel.clearSnackbar()
         viewModel.dragRecurringAndChoose(recurringInstance(), EditScope.THIS_AND_FUTURE)
+        assertEquals(rescheduledMessage, viewModel.uiState.value.pendingSnackbarMessage)
+        viewModel.endDragUndoWindow()
         advanceUntilIdle()
         assertNull(viewModel.uiState.value.currentError)
-        assertEquals(rescheduledMessage, viewModel.uiState.value.pendingSnackbarMessage)
+        assertNull(viewModel.uiState.value.pendingSnackbarMessage)
 
         assertEquals(1, fakeCalendarProviderRepository.updatedEvents.size)
         assertEquals(1, fakeCalendarProviderRepository.createdExceptions.size)
@@ -404,15 +427,18 @@ class HomeViewModelDeviceRescheduleTest {
     fun `successful drag of a Room event still updates it and shows the success snackbar`() = runTest {
         val (roomEvent, event) = roomDisplayEvent()
         coEvery { eventCoordinator.updateEvent(any(), any()) } returns event
+        coEvery { eventReader.getEventById(7L) } returns event
         val viewModel = createViewModel()
         advanceUntilIdle()
 
         viewModel.rescheduleEvent(roomEvent, targetDate, targetStartMinutes)
+        assertEquals(rescheduledMessage, viewModel.uiState.value.pendingSnackbarMessage)
+        viewModel.endDragUndoWindow()
         advanceUntilIdle()
 
         coVerify(exactly = 1) { eventCoordinator.updateEvent(any(), any()) }
         assertNull(viewModel.uiState.value.currentError)
-        assertEquals(rescheduledMessage, viewModel.uiState.value.pendingSnackbarMessage)
+        assertNull(viewModel.uiState.value.pendingSnackbarMessage)
     }
 
     // ==================== All-events drag on a recurring device event ====================
@@ -423,11 +449,12 @@ class HomeViewModelDeviceRescheduleTest {
         advanceUntilIdle()
 
         viewModel.rescheduleEvent(
-            DisplayEvent.Device(recurringInstance()),
+            DisplayEvent.Device(fakeCalendarProviderRepository.seedRowFor(recurringInstance())),
             targetDate,
             targetStartMinutes,
             EditScope.ALL_EVENTS,
         )
+        viewModel.endDragUndoWindow()
         advanceUntilIdle()
 
         assertNoProviderWrites()
@@ -440,6 +467,7 @@ class HomeViewModelDeviceRescheduleTest {
         advanceUntilIdle()
 
         viewModel.dragRecurringAndChoose(recurringInstance(), EditScope.ALL_EVENTS)
+        viewModel.endDragUndoWindow()
         advanceUntilIdle()
 
         assertNoProviderWrites()
@@ -453,11 +481,12 @@ class HomeViewModelDeviceRescheduleTest {
         advanceUntilIdle()
 
         viewModel.rescheduleEvent(
-            DisplayEvent.Device(deviceInstance()),
+            DisplayEvent.Device(fakeCalendarProviderRepository.seedRowFor(deviceInstance())),
             targetDate,
             targetStartMinutes,
             EditScope.ALL_EVENTS,
         )
+        viewModel.endDragUndoWindow()
         advanceUntilIdle()
 
         assertEquals(100L, fakeCalendarProviderRepository.updatedEvents.single().eventId)
@@ -473,7 +502,8 @@ class HomeViewModelDeviceRescheduleTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.rescheduleEvent(DisplayEvent.Device(exception), targetDate, targetStartMinutes, EditScope.ALL_EVENTS)
+        viewModel.rescheduleEvent(DisplayEvent.Device(fakeCalendarProviderRepository.seedRowFor(exception)), targetDate, targetStartMinutes, EditScope.ALL_EVENTS)
+        viewModel.endDragUndoWindow()
         advanceUntilIdle()
 
         assertEquals(150L, fakeCalendarProviderRepository.updatedEvents.single().eventId)
@@ -492,7 +522,7 @@ class HomeViewModelDeviceRescheduleTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.rescheduleEvent(DisplayEvent.Device(deviceInstance()), targetDate, targetStartMinutes)
+        viewModel.rescheduleEvent(DisplayEvent.Device(fakeCalendarProviderRepository.seedRowFor(deviceInstance())), targetDate, targetStartMinutes)
         advanceUntilIdle()
 
         assertEquals(rescheduledMessage, viewModel.uiState.value.pendingSnackbarMessage)
@@ -500,16 +530,18 @@ class HomeViewModelDeviceRescheduleTest {
 
     @Test
     fun `drag that throws shows the localized failure message without exception details`() = runTest {
-        val (roomEvent, _) = roomDisplayEvent()
+        val (roomEvent, event) = roomDisplayEvent()
+        coEvery { eventReader.getEventById(7L) } returns event
         coEvery { eventCoordinator.updateEvent(any(), any()) } throws RuntimeException("secret-detail")
         val viewModel = createViewModel()
         advanceUntilIdle()
 
         viewModel.rescheduleEvent(roomEvent, targetDate, targetStartMinutes)
+        viewModel.endDragUndoWindow()
         advanceUntilIdle()
 
         val message = viewModel.uiState.value.pendingSnackbarMessage
-        assertEquals(rescheduleFailedMessage, message)
+        assertEquals("$moveFailedMessage:Review", message)
         assertFalse(message!!.contains("secret-detail"))
     }
 

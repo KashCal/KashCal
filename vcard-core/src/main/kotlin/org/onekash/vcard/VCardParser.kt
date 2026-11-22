@@ -139,7 +139,8 @@ class VCardParser {
                     val label = prop.group?.let { labelsByGroup[it] }
                     // A native ANNIVERSARY, when present, wins over the Apple raw form.
                     if (label.equals("Anniversary", ignoreCase = true) && anniversary == null) {
-                        anniversary = dateFromText(prop.value)
+                        val omitYears = prop.parameters.get(OMIT_YEAR_PARAMETER)
+                        anniversary = dateFromText(prop.value, omitYears)
                     }
                 }
                 prop.propertyName.equals("X-ABRELATEDNAMES", ignoreCase = true) -> {
@@ -192,13 +193,16 @@ class VCardParser {
 
     /**
      * Converts a native BDAY or ANNIVERSARY; null when it has no usable value. A full calendar
-     * date becomes [ContactDate.date]; anything else is kept as text. That text is either a
-     * free-text value or a reduced-accuracy date such as `--0415` (RFC 6350 §4.3.1, a birthday
-     * without a year), which ez-vcard exposes only through `partialDate`, with neither `date`
-     * nor `text` set. Without the `partialDate` read those would be silently dropped.
+     * date becomes [ContactDate.date], unless it has no year ([yearlessText]), which becomes
+     * `--MM-DD` text. Anything else is kept as text. That text is either a free-text value or a
+     * reduced-accuracy date such as `--0415` (RFC 6350 §4.3.1, a birthday without a year), which
+     * ez-vcard exposes only through `partialDate`, with neither `date` nor `text` set. Without
+     * the `partialDate` read those would be silently dropped.
      */
     private fun toContactDate(prop: ezvcard.property.DateOrTimeProperty): ContactDate? {
         val localDate = prop.date?.let { runCatching { LocalDate.from(it) }.getOrNull() }
+        localDate?.let { yearlessText(it, prop.parameters.get(OMIT_YEAR_PARAMETER)) }
+            ?.let { return ContactDate(text = it) }
         val text = prop.text.blankToNull()
             ?: prop.partialDate?.let { runCatching { it.toISO8601(true) }.getOrNull() }.blankToNull()
         if (localDate == null && text == null) return null
@@ -206,13 +210,15 @@ class VCardParser {
     }
 
     /**
-     * Converts an Apple raw X-ABDATE value, an ISO or basic-ISO date. The trimmed string is
-     * always kept as text; null only when blank.
+     * Converts an Apple raw X-ABDATE value, an ISO or basic-ISO date, with the values of its
+     * [OMIT_YEAR_PARAMETER]. A date without a year ([yearlessText]) becomes `--MM-DD` text;
+     * otherwise the trimmed string is kept as text beside the parsed date. Null only when blank.
      */
-    private fun dateFromText(value: String?): ContactDate? {
+    private fun dateFromText(value: String?, omitYears: List<String>): ContactDate? {
         val v = value?.trim().blankToNull() ?: return null
         val localDate = runCatching { LocalDate.parse(v) }.getOrNull()
             ?: runCatching { LocalDate.parse(v, java.time.format.DateTimeFormatter.BASIC_ISO_DATE) }.getOrNull()
+        localDate?.let { yearlessText(it, omitYears) }?.let { return ContactDate(text = it) }
         return ContactDate(date = localDate, text = v)
     }
 

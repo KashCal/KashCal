@@ -7,7 +7,7 @@ import org.junit.Test
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendarInstance
 
 /**
- * Tests that [DisplayEvent.Device]'s rrule, reminders and categories come from its instance, and
+ * Tests that [DisplayEvent.Device]'s rrule and categories come from its instance, and
  * that a filter on `categories` keeps a tagged device event and drops an untagged one.
  */
 class DisplayEventDeviceTest {
@@ -53,21 +53,9 @@ class DisplayEventDeviceTest {
     }
 
     @Test
-    fun `Device reminders delegates to instance reminders`() {
-        val device = DisplayEvent.Device(createInstance(reminders = listOf(15, 60, 1440)))
-        assertEquals(listOf(15, 60, 1440), device.reminders)
-    }
-
-    @Test
     fun `Device with null rrule returns null`() {
         val device = DisplayEvent.Device(createInstance(rrule = null))
         assertNull(device.rrule)
-    }
-
-    @Test
-    fun `Device with empty reminders returns empty list`() {
-        val device = DisplayEvent.Device(createInstance(reminders = emptyList()))
-        assertTrue(device.reminders.isEmpty())
     }
 
     @Test

@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.onekash.kashcal.reminder.device.DeviceCalendarChangeWatcher
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.widget.WidgetUpdateManager
@@ -28,6 +29,7 @@ class BootRecoveryHandlerTest {
     private lateinit var reminderScheduler: ReminderScheduler
     private lateinit var deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler
     private lateinit var widgetUpdateManager: WidgetUpdateManager
+    private lateinit var changeWatcher: DeviceCalendarChangeWatcher
     private lateinit var handler: BootRecoveryHandler
 
     @Before
@@ -39,10 +41,13 @@ class BootRecoveryHandlerTest {
         reminderScheduler = mockk(relaxed = true)
         deviceCalendarReminderScheduler = mockk(relaxed = true)
         widgetUpdateManager = mockk(relaxed = true)
+        // Side-effect collaborator (schedules or cancels a job), so relaxed is allowed.
+        changeWatcher = mockk(relaxed = true)
         handler = BootRecoveryHandler(
             reminderScheduler,
             deviceCalendarReminderScheduler,
-            widgetUpdateManager
+            widgetUpdateManager,
+            changeWatcher,
         )
     }
 
@@ -95,5 +100,24 @@ class BootRecoveryHandlerTest {
         handler.rescheduleReminders()
 
         verify(exactly = 1) { widgetUpdateManager.scheduleMidnightUpdate() }
+    }
+
+    @Test
+    fun `rescheduleReminders re-picks the device reminder and then re-schedules the calendar-change job`() = runTest {
+        handler.rescheduleReminders()
+
+        coVerifyOrder {
+            deviceCalendarReminderScheduler.scheduleNextReminder()
+            changeWatcher.refresh()
+        }
+    }
+
+    @Test
+    fun `a failing device re-pick still re-schedules the calendar-change job`() = runTest {
+        coEvery { deviceCalendarReminderScheduler.scheduleNextReminder() } throws IllegalStateException("provider died")
+
+        handler.rescheduleReminders()
+
+        coVerify { changeWatcher.refresh() }
     }
 }

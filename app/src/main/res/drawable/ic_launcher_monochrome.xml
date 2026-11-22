@@ -5,9 +5,10 @@
     android:viewportWidth="88"
     android:viewportHeight="88">
 
-    <!-- Calendar card echoing the regular logo, with a calendar glyph
-         (binding rings, header divider, day grid) instead of the "31"
-         numerals, which don't read well as a single-color monochrome. -->
+    <!-- Themed layer of the default, round and supporter icons: a calendar
+         card echoing the regular logo, with binding rings, a header divider
+         and a day grid in place of the "31" numerals. The date icons use
+         their own dated layers. -->
     <group
         android:translateX="44"
         android:translateY="44"

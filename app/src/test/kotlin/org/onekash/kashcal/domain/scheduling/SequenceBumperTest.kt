@@ -33,6 +33,30 @@ class SequenceBumperTest {
     // ---- Significant (scheduling) properties: bump ----
 
     @Test
+    fun `a zone change bumps even when the instants stay`() {
+        // DTSTART;TZID=Europe/London:...T100000 to DTSTART;TZID=UTC:...T100000 in winter changes
+        // DTSTART (RFC 5545 §3.3.5) at the same instant; RFC 5546 §2.1.4 requires the bump.
+        val old = baseEvent().copy(timezone = "Europe/London", rrule = "FREQ=WEEKLY")
+        val new = old.copy(timezone = "UTC")
+        assertTrue(SequenceBumper.reschedules(old, new))
+        assertTrue(SequenceBumper.shouldBump(old, new))
+    }
+
+    @Test
+    fun `a zone change on a one-off at the same instants is not a reschedule`() {
+        // RFC 6638 §3.2.8: a reschedule is a change that impacts instances; a one-off's only
+        // instance stays where it was.
+        val old = baseEvent().copy(timezone = "UTC")
+        assertFalse(SequenceBumper.reschedules(old, old.copy(timezone = null)))
+    }
+
+    @Test
+    fun `an unchanged zone does not bump`() {
+        val old = baseEvent().copy(timezone = "Europe/London")
+        assertFalse(SequenceBumper.shouldBump(old, old.copy(title = "Standup ")))
+    }
+
+    @Test
     fun `DTSTART change bumps`() {
         val old = baseEvent()
         val new = old.copy(startTs = old.startTs + 3_600_000)

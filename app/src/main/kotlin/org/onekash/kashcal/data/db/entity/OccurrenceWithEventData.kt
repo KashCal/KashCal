@@ -1,7 +1,7 @@
 package org.onekash.kashcal.data.db.entity
 
-import androidx.room.ColumnInfo
-import androidx.room.Embedded
+import androidx.room3.ColumnInfo
+import androidx.room3.Embedded
 
 /**
  * Holds one row of an occurrences-events join: the occurrence columns plus the joined [Event].

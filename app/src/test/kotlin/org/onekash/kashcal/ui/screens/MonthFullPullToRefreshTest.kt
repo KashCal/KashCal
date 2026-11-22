@@ -1,8 +1,5 @@
 package org.onekash.kashcal.ui.screens
 
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.rememberScrollableState
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +11,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import org.onekash.kashcal.domain.monthfull.MAX_MONTH_FULL_ZOOM
+import org.junit.Assert.assertEquals
+import androidx.compose.ui.test.pinch
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.testTag
@@ -35,18 +39,16 @@ import org.robolectric.annotation.Config
 import java.util.Calendar as JavaCalendar
 
 /**
- * Checks pull-to-refresh on the full-height month view (MONTH_FULL).
+ * Checks the gestures on the full-height month page ([MonthFullPage]): pull-to-refresh, paging
+ * between months, and the pinch that zooms the day cells.
  *
  * Material3 pull-to-refresh is nested-scroll driven: it sees a drag only when a descendant passes
  * vertical scroll deltas up the chain. The full-height grid fits the screen (weighted rows) with no
- * scrollable child, so without help the pull silently does nothing. A zero-consuming `scrollable`
- * on the month page hands the vertical gesture to pull-to-refresh.
- *
- * The wrapper is an inline copy of production: a `pullToRefresh` Box around a `HorizontalPager`
- * whose page hosts the donor Column and the real [FullHeightMonthGrid]. The pager stays in the
- * copy because the vertical donor must coexist with the pager's horizontal swipe without either
- * stealing the other's gesture. The tests also check the donor exposes no scroll axis range to
- * accessibility.
+ * scrollable child, so without help the pull silently does nothing; the page's zero-consuming
+ * `scrollable` hands the vertical gesture to pull-to-refresh. The wrapper is a `pullToRefresh` Box
+ * around a `HorizontalPager` of real pages, as the home screen has it; the control case swaps the
+ * page for a bare grid with no donor. The tests also check the donor exposes no scroll axis range
+ * to accessibility, and that a pinch zooms without paging or refreshing.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34], qualifiers = "w360dp-h720dp-mdpi")
@@ -55,6 +57,9 @@ class MonthFullPullToRefreshTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
+    /** Zoom values the page reported, in order. */
+    private val zooms = mutableListOf<Float>()
+
     @Composable
     private fun MonthFullUnderTest(
         withDonor: Boolean,
@@ -62,9 +67,7 @@ class MonthFullPullToRefreshTest {
         onRefresh: () -> Unit,
     ) {
         val pullToRefreshState = rememberPullToRefreshState()
-        // Called unconditionally to satisfy the composition rules; wired in only when
-        // `withDonor` is true.
-        val scrollDonor = rememberScrollableState { 0f }
+        var zoom by remember { mutableFloatStateOf(1f) }
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -81,27 +84,38 @@ class MonthFullPullToRefreshTest {
                 modifier = Modifier.fillMaxSize(),
                 userScrollEnabled = true,
             ) { page ->
-                val columnModifier = if (withDonor) {
-                    Modifier
-                        .fillMaxSize()
-                        .testTag("monthPage")
-                        .scrollable(orientation = Orientation.Vertical, state = scrollDonor)
-                } else {
-                    Modifier.fillMaxSize().testTag("monthPage")
-                }
-                Column(modifier = columnModifier, verticalArrangement = Arrangement.Top) {
-                    FullHeightMonthGrid(
+                if (withDonor) {
+                    MonthFullPage(
                         year = 2026,
                         month = page,
                         selectedDate = 0L,
                         monthEventsMap = persistentMapOf<Int, ImmutableList<DisplayEvent>>(),
-                        onDateSelected = {},
-                        firstDayOfWeekPref = JavaCalendar.MONDAY,
+                        onDayTap = { _, _ -> },
+                        firstDayOfWeek = JavaCalendar.MONDAY,
                         showWeekNumbers = false,
                         showEventEmojis = false,
-                        refreshKey = 0,
-                        modifier = Modifier.weight(1f),
+                        nowMs = 0L,
+                        todayDayCode = 0,
+                        zoom = zoom,
+                        onZoomChange = { zooms += it; zoom = it },
+                        modifier = Modifier.testTag("monthPage"),
                     )
+                } else {
+                    Column(modifier = Modifier.fillMaxSize().testTag("monthPage"), verticalArrangement = Arrangement.Top) {
+                        FullHeightMonthGrid(
+                            year = 2026,
+                            month = page,
+                            selectedDate = 0L,
+                            monthEventsMap = persistentMapOf<Int, ImmutableList<DisplayEvent>>(),
+                            onDayTap = { _, _ -> },
+                            firstDayOfWeekPref = JavaCalendar.MONDAY,
+                            showWeekNumbers = false,
+                            showEventEmojis = false,
+                            nowMs = 0L,
+                            todayDayCode = 0,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                 }
             }
         }
@@ -191,5 +205,76 @@ class MonthFullPullToRefreshTest {
             "donor must not advertise a vertical scroll axis range to a11y",
             config.contains(SemanticsProperties.VerticalScrollAxisRange),
         )
+    }
+
+    // -------- Pinch --------
+
+    private fun pinchOut(atY: Float? = null, from: Float = 40f, to: Float = 50f, durationMillis: Long = 400) {
+        composeTestRule.onNodeWithTag("ptr").performTouchInput {
+            val y = atY ?: centerY
+            pinch(
+                Offset(centerX - from, y), Offset(centerX - to, y),
+                Offset(centerX + from, y), Offset(centerX + to, y),
+                durationMillis = durationMillis,
+            )
+        }
+        composeTestRule.waitForIdle()
+    }
+
+    @Test
+    fun `a pinch zooms the cells and a second pinch carries on from there`() {
+        val pager = renderWith(withDonor = true)
+        pinchOut()
+        val first = zooms.last()
+        assertTrue("first pinch zoomed in, got $first", first > 1f)
+        assertTrue("first pinch stayed under the limit, got $first", first < MAX_MONTH_FULL_ZOOM)
+        pinchOut(to = 48f)
+        assertTrue("second pinch continued, got ${zooms.last()} after $first", zooms.last() > first)
+        assertEquals("a pinch doesn't page", 1, pager.currentPage)
+    }
+
+    @Test
+    fun `a slow pinch keeps following the fingers after the slop`() {
+        renderWith(withDonor = true)
+        pinchOut(from = 150f, to = 165f, durationMillis = 3_000)
+        assertTrue("slow pinch reached ${zooms.lastOrNull()}", (zooms.lastOrNull() ?: 1f) > 1.09f)
+    }
+
+    @Test
+    fun `a pinch over the weekday header zooms too`() {
+        renderWith(withDonor = true)
+        val header = composeTestRule.onNodeWithTag("monthPage").fetchSemanticsNode().boundsInRoot.top + 6f
+        pinchOut(atY = header)
+        assertTrue("header pinch zoomed, got $zooms", (zooms.lastOrNull() ?: 1f) > 1f)
+    }
+
+    @Test
+    fun `a vertical pinch in the side margin zooms without refreshing or paging`() {
+        // Fingers spreading along y give pull-to-refresh a vertical drag to see; only the pinch
+        // consuming it keeps the refresh away. x sits in the grid's side padding.
+        var refreshed = false
+        val pager = renderWith(withDonor = true, onRefresh = { refreshed = true })
+        composeTestRule.onNodeWithTag("ptr").performTouchInput {
+            val x = left + 4f
+            pinch(
+                Offset(x, centerY - 40f), Offset(x, centerY - 160f),
+                Offset(x, centerY + 40f), Offset(x, centerY + 160f),
+                durationMillis = 400,
+            )
+        }
+        composeTestRule.waitForIdle()
+        assertTrue("it zoomed, got $zooms", (zooms.lastOrNull() ?: 1f) > 1f)
+        assertFalse("a pinch must not refresh", refreshed)
+        assertEquals("a pinch must not page", 1, pager.currentPage)
+    }
+
+    @Test
+    fun `a pinch neither pages nor refreshes`() {
+        var refreshed = false
+        val pager = renderWith(withDonor = true, onRefresh = { refreshed = true })
+        pinchOut(from = 40f, to = 120f)
+        assertFalse("a pinch must not refresh", refreshed)
+        assertEquals("a pinch must not page", 1, pager.currentPage)
+        assertTrue("it zoomed", zooms.isNotEmpty())
     }
 }

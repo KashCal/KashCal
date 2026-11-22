@@ -61,6 +61,7 @@ class DayColumnReorderDragTest {
                 DayColumn(
                     date = date,
                     events = events,
+                    now = { 0L },
                     onEventClick = {},
                     onOverflowClick = {},
                     onEventDragStart = { ev, _ -> draggedTitle = ev.title },

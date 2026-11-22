@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
+import org.onekash.kashcal.data.ics.IcsRefreshWorker
 import org.onekash.kashcal.domain.changes.RecentChangeEntry
 import org.onekash.kashcal.sync.session.SyncTrigger
 import org.onekash.kashcal.sync.contacts.ContactSyncWorker
@@ -29,9 +30,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Schedules calendar and contact sync on WorkManager, and holds the sync UI state shared
- * across ViewModels (banner flag, last sync changes). It also clears the change notification
- * once the app shows its changes.
+ * Schedules calendar and contact sync on WorkManager, and the one-shot refresh of the ICS feeds
+ * that pull-to-refresh requests ([requestImmediateIcsRefresh]); the feeds' periodic refresh is
+ * [IcsScheduler]'s. Holds the sync UI state shared across ViewModels (banner flag, last sync
+ * changes), and clears the change notification once the app shows its changes.
  *
  * Provides periodic background sync (configurable, at least 15 minutes), one-shot sync for
  * user-initiated refresh, expedited sync after a local change, per-calendar and per-account
@@ -247,6 +249,17 @@ class SyncScheduler @Inject constructor(
 
         return oneShotWork.id
     }
+
+    /**
+     * Requests a one-shot refresh of every enabled ICS feed through
+     * [IcsRefreshWorker.requestImmediateRefresh], which decides what happens to an unfinished
+     * one. The calendar sync ([requestImmediateSync]) syncs CalDAV accounts only, and feeds live
+     * under a non-CalDAV account, so pull-to-refresh calls this as well.
+     *
+     * @return the id [IcsRefreshWorker.requestImmediateRefresh] returns
+     */
+    fun requestImmediateIcsRefresh(): java.util.UUID =
+        IcsRefreshWorker.requestImmediateRefresh(context)
 
     /**
      * Applies the defaults of user-initiated one-shot sync work: the LAN-friendly network

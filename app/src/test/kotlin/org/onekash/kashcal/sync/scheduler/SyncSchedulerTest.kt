@@ -25,6 +25,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.R
+import org.onekash.kashcal.data.ics.IcsRefreshWorker
 import org.onekash.kashcal.sync.notification.ChangeNotificationChannels
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
@@ -192,6 +193,21 @@ class SyncSchedulerTest {
         val workInfos =
             workManager.getWorkInfosForUniqueWork(SyncScheduler.ONE_SHOT_CONTACT_SYNC_WORK).get()
         assertEquals(1, workInfos.size)
+    }
+
+    @Test
+    fun `requestImmediateIcsRefresh keeps an unfinished refresh and ignores the repeat`() {
+        val first = scheduler.requestImmediateIcsRefresh()
+
+        val second = scheduler.requestImmediateIcsRefresh()
+
+        // The network constraint holds the first request in the queue, so the repeat finds it
+        // unfinished and must leave it in place rather than cancel it.
+        val unfinished = workManager
+            .getWorkInfosForUniqueWork(IcsRefreshWorker.ONE_SHOT_REFRESH_WORK).get()
+            .filter { !it.state.isFinished }
+        assertEquals(listOf(first), unfinished.map { it.id })
+        assertNotEquals(first, second)
     }
 
     @Test

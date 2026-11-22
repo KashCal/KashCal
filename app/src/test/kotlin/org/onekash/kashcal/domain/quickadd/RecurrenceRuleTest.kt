@@ -318,26 +318,82 @@ class RecurrenceRuleTest {
     // ==================== UNTIL ====================
 
     @Test
-    fun `every Monday until December sets UNTIL to Dec 31`() {
+    fun `every Monday until December sets the end to Dec 31`() {
+        // The rule records the end day; QuickAddParser writes the UNTIL
+        // (QuickAddUntilExpansionTest).
         val ctx = parse("every Monday until December")
         assertNotNull(ctx.rrule)
         assertTrue(ctx.rrule!!.contains("FREQ=WEEKLY"))
         assertTrue(ctx.rrule!!.contains("BYDAY=MO"))
-        assertTrue(ctx.rrule!!.contains("UNTIL="))
+        assertEquals(LocalDate.of(2026, 12, 31), ctx.untilDate)
     }
 
     @Test
-    fun `every Monday until Jan 15 sets UNTIL`() {
+    fun `every Monday until Jan 15 sets the end`() {
         val ctx = parse("every Monday until Jan 15")
         assertNotNull(ctx.rrule)
-        assertTrue(ctx.rrule!!.contains("UNTIL="))
+        assertEquals(LocalDate.of(2027, 1, 15), ctx.untilDate)
     }
 
     @Test
-    fun `every Monday until December 15 sets UNTIL`() {
+    fun `every Monday until December 15 sets the end`() {
         val ctx = parse("every Monday until December 15")
         assertNotNull(ctx.rrule)
-        assertTrue(ctx.rrule!!.contains("UNTIL="))
+        assertEquals(LocalDate.of(2026, 12, 15), ctx.untilDate)
+    }
+
+    private fun parseWithWeekStart(input: String, firstDayOfWeek: Int): ParseContext {
+        val tokens = WordTokenizer.tokenize(normalizer.normalize(input))
+        val context = ParseContext(reference, firstDayOfWeek = firstDayOfWeek)
+        RecurrenceRule.apply(tokens, context)
+        return context
+    }
+
+    @Test
+    fun `until the end of the month ends on the reference month's last day`() {
+        for (input in listOf("every Monday until the end of the month", "every Monday until end of month")) {
+            val ctx = parse(input)
+            assertEquals(input, java.time.LocalDate.of(2026, 4, 30), ctx.untilDate)
+            assertEquals(input, "FREQ=WEEKLY;BYDAY=MO", ctx.rrule)
+        }
+    }
+
+    @Test
+    fun `until the end of the week follows the first day of the week`() {
+        val mondayFirst = parseWithWeekStart("every day until the end of the week", java.util.Calendar.MONDAY)
+        assertEquals(java.time.LocalDate.of(2026, 4, 19), mondayFirst.untilDate)
+        val sundayFirst = parseWithWeekStart("every day until the end of the week", java.util.Calendar.SUNDAY)
+        assertEquals(java.time.LocalDate.of(2026, 4, 18), sundayFirst.untilDate)
+    }
+
+    @Test
+    fun `until the end of the year and of a named month`() {
+        assertEquals(java.time.LocalDate.of(2026, 12, 31), parse("every day until the end of the year").untilDate)
+        assertEquals(java.time.LocalDate.of(2026, 6, 30), parse("every day until the end of june").untilDate)
+    }
+
+    @Test
+    fun `until the end of the month is consumed whole`() {
+        val tokens = WordTokenizer.tokenize(normalizer.normalize("standup every weekday until the end of the month"))
+        val ctx = ParseContext(reference)
+        RecurrenceRule.apply(tokens, ctx)
+        val unconsumed = tokens.indices.filter { !ctx.isConsumed(it) }.map { tokens[it].text }
+        assertEquals(listOf("standup"), unconsumed)
+    }
+
+    @Test
+    fun `every evening is daily and leaves the day-half word for the time`() {
+        val tokens = WordTokenizer.tokenize(normalizer.normalize("walk every evening"))
+        val ctx = ParseContext(reference)
+        RecurrenceRule.apply(tokens, ctx)
+        assertEquals("FREQ=DAILY", ctx.rrule)
+        assertEquals(listOf("walk", "evening"), tokens.indices.filter { !ctx.isConsumed(it) }.map { tokens[it].text })
+    }
+
+    @Test
+    fun `on plural weekdays makes a weekly rule`() {
+        val ctx = parse("on tuesdays and thursdays")
+        assertEquals("FREQ=WEEKLY;BYDAY=TU,TH", ctx.rrule)
     }
 
     // ==================== COUNT ====================
@@ -362,6 +418,7 @@ class RecurrenceRuleTest {
     fun `every Monday without until or count has no UNTIL or COUNT`() {
         val ctx = parse("every Monday")
         assertNotNull(ctx.rrule)
+        assertNull(ctx.untilDate)
         assertTrue(!ctx.rrule!!.contains("UNTIL"))
         assertTrue(!ctx.rrule!!.contains("COUNT"))
     }

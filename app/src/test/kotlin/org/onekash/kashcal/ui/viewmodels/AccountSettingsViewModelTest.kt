@@ -9,14 +9,20 @@ import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -48,6 +54,10 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.preferences.UserPreferencesRepository
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
+import org.onekash.kashcal.domain.feeds.FeedAccount
+import org.onekash.kashcal.domain.feeds.FeedListing
+import org.onekash.kashcal.domain.feeds.ServerCalendarFeeds
+import org.onekash.kashcal.domain.feeds.ServerFeed
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.reader.SyncLogReader
 import org.onekash.kashcal.error.CalendarError
@@ -61,14 +71,18 @@ import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.sync.scheduler.SyncStatus
 import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
 import org.onekash.kashcal.ui.screens.settings.AccountDetailSyncStatus
+import org.onekash.kashcal.ui.screens.settings.AccountFeedRow
+import org.onekash.kashcal.ui.screens.settings.AccountFeedsContent
 import org.onekash.kashcal.ui.screens.settings.CalDavConnectionState
 import org.onekash.kashcal.ui.screens.settings.ContactSyncConfirmation
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.shared.EventColorPalette
+import org.onekash.kashcal.ui.shared.maskEmail
 import org.onekash.kashcal.ui.util.UiMessage
 import org.onekash.kashcal.widget.WidgetUpdateManager
 import java.util.UUID
 import org.onekash.kashcal.testutil.plainImportFile
+import kotlinx.coroutines.withContext
 
 /**
  * Tests AccountSettingsViewModel.
@@ -132,6 +146,8 @@ class AccountSettingsViewModelTest {
     private lateinit var backupExporter: org.onekash.kashcal.domain.backup.SettingsBackupExporter
     private lateinit var backupImporter: org.onekash.kashcal.domain.backup.SettingsBackupImporter
     private lateinit var permissionChecker: org.onekash.kashcal.ui.permission.FakePermissionChecker
+    private lateinit var serverCalendarFeeds: ServerCalendarFeeds
+    private val feedAccountsFlow = MutableStateFlow<List<FeedAccount>>(emptyList())
 
     // Flows we control
     private lateinit var calendarsFlow: MutableStateFlow<List<Calendar>>
@@ -246,6 +262,8 @@ class AccountSettingsViewModelTest {
         every { eventCoordinator.getAllCalendars() } returns calendarsFlow
         every { eventCoordinator.getAllAccounts() } returns flowOf(emptyList())
         every { eventCoordinator.getICloudCalendarCount() } returns iCloudCalendarCountFlow
+        // The iCloud row's enabled flag is observed from the accounts table.
+        every { accountRepository.getAccountsByProviderFlow(any()) } returns flowOf(emptyList())
         every { eventCoordinator.getCalDavAccountCount() } returns calDavAccountCountFlow
         every { userPreferences.defaultCalendarId } returns defaultCalendarIdFlow
         every { userPreferences.defaultCalendar } returns defaultCalendarFlow
@@ -260,6 +278,10 @@ class AccountSettingsViewModelTest {
         coEvery { accountRepository.hasCredentials(any()) } returns false
 
         every { eventCoordinator.getAllIcsSubscriptions() } returns flowOf(emptyList())
+
+        // Strict: only the feed-account flow is stubbed; each feeds test stubs what it calls.
+        serverCalendarFeeds = mockk()
+        every { serverCalendarFeeds.observeFeedAccounts() } returns feedAccountsFlow
 
         every { dataStore.contactBirthdaysEnabled } returns contactBirthdaysEnabledFlow
         every { dataStore.contactBirthdaysLastSync } returns contactBirthdaysLastSyncFlow
@@ -286,7 +308,9 @@ class AccountSettingsViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel(): AccountSettingsViewModel {
+    private fun createViewModel(
+        savedStateHandle: androidx.lifecycle.SavedStateHandle = androidx.lifecycle.SavedStateHandle(),
+    ): AccountSettingsViewModel {
         // Stubs context.getString for the strings tests assert on, so messages are stable under
         // the relaxed mock.
         val stubContext: android.content.Context = io.mockk.mockk(relaxed = true) {
@@ -306,6 +330,7 @@ class AccountSettingsViewModelTest {
             discoveryService = discoveryService,
             calDavDiscoveryService = calDavDiscoveryService,
             eventCoordinator = eventCoordinator,
+            serverCalendarFeeds = serverCalendarFeeds,
             syncLogReader = syncLogReader,
             contactEventManager = contactEventManager,
             calendarProviderManager = calendarProviderManager,
@@ -323,6 +348,7 @@ class AccountSettingsViewModelTest {
             ),
             context = stubContext,
             applicationScope = applicationScope,
+            savedStateHandle = savedStateHandle,
         )
     }
 
@@ -865,69 +891,6 @@ class AccountSettingsViewModelTest {
             syncScheduler.setShowBannerForSync(true)
             syncScheduler.requestImmediateSync(forceFullSync = true, showNotification = true)
         }
-    }
-
-    // ==================== Calendar Visibility Tests ====================
-
-    @Test
-    fun `onToggleCalendar calls eventCoordinator setCalendarVisibility`() = runTest {
-        calendarsFlow.value = testCalendars
-        coEvery { eventCoordinator.setCalendarVisibility(any(), any()) } returns Unit
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.onToggleCalendar(1L, false)
-        advanceUntilIdle()
-
-        coVerify { eventCoordinator.setCalendarVisibility(1L, false) }
-    }
-
-    @Test
-    fun `onToggleCalendar shows calendar`() = runTest {
-        calendarsFlow.value = testCalendars
-        coEvery { eventCoordinator.setCalendarVisibility(any(), any()) } returns Unit
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.onToggleCalendar(1L, true)
-        advanceUntilIdle()
-
-        coVerify { eventCoordinator.setCalendarVisibility(1L, true) }
-    }
-
-    @Test
-    fun `onShowAllCalendars sets all calendars visible via EventCoordinator`() = runTest {
-        calendarsFlow.value = testCalendars
-        coEvery { eventCoordinator.setCalendarVisibility(any(), any()) } returns Unit
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.onShowAllCalendars()
-        advanceUntilIdle()
-
-        coVerify { eventCoordinator.setCalendarVisibility(1L, true) }
-        coVerify { eventCoordinator.setCalendarVisibility(2L, true) }
-        coVerify { eventCoordinator.setCalendarVisibility(3L, true) }
-    }
-
-    @Test
-    fun `onHideAllCalendars keeps one calendar visible via EventCoordinator`() = runTest {
-        calendarsFlow.value = testCalendars
-        coEvery { eventCoordinator.setCalendarVisibility(any(), any()) } returns Unit
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.onHideAllCalendars()
-        advanceUntilIdle()
-
-        // The first calendar stays visible; the others are hidden.
-        coVerify { eventCoordinator.setCalendarVisibility(1L, true) }
-        coVerify { eventCoordinator.setCalendarVisibility(2L, false) }
-        coVerify { eventCoordinator.setCalendarVisibility(3L, false) }
     }
 
     // ==================== Default Calendar Tests ====================
@@ -2408,7 +2371,7 @@ class AccountSettingsViewModelTest {
     }
 
     @Test
-    fun `onSignIn skips success sheet in initial setup mode`() = runTest {
+    fun `onSignIn skips success sheet on the onboarding iCloud route`() = runTest {
         coEvery { discoveryService.discoverAndCreateAccount(any(), any()) } returns DiscoveryResult.Success(
             account = testDbAccount,
             calendars = testCalendars
@@ -2418,7 +2381,7 @@ class AccountSettingsViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.setInitialSetupMode(true)
+        viewModel.applyOnboardingRoute(OnboardingRoute.ICLOUD)
         viewModel.onAppleIdChange("test@icloud.com")
         viewModel.onPasswordChange("xxxx-xxxx-xxxx-xxxx")
         advanceUntilIdle()
@@ -2429,6 +2392,259 @@ class AccountSettingsViewModelTest {
         val state = viewModel.uiState.value
         assertEquals(false, state.showAccountConnectedSheet)
         assertTrue(state.pendingFinishActivity)
+    }
+
+    // ==================== Onboarding routes ====================
+
+    @Test
+    fun `the onboarding iCloud route opens the sign-in and Cancel returns to the calendar`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.applyOnboardingRoute(OnboardingRoute.ICLOUD)
+        assertTrue(viewModel.uiState.value.showICloudSignInSheet)
+
+        viewModel.hideICloudSignInSheet()
+
+        assertFalse(viewModel.uiState.value.showICloudSignInSheet)
+        assertTrue(viewModel.uiState.value.pendingFinishActivity)
+    }
+
+    @Test
+    fun `the onboarding CalDAV route opens the sign-in and Cancel returns to the calendar`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.applyOnboardingRoute(OnboardingRoute.CALDAV)
+        assertTrue(viewModel.uiState.value.showCalDavSignInSheet)
+
+        viewModel.hideCalDavSignInSheet()
+
+        assertFalse(viewModel.uiState.value.showCalDavSignInSheet)
+        assertTrue(viewModel.uiState.value.pendingFinishActivity)
+    }
+
+    @Test
+    fun `cancelling a sign-in opened from Settings stays in Settings`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.showICloudSignInSheet()
+        viewModel.hideICloudSignInSheet()
+        viewModel.showCalDavSignInSheet()
+        viewModel.hideCalDavSignInSheet()
+
+        assertFalse(viewModel.uiState.value.pendingFinishActivity)
+    }
+
+    @Test
+    fun `an onboarding route is applied once per view model, so a rotation does not reopen it`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.applyOnboardingRoute(OnboardingRoute.CALDAV)
+        viewModel.hideAccountConnectedSheet()
+        viewModel.hideCalDavSignInSheet()
+        // The activity is recreated with the same intent; the view model is kept.
+        viewModel.applyOnboardingRoute(OnboardingRoute.CALDAV)
+
+        assertFalse(viewModel.uiState.value.showCalDavSignInSheet)
+        assertFalse(viewModel.uiState.value.pendingFinishActivity)
+    }
+
+    @Test
+    fun `Add another on the connected sheet ends the onboarding route`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.applyOnboardingRoute(OnboardingRoute.CALDAV)
+        viewModel.hideAccountConnectedSheet()
+        viewModel.applyOnboardingRoute(OnboardingRoute.CALDAV)
+        viewModel.showCalDavSignInSheet()
+        viewModel.hideCalDavSignInSheet()
+
+        assertFalse(viewModel.uiState.value.pendingFinishActivity)
+    }
+
+    @Test
+    fun `after Add another an iCloud success shows the connected sheet`() = runTest {
+        coEvery { discoveryService.discoverAndCreateAccount(any(), any()) } returns DiscoveryResult.Success(
+            account = testDbAccount,
+            calendars = testCalendars
+        )
+        coEvery { accountRepository.saveCredentials(any(), any()) } returns true
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.applyOnboardingRoute(OnboardingRoute.CALDAV)
+        viewModel.hideAccountConnectedSheet()
+        viewModel.onAppleIdChange("test@icloud.com")
+        viewModel.onPasswordChange("xxxx-xxxx-xxxx-xxxx")
+        viewModel.onSignIn()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.showAccountConnectedSheet)
+        assertFalse(viewModel.uiState.value.pendingFinishActivity)
+    }
+
+    @Test
+    fun `a new view model after process death applies the route again`() = runTest {
+        val first = createViewModel()
+        advanceUntilIdle()
+        first.applyOnboardingRoute(OnboardingRoute.ICLOUD)
+
+        val afterProcessDeath = createViewModel()
+        advanceUntilIdle()
+        afterProcessDeath.applyOnboardingRoute(OnboardingRoute.ICLOUD)
+
+        assertTrue(afterProcessDeath.uiState.value.showICloudSignInSheet)
+    }
+
+    @Test
+    fun `closing the iCloud sheet while it connects on the onboarding route lets the sign-in finish`() = runTest {
+        coEvery { discoveryService.discoverAndCreateAccount(any(), any()) } coAnswers { awaitCancellation() }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.applyOnboardingRoute(OnboardingRoute.ICLOUD)
+        viewModel.onAppleIdChange("test@icloud.com")
+        viewModel.onPasswordChange("xxxx-xxxx-xxxx-xxxx")
+        viewModel.onSignIn()
+        // runCurrent, not advanceUntilIdle: skipping virtual time would hit the discovery timeout.
+        runCurrent()
+        assertEquals(ICloudConnectionState.Connecting, viewModel.uiState.value.iCloudState)
+
+        viewModel.hideICloudSignInSheet()
+
+        // Finishing now would clear the view model and cancel the sign-in mid-write.
+        assertFalse(viewModel.uiState.value.pendingFinishActivity)
+    }
+
+    @Test
+    fun `closing the CalDAV sheet while it discovers on the onboarding route lets discovery finish`() = runTest {
+        coEvery { calDavDiscoveryService.isDisplayNameAvailable(any()) } returns true
+        coEvery { calDavDiscoveryService.discoverCalendars(any(), any(), any(), any()) } coAnswers {
+            awaitCancellation()
+        }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.applyOnboardingRoute(OnboardingRoute.CALDAV)
+        viewModel.onCalDavServerUrlChange("https://nextcloud.example.com")
+        viewModel.onCalDavUsernameChange("user")
+        viewModel.onCalDavPasswordChange("password123")
+        advanceUntilIdle()
+        viewModel.onCalDavDiscover()
+        // runCurrent, not advanceUntilIdle: skipping virtual time would hit the discovery timeout.
+        runCurrent()
+        assertTrue(viewModel.uiState.value.calDavState is CalDavConnectionState.Discovering)
+
+        viewModel.hideCalDavSignInSheet()
+
+        assertFalse(viewModel.uiState.value.pendingFinishActivity)
+    }
+
+    @Test
+    fun `a CalDAV sign-in on the onboarding route shows the connected sheet and Done returns`() = runTest {
+        coEvery { calDavDiscoveryService.isDisplayNameAvailable(any()) } returns true
+        coEvery { calDavDiscoveryService.discoverCalendars(any(), any(), any(), any()) } returns
+            DiscoveryResult.CalendarsFound(
+                serverUrl = "https://nextcloud.example.com",
+                username = "user",
+                calendarHomeUrl = "https://nextcloud.example.com/remote.php/dav/calendars/user/",
+                principalUrl = "https://nextcloud.example.com/remote.php/dav/principals/users/user/",
+                calendars = listOf(
+                    DiscoveredCalendar(href = "/remote.php/dav/calendars/user/personal/", displayName = "Personal", color = 0)
+                )
+            )
+        coEvery {
+            calDavDiscoveryService.createAccountWithSelectedCalendars(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns DiscoveryResult.Success(
+            account = Account(id = 42L, provider = AccountProvider.CALDAV, email = "user"),
+            calendars = emptyList()
+        )
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.applyOnboardingRoute(OnboardingRoute.CALDAV)
+        viewModel.onCalDavServerUrlChange("https://nextcloud.example.com")
+        viewModel.onCalDavUsernameChange("user")
+        viewModel.onCalDavPasswordChange("password123")
+        advanceUntilIdle()
+        viewModel.onCalDavDiscover()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.showAccountConnectedSheet)
+        assertFalse(viewModel.uiState.value.pendingFinishActivity)
+
+        viewModel.onAccountConnectedDone()
+        assertTrue(viewModel.uiState.value.pendingFinishActivity)
+    }
+
+    @Test
+    fun `a route the user left stays left after process death`() = runTest {
+        val handle = androidx.lifecycle.SavedStateHandle()
+        val first = createViewModel(handle)
+        advanceUntilIdle()
+        first.applyOnboardingRoute(OnboardingRoute.CALDAV)
+        first.hideAccountConnectedSheet()
+
+        val afterProcessDeath = createViewModel(handle)
+        advanceUntilIdle()
+        afterProcessDeath.applyOnboardingRoute(OnboardingRoute.CALDAV)
+
+        assertFalse(afterProcessDeath.uiState.value.showCalDavSignInSheet)
+    }
+
+    // ==================== Device calendars after Android settings ====================
+
+    @Test
+    fun `coming back from Android settings with access turns device calendars on once`() = runTest {
+        permissionChecker.calendarRead = false
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.markDeviceCalendarsPendingSettings()
+        // The resume right after the refused request, before the user reaches Android settings.
+        viewModel.refreshCalendarPermission()
+        advanceUntilIdle()
+        coVerify(exactly = 0) { dataStore.setDeviceCalendarsEnabled(true) }
+
+        permissionChecker.calendarRead = true
+        viewModel.refreshCalendarPermission()
+        advanceUntilIdle()
+        viewModel.refreshCalendarPermission()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { dataStore.setDeviceCalendarsEnabled(true) }
+        verify(exactly = 1) { calendarProviderManager.onEnabled() }
+    }
+
+    @Test
+    fun `without a pending return a granted refresh does not turn device calendars on`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.refreshCalendarPermission()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { dataStore.setDeviceCalendarsEnabled(true) }
+    }
+
+    @Test
+    fun `the pending return survives process death`() = runTest {
+        permissionChecker.calendarRead = false
+        val handle = androidx.lifecycle.SavedStateHandle()
+        createViewModel(handle).markDeviceCalendarsPendingSettings()
+        advanceUntilIdle()
+
+        permissionChecker.calendarRead = true
+        val afterProcessDeath = createViewModel(handle)
+        advanceUntilIdle()
+        afterProcessDeath.refreshCalendarPermission()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { dataStore.setDeviceCalendarsEnabled(true) }
     }
 
     // ==================== Edge Cases ====================
@@ -3872,6 +4088,24 @@ class AccountSettingsViewModelTest {
     }
 
     @Test
+    fun `the device reminders switch goes through the provider manager`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleDeviceCalendarReminders(true)
+        advanceUntilIdle()
+        viewModel.onToggleDeviceCalendarReminders(false)
+        advanceUntilIdle()
+
+        coVerifyOrder {
+            dataStore.setDeviceCalendarRemindersEnabled(true)
+            calendarProviderManager.onRemindersEnabled()
+            dataStore.setDeviceCalendarRemindersEnabled(false)
+            calendarProviderManager.onRemindersDisabled()
+        }
+    }
+
+    @Test
     fun `calendar notifications show as blocked when the reminder channel or permission is off`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -3899,6 +4133,18 @@ class AccountSettingsViewModelTest {
             org.onekash.kashcal.ui.permission.ChangeNotificationsStep.RequestPermission,
             viewModel.calendarNotificationsStep()
         )
+    }
+
+    @Test
+    fun `a Settings notification permission answer records that the app asked`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onCalendarNotificationsPermissionResult(granted = false)
+        viewModel.onChangeNotificationsPermissionResult(granted = true)
+        advanceUntilIdle()
+
+        coVerify(exactly = 2) { userPreferences.setNotificationAskDone() }
     }
 
     @Test
@@ -4099,5 +4345,812 @@ class AccountSettingsViewModelTest {
         viewModel.refreshChangeNotifications()
         advanceUntilIdle()
         assertTrue(viewModel.changeNotificationsOn.value)
+    }
+
+    // ==================== Sign in again (#371) ====================
+
+    private val signInAgainAccount = Account(
+        id = 7L,
+        provider = AccountProvider.CALDAV,
+        email = "user",
+        displayName = "Home",
+        principalUrl = "http://192.168.1.5:8080/remote.php/dav/principals/users/user/",
+        homeSetUrl = "http://192.168.1.5:8080/remote.php/dav/calendars/user/",
+        isEnabled = true
+    )
+
+    private val signInAgainFound = DiscoveryResult.CalendarsFound(
+        serverUrl = "http://192.168.1.5:8080",
+        username = "user",
+        calendarHomeUrl = "http://192.168.1.5:8080/remote.php/dav/calendars/user/",
+        principalUrl = "http://192.168.1.5:8080/remote.php/dav/principals/users/user/",
+        calendars = listOf(
+            DiscoveredCalendar(href = "/remote.php/dav/calendars/user/personal/", displayName = "Personal", color = 0xFF2196F3.toInt())
+        )
+    )
+
+    private fun stubSignInAgainDiscovery(createResult: DiscoveryResult = DiscoveryResult.Success(signInAgainAccount, emptyList())) {
+        coEvery { accountRepository.getAccountById(7L) } returns signInAgainAccount
+        coEvery { calDavDiscoveryService.isDisplayNameAvailable(any(), any()) } returns true
+        coEvery { calDavDiscoveryService.discoverCalendars(any(), any(), any(), any()) } returns signInAgainFound
+        coEvery {
+            calDavDiscoveryService.createAccountWithSelectedCalendars(any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } returns createResult
+    }
+
+    @Test
+    fun `startCalDavSignInAgain prefills the sheet from the account and records it`() = runTest {
+        coEvery { accountRepository.getAccountById(7L) } returns signInAgainAccount
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.startCalDavSignInAgain(7L)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state.showCalDavSignInSheet)
+        assertEquals(7L, state.calDavSignInAgainAccountId)
+        val form = state.calDavState as CalDavConnectionState.NotConnected
+        assertEquals("http://192.168.1.5:8080", form.serverUrl)
+        assertEquals("user", form.username)
+        assertEquals("Home", form.displayName)
+        assertEquals("", form.password)
+        assertFalse(form.trustInsecure)
+        assertNull(form.error)
+    }
+
+    @Test
+    fun `startCalDavSignInAgain with no home set or name regenerates the name as the server is typed`() = runTest {
+        coEvery { accountRepository.getAccountById(7L) } returns signInAgainAccount.copy(homeSetUrl = null, displayName = null)
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.startCalDavSignInAgain(7L)
+        advanceUntilIdle()
+        val prefilled = viewModel.uiState.value.calDavState as CalDavConnectionState.NotConnected
+        assertEquals("", prefilled.serverUrl)
+        assertEquals("", prefilled.displayName)
+
+        viewModel.onCalDavServerUrlChange("https://nextcloud.example.com")
+        val typed = viewModel.uiState.value.calDavState as CalDavConnectionState.NotConnected
+        assertTrue("name regenerated, got '${typed.displayName}'", typed.displayName.isNotBlank())
+    }
+
+    @Test
+    fun `startCalDavSignInAgain with a home set but no name prefills the generated name`() = runTest {
+        coEvery { accountRepository.getAccountById(7L) } returns signInAgainAccount.copy(displayName = null)
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.startCalDavSignInAgain(7L)
+        advanceUntilIdle()
+
+        val form = viewModel.uiState.value.calDavState as CalDavConnectionState.NotConnected
+        assertTrue("generated name, got '${form.displayName}'", form.displayName.isNotBlank())
+        // Marked as typed, so changing the server afterwards keeps it.
+        viewModel.onCalDavServerUrlChange("https://nextcloud.example.com")
+        assertEquals(form.displayName, (viewModel.uiState.value.calDavState as CalDavConnectionState.NotConnected).displayName)
+    }
+
+    @Test
+    fun `startCalDavSignInAgain ignores accounts that are not CalDAV`() = runTest {
+        coEvery { accountRepository.getAccountById(7L) } returns signInAgainAccount.copy(provider = AccountProvider.ICLOUD)
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.startCalDavSignInAgain(7L)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.showCalDavSignInSheet)
+        assertNull(viewModel.uiState.value.calDavSignInAgainAccountId)
+    }
+
+    @Test
+    fun `sign in again excludes the account from the name checks and re-attaches it with a forced sync`() = runTest {
+        stubSignInAgainDiscovery()
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.startCalDavSignInAgain(7L)
+        advanceUntilIdle()
+        viewModel.onCalDavDisplayNameChange("Home")
+        viewModel.onCalDavPasswordChange("new-pass")
+        advanceUntilIdle()
+        viewModel.onCalDavDiscover()
+        advanceUntilIdle()
+
+        coVerify { calDavDiscoveryService.isDisplayNameAvailable("Home", 7L) }
+        coVerify(exactly = 0) { calDavDiscoveryService.isDisplayNameAvailable(any(), null) }
+        coVerify {
+            calDavDiscoveryService.createAccountWithSelectedCalendars(
+                "http://192.168.1.5:8080", "user", "new-pass", false, any(), any(), any(), "Home", 7L
+            )
+        }
+        verify { syncScheduler.syncAccount(7L, forceFullSync = true) }
+        assertNull(viewModel.uiState.value.calDavSignInAgainAccountId)
+    }
+
+    @Test
+    fun `after a successful sign in again the next Add CalDAV is a normal sign-in`() = runTest {
+        stubSignInAgainDiscovery()
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.startCalDavSignInAgain(7L)
+        advanceUntilIdle()
+        viewModel.onCalDavPasswordChange("new-pass")
+        viewModel.onCalDavDiscover()
+        advanceUntilIdle()
+
+        viewModel.showCalDavSignInSheet()
+        viewModel.onCalDavServerUrlChange("http://192.168.1.5:8080")
+        viewModel.onCalDavUsernameChange("other")
+        viewModel.onCalDavDisplayNameChange("Second")
+        viewModel.onCalDavPasswordChange("pw")
+        advanceUntilIdle()
+        viewModel.onCalDavDiscover()
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.calDavSignInAgainAccountId)
+        coVerify { calDavDiscoveryService.isDisplayNameAvailable("Second", null) }
+        coVerify {
+            calDavDiscoveryService.createAccountWithSelectedCalendars(any(), "other", "pw", any(), any(), any(), any(), any(), null)
+        }
+    }
+
+    @Test
+    fun `hiding the sheet ends sign in again`() = runTest {
+        coEvery { accountRepository.getAccountById(7L) } returns signInAgainAccount
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.startCalDavSignInAgain(7L)
+        advanceUntilIdle()
+
+        viewModel.hideCalDavSignInSheet()
+
+        assertNull(viewModel.uiState.value.calDavSignInAgainAccountId)
+        assertEquals(CalDavConnectionState.NotConnected(), viewModel.uiState.value.calDavState)
+    }
+
+    @Test
+    fun `dismissing the sheet during discovery still re-attaches the account it was opened from`() = runTest {
+        stubSignInAgainDiscovery()
+        val viewModel = createViewModel()
+        coEvery { calDavDiscoveryService.discoverCalendars(any(), any(), any(), any()) } coAnswers {
+            viewModel.hideCalDavSignInSheet()
+            signInAgainFound
+        }
+        advanceUntilIdle()
+        viewModel.startCalDavSignInAgain(7L)
+        advanceUntilIdle()
+        viewModel.onCalDavPasswordChange("new-pass")
+        viewModel.onCalDavDiscover()
+        advanceUntilIdle()
+
+        coVerify {
+            calDavDiscoveryService.createAccountWithSelectedCalendars(any(), any(), any(), any(), any(), any(), any(), any(), 7L)
+        }
+    }
+
+    @Test
+    fun `fields changed during discovery do not replace what was submitted`() = runTest {
+        stubSignInAgainDiscovery()
+        val viewModel = createViewModel()
+        coEvery { calDavDiscoveryService.discoverCalendars(any(), any(), any(), any()) } coAnswers {
+            // Reopening the sheet mid-discovery rewrites the form, as startCalDavSignInAgain does.
+            viewModel.onCalDavPasswordChange("")
+            viewModel.onCalDavUsernameChange("someone-else")
+            signInAgainFound
+        }
+        advanceUntilIdle()
+        viewModel.startCalDavSignInAgain(7L)
+        advanceUntilIdle()
+        viewModel.onCalDavPasswordChange("new-pass")
+        viewModel.onCalDavDiscover()
+        advanceUntilIdle()
+
+        coVerify {
+            calDavDiscoveryService.createAccountWithSelectedCalendars(
+                any(), "user", "new-pass", false, any(), any(), any(), "Home", 7L
+            )
+        }
+    }
+
+    @Test
+    fun `a different account during sign in again shows the mismatch message`() = runTest {
+        stubSignInAgainDiscovery(
+            createResult = DiscoveryResult.Error("different", reason = DiscoveryErrorReason.ACCOUNT_MISMATCH)
+        )
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.startCalDavSignInAgain(7L)
+        advanceUntilIdle()
+        viewModel.onCalDavPasswordChange("new-pass")
+        viewModel.onCalDavDiscover()
+        advanceUntilIdle()
+
+        val form = viewModel.uiState.value.calDavState as CalDavConnectionState.NotConnected
+        assertEquals(UiMessage.ResId(R.string.caldav_error_sign_in_again_mismatch), form.error)
+        verify(exactly = 0) { syncScheduler.syncAccount(any(), any()) }
+    }
+
+    @Test
+    fun `account detail needs sign in only for a CalDAV account without readable credentials`() = runTest {
+        val icloud = testDetailAccount.copy(id = 11L, provider = AccountProvider.ICLOUD)
+        every { accountRepository.getAccountByIdFlow(10L) } returns flowOf(testDetailAccount)
+        every { accountRepository.getAccountByIdFlow(11L) } returns flowOf(icloud)
+        coEvery { accountRepository.getCredentials(any()) } returns null
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.observeAccountDetail(10L)
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.accountDetail!!.needsSignIn)
+
+        viewModel.observeAccountDetail(11L)
+        advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.accountDetail!!.needsSignIn)
+
+        coEvery { accountRepository.getCredentials(10L) } returns
+            AccountCredentials(username = "user", password = "pw", serverUrl = "https://dav.example.com")
+        viewModel.observeAccountDetail(10L)
+        advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.accountDetail!!.needsSignIn)
+    }
+
+    @Test
+    fun `account detail treats an unreadable stored value as needing sign in instead of crashing`() = runTest {
+        every { accountRepository.getAccountByIdFlow(10L) } returns flowOf(testDetailAccount)
+        // EncryptedSharedPreferences throws this for a stored value that isn't valid Base64.
+        coEvery { accountRepository.getCredentials(10L) } throws IllegalArgumentException("bad base-64")
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.observeAccountDetail(10L)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.accountDetail!!.needsSignIn)
+    }
+
+    @Test
+    fun `account detail never needs sign in for a local account`() = runTest {
+        every { accountRepository.getAccountByIdFlow(12L) } returns
+            flowOf(testDetailAccount.copy(id = 12L, provider = AccountProvider.LOCAL))
+        coEvery { accountRepository.getCredentials(any()) } returns null
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.observeAccountDetail(12L)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.accountDetail!!.needsSignIn)
+    }
+
+    @Test
+    fun `changeAccountPassword without stored credentials fails with No existing credentials`() = runTest {
+        coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount
+        coEvery { accountRepository.getCredentials(10L) } returns null
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        var callbackResult: Result<Unit>? = null
+        viewModel.changeAccountPassword(10L, "new-pass") { callbackResult = it }
+        advanceUntilIdle()
+
+        assertEquals("No existing credentials", callbackResult!!.exceptionOrNull()?.message)
+        coVerify(exactly = 0) { accountRepository.saveCredentials(any(), any()) }
+    }
+
+    // ==================== iCloud sign in again (#371) ====================
+
+    @Test
+    fun `an iCloud account without credentials prefills its Apple ID`() = runTest {
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testDbAccount)
+        coEvery { accountRepository.hasCredentials(testDbAccount.id) } returns false
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value.iCloudState as ICloudConnectionState.NotConnected
+        assertEquals("test@icloud.com", state.appleId)
+        assertEquals("", state.password)
+        assertNull(state.error)
+    }
+
+    @Test
+    fun `the prefilled Apple ID stays editable`() = runTest {
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testDbAccount)
+        coEvery { accountRepository.hasCredentials(testDbAccount.id) } returns false
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onAppleIdChange("other@icloud.com")
+
+        assertEquals("other@icloud.com", (viewModel.uiState.value.iCloudState as ICloudConnectionState.NotConnected).appleId)
+    }
+
+    @Test
+    fun `signing in again to the existing iCloud account runs the forced sync`() = runTest {
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testDbAccount)
+        coEvery { accountRepository.hasCredentials(testDbAccount.id) } returns false
+        coEvery { discoveryService.discoverAndCreateAccount(any(), any()) } returns
+            DiscoveryResult.Success(account = testDbAccount, calendars = testCalendars)
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onPasswordChange("xxxx-xxxx-xxxx-xxxx")
+        viewModel.onSignIn()
+        advanceUntilIdle()
+
+        coVerify { discoveryService.discoverAndCreateAccount("test@icloud.com", "xxxx-xxxx-xxxx-xxxx") }
+        verify { syncScheduler.syncAccount(testDbAccount.id, forceFullSync = true) }
+    }
+
+    // ==================== Account rows: sync on or off ====================
+
+    @Test
+    fun `CalDAV rows carry each account's enabled state`() = runTest {
+        every { eventCoordinator.getCalDavAccounts() } returns flowOf(
+            listOf(
+                testDetailAccount.copy(id = 20L, isEnabled = false),
+                testDetailAccount.copy(id = 21L, isEnabled = true),
+            )
+        )
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val rows = viewModel.uiState.value.calDavAccounts.associateBy { it.id }
+        assertFalse(rows.getValue(20L).isEnabled)
+        assertTrue(rows.getValue(21L).isEnabled)
+    }
+
+    @Test
+    fun `iCloud Connected starts with the account's enabled state and follows the toggle`() = runTest {
+        val disabled = testDbAccount.copy(isEnabled = false)
+        val rows = MutableStateFlow(listOf(disabled))
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(disabled)
+        coEvery { accountRepository.hasCredentials(disabled.id) } returns true
+        every { accountRepository.getAccountsByProviderFlow(AccountProvider.ICLOUD) } returns rows
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertFalse((viewModel.uiState.value.iCloudState as ICloudConnectionState.Connected).isEnabled)
+
+        rows.value = listOf(disabled.copy(isEnabled = true))
+        advanceUntilIdle()
+        assertTrue((viewModel.uiState.value.iCloudState as ICloudConnectionState.Connected).isEnabled)
+
+        rows.value = listOf(disabled.copy(isEnabled = false))
+        advanceUntilIdle()
+        assertFalse((viewModel.uiState.value.iCloudState as ICloudConnectionState.Connected).isEnabled)
+    }
+
+    @Test
+    fun `iCloud account rows leave a state that isn't Connected untouched`() = runTest {
+        val rows = MutableStateFlow(listOf(testDbAccount.copy(isEnabled = false)))
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns emptyList()
+        every { accountRepository.getAccountsByProviderFlow(AccountProvider.ICLOUD) } returns rows
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        val notConnected = viewModel.uiState.value.iCloudState
+        assertTrue(notConnected is ICloudConnectionState.NotConnected)
+
+        rows.value = listOf(testDbAccount.copy(isEnabled = false, displayName = "changed"))
+        advanceUntilIdle()
+        assertEquals(notConnected, viewModel.uiState.value.iCloudState)
+    }
+
+    @Test
+    fun `a row emitted while signing in still applies after sign-in when emitted again`() = runTest {
+        // Replays and re-emits equal values, as a Room flow does after each write to the table.
+        val rows = MutableSharedFlow<List<Account>>(replay = 1)
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns emptyList()
+        every { accountRepository.getAccountsByProviderFlow(AccountProvider.ICLOUD) } returns rows
+        val viewModel = createViewModel()
+        var stateDuringSignIn: ICloudConnectionState? = null
+        coEvery { discoveryService.discoverAndCreateAccount(any(), any()) } coAnswers {
+            rows.emit(listOf(testDbAccount.copy(isEnabled = false)))
+            // Lets the observer take the row while sign-in is still in progress.
+            kotlinx.coroutines.yield()
+            stateDuringSignIn = viewModel.uiState.value.iCloudState
+            DiscoveryResult.Success(account = testDbAccount.copy(isEnabled = true), calendars = testCalendars)
+        }
+        advanceUntilIdle()
+
+        viewModel.onAppleIdChange("test@icloud.com")
+        viewModel.onPasswordChange("xxxx-xxxx-xxxx-xxxx")
+        viewModel.onSignIn()
+        advanceUntilIdle()
+        assertTrue("taken while signing in: $stateDuringSignIn", stateDuringSignIn is ICloudConnectionState.Connecting)
+        assertTrue((viewModel.uiState.value.iCloudState as ICloudConnectionState.Connected).isEnabled)
+
+        // The stored row says off; the equal re-emission must still reach the Connected state.
+        rows.emit(listOf(testDbAccount.copy(isEnabled = false)))
+        advanceUntilIdle()
+        assertFalse((viewModel.uiState.value.iCloudState as ICloudConnectionState.Connected).isEnabled)
+    }
+
+    @Test
+    fun `signing out leaves NotConnected when the rows empty`() = runTest {
+        val rows = MutableStateFlow(listOf(testDbAccount.copy(isEnabled = true)))
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testDbAccount)
+        coEvery { accountRepository.hasCredentials(testDbAccount.id) } returns true
+        every { accountRepository.getAccountsByProviderFlow(AccountProvider.ICLOUD) } returns rows
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onSignOut()
+        rows.value = emptyList()
+        advanceUntilIdle()
+
+        assertEquals(ICloudConnectionState.NotConnected(), viewModel.uiState.value.iCloudState)
+    }
+
+    @Test
+    fun `loading builds Connected with the row's enabled state on its own`() = runTest {
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testDbAccount.copy(isEnabled = false))
+        coEvery { accountRepository.hasCredentials(testDbAccount.id) } returns true
+        // No row emissions, so only loadInitialState can set the flag.
+        every { accountRepository.getAccountsByProviderFlow(AccountProvider.ICLOUD) } returns flowOf(emptyList())
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertFalse((viewModel.uiState.value.iCloudState as ICloudConnectionState.Connected).isEnabled)
+    }
+
+    @Test
+    fun `sign-in builds Connected with the returned account's enabled state on its own`() = runTest {
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns emptyList()
+        every { accountRepository.getAccountsByProviderFlow(AccountProvider.ICLOUD) } returns flowOf(emptyList())
+        coEvery { discoveryService.discoverAndCreateAccount(any(), any()) } returns
+            DiscoveryResult.Success(account = testDbAccount.copy(isEnabled = false), calendars = testCalendars)
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onAppleIdChange("test@icloud.com")
+        viewModel.onPasswordChange("xxxx-xxxx-xxxx-xxxx")
+        viewModel.onSignIn()
+        advanceUntilIdle()
+
+        assertFalse((viewModel.uiState.value.iCloudState as ICloudConnectionState.Connected).isEnabled)
+    }
+
+    // ==================== Add from account sheet ====================
+
+    private val nc = FeedAccount(id = 7L, displayName = "Nextcloud", email = "user@example.test")
+    private val ic = FeedAccount(id = 8L, displayName = "iCloud", email = "other@example.test")
+    private val usUrl = "https://feeds.example.test/us.ics"
+    private val deUrl = "https://feeds.example.test/de.ics"
+
+    private fun subscriptionsFlowOf(vararg rows: Pair<Long, String>) {
+        every { eventCoordinator.getAllIcsSubscriptions() } returns flowOf(
+            rows.map { (id, url) ->
+                IcsSubscription(id = id, url = url, name = "Feed $id", color = 0, calendarId = 100 + id)
+            }
+        )
+    }
+
+    private fun feedsSection(vm: AccountSettingsViewModel, accountId: Long) =
+        vm.accountFeedsSheet.value!!.sections.single { it.accountId == accountId }
+
+    private fun rowsOf(vm: AccountSettingsViewModel, accountId: Long): List<AccountFeedRow> =
+        (feedsSection(vm, accountId).content as AccountFeedsContent.Feeds).rows
+
+    @Test
+    fun `Add from account shows while a feed account exists`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertFalse(viewModel.hasFeedAccounts.value)
+
+        feedAccountsFlow.value = listOf(nc)
+        advanceUntilIdle()
+        assertTrue(viewModel.hasFeedAccounts.value)
+    }
+
+    @Test
+    fun `opening the sheet starts every account Checking and lists them in parallel`() = runTest {
+        feedAccountsFlow.value = listOf(nc, ic)
+        val ncGate = CompletableDeferred<FeedListing>()
+        val icGate = CompletableDeferred<FeedListing>()
+        coEvery { serverCalendarFeeds.listFeeds(7L) } coAnswers { ncGate.await() }
+        coEvery { serverCalendarFeeds.listFeeds(8L) } coAnswers { icGate.await() }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onOpenAccountFeeds()
+        runCurrent()
+
+        val sections = viewModel.accountFeedsSheet.value!!.sections
+        assertEquals(listOf(7L, 8L), sections.map { it.accountId })
+        assertEquals(maskEmail("user@example.test"), sections[0].maskedEmail)
+        assertEquals("Nextcloud", sections[0].displayName)
+        assertTrue(sections.all { it.content == AccountFeedsContent.Checking })
+        coVerify(exactly = 1) { serverCalendarFeeds.listFeeds(7L) }
+        coVerify(exactly = 1) { serverCalendarFeeds.listFeeds(8L) }
+
+        icGate.complete(FeedListing.Failed)
+        ncGate.complete(FeedListing.Feeds(emptyList()))
+        advanceUntilIdle()
+        assertEquals(AccountFeedsContent.NoFeeds, feedsSection(viewModel, 7L).content)
+        assertEquals(AccountFeedsContent.Failed, feedsSection(viewModel, 8L).content)
+    }
+
+    @Test
+    fun `a listing's feeds become rows with the server name, host and color`() = runTest {
+        feedAccountsFlow.value = listOf(nc)
+        coEvery { serverCalendarFeeds.listFeeds(7L) } returns
+            FeedListing.Feeds(listOf(ServerFeed(usUrl, "US Holidays", 0xFF1E88E5.toInt())))
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onOpenAccountFeeds()
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(AccountFeedRow(usUrl, "US Holidays", "feeds.example.test", 0xFF1E88E5.toInt())),
+            rowsOf(viewModel, 7L),
+        )
+    }
+
+    @Test
+    fun `a listing that never returns shows Failed after 20 seconds`() = runTest {
+        feedAccountsFlow.value = listOf(nc)
+        // Like OkHttp's blocking call: cancelling the caller doesn't stop it.
+        val gate = CompletableDeferred<FeedListing>()
+        coEvery { serverCalendarFeeds.listFeeds(7L) } coAnswers { withContext(NonCancellable) { gate.await() } }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onOpenAccountFeeds()
+        advanceTimeBy(19_999)
+        runCurrent()
+        assertEquals(AccountFeedsContent.Checking, feedsSection(viewModel, 7L).content)
+
+        advanceTimeBy(2)
+        runCurrent()
+        assertEquals(AccountFeedsContent.Failed, feedsSection(viewModel, 7L).content)
+        gate.complete(FeedListing.Feeds(emptyList()))
+    }
+
+    @Test
+    fun `Retry lists only that account again and a superseded listing never shows`() = runTest {
+        feedAccountsFlow.value = listOf(nc, ic)
+        val oldGate = CompletableDeferred<FeedListing>()
+        var ncCalls = 0
+        coEvery { serverCalendarFeeds.listFeeds(7L) } coAnswers {
+            ncCalls++
+            if (ncCalls == 1) withContext(NonCancellable) { oldGate.await() }
+            else FeedListing.Feeds(listOf(ServerFeed(deUrl, "German", null)))
+        }
+        coEvery { serverCalendarFeeds.listFeeds(8L) } returns FeedListing.Feeds(emptyList())
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onOpenAccountFeeds()
+        runCurrent()
+
+        viewModel.onRetryAccountFeeds(7L)
+        advanceUntilIdle()
+        assertEquals(listOf(deUrl), rowsOf(viewModel, 7L).map { it.url })
+
+        oldGate.complete(FeedListing.Failed)
+        advanceUntilIdle()
+        assertEquals(listOf(deUrl), rowsOf(viewModel, 7L).map { it.url })
+        coVerify(exactly = 1) { serverCalendarFeeds.listFeeds(8L) }
+    }
+
+    @Test
+    fun `closing the sheet cancels listings, drops the state, and each open lists fresh`() = runTest {
+        feedAccountsFlow.value = listOf(nc)
+        val gate = CompletableDeferred<FeedListing>()
+        coEvery { serverCalendarFeeds.listFeeds(7L) } coAnswers { gate.await() }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onOpenAccountFeeds()
+        runCurrent()
+
+        viewModel.onCloseAccountFeeds()
+        gate.complete(FeedListing.Feeds(listOf(ServerFeed(usUrl, "US", null))))
+        advanceUntilIdle()
+        assertNull(viewModel.accountFeedsSheet.value)
+
+        coEvery { serverCalendarFeeds.listFeeds(7L) } returns FeedListing.Feeds(emptyList())
+        viewModel.onOpenAccountFeeds()
+        advanceUntilIdle()
+        assertEquals(AccountFeedsContent.NoFeeds, feedsSection(viewModel, 7L).content)
+        coVerify(exactly = 2) { serverCalendarFeeds.listFeeds(7L) }
+    }
+
+    @Test
+    fun `with no feed account left the sheet opens with no sections`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onOpenAccountFeeds()
+        advanceUntilIdle()
+
+        assertEquals(emptyList<Any>(), viewModel.accountFeedsSheet.value!!.sections)
+    }
+
+    @Test
+    fun `a switch is on when a Calendar Feeds entry has the same URL in any spelling, in every section`() = runTest {
+        feedAccountsFlow.value = listOf(nc, ic)
+        subscriptionsFlowOf(1L to "WEBCAL://Feeds.Example.test/us.ics")
+        coEvery { serverCalendarFeeds.listFeeds(any()) } returns FeedListing.Feeds(
+            listOf(ServerFeed(usUrl, "US", null), ServerFeed(deUrl, "DE", null))
+        )
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onOpenAccountFeeds()
+        advanceUntilIdle()
+
+        for (account in listOf(7L, 8L)) {
+            val rows = rowsOf(viewModel, account).associateBy { it.url }
+            assertTrue(rows.getValue(usUrl).isOn)
+            assertFalse(rows.getValue(deUrl).isOn)
+        }
+    }
+
+    @Test
+    fun `switching on adds the feed on the app scope with its name and the row's color, busy until done`() = runTest {
+        feedAccountsFlow.value = listOf(nc)
+        coEvery { serverCalendarFeeds.listFeeds(7L) } returns FeedListing.Feeds(listOf(ServerFeed(usUrl, "US Holidays", null)))
+        coEvery { eventCoordinator.addIcsSubscription(any(), any(), any()) } returns
+            IcsSubscriptionRepository.SubscriptionResult.Success(
+                IcsSubscription(id = 5, url = usUrl, name = "US Holidays", color = 0, calendarId = 105)
+            )
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onOpenAccountFeeds()
+        advanceUntilIdle()
+        val color = rowsOf(viewModel, 7L).single().color
+        advanceUntilIdle()
+        assertEquals("the fallback color stays put", color, rowsOf(viewModel, 7L).single().color)
+
+        viewModel.onAccountFeedSwitch(7L, usUrl, on = true)
+        advanceUntilIdle()
+        assertTrue("busy until the app-scope add runs", rowsOf(viewModel, 7L).single().isBusy)
+        coVerify(exactly = 0) { eventCoordinator.addIcsSubscription(any(), any(), any()) }
+
+        appDispatcher.scheduler.advanceUntilIdle()
+        advanceUntilIdle()
+        coVerify(exactly = 1) { eventCoordinator.addIcsSubscription(usUrl, "US Holidays", color) }
+        assertFalse(rowsOf(viewModel, 7L).single().isBusy)
+    }
+
+    @Test
+    fun `switching on adds the feed with the tapped section's name and color`() = runTest {
+        feedAccountsFlow.value = listOf(nc, ic)
+        coEvery { serverCalendarFeeds.listFeeds(7L) } returns
+            FeedListing.Feeds(listOf(ServerFeed(deUrl, "German Holidays", 0xFFE53935.toInt())))
+        coEvery { serverCalendarFeeds.listFeeds(8L) } returns
+            FeedListing.Feeds(listOf(ServerFeed(deUrl, "Bavaria Holidays", 0xFF43A047.toInt())))
+        coEvery { eventCoordinator.addIcsSubscription(any(), any(), any()) } returns
+            IcsSubscriptionRepository.SubscriptionResult.Error("dup", isDuplicate = true)
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onOpenAccountFeeds()
+        advanceUntilIdle()
+
+        viewModel.onAccountFeedSwitch(8L, deUrl, on = true)
+        appDispatcher.scheduler.advanceUntilIdle()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { eventCoordinator.addIcsSubscription(deUrl, "Bavaria Holidays", 0xFF43A047.toInt()) }
+    }
+
+    @Test
+    fun `switching off removes every matching entry right away with no Undo`() = runTest {
+        feedAccountsFlow.value = listOf(nc)
+        subscriptionsFlowOf(1L to usUrl, 2L to "webcal://feeds.example.test/us.ics", 3L to deUrl)
+        coEvery { serverCalendarFeeds.listFeeds(7L) } returns FeedListing.Feeds(listOf(ServerFeed(usUrl, "US", null)))
+        coEvery { eventCoordinator.removeIcsSubscription(any()) } returns Unit
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onOpenAccountFeeds()
+        advanceUntilIdle()
+
+        viewModel.onAccountFeedSwitch(7L, usUrl, on = false)
+        appDispatcher.scheduler.advanceUntilIdle()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { eventCoordinator.removeIcsSubscription(1L) }
+        coVerify(exactly = 1) { eventCoordinator.removeIcsSubscription(2L) }
+        coVerify(exactly = 0) { eventCoordinator.removeIcsSubscription(3L) }
+        assertNull(viewModel.uiState.value.pendingSnackbarMessage)
+        assertNull(viewModel.uiState.value.pendingSubscriptionDeletionId)
+    }
+
+    @Test
+    fun `switching on a feed pending a swipe-delete undoes the delete instead of adding`() = runTest {
+        feedAccountsFlow.value = listOf(nc)
+        subscriptionsFlowOf(1L to usUrl)
+        coEvery { serverCalendarFeeds.listFeeds(7L) } returns FeedListing.Feeds(listOf(ServerFeed(usUrl, "US", null)))
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onDeleteSubscription(1L, "Removed", "Undo")
+        viewModel.onOpenAccountFeeds()
+        advanceUntilIdle()
+        assertFalse("hidden while pending", rowsOf(viewModel, 7L).single().isOn)
+
+        viewModel.onAccountFeedSwitch(7L, usUrl, on = true)
+        appDispatcher.scheduler.advanceUntilIdle()
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.pendingSubscriptionDeletionId)
+        assertTrue(rowsOf(viewModel, 7L).single().isOn)
+        coVerify(exactly = 0) { eventCoordinator.addIcsSubscription(any(), any(), any()) }
+    }
+
+    @Test
+    fun `switching off settles a matching pending swipe-delete and removes it once`() = runTest {
+        feedAccountsFlow.value = listOf(nc)
+        subscriptionsFlowOf(1L to usUrl, 2L to "webcal://feeds.example.test/us.ics")
+        coEvery { serverCalendarFeeds.listFeeds(7L) } returns FeedListing.Feeds(listOf(ServerFeed(usUrl, "US", null)))
+        coEvery { eventCoordinator.removeIcsSubscription(any()) } returns Unit
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onDeleteSubscription(1L, "Removed", "Undo")
+        viewModel.onOpenAccountFeeds()
+        advanceUntilIdle()
+
+        viewModel.onAccountFeedSwitch(7L, usUrl, on = false)
+        appDispatcher.scheduler.advanceUntilIdle()
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.pendingSubscriptionDeletionId)
+        assertNull(viewModel.uiState.value.pendingSnackbarMessage)
+        coVerify(exactly = 1) { eventCoordinator.removeIcsSubscription(1L) }
+        coVerify(exactly = 1) { eventCoordinator.removeIcsSubscription(2L) }
+
+        viewModel.onSubscriptionDeletionSettled()
+        appDispatcher.scheduler.advanceUntilIdle()
+        coVerify(exactly = 1) { eventCoordinator.removeIcsSubscription(1L) }
+    }
+
+    @Test
+    fun `a throwing add or removal clears busy and doesn't escape`() = runTest {
+        feedAccountsFlow.value = listOf(nc)
+        subscriptionsFlowOf(1L to deUrl)
+        coEvery { serverCalendarFeeds.listFeeds(7L) } returns FeedListing.Feeds(
+            listOf(ServerFeed(usUrl, "US", null), ServerFeed(deUrl, "DE", null))
+        )
+        coEvery { eventCoordinator.addIcsSubscription(any(), any(), any()) } throws IllegalStateException("db")
+        coEvery { eventCoordinator.removeIcsSubscription(any()) } throws IllegalStateException("db")
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onOpenAccountFeeds()
+        advanceUntilIdle()
+
+        viewModel.onAccountFeedSwitch(7L, usUrl, on = true)
+        viewModel.onAccountFeedSwitch(7L, deUrl, on = false)
+        appDispatcher.scheduler.advanceUntilIdle()
+        advanceUntilIdle()
+
+        // runTest fails the test on an exception escaping any coroutine, so reaching here also
+        // shows neither throw escaped applicationScope.
+        assertTrue(rowsOf(viewModel, 7L).none { it.isBusy })
+    }
+
+    @Test
+    fun `closing and reopening the sheet mid-add keeps the switch disabled`() = runTest {
+        feedAccountsFlow.value = listOf(nc)
+        coEvery { serverCalendarFeeds.listFeeds(7L) } returns FeedListing.Feeds(listOf(ServerFeed(usUrl, "US", null)))
+        val addGate = CompletableDeferred<IcsSubscriptionRepository.SubscriptionResult>()
+        coEvery { eventCoordinator.addIcsSubscription(any(), any(), any()) } coAnswers { addGate.await() }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onOpenAccountFeeds()
+        advanceUntilIdle()
+
+        viewModel.onAccountFeedSwitch(7L, usUrl, on = true)
+        appDispatcher.scheduler.runCurrent()
+        viewModel.onCloseAccountFeeds()
+        viewModel.onOpenAccountFeeds()
+        advanceUntilIdle()
+        assertTrue(rowsOf(viewModel, 7L).single().isBusy)
+
+        addGate.complete(IcsSubscriptionRepository.SubscriptionResult.Error("dup", isDuplicate = true))
+        appDispatcher.scheduler.advanceUntilIdle()
+        advanceUntilIdle()
+        assertFalse(rowsOf(viewModel, 7L).single().isBusy)
     }
 }

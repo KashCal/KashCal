@@ -1,10 +1,10 @@
 package org.onekash.kashcal.sync.strategy.integration
 
 import io.mockk.mockk
+import org.onekash.kashcal.data.db.EventIcsStore
 
 import android.content.Context
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,6 +38,7 @@ import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.sync.strategy.PullResult
 import org.onekash.kashcal.sync.strategy.PullStrategy
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.io.File
@@ -83,7 +84,7 @@ class RealICloudPullStrategyTest {
         val context: Context = ApplicationProvider.getApplicationContext()
 
         // Real Room in-memory database
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
 
@@ -122,7 +123,8 @@ class RealICloudPullStrategyTest {
             dataStore = dataStore,
             inviteNotifier = mockk(relaxed = true),
             accountRepository = mockk(relaxed = true),
-            reminderScheduler = mockk(relaxed = true)
+            reminderScheduler = mockk(relaxed = true),
+            icsSource = EventIcsStore(database),
         )
     }
 

@@ -7,7 +7,7 @@
 -->
 <paths>
     <!--
-        Cache directory for temporary ICS exports.
+        Cache directory for temporary ICS exports and debug reports.
         Files here are auto-cleaned by system when storage is low.
         Path: /data/data/org.onekash.kashcal/cache/shared/
     -->

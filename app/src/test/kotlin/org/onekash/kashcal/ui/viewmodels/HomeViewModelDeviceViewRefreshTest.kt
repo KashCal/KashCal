@@ -84,7 +84,7 @@ class HomeViewModelDeviceViewRefreshTest {
         io.mockk.coEvery { dataStore.defaultEventDuration } returns MutableStateFlow(20)
         io.mockk.coEvery { dataStore.timeFormat } returns MutableStateFlow("system")
         io.mockk.coEvery { dataStore.showEventEmojis } returns MutableStateFlow(true)
-        io.mockk.coEvery { dataStore.onboardingDismissed } returns MutableStateFlow(true)
+        io.mockk.coEvery { dataStore.onboardingCompleted } returns MutableStateFlow(true)
 
         every { eventCoordinator.getAllCalendars() } returns MutableStateFlow(emptyList())
         every { eventReader.getVisibleOccurrencesInRange(any(), any()) } returns MutableStateFlow(emptyList())
@@ -114,6 +114,7 @@ class HomeViewModelDeviceViewRefreshTest {
         contactEmailReader = mockk(relaxed = true),
         context = mockk(relaxed = true),
         ioDispatcher = testDispatcher,
+        applicationScope = kotlinx.coroutines.CoroutineScope(testDispatcher),
     )
 
     @Test

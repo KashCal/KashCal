@@ -1,0 +1,4 @@
+• Meet Kash, a fluffball new to Earth: spot it on empty days, the first-run sheet, and About
+• Phone-calendar reminders ring even when KashCal wasn't running (#417)
+• Edit and Delete stay on screen for long titles (#418)
+• Imported UTC repeating events stay on time in device calendars (#410)

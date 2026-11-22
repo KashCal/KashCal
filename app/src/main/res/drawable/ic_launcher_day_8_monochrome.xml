@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated themed layer for day 8: outlined calendar card with binding tabs and the day number. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="88"
+    android:viewportHeight="88">
+    <group android:translateX="44" android:translateY="44" android:scaleX="0.9" android:scaleY="0.9" android:rotation="-2">
+        <path android:strokeColor="#FFFFFF" android:strokeWidth="3.5" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M-12,-17H12A6,6 0 0 1 18,-11V15A6,6 0 0 1 12,21H-12A6,6 0 0 1 -18,15V-11A6,6 0 0 1 -12,-17Z" />
+        <path android:strokeColor="#FFFFFF" android:strokeWidth="3.5" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M-9,-23V-12" />
+        <path android:strokeColor="#FFFFFF" android:strokeWidth="3.5" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M9,-23V-12" />
+        <path android:fillColor="#FFFFFF" android:pathData="M0 -3.552Q1.364 -3.552 2.497 -3.134Q3.63 -2.716 4.323 -1.88Q5.016 -1.044 5.016 0.232Q5.016 1.178 4.642 1.893Q4.268 2.608 3.641 3.136Q3.014 3.664 2.2 4.06Q3.036 4.5 3.795 5.083Q4.554 5.666 5.027 6.447Q5.5 7.228 5.5 8.284Q5.5 9.582 4.807 10.55Q4.114 11.518 2.871 12.046Q1.628 12.574 0 12.574Q-1.76 12.574 -2.992 12.068Q-4.224 11.562 -4.873 10.616Q-5.522 9.67 -5.522 8.372Q-5.522 7.294 -5.115 6.502Q-4.708 5.71 -4.026 5.127Q-3.344 4.544 -2.508 4.148Q-3.212 3.708 -3.784 3.147Q-4.356 2.586 -4.697 1.871Q-5.038 1.156 -5.038 0.21Q-5.038 -1.044 -4.334 -1.88Q-3.63 -2.716 -2.475 -3.134Q-1.32 -3.552 0 -3.552ZM-2.442 8.174Q-2.442 9.032 -1.837 9.582Q-1.232 10.132 -0.044 10.132Q1.188 10.132 1.804 9.604Q2.42 9.076 2.42 8.196Q2.42 7.602 2.068 7.151Q1.716 6.7 1.199 6.337Q0.682 5.974 0.132 5.666L-0.154 5.512Q-0.836 5.82 -1.353 6.216Q-1.87 6.612 -2.156 7.085Q-2.442 7.558 -2.442 8.174ZM-0.022 -1.132Q-0.836 -1.132 -1.375 -0.714Q-1.914 -0.296 -1.914 0.474Q-1.914 1.002 -1.65 1.409Q-1.386 1.816 -0.946 2.113Q-0.506 2.41 0 2.674Q0.506 2.432 0.935 2.146Q1.364 1.86 1.628 1.453Q1.892 1.046 1.892 0.474Q1.892 -0.296 1.353 -0.714Q0.814 -1.132 -0.022 -1.132Z" />
+    </group>
+</vector>

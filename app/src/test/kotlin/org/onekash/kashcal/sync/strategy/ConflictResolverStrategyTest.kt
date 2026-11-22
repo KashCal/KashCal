@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import android.util.Log
+import org.onekash.kashcal.testutil.FakeEventIcsSource
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -76,7 +77,8 @@ class ConflictResolverStrategyTest {
                     val block = firstArg<suspend () -> Unit>()
                     block()
                 }
-            }
+            },
+            icsSource = FakeEventIcsSource(),
         )
     }
 

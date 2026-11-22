@@ -52,4 +52,33 @@ val ALL_RELEASE_NOTES: ImmutableList<ReleaseNote> = persistentListOf(
         ),
         hero = WhatsNewHero.CHANGE_NOTIFICATIONS,
     ),
+    ReleaseNote(
+        versionCode = 803,
+        titleRes = R.string.whats_new_v803_offline_title,
+        bodyRes = R.string.whats_new_v803_offline_body,
+        findInRes = listOf(
+            R.string.hub_accounts_and_settings,
+            R.string.settings_section_calendars,
+            R.string.offline_calendars_row_label,
+        ),
+        hero = WhatsNewHero.OFFLINE_CALENDARS,
+    ),
+    ReleaseNote(
+        versionCode = 803,
+        titleRes = R.string.whats_new_v803_backup_title,
+        bodyRes = R.string.whats_new_v803_backup_body,
+        findInRes = listOf(
+            R.string.hub_accounts_and_settings,
+            R.string.settings_section_data,
+            R.string.calendar_backup_title,
+        ),
+        hero = WhatsNewHero.CALENDAR_BACKUP,
+    ),
+    ReleaseNote(
+        versionCode = 803,
+        titleRes = R.string.whats_new_v803_print_title,
+        bodyRes = R.string.whats_new_v803_print_body,
+        findInRes = listOf(R.string.hub_section_own_your_calendar, R.string.print_your_week),
+        hero = WhatsNewHero.PRINT_WEEK,
+    ),
 )

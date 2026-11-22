@@ -488,4 +488,59 @@ class RRuleExpanderRdateTest {
             assertEquals(listOf("20260110", "20260115", "20260215", "20260220"), dayCodes)
         }
     }
+
+    @Nested
+    @DisplayName("Matching by instant (RFC 5545 §3.8.5.1-2)")
+    inner class MatchingByInstant {
+
+        private val newYork = ZoneId.of("America/New_York")
+
+        private fun expandSeries(vararg extra: String, allDay: Boolean = false): List<Long> {
+            val start = if (allDay) "DTSTART;VALUE=DATE:20260301" else "DTSTART;TZID=America/New_York:20260301T100000"
+            val end = if (allDay) "DTEND;VALUE=DATE:20260302" else "DTEND;TZID=America/New_York:20260301T110000"
+            val ics = (listOf(
+                "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Test//Test//EN", "BEGIN:VEVENT",
+                "UID:instant-match@test.com", "DTSTAMP:20260101T000000Z", start, end,
+                "RRULE:FREQ=DAILY;COUNT=3", "SUMMARY:Instant matching",
+            ) + extra + listOf("END:VEVENT", "END:VCALENDAR")).joinToString("\r\n")
+            val event = (parser.parseAllEvents(ics) as ParseResult.Success).value.first()
+            return expander.expand(event, rangeFor2026()).map { it.dtStart.timestamp }
+        }
+
+        private fun ny(day: Int, hour: Int): Long =
+            ZonedDateTime.of(2026, 3, day, hour, 0, 0, 0, newYork).toInstant().toEpochMilli()
+
+        @Test
+        fun `an EXDATE at another time of day removes no occurrence`() {
+            assertEquals(listOf(ny(1, 10), ny(2, 10), ny(3, 10)), expandSeries("EXDATE;TZID=America/New_York:20260302T090000"))
+        }
+
+        @Test
+        fun `an EXDATE in UTC form at the occurrence's instant removes it`() {
+            // 2 Mar 2026 10:00 EST is 15:00Z.
+            assertEquals(listOf(ny(1, 10), ny(3, 10)), expandSeries("EXDATE:20260302T150000Z"))
+        }
+
+        @Test
+        fun `an RDATE on a day that already has an occurrence adds its own instance`() {
+            assertEquals(
+                listOf(ny(1, 10), ny(2, 10), ny(2, 15), ny(3, 10)),
+                expandSeries("RDATE;TZID=America/New_York:20260302T150000"),
+            )
+        }
+
+        @Test
+        fun `an EXDATE removes the RRULE occurrence at its instant and keeps the same-day RDATE`() {
+            assertEquals(
+                listOf(ny(1, 10), ny(2, 15), ny(3, 10)),
+                expandSeries("RDATE;TZID=America/New_York:20260302T150000", "EXDATE;TZID=America/New_York:20260302T100000"),
+            )
+        }
+
+        @Test
+        fun `a DATE EXDATE on an all-day series removes that day`() {
+            val utc = { d: Int -> ZonedDateTime.of(2026, 3, d, 0, 0, 0, 0, zone).toInstant().toEpochMilli() }
+            assertEquals(listOf(utc(1), utc(3)), expandSeries("EXDATE;VALUE=DATE:20260302", allDay = true))
+        }
+    }
 }

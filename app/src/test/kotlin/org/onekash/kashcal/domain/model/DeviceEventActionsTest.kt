@@ -29,6 +29,7 @@ class DeviceEventActionsTest {
         categories: List<String> = emptyList(),
         originalId: Long? = null,
         timezone: String? = "America/New_York",
+        eventColor: Int? = null,
     ) = DeviceCalendarInstance(
         instanceId = 1L,
         eventId = 100L,
@@ -46,7 +47,7 @@ class DeviceEventActionsTest {
         calendarId = 5L,
         calendarDisplayName = "Work Calendar",
         calendarColor = 0xFF1976D2.toInt(),
-        eventColor = null,
+        eventColor = eventColor,
         status = 1,
         availability = 0,
         hasAlarm = false,
@@ -80,6 +81,31 @@ class DeviceEventActionsTest {
         assertEquals(1700000000000L, event.startTs)
         assertEquals(1700003600000L, event.endTs)
         assertFalse(event.isAllDay)
+    }
+
+    @Test
+    fun `toEventForDuplicate carries the alerts as ISO durations and the event colour`() {
+        val device = DisplayEvent.Device(createTestInstance(reminders = listOf(15, 1440), eventColor = 0xFF4CAF50.toInt()))
+
+        val event = device.toEventForDuplicate()
+
+        assertEquals(listOf("-PT15M", "-PT24H"), event.reminders)
+        assertEquals(0xFF4CAF50.toInt(), event.color)
+    }
+
+    @Test
+    fun `toEventForDuplicate carries an all-day day-of alert as an after-midnight offset`() {
+        val device = DisplayEvent.Device(createTestInstance(isAllDay = true, reminders = listOf(-540)))
+
+        assertEquals(listOf("PT9H"), device.toEventForDuplicate().reminders)
+    }
+
+    @Test
+    fun `toEventForDuplicate of an event without alerts or colour carries neither`() {
+        val event = DisplayEvent.Device(createTestInstance()).toEventForDuplicate()
+
+        assertNull(event.reminders)
+        assertNull(event.color)
     }
 
     @Test

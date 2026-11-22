@@ -1,11 +1,15 @@
 package org.onekash.kashcal.data.calendar_provider
 
 import android.Manifest
+import android.app.AlarmManager
 import android.app.Application
+import android.app.job.JobInfo
+import android.app.job.JobScheduler
 import android.content.Context
 import android.provider.CalendarContract
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.test.core.app.ApplicationProvider
+import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -18,6 +22,7 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -25,11 +30,15 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.reminder.device.DeviceCalendarAlarmReceiver
+import org.onekash.kashcal.reminder.device.DeviceCalendarChangeWatcher
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
+import org.onekash.kashcal.util.JobSchedulerIds
 import org.onekash.kashcal.widget.WidgetUpdateManager
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows
@@ -55,6 +64,7 @@ class CalendarProviderManagerTest {
     private lateinit var deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler
     private lateinit var widgetUpdateManager: WidgetUpdateManager
     private lateinit var manager: CalendarProviderManager
+    private lateinit var jobScheduler: JobScheduler
 
     @Before
     fun setup() {
@@ -68,9 +78,11 @@ class CalendarProviderManagerTest {
             scope = dataStoreScope
         ) { testDataStoreFile }
         dataStore = KashCalDataStore(context, testPrefsDataStore)
+        jobScheduler = context.getSystemService(JobScheduler::class.java)
+        jobScheduler.cancelAll()
         deviceCalendarReminderScheduler = mockk(relaxed = true)
         widgetUpdateManager = mockk(relaxed = true)
-        manager = CalendarProviderManager(context, dataStore, deviceCalendarReminderScheduler, widgetUpdateManager)
+        manager = CalendarProviderManager(context, dataStore, deviceCalendarReminderScheduler, widgetUpdateManager, DeviceCalendarChangeWatcher(context, dataStore))
     }
 
     @After
@@ -183,7 +195,7 @@ class CalendarProviderManagerTest {
         Shadows.shadowOf(context as Application).denyPermissions(Manifest.permission.READ_CALENDAR)
 
         // A new manager, so it sees the denied permission.
-        manager = CalendarProviderManager(context, dataStore, deviceCalendarReminderScheduler, widgetUpdateManager)
+        manager = CalendarProviderManager(context, dataStore, deviceCalendarReminderScheduler, widgetUpdateManager, DeviceCalendarChangeWatcher(context, dataStore))
         manager.initialize()
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -299,6 +311,7 @@ class CalendarProviderManagerTest {
     @Test
     fun `provider change still bumps changeSignal and reschedules device reminders`() = runTest(testDispatcher) {
         manager.onEnabled()
+        consumeEnableRepick()
         val afterEnable = manager.changeSignal.value
 
         notifyEventChanges()
@@ -312,6 +325,7 @@ class CalendarProviderManagerTest {
     fun `slow widget refresh does not hold up the reminder reschedule`() = runTest(testDispatcher) {
         coEvery { widgetUpdateManager.updateAllWidgets(any()) } coAnswers { awaitCancellation() }
         manager.onEnabled()
+        consumeEnableRepick()
 
         notifyEventChanges()
         advanceDebounce(3001)
@@ -322,8 +336,10 @@ class CalendarProviderManagerTest {
 
     @Test
     fun `slow reminder reschedule does not hold up the widget refresh`() = runTest(testDispatcher) {
-        coEvery { deviceCalendarReminderScheduler.scheduleNextReminder() } coAnswers { awaitCancellation() }
         manager.onEnabled()
+        consumeEnableRepick()
+        // Only the observer's re-pick hangs, so the enable's job reconcile isn't held behind it.
+        coEvery { deviceCalendarReminderScheduler.scheduleNextReminder() } coAnswers { awaitCancellation() }
 
         notifyEventChanges()
         advanceDebounce(3001)
@@ -394,5 +410,253 @@ class CalendarProviderManagerTest {
         advanceDebounce(3001)
 
         coVerify(exactly = 0) { widgetUpdateManager.updateAllWidgets(any()) }
+    }
+
+    // ========== Calendar-change job and app-start re-pick ==========
+
+    /**
+     * Runs the re-pick that switching on starts, checks it happened once and forgets it, so a
+     * later count is the observer's alone.
+     */
+    private fun consumeEnableRepick() {
+        testDispatcher.scheduler.runCurrent()
+        coVerify(exactly = 1) { deviceCalendarReminderScheduler.scheduleNextReminder() }
+        clearMocks(deviceCalendarReminderScheduler, answers = false)
+    }
+
+    private fun changeJobPending() = jobScheduler.getPendingJob(JobSchedulerIds.DEVICE_CALENDAR_CHANGE) != null
+
+    private suspend fun enableDeviceReminders() {
+        dataStore.setDeviceCalendarsEnabled(true)
+        dataStore.setDeviceCalendarRemindersEnabled(true)
+    }
+
+    @Test
+    fun `app start re-picks the next device reminder`() = runTest(testDispatcher) {
+        enableDeviceReminders()
+
+        manager.initialize()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify { deviceCalendarReminderScheduler.scheduleNextReminder() }
+        manager.onDisabled()
+    }
+
+    @Test
+    fun `app start schedules the calendar-change job`() = runTest(testDispatcher) {
+        enableDeviceReminders()
+
+        manager.initialize()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue("calendar-change job must be pending after app start", changeJobPending())
+        manager.onDisabled()
+    }
+
+    @Test
+    fun `app start with device calendars off cancels a leftover calendar-change job`() = runTest(testDispatcher) {
+        enableDeviceReminders()
+        DeviceCalendarChangeWatcher(context, dataStore).reconcile()
+        assertTrue(changeJobPending())
+        dataStore.setDeviceCalendarsEnabled(false)
+
+        manager.initialize()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(changeJobPending())
+    }
+
+    @Test
+    fun `app start after READ_CALENDAR was revoked leaves no calendar-change job`() = runTest(testDispatcher) {
+        enableDeviceReminders()
+        DeviceCalendarChangeWatcher(context, dataStore).reconcile()
+        Shadows.shadowOf(context as Application).denyPermissions(Manifest.permission.READ_CALENDAR)
+
+        manager.initialize()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(dataStore.deviceCalendarsEnabled.first())
+        assertFalse(changeJobPending())
+    }
+
+    @Test
+    fun `a failing re-pick at app start still leaves the calendar-change job scheduled`() = runTest(testDispatcher) {
+        enableDeviceReminders()
+        coEvery { deviceCalendarReminderScheduler.scheduleNextReminder() } throws IllegalStateException("provider died")
+
+        manager.initialize()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(changeJobPending())
+        manager.onDisabled()
+    }
+
+    @Test
+    fun `switching device calendars on and off schedules and cancels the calendar-change job`() = runTest(testDispatcher) {
+        enableDeviceReminders()
+        manager.onEnabled()
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertTrue(changeJobPending())
+
+        dataStore.setDeviceCalendarsEnabled(false)
+        manager.onDisabled()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(changeJobPending())
+    }
+
+    @Test
+    fun `app start replaces a pending calendar-change job`() = runTest(testDispatcher) {
+        // A copy left by a run that was killed looks current but may not run again for minutes.
+        enableDeviceReminders()
+        DeviceCalendarChangeWatcher(context, dataStore).reconcile()
+        val seeded = jobScheduler.getPendingJob(JobSchedulerIds.DEVICE_CALENDAR_CHANGE)
+
+        manager.initialize()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val now = jobScheduler.getPendingJob(JobSchedulerIds.DEVICE_CALENDAR_CHANGE)
+        assertTrue(now != null && now !== seeded)
+        manager.onDisabled()
+    }
+
+    @Test
+    fun `the app-start re-pick runs before the calendar-change job is replaced`() = runTest(testDispatcher) {
+        // Replacing the job stops a run JobScheduler started this process for and releases its
+        // wakelock, so the re-pick goes first, while that wakelock is still held.
+        enableDeviceReminders()
+        DeviceCalendarChangeWatcher(context, dataStore).reconcile()
+        val seeded = jobScheduler.getPendingJob(JobSchedulerIds.DEVICE_CALENDAR_CHANGE)
+        var atRepick: JobInfo? = null
+        coEvery { deviceCalendarReminderScheduler.scheduleNextReminder() } coAnswers {
+            atRepick = jobScheduler.getPendingJob(JobSchedulerIds.DEVICE_CALENDAR_CHANGE)
+        }
+
+        manager.initialize()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue("the re-pick must still see the job it started with", atRepick === seeded)
+        val now = jobScheduler.getPendingJob(JobSchedulerIds.DEVICE_CALENDAR_CHANGE)
+        assertTrue("the job must be replaced after the re-pick", now != null && now !== seeded)
+        manager.onDisabled()
+    }
+
+    @Test
+    fun `app start with device reminders off cancels a pending calendar-change job`() = runTest(testDispatcher) {
+        enableDeviceReminders()
+        DeviceCalendarChangeWatcher(context, dataStore).reconcile()
+        dataStore.setDeviceCalendarRemindersEnabled(false)
+
+        manager.initialize()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(changeJobPending())
+        manager.onDisabled()
+    }
+
+    @Test
+    fun `switching device calendars on re-picks the next device reminder`() = runTest(testDispatcher) {
+        // Nothing in the provider changes when the switch turns on, so only onEnabled can re-pick.
+        enableDeviceReminders()
+
+        manager.onEnabled()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) { deviceCalendarReminderScheduler.scheduleNextReminder() }
+        manager.onDisabled()
+    }
+
+    @Test
+    fun `a calendar setting change while device calendars are on re-picks the next device reminder`() = runTest(testDispatcher) {
+        // A tick or the declined-events filter, so a newly ticked calendar's reminder is armed
+        // without waiting for the provider write to reach the observer.
+        enableDeviceReminders()
+
+        manager.onDeviceCalendarSettingsChanged()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) { deviceCalendarReminderScheduler.scheduleNextReminder() }
+        manager.onDisabled()
+    }
+
+    @Test
+    fun `a restore that turns device calendars on re-picks the next device reminder`() = runTest(testDispatcher) {
+        enableDeviceReminders()
+
+        manager.applyDeviceCalendarsSetting()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) { deviceCalendarReminderScheduler.scheduleNextReminder() }
+        manager.onDisabled()
+    }
+
+    @Test
+    fun `a failing re-pick on enable still reconciles the calendar-change job`() = runTest(testDispatcher) {
+        enableDeviceReminders()
+        coEvery { deviceCalendarReminderScheduler.scheduleNextReminder() } throws IllegalStateException("provider died")
+
+        manager.onEnabled()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify { deviceCalendarReminderScheduler.scheduleNextReminder() }
+        assertTrue(changeJobPending())
+        manager.onDisabled()
+    }
+
+    @Test
+    fun `an event written while the app wasn't running gets its reminder armed at app start`() = runTest(testDispatcher) {
+        // The proven relaunch case: another app wrote the event while KashCal's process was dead,
+        // so no observer saw it; opening the app must arm it.
+        val provider = SqliteCalendarProvider.install()
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        Shadows.shadowOf(alarmManager).scheduledAlarms.mapNotNull { it.operation }.forEach { alarmManager.cancel(it) }
+        try {
+            provider.seedCalendar(7L)
+            enableDeviceReminders()
+            dataStore.setEnabledDeviceCalendarIds(setOf(7L))
+            val start = System.currentTimeMillis() + 2 * 60 * 60_000L
+            val eventId = provider.insertRow(
+                SqliteCalendarProvider.EVENTS,
+                CalendarContract.Events.CALENDAR_ID to 7L, CalendarContract.Events.TITLE to "Written elsewhere",
+                CalendarContract.Events.DTSTART to start, CalendarContract.Events.DTEND to start + 60 * 60_000L,
+                CalendarContract.Events.EVENT_TIMEZONE to "UTC", CalendarContract.Events.ALL_DAY to 0,
+                CalendarContract.Events.STATUS to CalendarContract.Events.STATUS_CONFIRMED,
+            )
+            provider.insertRow(
+                SqliteCalendarProvider.REMINDERS,
+                CalendarContract.Reminders.EVENT_ID to eventId, CalendarContract.Reminders.MINUTES to 15,
+                CalendarContract.Reminders.METHOD to CalendarContract.Reminders.METHOD_ALERT,
+            )
+            val scheduler = DeviceCalendarReminderScheduler(context, SqliteCalendarProvider.repository(context), dataStore)
+            manager = CalendarProviderManager(context, dataStore, scheduler, widgetUpdateManager, DeviceCalendarChangeWatcher(context, dataStore))
+
+            manager.initialize()
+
+            awaitUntil("the reminder to be armed") {
+                deviceAlarms(alarmManager) == listOf(eventId to start - 15 * 60_000L)
+            }
+        } finally {
+            manager.onDisabled()
+            provider.db.close()
+        }
+    }
+
+    /** Device reminder alarms currently set, as event id to trigger time. */
+    private fun deviceAlarms(alarmManager: AlarmManager): List<Pair<Long, Long>> =
+        Shadows.shadowOf(alarmManager).scheduledAlarms.mapNotNull { alarm ->
+            val intent = alarm.operation?.let { Shadows.shadowOf(it).savedIntent } ?: return@mapNotNull null
+            if (intent.component?.className != DeviceCalendarAlarmReceiver::class.java.name) return@mapNotNull null
+            intent.getLongExtra(DeviceCalendarReminderScheduler.EXTRA_EVENT_ID, -1L) to alarm.triggerAtMs
+        }
+
+    private suspend fun TestScope.awaitUntil(what: String, condition: suspend () -> Boolean) {
+        // The repository reads on Dispatchers.IO, so poll as well as advancing the test dispatcher.
+        val deadline = System.currentTimeMillis() + 20_000
+        while (true) {
+            testScheduler.advanceUntilIdle()
+            if (condition()) return
+            if (System.currentTimeMillis() > deadline) fail("timed out waiting for $what")
+            Thread.sleep(20)
+        }
     }
 }

@@ -20,7 +20,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.reader.PendingInvitation
 import org.onekash.kashcal.ui.components.attendees.AttendeeStatus
 import org.robolectric.RobolectricTestRunner
@@ -51,10 +50,10 @@ class InvitationInboxSheetTest {
     fun restoreLocale() = Locale.setDefault(savedLocale)
 
     private fun invitation(id: Long) = PendingInvitation(
-        event = Event(
-            id = id, calendarId = 1L, uid = "uid-$id", title = "Invite $id",
-            startTs = start + id * 86_400_000L, endTs = start + id * 86_400_000L + 3_600_000L, dtstamp = 0L
-        ),
+        eventId = id,
+        title = "Invite $id",
+        location = null,
+        isAllDay = false,
         occurrenceStartTs = start + id * 86_400_000L,
         occurrenceEndTs = start + id * 86_400_000L + 3_600_000L,
         accountId = 1L,

@@ -19,7 +19,9 @@ data class AccountDetailUiModel(
     val contactSyncEnabled: Boolean,
     val contactCount: Int,
     val lastSuccessfulSyncAt: Long?,
-    val consecutiveSyncFailures: Int
+    val consecutiveSyncFailures: Int,
+    /** True for a CalDAV account whose credentials are missing or fail to decrypt. */
+    val needsSignIn: Boolean = false
 )
 
 /** Tracks the account detail sheet's Sync Now action. */
@@ -67,8 +69,13 @@ sealed class AccountDetailDiscoverStatus {
  *
  * @param contactCount synced address-book contacts for this account, 0 when contact sync is
  *   off or nothing has synced yet
+ * @param needsSignIn see [AccountDetailUiModel.needsSignIn]
  */
-fun Account.toDetailUiModel(calendarCount: Int, contactCount: Int = 0): AccountDetailUiModel {
+fun Account.toDetailUiModel(
+    calendarCount: Int,
+    contactCount: Int = 0,
+    needsSignIn: Boolean = false
+): AccountDetailUiModel {
     return AccountDetailUiModel(
         accountId = id,
         provider = provider,
@@ -80,6 +87,7 @@ fun Account.toDetailUiModel(calendarCount: Int, contactCount: Int = 0): AccountD
         contactSyncEnabled = contactSyncEnabled,
         contactCount = contactCount,
         lastSuccessfulSyncAt = lastSuccessfulSyncAt,
-        consecutiveSyncFailures = consecutiveSyncFailures
+        consecutiveSyncFailures = consecutiveSyncFailures,
+        needsSignIn = needsSignIn
     )
 }

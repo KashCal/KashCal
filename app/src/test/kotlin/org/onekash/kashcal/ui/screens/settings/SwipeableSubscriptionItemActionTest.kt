@@ -10,6 +10,7 @@ import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.platform.app.InstrumentationRegistry
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -23,7 +24,8 @@ import org.robolectric.annotation.Config
  * Verifies the swipe-to-delete gesture on a subscription row has a Switch Access and TalkBack
  * equivalent: a "Delete" custom accessibility action that calls onDelete with the subscription
  * id. Android requires gesture-only functionality to also be reachable as a selectable control
- * or custom action. Also checks the row renders the subscription name.
+ * or custom action. Also checks the row renders the subscription name, and the last refresh
+ * error in the user's language.
  *
  * Runs under Robolectric in the unit source set (no emulator).
  */
@@ -34,8 +36,9 @@ class SwipeableSubscriptionItemActionTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    private val deleteLabel =
-        InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.cd_delete)
+    private val context = InstrumentationRegistry.getInstrumentation().targetContext
+
+    private val deleteLabel = context.getString(R.string.cd_delete)
 
     private val subscription = IcsSubscriptionUiModel(
         id = 42L,
@@ -45,11 +48,14 @@ class SwipeableSubscriptionItemActionTest {
         enabled = true,
     )
 
-    private fun renderWith(onDelete: (Long) -> Unit) {
+    private fun renderWith(
+        onDelete: (Long) -> Unit,
+        shown: IcsSubscriptionUiModel = subscription,
+    ) {
         composeTestRule.setContent {
             MaterialTheme {
                 SwipeableSubscriptionItem(
-                    subscription = subscription,
+                    subscription = shown,
                     onToggle = { _, _ -> },
                     onDelete = onDelete,
                     onRefresh = {},
@@ -74,6 +80,28 @@ class SwipeableSubscriptionItemActionTest {
     fun `row renders subscription name`() {
         renderWith(onDelete = {})
         composeTestRule.onNodeWithText("My Calendar").assertIsDisplayed()
+    }
+
+    @Test
+    fun `a stored refresh error shows as its string resource`() {
+        renderWith(onDelete = {}, shown = subscription.copy(lastError = "Invalid ICS format"))
+        composeTestRule.onNodeWithText(context.getString(R.string.ics_fetch_error_not_calendar))
+            .assertIsDisplayed()
+    }
+
+    @Test
+    @Config(qualifiers = "+de")
+    fun `a stored refresh error shows in the user's language`() {
+        val shownText = context.getString(R.string.ics_fetch_error_not_calendar)
+        assertNotEquals("the German resource is used", "That URL doesn't look like a calendar feed.", shownText)
+        renderWith(onDelete = {}, shown = subscription.copy(lastError = "Invalid ICS format"))
+        composeTestRule.onNodeWithText(shownText).assertIsDisplayed()
+    }
+
+    @Test
+    fun `an unrecognised refresh error shows as stored`() {
+        renderWith(onDelete = {}, shown = subscription.copy(lastError = "Unknown sync error"))
+        composeTestRule.onNodeWithText("Unknown sync error").assertIsDisplayed()
     }
 
     @Test

@@ -15,10 +15,11 @@ import java.time.LocalDate
  * ([AppIconSwitchPlan], [AppIconUtility]). The component state is the source of truth; no
  * preference is persisted.
  *
- * [DEFAULT] is the only alias enabled at install. [SUPPORTER] and [SUPPORTER_CALENDAR] share one
- * gold icon and differ only in the launcher label: "KashCal" vs "Calendar". [TODAYS_DATE] has one
- * alias per day of the month, each showing that day's number ([DayIcons]); which one it enables
- * depends on the date.
+ * [DEFAULT] is the only alias enabled at install. [KASH] shows the mascot and has its own themed
+ * silhouette. [SUPPORTER] and [SUPPORTER_CALENDAR] share one gold icon and differ only in the
+ * launcher label: "KashCal" vs "Calendar". [TODAYS_DATE] has one alias per day of the month, each
+ * showing that day's number ([DayIcons]) and labeled "Calendar"; which one it enables depends on
+ * the date.
  *
  * @property fixedAliasSuffix the alias class name relative to the application package, or null
  *   for [TODAYS_DATE], whose alias comes from [LauncherAliases.daySuffix].
@@ -35,6 +36,11 @@ enum class AppIconPreset(
         fixedAliasSuffix = ".MainActivityDefault",
         fixedPreviewRes = R.mipmap.ic_launcher_foreground,
         labelRes = R.string.app_icon_default,
+    ),
+    KASH(
+        fixedAliasSuffix = ".MainActivityKash",
+        fixedPreviewRes = R.mipmap.ic_launcher_kash_foreground,
+        labelRes = R.string.app_icon_kash,
     ),
     SUPPORTER(
         fixedAliasSuffix = ".MainActivitySupporter",

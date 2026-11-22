@@ -1,7 +1,9 @@
 package org.onekash.kashcal.ui.model
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
@@ -219,5 +221,97 @@ class CalendarGroupTest {
         val groups = CalendarGroup.fromDeviceCalendars(listOf(deviceCalendar(1L, "")))
 
         assertEquals("Local", groups.single().accountName)
+    }
+
+    // ========== Offline calendar ids ==========
+
+    @Test
+    fun `offlineCalendarIds lists every calendar of the LOCAL account and nothing else`() {
+        val accounts = listOf(
+            account(1, AccountProvider.LOCAL, email = "local"),
+            account(2, AccountProvider.CONTACTS, email = "contacts"),
+            account(3, AccountProvider.CALDAV),
+        )
+        val calendars = listOf(
+            calendar(10, 1).copy(caldavUrl = "local://default"),
+            calendar(11, 1).copy(caldavUrl = "local://calendar/5e6f7a8b-9c0d-4e1f-a2b3-c4d5e6f7a8b9"),
+            calendar(20, 2).copy(caldavUrl = "local://contact_birthdays"),
+            calendar(30, 3),
+        )
+
+        assertEquals(setOf(10L, 11L), group(calendars, accounts).offlineCalendarIds())
+    }
+
+    // ========== Picker sections ==========
+
+    private val pickerAccounts = listOf(
+        account(1, AccountProvider.ICLOUD, displayName = "iCloud"),
+        account(2, AccountProvider.CALDAV, displayName = "Zoho"),
+        account(3, AccountProvider.LOCAL, email = "local"),
+    )
+    private val pickerCalendars = listOf(calendar(10, 1), calendar(20, 2), calendar(30, 3))
+    private val deviceGroups = CalendarGroup.fromDeviceCalendars(listOf(deviceCalendar(7L, "phone")))
+
+    @Test
+    fun `picker sections list accounts by name, then device calendars, then Offline`() {
+        val sections = group(pickerCalendars, pickerAccounts).toPickerSections(deviceGroups)
+
+        assertEquals(listOf("iCloud", "Zoho"), sections.accounts.map { it.accountName })
+        assertEquals(listOf("phone"), sections.device.map { it.accountName })
+        assertEquals(listOf("Offline"), sections.offline.map { it.accountName })
+        assertTrue(sections.dividerBeforeDevice)
+        assertTrue(sections.dividerBeforeOffline)
+    }
+
+    @Test
+    fun `without device calendars the only divider is above Offline`() {
+        val sections = group(pickerCalendars, pickerAccounts).toPickerSections(emptyList())
+
+        assertFalse(sections.dividerBeforeDevice)
+        assertTrue(sections.dividerBeforeOffline)
+    }
+
+    @Test
+    fun `device groups without calendars are left out`() {
+        val empty = CalendarGroup(accountName = "phone", accountId = -1, isDeviceSection = true)
+        val sections = group(pickerCalendars, pickerAccounts).toPickerSections(listOf(empty))
+
+        assertTrue(sections.device.isEmpty())
+        assertFalse(sections.dividerBeforeDevice)
+    }
+
+    @Test
+    fun `with only offline calendars there is no divider`() {
+        val sections = group(listOf(calendar(30, 3)), pickerAccounts).toPickerSections(emptyList())
+
+        assertTrue(sections.accounts.isEmpty())
+        assertFalse(sections.dividerBeforeOffline)
+    }
+
+    @Test
+    fun `device calendars listed first get no divider, Offline below them does`() {
+        val sections = group(listOf(calendar(30, 3)), pickerAccounts).toPickerSections(deviceGroups)
+
+        assertFalse(sections.dividerBeforeDevice)
+        assertTrue(sections.dividerBeforeOffline)
+    }
+
+    @Test
+    fun `device calendars alone get no divider`() {
+        val sections = emptyList<CalendarGroup>().toPickerSections(deviceGroups)
+
+        assertFalse(sections.dividerBeforeDevice)
+        assertFalse(sections.dividerBeforeOffline)
+        assertTrue(sections.offline.isEmpty())
+    }
+
+    @Test
+    fun `contact groups stay with the accounts, after them`() {
+        val accounts =
+            pickerAccounts + account(4, AccountProvider.CONTACTS, displayName = "Birthdays")
+        val calendars = pickerCalendars + calendar(40, 4)
+        val sections = group(calendars, accounts).toPickerSections(emptyList())
+
+        assertEquals(listOf("iCloud", "Zoho", "Birthdays"), sections.accounts.map { it.accountName })
     }
 }

@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 import org.onekash.kashcal.domain.quickadd.normalizer.NormalizerChain
+import org.onekash.kashcal.domain.quickadd.normalizer.SpannedText
 import org.onekash.kashcal.domain.quickadd.rule.AbsoluteDateRule
 import org.onekash.kashcal.domain.quickadd.rule.LocationRule
 import org.onekash.kashcal.domain.quickadd.rule.ParseContext
@@ -11,6 +12,7 @@ import org.onekash.kashcal.domain.quickadd.rule.RelativeDateRule
 import org.onekash.kashcal.domain.quickadd.rule.TimeRule
 import org.onekash.kashcal.domain.quickadd.tokenizer.WordTokenizer
 import java.time.LocalDateTime
+import java.util.Locale
 
 class LocationRuleTest {
 
@@ -18,24 +20,39 @@ class LocationRuleTest {
     private val reference = LocalDateTime.of(2026, 4, 13, 10, 0)
 
     private val normalizer = NormalizerChain()
-    private val normalizerNoLowercase = NormalizerChain(lowercase = false)
 
     /**
-     * Normalizes and tokenizes [input] with original-case words, then applies the relative-date,
-     * absolute-date and time rules before [LocationRule], in [QuickAddParser]'s order. The parser
-     * also runs other rules before it.
+     * Normalizes and tokenizes [input] over the span path the parser uses (tokens cut from the
+     * typed text), then applies the relative-date, absolute-date and time rules before
+     * [LocationRule], in [QuickAddParser]'s order. The parser also runs other rules before it.
      */
     private fun parse(input: String): ParseContext {
-        val normalized = normalizer.normalize(input)
-        val originalCased = normalizerNoLowercase.normalize(input)
-        val originalWords = if (originalCased.isNotEmpty()) originalCased.split(" ") else emptyList()
-        val tokens = WordTokenizer.tokenize(normalized, originalWords)
-        val context = ParseContext(reference)
+        val tokens = WordTokenizer.tokenize(normalizer.normalize(SpannedText.of(input)), input, Locale.US)
+        val context = ParseContext(reference, source = input)
         RelativeDateRule.apply(tokens, context)
         AbsoluteDateRule.apply(tokens, context)
         TimeRule.apply(tokens, context)
         LocationRule.apply(tokens, context)
         return context
+    }
+
+    // ==================== Typed location text ====================
+
+    @Test
+    fun `a unit word inside a location does not end it`() {
+        assertEquals("Hall Day Spa", parse("Lunch at Hall Day Spa").location)
+        assertEquals("Week Street Cafe", parse("Coffee at Week Street Cafe").location)
+    }
+
+    @Test
+    fun `a trailing unit word still ends the location`() {
+        assertEquals("Bob's next", parse("Party at Bob's next week").location)
+    }
+
+    @Test
+    fun `the location keeps typed punctuation and cuts consumed words`() {
+        assertEquals("Bob & Sue's", parse("Dinner at Bob & Sue's tomorrow").location)
+        assertEquals("Blue Bottle downtown", parse("Coffee at Blue Bottle tomorrow downtown").location)
     }
 
     // ==================== Basic location extraction ====================
@@ -123,5 +140,10 @@ class LocationRuleTest {
     fun `special characters preserved in location`() {
         val ctx = parse("Coffee at O'Brien's Pub tomorrow at 3pm")
         assertEquals("O'Brien's Pub", ctx.location)
+    }
+
+    @Test
+    fun `a dash between kept location words stays`() {
+        assertEquals("Joe\u2019s \u2014 downtown", parse("Dinner at Joe\u2019s \u2014 downtown tomorrow").location)
     }
 }

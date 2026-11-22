@@ -127,4 +127,139 @@ class IcsImportFileTest {
     fun `a file that doesn't parse returns null`() {
         assertNull(IcsParserService.parseForImport("BEGIN:VCALENDAR\r\nnot ical"))
     }
+
+    // ---- the stored copy each group carries ----
+
+    private fun copiesOf(file: IcsImportFile, uid: String) =
+        file.groups.single { it.uid == uid }.components.map { it.ics }
+
+    private fun unfoldedLines(copy: String) = copy.replace(Regex("\r?\n[ \t]"), "").lines().map { it.trimEnd('\r') }
+
+    private val newYork = "BEGIN:VTIMEZONE\r\nTZID:America/New_York\r\nBEGIN:STANDARD\r\n" +
+        "DTSTART:19701101T020000\r\nTZOFFSETFROM:-0400\r\nTZOFFSETTO:-0500\r\nEND:STANDARD\r\nEND:VTIMEZONE\r\n"
+    private val tokyo = "BEGIN:VTIMEZONE\r\nTZID:Asia/Tokyo\r\nBEGIN:STANDARD\r\n" +
+        "DTSTART:19700101T000000\r\nTZOFFSETFROM:+0900\r\nTZOFFSETTO:+0900\r\nEND:STANDARD\r\nEND:VTIMEZONE\r\n"
+
+    @Test
+    fun `every component of a group carries the group's text without METHOD or other groups`() {
+        val content = vcal(
+            "PUBLISH",
+            newYork + tokyo +
+                vevent("UID:a", "DTSTART;TZID=America/New_York:20261102T090000", "DURATION:PT1H", "RRULE:FREQ=WEEKLY;COUNT=3", "SUMMARY:A", "X-A:series"),
+            vevent("UID:b", "DTSTART;TZID=Asia/Tokyo:20261103T090000", "DURATION:PT1H", "SUMMARY:B", "X-B:1"),
+            vevent("UID:a", "RECURRENCE-ID;TZID=America/New_York:20261109T090000", "DTSTART;TZID=America/New_York:20261109T100000", "DURATION:PT1H", "SUMMARY:A moved", "X-A:occurrence"),
+        )
+        val file = requireNotNull(IcsParserService.parseForImport(content))
+        val copies = copiesOf(file, "a")
+        assertEquals("series and changed occurrence share one copy", 1, copies.toSet().size)
+        val lines = unfoldedLines(requireNotNull(copies.first()))
+        assertTrue("no METHOD", lines.none { it.startsWith("METHOD") })
+        assertEquals("both of a's VEVENTs, in file order", listOf("X-A:series", "X-A:occurrence"), lines.filter { it.startsWith("X-A") })
+        assertTrue("no other group", lines.none { it.startsWith("X-B") || it == "UID:b" })
+        assertEquals("only the zone a names", listOf("TZID:America/New_York"), lines.filter { it.startsWith("TZID:") })
+        assertTrue("b has its own copy", copiesOf(file, "b").single()!!.contains("X-B:1"))
+    }
+
+    @Test
+    fun `an invitation's copy has no VALARM`() {
+        val content = vcal(
+            "REQUEST",
+            vevent(
+                "UID:inv", "DTSTAMP:20260901T120000Z", "DTSTART:20261020T160000Z", "DTEND:20261020T170000Z",
+                "SUMMARY:Invite", "ORGANIZER:mailto:org@example.test", "ATTENDEE:mailto:me@example.test",
+                "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:Organizer's", "TRIGGER:-PT5M", "END:VALARM",
+            ),
+        )
+        val copy = requireNotNull(copiesOf(requireNotNull(IcsParserService.parseForImport(content)), "inv").single())
+        assertFalse(copy.contains("VALARM"))
+        assertTrue(copy.contains("ORGANIZER:mailto:org@example.test"))
+    }
+
+    @Test
+    fun `LF-only and CRLF files both keep a copy`() {
+        val lf = requireNotNull(IcsParserService.parseForImport(fixture("issue_364_request.ics")))
+        assertNotNull(lf.groups.single().masters.single().ics)
+        val crlf = requireNotNull(IcsParserService.parseForImport(fixture("nextcloud_request.ics")))
+        crlf.groups.forEach { group -> group.components.forEach { assertNotNull(it.ics) } }
+    }
+
+    @Test
+    fun `a folded UID line keeps a copy`() {
+        val longUid = "folded-" + "0123456789".repeat(8) + "@example.test"
+        val folded = "UID:" + longUid.substring(0, 60) + "\r\n " + longUid.substring(60)
+        val file = requireNotNull(IcsParserService.parseForImport(vcal(null, vevent(folded, "DTSTART:20261020T160000Z", "DTEND:20261020T170000Z", "SUMMARY:Folded", "X-KEPT:1"))))
+        assertEquals(longUid, file.groups.single().uid)
+        assertTrue(requireNotNull(file.groups.single().masters.single().ics).contains("X-KEPT:1"))
+    }
+
+    @Test
+    fun `the copy builder reads component tags in any case`() {
+        // The parser reads no events from a lowercase file, so this checks the builder alone.
+        val content = vcal(null, "begin:vevent\r\nUID:lower\r\nDTSTART:20261020T160000Z\r\nSUMMARY:Lower\r\nX-KEPT:1\r\nend:vevent\r\n")
+        val copy = requireNotNull(ImportedCopy.build(content, dropAlarms = false)["lower"])
+        assertTrue(copy.contains("X-KEPT:1"))
+        assertTrue(copy.contains("end:vevent"))
+    }
+
+    @Test
+    fun `a byte order mark keeps a copy`() {
+        val content = "\uFEFF" + vcal(null, vevent("UID:bom", "DTSTART:20261020T160000Z", "DTEND:20261020T170000Z", "SUMMARY:Bom", "X-KEPT:1"))
+        val file = requireNotNull(IcsParserService.parseForImport(content))
+        file.groups.single().components.forEach {
+            val copy = requireNotNull(it.ics)
+            assertTrue(copy.contains("X-KEPT:1"))
+            assertFalse("the mark isn't copied", copy.startsWith("\uFEFF"))
+        }
+    }
+
+    @Test
+    fun `a file with two VCALENDARs keeps the copies of the one the parser reads`() {
+        val first = vcal(null, vevent("UID:first-cal", "DTSTART:20261020T160000Z", "DTEND:20261020T170000Z", "SUMMARY:First", "X-ONE:1"))
+        val second = vcal(null, vevent("UID:second-cal", "DTSTART:20261021T160000Z", "DTEND:20261021T170000Z", "SUMMARY:Second", "X-TWO:2"))
+        val file = requireNotNull(IcsParserService.parseForImport(first + second))
+        assertTrue(file.groups.isNotEmpty())
+        for (group in file.groups) {
+            val copy = requireNotNull(group.masters.single().ics) { "${group.uid} keeps a copy" }
+            assertEquals("one calendar in the copy", 1, Regex("BEGIN:VCALENDAR").findAll(copy).count())
+            assertEquals("only its own VEVENT", 1, Regex("BEGIN:VEVENT").findAll(copy).count())
+            assertTrue(copy.contains("UID:${group.uid}"))
+        }
+    }
+
+    @Test
+    fun `a copy that doesn't parse to the group's VEVENTs is not kept`() {
+        val series = vcal(
+            null,
+            vevent("UID:check", "DTSTART:20261102T160000Z", "DTEND:20261102T170000Z", "RRULE:FREQ=WEEKLY;COUNT=3", "SUMMARY:S"),
+            vevent("UID:check", "RECURRENCE-ID:20261109T160000Z", "DTSTART:20261109T180000Z", "DTEND:20261109T190000Z", "SUMMARY:Moved"),
+        )
+        val events = org.onekash.icaldav.parser.ICalParser().parseAllEvents(series).getOrNull()!!
+        assertEquals("the matching copy is kept", series, IcsParserService.verifiedCopy(series, events))
+        val otherInstance = series.replace("RECURRENCE-ID:20261109T160000Z", "RECURRENCE-ID:20261116T160000Z")
+        assertNull("another occurrence", IcsParserService.verifiedCopy(otherInstance, events))
+        val seriesOnly = vcal(null, vevent("UID:check", "DTSTART:20261102T160000Z", "DTEND:20261102T170000Z", "RRULE:FREQ=WEEKLY;COUNT=3", "SUMMARY:S"))
+        assertNull("a VEVENT missing", IcsParserService.verifiedCopy(seriesOnly, events))
+        assertNull("not iCalendar", IcsParserService.verifiedCopy("BEGIN:VCALENDAR\r\nnot ical", events))
+    }
+
+    @Test
+    fun `a VEVENT without a UID keeps no copy`() {
+        val content = vcal(null, vevent("DTSTART:20261020T160000Z", "DTEND:20261020T170000Z", "SUMMARY:No uid", "X-LOST:1"))
+        val file = requireNotNull(IcsParserService.parseForImport(content))
+        assertNull(file.groups.single().masters.single().ics)
+    }
+
+    @Test
+    fun `copies for a large file are built in one pass`() {
+        val vevents = (0 until 2_000).joinToString("") { n ->
+            vevent("UID:bulk-$n@example.test", "DTSTART:20261020T160000Z", "DTEND:20261020T170000Z", "SUMMARY:Bulk $n", "X-N:$n")
+        }
+        val content = vcal(null, vevents)
+        val started = System.nanoTime()
+        val file = requireNotNull(IcsParserService.parseForImport(content))
+        val elapsedMs = (System.nanoTime() - started) / 1_000_000
+        assertEquals(2_000, file.groups.size)
+        assertTrue("every group keeps its copy", file.groups.all { it.masters.single().ics != null })
+        assertTrue("built in ${elapsedMs}ms", elapsedMs < 5_000)
+    }
 }

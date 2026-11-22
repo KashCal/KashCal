@@ -25,6 +25,7 @@ import org.onekash.kashcal.domain.rrule.RruleBuilder
 import org.onekash.kashcal.ui.components.pickers.rememberRruleDisplayStrings
 import org.onekash.kashcal.util.DateTimeUtils
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
@@ -136,7 +137,12 @@ fun QuickAddPreview(
         if (result.rrule != null) {
             val rruleStrings = rememberRruleDisplayStrings()
             Text(
-                text = RruleBuilder.formatForDisplay(result.rrule, rruleStrings),
+                // QuickAddViewModel.save writes a timed start in the device zone; read UNTIL there.
+                text = RruleBuilder.formatForDisplay(
+                    result.rrule,
+                    rruleStrings,
+                    RruleBuilder.untilZoneFor(result.isAllDay, ZoneId.systemDefault().id),
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary
             )

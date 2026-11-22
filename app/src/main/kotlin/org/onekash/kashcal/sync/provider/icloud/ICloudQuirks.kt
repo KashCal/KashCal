@@ -50,6 +50,9 @@ class ICloudQuirks @Inject constructor() : CalDavQuirks {
         }
     }
 
+    override fun extractWebcalFeeds(responseBody: String): List<CalDavQuirks.ParsedWebcalFeed>? =
+        xmlParser.extractWebcalFeeds(responseBody)
+
     override fun classifyCalendarProbe(responseBody: String, requestedPath: String): Boolean? {
         val probed = xmlParser.extractProbedCollection(responseBody, requestedPath) ?: return null
         return probed.isCalendar &&
@@ -149,9 +152,8 @@ class ICloudQuirks @Inject constructor() : CalDavQuirks {
 
     override fun shouldSkipCalendar(href: String, displayName: String?): Boolean {
         // Reserved words match only as whole path segments ([matchesReservedCollection]).
-        // iCloud has no tasks path-segment skip: its `/calendars/tasks/` ("Reminders") is a
-        // real <calendar> that is VTODO-only, so the VEVENT component gate in [isListable],
-        // not a display-name match, keeps it hidden.
+        // iCloud's `/calendars/tasks/` ("Reminders") is a VTODO-only <calendar>; the VEVENT
+        // component gate in [isListable] hides it, not its path or name.
         return matchesReservedCollection(href = href)
     }
 

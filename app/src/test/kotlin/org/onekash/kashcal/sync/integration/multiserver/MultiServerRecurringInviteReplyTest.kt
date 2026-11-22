@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.integration.multiserver
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.every
 import io.mockk.mockk
@@ -35,6 +35,7 @@ import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.sync.strategy.PushResult
 import org.onekash.kashcal.sync.strategy.PushStrategy
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.net.URI
@@ -97,6 +98,10 @@ class MultiServerRecurringInviteReplyTest(private val config: CalDavServerConfig
         private val SECOND_USER = mapOf(
             "Nextcloud" to ("NEXTCLOUD_USERNAME_2" to "NEXTCLOUD_PASSWORD_2"),
             "SOGo" to ("SOGO_USERNAME_2" to "SOGO_PASSWORD_2"),
+            // DAViCal delivers a one-off invite to its second user (SCHEDULE-STATUS=1.2, copy in
+            // its .in/), but answers 500 to this test's series with a changed occurrence (its
+            // duplicate inbox row, live 2026-11-09), so the delivered-invite case skips there.
+            "DAViCal" to ("DAVICAL_USERNAME_2" to "DAVICAL_PASSWORD_2"),
         )
     }
 
@@ -278,7 +283,7 @@ class MultiServerRecurringInviteReplyTest(private val config: CalDavServerConfig
 
         /**
          * Stores this run's own resource the way pull does: every VEVENT row
-         * carries the whole body with its attendees, and the changed occurrence
+         * carries its attendees, the series row the whole body, and the changed occurrence
          * is normalized against the series DTSTART and linked to its occurrence.
          */
         private suspend fun storeOwnResource(db: KashCalDatabase, calendar: Calendar, body: String, etag: String?) {
@@ -288,6 +293,7 @@ class MultiServerRecurringInviteReplyTest(private val config: CalDavServerConfig
             val seriesParsed = parsed.first { it.recurrenceId == null }
             val series = ICalEventMapper.toEntity(seriesParsed, body, calendar.id, url, etag)
             val seriesId = db.eventsDao().insert(series.event)
+            EventIcsStore(db).write(seriesId, series.ics)
             db.attendeesDao().replaceForEvent(seriesId, series.attendees.map { it.copy(eventId = seriesId) })
             generator.regenerateOccurrences(db.eventsDao().getById(seriesId)!!)
             for (occurrence in parsed.filter { it.recurrenceId != null }) {
@@ -454,7 +460,7 @@ class MultiServerRecurringInviteReplyTest(private val config: CalDavServerConfig
 
     private fun newDatabase(): KashCalDatabase {
         val context: Context = ApplicationProvider.getApplicationContext()
-        return Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java).allowMainThreadQueries().build()
+        return TestDatabases.inMemory(context).allowMainThreadQueries().build()
             .also { databases += it }
     }
 
@@ -494,6 +500,7 @@ class MultiServerRecurringInviteReplyTest(private val config: CalDavServerConfig
         accountRepository = accountRepository(db),
         attendeesDao = db.attendeesDao(),
         pendingCancelsDao = db.pendingCancelsDao(),
+        icsSource = EventIcsStore(db),
     )
 
     private fun pullStrategy(db: KashCalDatabase, user: User): PullStrategy {
@@ -512,6 +519,7 @@ class MultiServerRecurringInviteReplyTest(private val config: CalDavServerConfig
             inviteNotifier = mockk(relaxed = true),
             accountRepository = accountRepository(db),
             reminderScheduler = mockk(relaxed = true),
+            icsSource = EventIcsStore(db),
         )
     }
 

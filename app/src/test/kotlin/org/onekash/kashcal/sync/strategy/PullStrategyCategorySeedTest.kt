@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -14,6 +14,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.KashCalDatabase
+import org.onekash.kashcal.data.db.PendingOperationTriggers
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.preferences.KashCalDataStore
@@ -29,6 +30,7 @@ import org.onekash.kashcal.sync.client.model.CalendarMetadataProbe
 import org.onekash.kashcal.sync.notification.InviteNotifier
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -61,7 +63,8 @@ class PullStrategyCategorySeedTest {
     @Before
     fun setup() = runTest {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
+            .addCallback(PendingOperationTriggers.callback())
             .allowMainThreadQueries()
             .build()
         // An event references its calendar, which references its account; seed both so the
@@ -81,7 +84,8 @@ class PullStrategyCategorySeedTest {
             dataStore = dataStore,
             inviteNotifier = inviteNotifier,
             accountRepository = accountRepository,
-            reminderScheduler = reminderScheduler
+            reminderScheduler = reminderScheduler,
+            icsSource = EventIcsStore(database),
         )
         coEvery { accountRepository.getAccountById(account.id) } returns account
     }

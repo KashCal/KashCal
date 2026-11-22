@@ -538,10 +538,10 @@ class CalculateAllDayTriggerTimeTest {
 }
 
 /**
- * Tests the rawIcal alarm read the scheduler uses for an event with more than 3 alarms.
+ * Tests the stored ICS alarm read the scheduler uses for an event with more than 3 alarms.
  *
- * For an event whose alarmCount is over 3, the scheduler reads every VALARM trigger from rawIcal
- * with [RawIcsParser.getAllAlarmTriggers], not only
+ * For an event whose alarmCount is over 3, the scheduler reads every VALARM trigger from the
+ * stored ICS with [RawIcsParser.getAllAlarmTriggers], not only
  * [org.onekash.kashcal.data.db.entity.Event.reminders], which keeps at most 5. These tests cover
  * that parser on 5 alarms, null and invalid input, and that each trigger it returns parses to an
  * offset; they don't run the scheduler.

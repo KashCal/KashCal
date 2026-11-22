@@ -1,7 +1,6 @@
 package org.onekash.kashcal.domain.generator
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -18,6 +17,7 @@ import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.io.File
@@ -50,7 +50,7 @@ class IcsCorpusPipelineTest {
     @Before
     fun setup() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
         occurrenceGenerator = OccurrenceGenerator(

@@ -133,7 +133,7 @@ class RRuleExpanderAdversarialTest {
 
         val occurrences = expander.expand(event, oneYearRange)
 
-        // ical4j 4.3.0 applies COUNT only when above 0, so COUNT=0 expands unbounded over the
+        // ical4j applies COUNT only when above 0, so COUNT=0 expands unbounded over the
         // range. The assert is always true.
         assertTrue(occurrences.size >= 0, "Should handle zero count")
     }

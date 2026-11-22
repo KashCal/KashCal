@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import io.mockk.clearAllMocks
+import org.onekash.kashcal.testutil.FakeEventIcsSource
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -105,7 +106,8 @@ class ExceptionDuplicateBugTest {
             dataStore = dataStore,
             inviteNotifier = mockk(relaxed = true),
             accountRepository = mockk(relaxed = true),
-            reminderScheduler = mockk(relaxed = true)
+            reminderScheduler = mockk(relaxed = true),
+            icsSource = FakeEventIcsSource(),
         )
     }
 

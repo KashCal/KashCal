@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -31,7 +32,6 @@ import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository
 import org.onekash.kashcal.data.calendar_provider.deviceEventReader
 import org.onekash.kashcal.data.calendar_provider.deviceEventWriter
-import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
@@ -41,10 +41,10 @@ import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.model.DisplayEvent
-import org.onekash.kashcal.domain.model.SearchResult
 import org.onekash.kashcal.domain.reader.DisplayEventRepository
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.domain.reader.EventReader.OccurrenceWithEvent
+import org.onekash.kashcal.domain.search.SearchOutcome
 import org.onekash.kashcal.error.ErrorPresentation
 import org.onekash.kashcal.network.NetworkMonitor
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
@@ -69,7 +69,8 @@ import java.util.Calendar as JavaCalendar
  * sync, banner, spinner, partial errors), network state, sheets and snackbars, event saves and
  * deletes at each scope, month dots, pending actions, the week and day pagers, time-grid scroll
  * and zoom restore, date pickers, the time-grid FAB seed, the view picker and the reactive week
- * and month grids, occurrence extension, the device calendar picker filter and avatar initials.
+ * and month grids, the missing-occurrence repair and the search range's occurrence coverage, the
+ * device calendar picker filter and avatar initials.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -156,12 +157,6 @@ class HomeViewModelTest {
         )
     )
 
-    private val testEventsWithNextOccurrence by lazy {
-        testEvents.map { event ->
-            EventWithNextOccurrence(event = event, nextOccurrenceTs = event.startTs)
-        }
-    }
-
     private val testOccurrencesWithEvents by lazy {
         testOccurrences.mapIndexed { index, occurrence ->
             OccurrenceWithEvent(
@@ -234,20 +229,9 @@ class HomeViewModelTest {
                 eventReader.getEventById(id)?.let { id to it }
             }.toMap()
         }
-        coEvery { eventReader.searchEvents(any()) } returns testEvents
-        coEvery { eventReader.searchEventsExcludingPast(any()) } returns testEvents
-        coEvery { eventReader.searchEventsWithNextOccurrence(any()) } returns testEventsWithNextOccurrence
-        coEvery { eventReader.searchEventsExcludingPastWithNextOccurrence(any()) } returns testEventsWithNextOccurrence
         // Device calendar change signal: 0, no changes.
         every { displayEventRepository.deviceCalendarChangeSignal } returns MutableStateFlow(0)
-
-        // searchDisplayEvents runs its roomSearcher lambda, so the EventReader verifications
-        // still see the search calls.
-        coEvery { displayEventRepository.searchDisplayEvents(any(), any(), any(), any()) } coAnswers {
-            val query = firstArg<String>()
-            val roomSearcher = arg<suspend (String) -> List<SearchResult>>(3)
-            roomSearcher(query)
-        }
+        every { displayEventRepository.observeSearch(any(), any(), any(), any()) } returns flowOf(SearchOutcome())
         every { dataStore.defaultCalendarView } returns flowOf(KashCalDataStore.VIEW_MONTH)
         coEvery { dataStore.getDefaultCalendarView() } returns KashCalDataStore.VIEW_MONTH
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
@@ -277,6 +261,16 @@ class HomeViewModelTest {
         every { dataStore.deviceCalendarRemindersEnabled } returns flowOf(true)
         coEvery { dataStore.getDeviceCalendarsEnabled() } returns false
         coEvery { dataStore.getEnabledDeviceCalendarIds() } returns emptySet()
+
+        // The onboarding sheet was answered, so startup runs past the onboarding check. Tests of
+        // the check itself stub it false.
+        every { dataStore.onboardingCompleted } returns flowOf(true)
+
+        // Reminders-are-off banner facts: never asked, no refusals.
+        every { dataStore.notificationAskDone } returns flowOf(false)
+        coEvery { dataStore.setNotificationAskDone() } returns Unit
+        every { dataStore.notificationPermissionDeniedCount } returns flowOf(0)
+        coEvery { eventReader.countOccurrencesWithPendingReminders(any(), any()) } returns 0
     }
 
     @After
@@ -309,6 +303,7 @@ class HomeViewModelTest {
             contactEmailReader = io.mockk.mockk(relaxed = true),
             context = context,
             ioDispatcher = testDispatcher,
+            applicationScope = kotlinx.coroutines.CoroutineScope(testDispatcher),
             currentDayCodeProvider = provider
         )
     }
@@ -381,6 +376,37 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `the sync changes snackbar labels its action View`() = runTest {
+        publish(listOf(recordedEntry(org.onekash.kashcal.sync.model.ChangeType.NEW, "Dentist")))
+        val context: android.content.Context = androidx.test.core.app.ApplicationProvider.getApplicationContext()
+
+        val viewModel = createViewModel(context = context)
+        advanceUntilIdle()
+
+        assertEquals(context.getString(org.onekash.kashcal.R.string.action_view), viewModel.uiState.value.pendingSnackbarActionLabel)
+    }
+
+    @Test
+    fun `each snackbar gets a new id and a stale clear leaves the newer one`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.showSnackbar("First")
+        val firstId = viewModel.uiState.value.pendingSnackbarId
+        viewModel.showSnackbar("First")
+        val secondId = viewModel.uiState.value.pendingSnackbarId
+        assertTrue(secondId > firstId)
+
+        viewModel.clearSnackbar(firstId)
+        assertEquals("First", viewModel.uiState.value.pendingSnackbarMessage)
+
+        viewModel.clearSnackbar(secondId)
+        assertNull(viewModel.uiState.value.pendingSnackbarMessage)
+        assertNull(viewModel.uiState.value.pendingSnackbarActionLabel)
+        assertNull(viewModel.uiState.value.pendingSnackbarAction)
+    }
+
+    @Test
     fun `a view model created after the snackbar showed doesn't show it again`() = runTest {
         publish(listOf(recordedEntry(org.onekash.kashcal.sync.model.ChangeType.NEW, "Dentist")))
         val context: android.content.Context = androidx.test.core.app.ApplicationProvider.getApplicationContext()
@@ -410,6 +436,8 @@ class HomeViewModelTest {
         // would land on the epoch month (Dec 1969 west of UTC); with no explicit selection the
         // month views stay on today's month.
         every { displayEventRepository.getDisplayEventsForRange(any(), any()) } returns flowOf(persistentListOf())
+        // Startup fails before it lands on today, so nothing is selected yet.
+        coEvery { accountRepository.getAllAccounts() } throws IllegalStateException("no accounts")
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -429,6 +457,8 @@ class HomeViewModelTest {
     @Test
     fun `switching to MONTH with no prior selection stays on current month not epoch`() = runTest {
         every { displayEventRepository.getDisplayEventsForRange(any(), any()) } returns flowOf(persistentListOf())
+        // Startup fails before it lands on today, so nothing is selected yet.
+        coEvery { accountRepository.getAllAccounts() } throws IllegalStateException("no accounts")
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -742,21 +772,6 @@ class HomeViewModelTest {
         coVerify { eventCoordinator.setCalendarVisibility(1L, false) }
     }
 
-    @Test
-    fun `showAllCalendars calls setCalendarVisibility for all calendars`() = runTest {
-        coEvery { eventCoordinator.setCalendarVisibility(any(), any()) } returns Unit
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.showAllCalendars()
-        advanceUntilIdle()
-
-        // setCalendarVisibility(id, true) for each calendar.
-        coVerify { eventCoordinator.setCalendarVisibility(1L, true) }
-        coVerify { eventCoordinator.setCalendarVisibility(2L, true) }
-    }
-
     // ==================== Navigation Tests ====================
 
     @Test
@@ -834,10 +849,6 @@ class HomeViewModelTest {
 
     @Test
     fun `cold start in MONTH lands instantly not animated`() = runTest {
-        // initializeAsync reads onboardingDismissed.first() before the cold-start goToToday;
-        // stubbed so init runs to completion.
-        every { dataStore.onboardingDismissed } returns flowOf(false)
-
         // createViewModel runs initializeAsync, which calls goToToday(animate = false): the
         // cold-start path itself, not the handler alone.
         val viewModel = createViewModel()
@@ -1048,280 +1059,6 @@ class HomeViewModelTest {
         // The pre-1970 date reaches the state.
         assertEquals(dateMillis, viewModel.uiState.value.selectedDate)
         assertTrue(viewModel.uiState.value.selectedDayLabel.contains("1969"))
-    }
-
-    // ==================== Search Tests ====================
-
-    @Test
-    fun `activateSearch enables search mode`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        assertFalse(viewModel.uiState.value.isSearchActive)
-
-        viewModel.activateSearch()
-        advanceUntilIdle()
-
-        assertTrue(viewModel.uiState.value.isSearchActive)
-        assertEquals("", viewModel.uiState.value.searchQuery)
-    }
-
-    @Test
-    fun `deactivateSearch clears search state`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        viewModel.updateSearchQuery("test")
-        advanceUntilIdle()
-
-        viewModel.deactivateSearch()
-        advanceUntilIdle()
-
-        assertFalse(viewModel.uiState.value.isSearchActive)
-        assertEquals("", viewModel.uiState.value.searchQuery)
-        assertTrue(viewModel.uiState.value.searchResults.isEmpty())
-    }
-
-    @Test
-    fun `updateSearchQuery performs search when 2+ chars`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        advanceUntilIdle()
-
-        viewModel.updateSearchQuery("me")
-        advanceUntilIdle()
-
-        // The default filter is Upcoming, so it calls searchEventsExcludingPastWithNextOccurrence.
-        coVerify { eventReader.searchEventsExcludingPastWithNextOccurrence("me") }
-        assertTrue(viewModel.uiState.value.searchResults.size >= 0)
-    }
-
-    @Test
-    fun `updateSearchQuery does not search with 1 char`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        viewModel.updateSearchQuery("m")
-        advanceUntilIdle()
-
-        coVerify(exactly = 0) { eventReader.searchEventsExcludingPastWithNextOccurrence(any()) }
-        assertTrue(viewModel.uiState.value.searchResults.isEmpty())
-    }
-
-    @Test
-    fun `setSearchDateFilter AnyTime re-searches with include past`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        viewModel.updateSearchQuery("test")
-        advanceUntilIdle()
-
-        assertEquals(DateFilter.Upcoming, viewModel.uiState.value.searchDateFilter)
-        // The first search runs under the default Upcoming filter.
-        coVerify(exactly = 1) { eventReader.searchEventsExcludingPastWithNextOccurrence("test") }
-
-        viewModel.setSearchDateFilter(DateFilter.AnyTime)
-        advanceUntilIdle()
-
-        assertEquals(DateFilter.AnyTime, viewModel.uiState.value.searchDateFilter)
-        // AnyTime includes the past: searchEventsWithNextOccurrence.
-        coVerify(exactly = 1) { eventReader.searchEventsWithNextOccurrence("test") }
-    }
-
-    // ==================== Search Lookback Tests ====================
-
-    @Test
-    fun `search with syncPastDays 730 and AnyTime filter uses 730 day lookback`() = runTest {
-        every { dataStore.syncPastDays } returns flowOf(730)
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        viewModel.updateSearchQuery("test")
-        advanceUntilIdle()
-
-        // AnyTime includes the past.
-        viewModel.setSearchDateFilter(DateFilter.AnyTime)
-        advanceUntilIdle()
-
-        // startDayCode is 730 days back, within 1 of the expected day code to allow for
-        // midnight (one day either side, except across a month boundary).
-        val today = java.time.LocalDate.now()
-        val expectedDate = today.minusDays(730)
-        val expectedCode = expectedDate.year * 10000 + expectedDate.monthValue * 100 + expectedDate.dayOfMonth
-        coVerify {
-            displayEventRepository.searchDisplayEvents(
-                eq("test"),
-                match { startDayCode -> kotlin.math.abs(startDayCode - expectedCode) <= 1 },
-                any(),
-                any()
-            )
-        }
-    }
-
-    @Test
-    fun `search with syncPastDays MAX_VALUE and AnyTime filter uses 10 year lookback`() = runTest {
-        every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        viewModel.updateSearchQuery("test")
-        advanceUntilIdle()
-
-        // AnyTime includes the past.
-        viewModel.setSearchDateFilter(DateFilter.AnyTime)
-        advanceUntilIdle()
-
-        // startDayCode is 10 years back, within 1 of the expected day code.
-        val today = java.time.LocalDate.now()
-        val expectedDate = today.minusYears(10)
-        val expectedCode = expectedDate.year * 10000 + expectedDate.monthValue * 100 + expectedDate.dayOfMonth
-        coVerify {
-            displayEventRepository.searchDisplayEvents(
-                eq("test"),
-                match { startDayCode -> kotlin.math.abs(startDayCode - expectedCode) <= 1 },
-                any(),
-                any()
-            )
-        }
-    }
-
-    // ==================== Search Debouncing Tests ====================
-
-    @Test
-    fun `search debounces with 300ms delay`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        advanceUntilIdle()
-
-        // Type a query.
-        viewModel.updateSearchQuery("me")
-
-        // No search right after typing.
-        coVerify(exactly = 0) { eventReader.searchEventsExcludingPastWithNextOccurrence(any()) }
-
-        // 100 ms: still no search.
-        testScheduler.advanceTimeBy(100)
-        testScheduler.runCurrent()
-        coVerify(exactly = 0) { eventReader.searchEventsExcludingPastWithNextOccurrence(any()) }
-
-        // 300 ms in total: the search runs.
-        testScheduler.advanceTimeBy(200)
-        testScheduler.runCurrent()
-        coVerify(exactly = 1) { eventReader.searchEventsExcludingPastWithNextOccurrence("me") }
-    }
-
-    @Test
-    fun `search cancels previous query when new query arrives`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        advanceUntilIdle()
-
-        // First query.
-        viewModel.updateSearchQuery("me")
-
-        // 150 ms, half the debounce delay.
-        testScheduler.advanceTimeBy(150)
-        testScheduler.runCurrent()
-
-        // Second query before the first runs.
-        viewModel.updateSearchQuery("meet")
-
-        // The full 300 ms for the second query.
-        testScheduler.advanceTimeBy(300)
-        testScheduler.runCurrent()
-
-        // Only the second query runs, through the default
-        // searchEventsExcludingPastWithNextOccurrence.
-        coVerify(exactly = 0) { eventReader.searchEventsExcludingPastWithNextOccurrence("me") }
-        coVerify(exactly = 1) { eventReader.searchEventsExcludingPastWithNextOccurrence("meet") }
-    }
-
-    @Test
-    fun `search does not debounce for queries under 2 chars`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        viewModel.updateSearchQuery("m")
-        advanceUntilIdle()
-
-        // No search, and the results clear at once without the debounce.
-        coVerify(exactly = 0) { eventReader.searchEventsExcludingPastWithNextOccurrence(any()) }
-        assertTrue(viewModel.uiState.value.searchResults.isEmpty())
-    }
-
-    // ==================== Search Date Filter Tests ====================
-
-    @Test
-    fun `activateSearch defaults to Upcoming filter`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        advanceUntilIdle()
-
-        assertEquals(DateFilter.Upcoming, viewModel.uiState.value.searchDateFilter)
-    }
-
-    @Test
-    fun `setSearchDateFilter AnyTime uses include-past query`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        viewModel.updateSearchQuery("test")
-        advanceUntilIdle()
-
-        viewModel.setSearchDateFilter(DateFilter.AnyTime)
-        advanceUntilIdle()
-
-        assertEquals(DateFilter.AnyTime, viewModel.uiState.value.searchDateFilter)
-        coVerify { eventReader.searchEventsWithNextOccurrence("test") }
-    }
-
-    @Test
-    fun `setSearchDateFilter from AnyTime to ThisWeek switches to range query`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        viewModel.updateSearchQuery("test")
-        advanceUntilIdle()
-
-        viewModel.setSearchDateFilter(DateFilter.AnyTime)
-        advanceUntilIdle()
-
-        viewModel.setSearchDateFilter(DateFilter.ThisWeek)
-        advanceUntilIdle()
-
-        assertEquals(DateFilter.ThisWeek, viewModel.uiState.value.searchDateFilter)
-        coVerify { eventReader.searchEventsInRangeWithNextOccurrence("test", any(), any()) }
-    }
-
-    @Test
-    fun `deactivateSearch resets filter to Upcoming`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.activateSearch()
-        viewModel.setSearchDateFilter(DateFilter.AnyTime)
-        advanceUntilIdle()
-
-        viewModel.deactivateSearch()
-        advanceUntilIdle()
-
-        assertEquals(DateFilter.Upcoming, viewModel.uiState.value.searchDateFilter)
     }
 
     // ==================== Agenda Tests ====================
@@ -1561,8 +1298,8 @@ class HomeViewModelTest {
         viewModel.refreshSync()
         advanceUntilIdle()
 
-        // A second refreshSync while the first is live returns at the isSyncing guard
-        // (asserted by `concurrent refreshSync calls are blocked when isSyncing is true`).
+        // A second refreshSync while the first is live returns at the isSyncing guard (asserted
+        // by `concurrent refreshSync calls start one calendar sync while isSyncing is true`).
         viewModel.refreshSync()
         advanceUntilIdle()
 
@@ -1614,6 +1351,8 @@ class HomeViewModelTest {
         verify(exactly = 0) { syncScheduler.requestImmediateSync(any(), any()) }
         // No contact sync either.
         verify(exactly = 0) { syncScheduler.requestImmediateContactSync() }
+        // No feed refresh either.
+        verify(exactly = 0) { syncScheduler.requestImmediateIcsRefresh() }
     }
 
     @Test
@@ -1656,6 +1395,93 @@ class HomeViewModelTest {
 
         // A contact sync too; the worker syncs every account with contact sync on.
         verify { syncScheduler.requestImmediateContactSync() }
+    }
+
+    @Test
+    fun `refreshSync when online also refreshes ICS feeds`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        networkStateFlow.value = true
+        io.mockk.clearMocks(syncScheduler, answers = false, recordedCalls = true, childMocks = false)
+
+        viewModel.refreshSync()
+        advanceUntilIdle()
+
+        verify(exactly = 1) { syncScheduler.requestImmediateIcsRefresh() }
+    }
+
+    @Test
+    fun `syncOnResumeIfNeeded does not refresh ICS feeds`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        io.mockk.clearMocks(syncScheduler, answers = false, recordedCalls = true, childMocks = false)
+
+        viewModel.syncOnResumeIfNeeded()
+        advanceUntilIdle()
+
+        // Of Home's syncs only the pull refreshes feeds; a resume would re-download them all.
+        verify { syncScheduler.requestImmediateSync(any(), any()) }
+        verify(exactly = 0) { syncScheduler.requestImmediateIcsRefresh() }
+    }
+
+    @Test
+    fun `refreshSync during a resume sync still refreshes ICS feeds`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        networkStateFlow.value = true
+        viewModel.syncOnResumeIfNeeded()
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.isSyncing)
+        io.mockk.clearMocks(syncScheduler, answers = false, recordedCalls = true, childMocks = false)
+
+        viewModel.refreshSync()
+        advanceUntilIdle()
+
+        // The running resume sync covers the accounts but not the feeds.
+        verify(exactly = 0) { syncScheduler.requestImmediateSync(any(), any()) }
+        verify(exactly = 1) { syncScheduler.requestImmediateIcsRefresh() }
+    }
+
+    @Test
+    fun `second refreshSync after the first sync succeeded refreshes ICS feeds again`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        networkStateFlow.value = true
+        io.mockk.clearMocks(syncScheduler, answers = false, recordedCalls = true, childMocks = false)
+
+        viewModel.refreshSync()
+        syncStatusFlow.value = SyncStatus.Running
+        advanceUntilIdle()
+        syncStatusFlow.value = SyncStatus.Succeeded(calendarsSynced = 1, eventsPulled = 1)
+        testScheduler.advanceTimeBy(100)
+        testScheduler.runCurrent()
+        // The calendar sync is done while its feed refresh may still run.
+        assertFalse(viewModel.uiState.value.isSyncing)
+        assertFalse(viewModel.uiState.value.showRefreshSpinner)
+
+        viewModel.refreshSync()
+        advanceUntilIdle()
+
+        // Both pulls ask for the feeds. That a repeat leaves an unfinished refresh running is
+        // pinned by SyncSchedulerTest `requestImmediateIcsRefresh keeps an unfinished refresh
+        // and ignores the repeat`.
+        verify(exactly = 2) { syncScheduler.requestImmediateSync(any(), any()) }
+        verify(exactly = 2) { syncScheduler.requestImmediateIcsRefresh() }
     }
 
     @Test
@@ -1712,6 +1538,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         verify(exactly = 0) { syncScheduler.requestImmediateSync(any(), any()) }
+        verify(exactly = 0) { syncScheduler.requestImmediateIcsRefresh() }
     }
 
     @Test
@@ -2347,28 +2174,411 @@ class HomeViewModelTest {
     // ==================== UI Sheet Tests ====================
 
     @Test
-    fun `toggleAppInfoSheet toggles visibility`() = runTest {
+    fun `About opens once however often it is tapped and closes on dismiss`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.showAboutSheet)
 
-        assertFalse(viewModel.uiState.value.showAppInfoSheet)
-
-        viewModel.toggleAppInfoSheet()
+        viewModel.openAboutSheet()
+        viewModel.openAboutSheet()
         advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.showAboutSheet)
 
-        assertTrue(viewModel.uiState.value.showAppInfoSheet)
+        viewModel.closeAboutSheet()
+        advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.showAboutSheet)
     }
 
     @Test
-    fun `dismissOnboardingSheet persists dismissal`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
+    fun `completeOnboarding persists the answer and closes the sheet`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns emptyList()
+        coEvery { eventReader.getTotalEventCount() } returns 0
+        val viewModel = startUnanswered()
+        assertTrue(viewModel.uiState.value.showOnboardingSheet)
 
-        viewModel.dismissOnboardingSheet()
+        viewModel.completeOnboarding()
         advanceUntilIdle()
 
         assertFalse(viewModel.uiState.value.showOnboardingSheet)
-        coVerify { dataStore.setOnboardingDismissed(true) }
+        coVerify { dataStore.setOnboardingCompleted(true) }
+    }
+
+    // ==================== Onboarding sheet gate ====================
+
+    /** Builds the view model with the sheet unanswered and asserts startup reached today. */
+    private fun TestScope.startUnanswered(): HomeViewModel {
+        every { dataStore.onboardingCompleted } returns flowOf(false)
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertTrue(
+            "startup must reach the cold-start goToToday",
+            viewModel.uiState.value.pendingNavigateToTodayInstant
+        )
+        return viewModel
+    }
+
+    @Test
+    fun `onboarding shows for a new user with nothing set up`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns emptyList()
+        coEvery { eventReader.getTotalEventCount() } returns 0
+
+        assertTrue(startUnanswered().uiState.value.showOnboardingSheet)
+    }
+
+    @Test
+    fun `onboarding stays hidden with a calendar feed account`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns
+            listOf(Account(id = 7, provider = AccountProvider.ICS, email = "feeds"))
+        coEvery { eventReader.getTotalEventCount() } returns 0
+
+        assertFalse(startUnanswered().uiState.value.showOnboardingSheet)
+    }
+
+    @Test
+    fun `onboarding stays hidden with device calendars on`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns emptyList()
+        every { dataStore.deviceCalendarsEnabled } returns flowOf(true)
+        coEvery { eventReader.getTotalEventCount() } returns 0
+
+        assertFalse(startUnanswered().uiState.value.showOnboardingSheet)
+    }
+
+    @Test
+    fun `onboarding stays hidden when the app already holds events`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns emptyList()
+        coEvery { eventReader.getTotalEventCount() } returns 3
+
+        assertFalse(startUnanswered().uiState.value.showOnboardingSheet)
+    }
+
+    @Test
+    fun `a failed event count hides onboarding and startup still reaches today`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns emptyList()
+        coEvery { eventReader.getTotalEventCount() } throws java.io.IOException("disk")
+
+        assertFalse(startUnanswered().uiState.value.showOnboardingSheet)
+    }
+
+    @Test
+    fun `a failed read of the onboarding flag hides it and startup still reaches today`() = runTest {
+        every { dataStore.onboardingCompleted } returns
+            kotlinx.coroutines.flow.flow { throw java.io.IOException("disk") }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.pendingNavigateToTodayInstant)
+        assertFalse(viewModel.uiState.value.showOnboardingSheet)
+    }
+
+    @Test
+    fun `an answered onboarding sheet reads no other fact`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.showOnboardingSheet)
+        coVerify(exactly = 0) { eventReader.getTotalEventCount() }
+    }
+
+    // ==================== Reminders-are-off banner ====================
+
+    private fun deviceReminder(id: Long, calendarId: Long, triggerTime: Long) =
+        org.onekash.kashcal.data.calendar_provider.UpcomingDeviceReminder(
+            eventId = id, occurrenceStartTs = triggerTime + 600_000, title = "Device $id",
+            location = null, isAllDay = false, reminderMinutes = 10, triggerTime = triggerTime,
+            calendarColor = 0, calendarId = calendarId,
+        )
+
+    /** A device repository with one reminder due soon in each of calendars 1 and 2. */
+    private fun deviceRepoWithReminders() =
+        org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository().apply {
+            val soon = System.currentTimeMillis() + 2 * 3_600_000
+            upcomingReminders = listOf(
+                deviceReminder(1, calendarId = 1, triggerTime = soon),
+                deviceReminder(2, calendarId = 2, triggerTime = soon),
+            )
+        }
+
+    private fun turnOnDeviceCalendars(ids: Set<Long> = setOf(1L, 2L)) {
+        every { dataStore.deviceCalendarsEnabled } returns flowOf(true)
+        every { dataStore.enabledDeviceCalendarIds } returns flowOf(ids)
+    }
+
+    @Test
+    fun `a never-asked user with reminders this week gets the banner with the count`() = runTest {
+        coEvery { eventReader.countOccurrencesWithPendingReminders(any(), any()) } returns 2
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onNotificationPermissionChecked(granted = false, rationaleDue = false, sdkInt = 34)
+        advanceUntilIdle()
+
+        assertEquals(2, viewModel.uiState.value.remindersOffBannerCount)
+    }
+
+    @Test
+    fun `the banner waits for the activity to report the permission`() = runTest {
+        coEvery { eventReader.countOccurrencesWithPendingReminders(any(), any()) } returns 2
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        syncStatusFlow.value = SyncStatus.Succeeded()
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.remindersOffBannerCount)
+    }
+
+    @Test
+    fun `seeing the permission granted hides it and records the ask`() = runTest {
+        coEvery { eventReader.countOccurrencesWithPendingReminders(any(), any()) } returns 2
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onNotificationPermissionChecked(granted = true, rationaleDue = false, sdkInt = 34)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.remindersOffBannerCount)
+        coVerify(exactly = 1) { dataStore.setNotificationAskDone() }
+    }
+
+    @Test
+    fun `an already-recorded grant isn't written again`() = runTest {
+        every { dataStore.notificationAskDone } returns flowOf(true)
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onNotificationPermissionChecked(granted = true, rationaleDue = false, sdkInt = 34)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { dataStore.setNotificationAskDone() }
+    }
+
+    @Test
+    fun `a recorded refusal, a rationale or an answered ask keeps it hidden`() = runTest {
+        coEvery { eventReader.countOccurrencesWithPendingReminders(any(), any()) } returns 2
+
+        every { dataStore.notificationPermissionDeniedCount } returns flowOf(1)
+        val refused = createViewModel()
+        advanceUntilIdle()
+        refused.onNotificationPermissionChecked(granted = false, rationaleDue = false, sdkInt = 34)
+        advanceUntilIdle()
+        assertNull(refused.uiState.value.remindersOffBannerCount)
+
+        every { dataStore.notificationPermissionDeniedCount } returns flowOf(0)
+        val rationale = createViewModel()
+        advanceUntilIdle()
+        rationale.onNotificationPermissionChecked(granted = false, rationaleDue = true, sdkInt = 34)
+        advanceUntilIdle()
+        assertNull(rationale.uiState.value.remindersOffBannerCount)
+
+        every { dataStore.notificationAskDone } returns flowOf(true)
+        val answered = createViewModel()
+        advanceUntilIdle()
+        answered.onNotificationPermissionChecked(granted = false, rationaleDue = false, sdkInt = 34)
+        advanceUntilIdle()
+        assertNull(answered.uiState.value.remindersOffBannerCount)
+    }
+
+    @Test
+    fun `no reminders this week keeps it hidden`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onNotificationPermissionChecked(granted = false, rationaleDue = false, sdkInt = 34)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.remindersOffBannerCount)
+    }
+
+    @Test
+    fun `a first sync holds it back until the sync finishes`() = runTest {
+        coEvery { eventReader.countOccurrencesWithPendingReminders(any(), any()) } returns 3
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        syncStatusFlow.value = SyncStatus.Running
+        advanceUntilIdle()
+
+        viewModel.onNotificationPermissionChecked(granted = false, rationaleDue = false, sdkInt = 34)
+        advanceUntilIdle()
+        assertNull(viewModel.uiState.value.remindersOffBannerCount)
+
+        syncStatusFlow.value = SyncStatus.Succeeded()
+        advanceUntilIdle()
+        assertEquals(3, viewModel.uiState.value.remindersOffBannerCount)
+    }
+
+    @Test
+    fun `a sync after it shows keeps it on screen`() = runTest {
+        coEvery { eventReader.countOccurrencesWithPendingReminders(any(), any()) } returns 3
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onNotificationPermissionChecked(granted = false, rationaleDue = false, sdkInt = 34)
+        advanceUntilIdle()
+
+        syncStatusFlow.value = SyncStatus.Running
+        advanceUntilIdle()
+        viewModel.onNotificationPermissionChecked(granted = false, rationaleDue = false, sdkInt = 34)
+        advanceUntilIdle()
+
+        assertEquals(3, viewModel.uiState.value.remindersOffBannerCount)
+    }
+
+    @Test
+    fun `Not now hides it for good and records the answer`() = runTest {
+        coEvery { eventReader.countOccurrencesWithPendingReminders(any(), any()) } returns 2
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onNotificationPermissionChecked(granted = false, rationaleDue = false, sdkInt = 34)
+        advanceUntilIdle()
+
+        viewModel.endRemindersOffBanner()
+        advanceUntilIdle()
+        viewModel.onNotificationPermissionChecked(granted = false, rationaleDue = false, sdkInt = 34)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.remindersOffBannerCount)
+        coVerify { dataStore.setNotificationAskDone() }
+    }
+
+    @Test
+    fun `Not now during a running check keeps it hidden`() = runTest {
+        val pending = kotlinx.coroutines.CompletableDeferred<Int>()
+        coEvery { eventReader.countOccurrencesWithPendingReminders(any(), any()) } coAnswers { pending.await() }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onNotificationPermissionChecked(granted = false, rationaleDue = false, sdkInt = 34)
+        advanceUntilIdle()
+
+        viewModel.endRemindersOffBanner()
+        pending.complete(2)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.remindersOffBannerCount)
+    }
+
+    @Test
+    fun `allowing from the banner hides it and confirms with a snackbar`() = runTest {
+        coEvery { eventReader.countOccurrencesWithPendingReminders(any(), any()) } returns 2
+        val context: android.content.Context = io.mockk.mockk(relaxed = true) {
+            every { getString(org.onekash.kashcal.R.string.reminders_on_snackbar) } returns "Reminders on"
+        }
+        val viewModel = createViewModel(context = context)
+        advanceUntilIdle()
+        viewModel.onNotificationPermissionChecked(granted = false, rationaleDue = false, sdkInt = 34)
+        advanceUntilIdle()
+
+        viewModel.endRemindersOffBanner()
+        viewModel.onRemindersOffPermissionResult(granted = true)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.remindersOffBannerCount)
+        assertEquals("Reminders on", viewModel.uiState.value.pendingSnackbarMessage)
+        coVerify { dataStore.setNotificationAskDone() }
+    }
+
+    @Test
+    fun `refusing from the banner hides it with no snackbar`() = runTest {
+        coEvery { eventReader.countOccurrencesWithPendingReminders(any(), any()) } returns 2
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onNotificationPermissionChecked(granted = false, rationaleDue = false, sdkInt = 34)
+        advanceUntilIdle()
+
+        viewModel.endRemindersOffBanner()
+        viewModel.onRemindersOffPermissionResult(granted = false)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.remindersOffBannerCount)
+        assertNull(viewModel.uiState.value.pendingSnackbarMessage)
+    }
+
+    @Test
+    fun `device reminders count only from notifying device calendars`() = runTest {
+        turnOnDeviceCalendars()
+        every { dataStore.mutedDeviceCalendarIds } returns flowOf(setOf(2L))
+        val viewModel = createViewModel(calendarProviderRepository = deviceRepoWithReminders())
+        advanceUntilIdle()
+
+        viewModel.onNotificationPermissionChecked(granted = false, rationaleDue = false, sdkInt = 34)
+        advanceUntilIdle()
+
+        assertEquals(1, viewModel.uiState.value.remindersOffBannerCount)
+    }
+
+    @Test
+    fun `device reminders don't count with device calendars or their reminders off`() = runTest {
+        val repo = deviceRepoWithReminders()
+
+        every { dataStore.enabledDeviceCalendarIds } returns flowOf(setOf(1L, 2L))
+        val calendarsOff = createViewModel(calendarProviderRepository = repo)
+        advanceUntilIdle()
+        calendarsOff.onNotificationPermissionChecked(granted = false, rationaleDue = false, sdkInt = 34)
+        advanceUntilIdle()
+        assertNull(calendarsOff.uiState.value.remindersOffBannerCount)
+
+        turnOnDeviceCalendars()
+        every { dataStore.deviceCalendarRemindersEnabled } returns flowOf(false)
+        val remindersOff = createViewModel(calendarProviderRepository = repo)
+        advanceUntilIdle()
+        remindersOff.onNotificationPermissionChecked(granted = false, rationaleDue = false, sdkInt = 34)
+        advanceUntilIdle()
+        assertNull(remindersOff.uiState.value.remindersOffBannerCount)
+    }
+
+    @Test
+    fun `an enqueued sync doesn't hold it back`() = runTest {
+        coEvery { eventReader.countOccurrencesWithPendingReminders(any(), any()) } returns 2
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        syncStatusFlow.value = SyncStatus.Enqueued
+        advanceUntilIdle()
+
+        viewModel.onNotificationPermissionChecked(granted = false, rationaleDue = false, sdkInt = 34)
+        advanceUntilIdle()
+
+        assertEquals(2, viewModel.uiState.value.remindersOffBannerCount)
+    }
+
+    @Test
+    fun `a failed sync re-checks it`() = runTest {
+        coEvery { eventReader.countOccurrencesWithPendingReminders(any(), any()) } returns 2
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        syncStatusFlow.value = SyncStatus.Running
+        advanceUntilIdle()
+        viewModel.onNotificationPermissionChecked(granted = false, rationaleDue = false, sdkInt = 34)
+        advanceUntilIdle()
+
+        syncStatusFlow.value = SyncStatus.Failed(errorMessage = "Network error")
+        advanceUntilIdle()
+
+        assertEquals(2, viewModel.uiState.value.remindersOffBannerCount)
+    }
+
+    @Test
+    fun `it hides when no reminders are left this week`() = runTest {
+        coEvery { eventReader.countOccurrencesWithPendingReminders(any(), any()) } returns 1
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onNotificationPermissionChecked(granted = false, rationaleDue = false, sdkInt = 34)
+        advanceUntilIdle()
+        assertEquals(1, viewModel.uiState.value.remindersOffBannerCount)
+
+        coEvery { eventReader.countOccurrencesWithPendingReminders(any(), any()) } returns 0
+        viewModel.onNotificationPermissionChecked(granted = false, rationaleDue = false, sdkInt = 34)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.remindersOffBannerCount)
+    }
+
+    @Test
+    fun `a failed read keeps the banner hidden`() = runTest {
+        coEvery { eventReader.countOccurrencesWithPendingReminders(any(), any()) } throws java.io.IOException("disk")
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onNotificationPermissionChecked(granted = false, rationaleDue = false, sdkInt = 34)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.remindersOffBannerCount)
     }
 
     // ==================== Snackbar Tests ====================
@@ -3351,7 +3561,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `concurrent refreshSync calls are blocked when isSyncing is true`() = runTest {
+    fun `concurrent refreshSync calls start one calendar sync while isSyncing is true`() = runTest {
         coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
@@ -3364,7 +3574,8 @@ class HomeViewModelTest {
         // so isSyncing is true.
         assertTrue(viewModel.uiState.value.isSyncing)
 
-        // Later refreshes while isSyncing is true are blocked.
+        // Later refreshes while isSyncing is true start no calendar sync, but each requests the
+        // feeds.
         viewModel.refreshSync()
         viewModel.refreshSync()
         viewModel.refreshSync()
@@ -3372,6 +3583,9 @@ class HomeViewModelTest {
 
         // Requested once, by the first refreshSync.
         verify(exactly = 1) { syncScheduler.requestImmediateSync(any(), any()) }
+        // One feed request per pull; the scheduler test named in the test above pins that
+        // repeats don't restart the first.
+        verify(exactly = 4) { syncScheduler.requestImmediateIcsRefresh() }
     }
 
     @Test
@@ -4131,10 +4345,7 @@ class HomeViewModelTest {
     @Test
     fun `initializeAsync seeds saved scroll minutes from DataStore`() = runTest {
         // The persisted clock time (14:00) reaches uiState so the time grid restores it on first
-        // composition, before the debounced writer can overwrite it. onboardingDismissed is
-        // stubbed so initializeAsync gets past the onboarding gate, which reads it with .first(),
-        // to the seed.
-        every { dataStore.onboardingDismissed } returns flowOf(false)
+        // composition, before the debounced writer can overwrite it.
         every { dataStore.weekViewScrollMinutes } returns flowOf(840)
         coEvery { dataStore.getWeekViewScrollMinutes() } returns 840
 
@@ -4173,7 +4384,6 @@ class HomeViewModelTest {
         // composition, in the same update that seeds the scroll minutes, so the scroll's
         // minutes-to-pixels conversion uses the restored zoom and not the default (the shared
         // update isn't asserted here).
-        every { dataStore.onboardingDismissed } returns flowOf(false)
         every { dataStore.weekViewHourHeight } returns flowOf(90f)
         coEvery { dataStore.getWeekViewHourHeight() } returns 90f
 
@@ -4187,7 +4397,6 @@ class HomeViewModelTest {
     fun `initializeAsync clamps an out-of-range persisted hour height`() = runTest {
         // A persisted or corrupt value above the pinch range is clamped on restore, so the grid
         // never renders degenerate.
-        every { dataStore.onboardingDismissed } returns flowOf(false)
         every { dataStore.weekViewHourHeight } returns flowOf(999f)
         coEvery { dataStore.getWeekViewHourHeight() } returns 999f
 
@@ -4199,7 +4408,6 @@ class HomeViewModelTest {
 
     @Test
     fun `initializeAsync clamps a too-small persisted hour height`() = runTest {
-        every { dataStore.onboardingDismissed } returns flowOf(false)
         every { dataStore.weekViewHourHeight } returns flowOf(5f)
         coEvery { dataStore.getWeekViewHourHeight() } returns 5f
 
@@ -4213,7 +4421,6 @@ class HomeViewModelTest {
     fun `initializeAsync falls back to default for a non-finite persisted hour height`() = runTest {
         // A corrupt DataStore proto could hold NaN. coerceIn leaves NaN unchanged, which would
         // render a NaN-height grid, so the seed rejects it and uses the default.
-        every { dataStore.onboardingDismissed } returns flowOf(false)
         every { dataStore.weekViewHourHeight } returns flowOf(Float.NaN)
         coEvery { dataStore.getWeekViewHourHeight() } returns Float.NaN
 
@@ -4805,13 +5012,91 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `a sideways pinch to 3-day saves it as the startup view and opens on the anchor date`() = runTest {
+        every { dataStore.defaultCalendarView } returns flowOf(KashCalDataStore.VIEW_WEEK)
+        coEvery { dataStore.getDefaultCalendarView() } returns KashCalDataStore.VIEW_WEEK
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        val anchor = LocalDate.now().plusDays(2)
+
+        viewModel.onWeekViewPinchSwitch(visibleDays = 3, date = anchor)
+        advanceUntilIdle()
+
+        assertEquals(ViewMode.THREE_DAYS, viewModel.uiState.value.viewMode)
+        coVerify(exactly = 1) { dataStore.setDefaultCalendarView("three_days") }
+        assertEquals(WeekViewUtils.dateToPage(anchor), viewModel.uiState.value.pendingWeekViewPagerPosition)
+    }
+
+    @Test
+    fun `a sideways pinch to Day opens the anchor date`() = runTest {
+        every { dataStore.defaultCalendarView } returns flowOf(KashCalDataStore.VIEW_THREE_DAYS)
+        coEvery { dataStore.getDefaultCalendarView() } returns KashCalDataStore.VIEW_THREE_DAYS
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        val anchor = LocalDate.now().plusDays(1)
+
+        viewModel.onWeekViewPinchSwitch(visibleDays = 1, date = anchor)
+        advanceUntilIdle()
+
+        assertEquals(ViewMode.DAY, viewModel.uiState.value.viewMode)
+        coVerify(exactly = 1) { dataStore.setDefaultCalendarView("day") }
+        assertEquals(WeekViewUtils.dateToPage(anchor), viewModel.uiState.value.pendingWeekViewPagerPosition)
+    }
+
+    @Test
+    fun `a sideways pinch to Week opens the week holding the anchor date`() = runTest {
+        every { dataStore.defaultCalendarView } returns flowOf(KashCalDataStore.VIEW_THREE_DAYS)
+        coEvery { dataStore.getDefaultCalendarView() } returns KashCalDataStore.VIEW_THREE_DAYS
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        val anchor = LocalDate.now().plusDays(9)
+
+        viewModel.onWeekViewPinchSwitch(visibleDays = 7, date = anchor)
+        advanceUntilIdle()
+
+        assertEquals(ViewMode.WEEK, viewModel.uiState.value.viewMode)
+        coVerify(exactly = 1) { dataStore.setDefaultCalendarView("week") }
+        assertEquals(
+            WeekViewUtils.dateToWeekPage(anchor, viewModel.uiState.value.firstDayOfWeek),
+            viewModel.uiState.value.pendingWeekViewPagerPosition,
+        )
+    }
+
+    @Test
+    fun `a pinch to the view already shown does nothing`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.setViewMode(ViewMode.THREE_DAYS)
+        advanceUntilIdle()
+        val pendingBefore = viewModel.uiState.value.pendingWeekViewPagerPosition
+
+        viewModel.onWeekViewPinchSwitch(visibleDays = 3, date = LocalDate.now().plusDays(20))
+        advanceUntilIdle()
+
+        assertEquals(pendingBefore, viewModel.uiState.value.pendingWeekViewPagerPosition)
+    }
+
+    @Test
+    fun `a pinch to a day count with no view does nothing`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        val modeBefore = viewModel.uiState.value.viewMode
+        val pendingBefore = viewModel.uiState.value.pendingWeekViewPagerPosition
+
+        viewModel.onWeekViewPinchSwitch(visibleDays = 5, date = LocalDate.now().plusDays(20))
+        advanceUntilIdle()
+
+        assertEquals(modeBefore, viewModel.uiState.value.viewMode)
+        assertEquals(pendingBefore, viewModel.uiState.value.pendingWeekViewPagerPosition)
+        coVerify(exactly = 0) { dataStore.setDefaultCalendarView(any()) }
+    }
+
+    @Test
     fun `init loads default view from DataStore`() = runTest {
         // The default view is AGENDA, stubbed before createViewModel.
         coEvery { dataStore.getDefaultCalendarView() } returns KashCalDataStore.VIEW_AGENDA
         every { dataStore.defaultCalendarView } returns flowOf(KashCalDataStore.VIEW_AGENDA)
         every { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(emptyList())
-        // initializeAsync reads onboardingDismissed with .first().
-        every { dataStore.onboardingDismissed } returns flowOf(false)
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -4819,33 +5104,13 @@ class HomeViewModelTest {
         assertEquals(ViewMode.AGENDA, viewModel.uiState.value.viewMode)
     }
 
-    // ==================== Occurrence Extension Tests ====================
+    // ==================== Occurrence Repair and Coverage Tests ====================
 
     @Test
-    fun `setViewingMonth calls both forward and past extension`() = runTest {
+    fun `setViewingMonth runs the missing-occurrence repair`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Both extensions extend nothing.
-        coEvery { eventCoordinator.extendOccurrencesIfNeeded(any()) } returns 0
-        coEvery { eventCoordinator.extendPastOccurrencesIfNeeded(any()) } returns 0
-
-        // A past month.
-        viewModel.setViewingMonth(2020, 2) // March 2020
-        advanceUntilIdle()
-
-        // Both the forward and the past extension run.
-        coVerify { eventCoordinator.extendOccurrencesIfNeeded(any()) }
-        coVerify { eventCoordinator.extendPastOccurrencesIfNeeded(any()) }
-    }
-
-    @Test
-    fun `setViewingMonth calls repairMissingOccurrences alongside extension`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        coEvery { eventCoordinator.extendOccurrencesIfNeeded(any()) } returns 0
-        coEvery { eventCoordinator.extendPastOccurrencesIfNeeded(any()) } returns 0
         coEvery { eventCoordinator.repairMissingOccurrences() } returns 2
 
         viewModel.setViewingMonth(2020, 2)

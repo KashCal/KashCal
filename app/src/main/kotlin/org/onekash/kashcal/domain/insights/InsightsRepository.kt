@@ -46,7 +46,7 @@ class InsightsRepository @Inject constructor(
         val endTs = periodEnd.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
 
         val (allOccurrences, calendarMap, roomCalendarIds) =
-            loadOccurrencesForRange(startTs, endTs, periodStart, periodEnd)
+            loadOccurrencesForRange(startTs, endTs, periodStart, periodEnd, zone)
 
         val stats = computeStats(allOccurrences, calendarMap, periodStart, periodEnd, startTs, endTs, zone)
         stats to allOccurrences
@@ -73,7 +73,8 @@ class InsightsRepository @Inject constructor(
         if (endTs <= startTs) return@withContext emptyList()
         val startDate = Instant.ofEpochMilli(startTs).atZone(zone).toLocalDate()
         val endDate = Instant.ofEpochMilli(endTs - 1).atZone(zone).toLocalDate()
-        val (allOccurrences, _, _) = loadOccurrencesForRange(startTs, endTs - 1, startDate, endDate)
+        val (allOccurrences, _, _) =
+            loadOccurrencesForRange(startTs, endTs - 1, startDate, endDate, zone)
         allOccurrences
     }
 
@@ -81,12 +82,19 @@ class InsightsRepository @Inject constructor(
         startTs: Long,
         endTs: Long,
         rangeStart: LocalDate,
-        rangeEnd: LocalDate
+        rangeEnd: LocalDate,
+        zone: ZoneId,
     ): Triple<List<InsightOccurrence>, Map<Long, Pair<String, Int>>, List<Long>> {
         val roomOccurrences = occurrencesDao.getOccurrencesWithEventsForInsights(startTs, endTs)
+        // A timed row's stored day codes are in the device zone it was generated in; see
+        // [DateTimeUtils.occurrenceStartDay].
         val roomOccs: List<InsightOccurrence> = roomOccurrences.map {
+            val allDay = it.event.isAllDay
             SimpleOccurrence(
-                it.startTs, it.endTs, it.event.isAllDay, it.startDay, it.endDay, it.calendarId,
+                it.startTs, it.endTs, allDay,
+                DateTimeUtils.occurrenceStartDay(it.startTs, it.startDay, allDay, zone),
+                DateTimeUtils.occurrenceEndDay(it.startTs, it.endTs, it.endDay, allDay, zone),
+                it.calendarId,
                 it.event.transp
             )
         }

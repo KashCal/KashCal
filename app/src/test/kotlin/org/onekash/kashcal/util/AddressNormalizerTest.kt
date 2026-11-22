@@ -44,7 +44,7 @@ class AddressNormalizerTest {
 
     @Test
     fun `path-relative principal href is preserved verbatim`() {
-        assertEquals("/646691839/principal/", AddressNormalizer.canonical("/646691839/principal/"))
+        assertEquals("/123456789/principal/", AddressNormalizer.canonical("/123456789/principal/"))
     }
 
     @Test

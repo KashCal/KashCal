@@ -7,6 +7,7 @@ enum class TokenType {
     WEEKDAY,
     TIME,
     TIME_RANGE,
+    DURATION,
     STRUCTURED_DATE,
     UNIT,
     MERIDIEM,
@@ -14,6 +15,5 @@ enum class TokenType {
     DATE_KEYWORD,
     TIME_KEYWORD,
     RECURRENCE_KEYWORD,
-    TIMEZONE,
     UNKNOWN
 }

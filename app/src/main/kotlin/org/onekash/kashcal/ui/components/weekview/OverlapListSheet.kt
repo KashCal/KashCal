@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.model.DisplayEvent
+import org.onekash.kashcal.util.DateTimeUtils
 
 /**
  * Shows [events] as a list of [CompactEventBlock]s in a bottom sheet.
@@ -26,6 +27,7 @@ import org.onekash.kashcal.domain.model.DisplayEvent
  * [WeekViewContent] opens it from a "+N" badge with the events that badge hides: the hidden part
  * of a time-grid overlap group, or an all-day column's overflow.
  *
+ * @param nowMs the grid's current time in epoch ms; events that have ended by then fade
  * @param onEventClick called when an event is tapped, followed by [onDismiss]
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,10 +36,12 @@ fun OverlapListSheet(
     events: List<DisplayEvent>,
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mma",
+    nowMs: Long,
     onDismiss: () -> Unit,
     onEventClick: (DisplayEvent) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState()
+    val todayDayCode = DateTimeUtils.eventTsToDayCode(nowMs, isAllDay = false)
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -69,6 +73,9 @@ fun OverlapListSheet(
                         },
                         showEventEmojis = showEventEmojis,
                         timePattern = timePattern,
+                        isPast = DateTimeUtils.isEventPast(
+                            displayEvent.endTs, displayEvent.endDay, displayEvent.isAllDay, nowMs, todayDayCode,
+                        ),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp)

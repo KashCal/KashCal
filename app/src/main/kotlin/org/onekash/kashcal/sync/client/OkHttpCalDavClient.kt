@@ -464,6 +464,39 @@ class OkHttpCalDavClient : CalDavClient {
             }
         }
 
+    override suspend fun listWebcalFeeds(
+        calendarHomeUrl: String
+    ): CalDavResult<List<CalDavQuirks.ParsedWebcalFeed>> =
+        withContext(Dispatchers.IO) {
+            val body = """
+                <?xml version="1.0" encoding="utf-8"?>
+                <d:propfind xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/"
+                            xmlns:ic="http://apple.com/ns/ical/">
+                    <d:prop>
+                        <d:resourcetype/>
+                        <d:displayname/>
+                        <ic:calendar-color/>
+                        <cs:source/>
+                    </d:prop>
+                </d:propfind>
+            """.trimIndent()
+
+            val request = Request.Builder()
+                .url(calendarHomeUrl)
+                .method("PROPFIND", body.toRequestBody(XML_MEDIA_TYPE))
+                .header("Depth", "1")
+                .build()
+
+            executeRequest(request) { responseBody ->
+                val feeds = quirks.extractWebcalFeeds(responseBody)
+                if (feeds == null) {
+                    CalDavResult.error(500, "Unreadable calendar feed listing")
+                } else {
+                    CalDavResult.success(feeds)
+                }
+            }
+        }
+
     override suspend fun probeCalendarCollection(calendarUrl: String): CalDavResult<Boolean> =
         withContext(Dispatchers.IO) {
             val body = """

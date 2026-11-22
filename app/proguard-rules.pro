@@ -60,7 +60,8 @@
 # Keep Room converters
 -keep class org.onekash.kashcal.data.db.converter.** { *; }
 
-# Room generated code
+# Room 2 classes, which WorkManager's own database uses; the app's Room 3 database, DAOs,
+# entities and converters are kept by name above.
 -keep class * extends androidx.room.RoomDatabase { *; }
 -keep @androidx.room.Entity class * { *; }
 -keep @androidx.room.Dao class * { *; }
@@ -177,7 +178,7 @@
 -keep class * implements net.fortuna.ical4j.transform.compliance.Rfc5545ComponentRule { *; }
 -keep class * implements net.fortuna.ical4j.transform.compliance.Rfc5545PropertyRule { *; }
 
-# Keep ical4j ZoneRulesProvider (loaded via ServiceLoader)
+# Keep ical4j's ZoneRulesProvider, which ical4j constructs and registers itself
 -keep class net.fortuna.ical4j.model.DefaultZoneRulesProvider { *; }
 -keep class * implements java.time.zone.ZoneRulesProvider { *; }
 

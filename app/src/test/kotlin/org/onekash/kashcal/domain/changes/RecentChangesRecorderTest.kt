@@ -1,7 +1,6 @@
 package org.onekash.kashcal.domain.changes
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -20,6 +19,7 @@ import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.model.ChangeType
 import org.onekash.kashcal.sync.model.ChangedField
 import org.onekash.kashcal.sync.model.SyncChange
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -42,7 +42,7 @@ class RecentChangesRecorderTest {
     private val now = 1_790_000_000_000L
 
     private fun open(): KashCalDatabase =
-        Room.databaseBuilder(context, KashCalDatabase::class.java, dbName).allowMainThreadQueries().build()
+        TestDatabases.file(context, dbName).allowMainThreadQueries().build()
 
     @Before
     fun setup() = runTest {

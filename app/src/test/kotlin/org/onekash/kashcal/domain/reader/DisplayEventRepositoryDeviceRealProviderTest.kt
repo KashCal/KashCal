@@ -3,6 +3,7 @@ package org.onekash.kashcal.domain.reader
 import android.provider.CalendarContract.Attendees
 import app.cash.turbine.test
 import io.mockk.coEvery
+import io.mockk.coJustRun
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +30,7 @@ import org.onekash.kashcal.data.calendar_provider.SqliteCalendarProvider
 import org.onekash.kashcal.data.db.dao.AccountsDao
 import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -77,7 +79,9 @@ class DisplayEventRepositoryDeviceRealProviderTest {
             every { attendeesChangeSignal() } returns flowOf(0)
         }
         val accountsDao: AccountsDao = mockk()
-        display = DisplayEventRepository(eventReader, f.repository, manager, dataStore, attendeesDao, accountsDao)
+        // These tests are about the device half; the series expansion a read runs is stubbed.
+        val generator: OccurrenceGenerator = mockk { coJustRun { ensureCovered(any(), any(), any(), any(), any()) } }
+        display = DisplayEventRepository(eventReader, f.repository, manager, dataStore, attendeesDao, accountsDao, generator)
     }
 
     @After

@@ -5,16 +5,19 @@ import kotlinx.coroutines.flow.first
 import org.onekash.icaldav.model.ICalEvent
 import org.onekash.icaldav.model.ParseResult
 import org.onekash.icaldav.parser.ICalParser
+import org.onekash.kashcal.data.db.EventIcsSource
 import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.entity.Attendee
+import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.onekash.kashcal.util.maskUid
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Fills an event's attendee rows on demand from `Event.rawIcal`.
+ * Fills an event's attendee rows on demand from its stored ICS, a server's copy; never from an
+ * imported file's copy ([Event.holdsFileCopy]), whose guests are the file's, not the user's.
  *
  * `PullStrategy` skips the upsert when the local etag matches the server's, so an event whose
  * etag hasn't changed since before attendees were stored has no attendee rows. The quick view
@@ -33,42 +36,50 @@ import javax.inject.Singleton
 @Singleton
 class AttendeeBackfill @Inject constructor(
     private val attendeesDao: AttendeesDao,
-    private val eventsDao: EventsDao
+    private val eventsDao: EventsDao,
+    private val icsSource: EventIcsSource,
 ) {
 
     private val parser = ICalParser()
 
     /**
-     * Parses `rawIcal` and persists its master VEVENT's attendees when the event has no
-     * attendee rows or any row's address is unusable. Returns the count written, 0 for a no-op.
+     * Parses the event's stored ICS ([EventIcsSource.read]) and persists its master VEVENT's
+     * attendees when the event has no attendee rows or any row's address is unusable. Returns the
+     * count written, 0 for a no-op.
      *
      * A parse that throws or fails returns 0 with one log line, the UID masked ([maskUid]). A
-     * missing event or `rawIcal`, no ATTENDEE text, no master VEVENT or no usable address return
-     * 0 without a log line. DAO exceptions propagate.
+     * missing event or stored ICS, an imported file's copy ([Event.holdsFileCopy]), no ATTENDEE
+     * text, no master VEVENT or no usable address return 0 without a log line. DAO exceptions
+     * propagate.
      */
     suspend fun backfillIfEmpty(eventId: Long): Int {
         val event = eventsDao.getById(eventId) ?: return 0
-        val rawIcal = event.rawIcal?.takeIf { it.isNotEmpty() } ?: return 0
+        // A file's copy lists the file's guests; the attendee table is the user's current set
+        // ([Event.holdsFileCopy]: any stored ICS of an unsynced import is a file's).
+        if (event.isUnsyncedImport) return 0
+
+        // Return when rows exist and every address is usable. A row with a principal-href, bare
+        // mailto: or blank address (e.g. written by a build without the parser's EMAIL=
+        // fallback) re-parses from the stored ICS. Racing callers converge (class doc). Checked
+        // before the read: opening an event calls this, and the stored ICS can be megabytes.
+        val existing = attendeesDao.getForEvent(eventId).first()
+        if (existing.isNotEmpty() && existing.all { isUsableAddress(it.address) }) return 0
+
+        val rawIcal = icsSource.read(event) ?: return 0
 
         // Skip the parse when the body has no ATTENDEE text.
         if (!rawIcal.contains("ATTENDEE")) return 0
 
-        // Return when rows exist and every address is usable. A row with a principal-href, bare
-        // mailto: or blank address (e.g. written by a build without the parser's EMAIL=
-        // fallback) re-parses from rawIcal. Racing callers converge (class doc).
-        val existing = attendeesDao.getForEvent(eventId).first()
-        if (existing.isNotEmpty() && existing.all { isUsableAddress(it.address) }) return 0
-
         val parseResult = try {
             parser.parse(rawIcal)
         } catch (e: Exception) {
-            Log.w(TAG, "rawIcal parse threw for event ${event.uid.maskUid()}: ${e.javaClass.simpleName}")
+            Log.w(TAG, "Stored ICS parse threw for event ${event.uid.maskUid()}: ${e.javaClass.simpleName}")
             return 0
         }
 
         val cal = (parseResult as? ParseResult.Success)?.value
             ?: run {
-                Log.w(TAG, "rawIcal parse failed for event ${event.uid.maskUid()}")
+                Log.w(TAG, "Stored ICS parse failed for event ${event.uid.maskUid()}")
                 return 0
             }
 
@@ -104,14 +115,14 @@ class AttendeeBackfill @Inject constructor(
      * Rejects a blank address, a bare `mailto:` (an ATTENDEE with no value), a principal href,
      * and ical4j's `net.fortunal.ical4j.invalid:` marker, which its relaxed parsing gives an
      * ATTENDEE value that isn't a URI. `fortunal` is an upstream typo (`Uris.INVALID_SCHEME` in
-     * ical4j 4.3.0); the match must keep it, or it stops matching what ical4j emits.
+     * ical4j); the match must keep it, or it stops matching what ical4j emits.
      */
     private fun isUsableAddress(address: String): Boolean {
         if (address.isBlank()) return false
         val withoutMailto = address.removePrefix("mailto:")
         if (withoutMailto.isBlank()) return false
         if (withoutMailto.startsWith("net.fortunal.ical4j.invalid:")) return false
-        // A principal href ("/646691839/principal/") is what builds without the EMAIL=
+        // A principal href ("/123456789/principal/") is what builds without the EMAIL=
         // fallback stored. A real CAL-ADDRESS is a mailto: or a URI not starting with `/`
         // (e.g. urn:uuid:).
         if (withoutMailto.startsWith("/")) return false

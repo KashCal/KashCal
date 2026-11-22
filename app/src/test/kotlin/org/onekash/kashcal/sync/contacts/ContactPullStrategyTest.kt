@@ -1,7 +1,6 @@
 package org.onekash.kashcal.sync.contacts
 
 import android.util.Log
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.every
 import io.mockk.mockkStatic
@@ -28,6 +27,7 @@ import org.onekash.kashcal.sync.carddav.model.ContactSyncItem
 import org.onekash.kashcal.sync.carddav.model.ContactSyncReport
 import org.onekash.kashcal.sync.carddav.model.ContactUploadResult
 import org.onekash.kashcal.sync.client.model.CalDavResult
+import org.onekash.kashcal.testutil.TestDatabases
 import org.onekash.vcard.VCardParser
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -65,10 +65,7 @@ class ContactPullStrategyTest {
         every { Log.e(any(), any<String>()) } returns 0
         every { Log.e(any(), any<String>(), any()) } returns 0
 
-        database = Room.inMemoryDatabaseBuilder(
-            ApplicationProvider.getApplicationContext(),
-            KashCalDatabase::class.java,
-        ).allowMainThreadQueries().build()
+        database = TestDatabases.inMemory(ApplicationProvider.getApplicationContext()).allowMainThreadQueries().build()
 
         accountId = database.accountsDao().insert(
             Account(provider = AccountProvider.ICLOUD, email = ACCOUNT_NAME),

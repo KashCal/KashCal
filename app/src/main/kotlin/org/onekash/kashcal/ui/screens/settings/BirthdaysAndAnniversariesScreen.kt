@@ -28,9 +28,11 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,10 +42,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.components.SettingsTopAppBar
-import org.onekash.kashcal.ui.components.pickers.ColorPaletteSheet
+import org.onekash.kashcal.ui.components.pickers.ExpandChevron
+import org.onekash.kashcal.ui.components.pickers.ExpandingColorPalette
+import org.onekash.kashcal.ui.components.pickers.expandStateDescription
 import org.onekash.kashcal.ui.shared.EventColorPalette
 import org.onekash.kashcal.ui.shared.formatReminderOption
 import org.onekash.kashcal.ui.shared.getAllDayReminderOptions
@@ -181,7 +187,10 @@ private fun ContactEventSection(
     onReminderChange: (Int) -> Unit
 ) {
     var showReminderPicker by remember { mutableStateOf(false) }
-    var showColorPicker by remember { mutableStateOf(false) }
+    var colorExpanded by rememberSaveable { mutableStateOf(false) }
+    // A switched-off section hides its pickers; turning it back on starts with the palette closed.
+    LaunchedEffect(isEnabled) { if (!isEnabled) colorExpanded = false }
+    val colorState = expandStateDescription(colorExpanded)
     val resources = LocalResources.current
 
     Column(
@@ -241,7 +250,8 @@ private fun ContactEventSection(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { showColorPicker = true }
+                        .clickable { colorExpanded = !colorExpanded }
+                        .semantics { stateDescription = colorState }
                         .padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -263,7 +273,15 @@ private fun ContactEventSection(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
+                    ExpandChevron(colorExpanded, tint = MaterialTheme.colorScheme.primary)
                 }
+                // Picking the current color again doesn't call onColorChange.
+                ExpandingColorPalette(
+                    selectedArgb = calendarColor,
+                    expanded = colorExpanded,
+                    onExpandedChange = { colorExpanded = it },
+                    onColorSelected = { color -> if (color != calendarColor) onColorChange(color) },
+                )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
@@ -307,18 +325,6 @@ private fun ContactEventSection(
             },
             onDismiss = { showReminderPicker = false },
             isAllDay = true
-        )
-    }
-
-    // Picking the current color again doesn't call onColorChange.
-    if (showColorPicker) {
-        ColorPaletteSheet(
-            selectedArgb = calendarColor,
-            onColorSelected = { color ->
-                if (color != calendarColor) onColorChange(color)
-                showColorPicker = false
-            },
-            onDismiss = { showColorPicker = false }
         )
     }
 }

@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import android.content.Context
-import androidx.room.Room
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -19,6 +19,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.icaldav.parser.ICalParser
 import org.onekash.kashcal.data.db.KashCalDatabase
+import org.onekash.kashcal.data.db.PendingOperationTriggers
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
@@ -35,6 +36,7 @@ import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.Instant
@@ -168,7 +170,8 @@ class PushStrategyRecurringInviteReplyTest {
         )
 
         val context: Context = ApplicationProvider.getApplicationContext()
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
+            .addCallback(PendingOperationTriggers.callback())
             .allowMainThreadQueries().build()
         occurrenceGenerator = OccurrenceGenerator(
             database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault()
@@ -191,7 +194,8 @@ class PushStrategyRecurringInviteReplyTest {
             pendingOperationsDao = database.pendingOperationsDao(),
             accountRepository = accountRepository,
             attendeesDao = database.attendeesDao(),
-            pendingCancelsDao = database.pendingCancelsDao()
+            pendingCancelsDao = database.pendingCancelsDao(),
+            icsSource = EventIcsStore(database),
         )
     }
 
@@ -201,12 +205,16 @@ class PushStrategyRecurringInviteReplyTest {
         server.shutdown()
     }
 
-    /** Stores [ics] the way pull does: every row carries the whole body, the URL and the etag. */
+    /**
+     * Stores [ics] the way pull does: every row carries the URL and the etag, and the body is
+     * stored once, on the series row.
+     */
     private suspend fun seedPulled(ics: String = resource) {
         val parsed = ICalParser().parseAllEvents(ics).getOrNull()!!
         val seriesParsed = parsed.single { it.recurrenceId == null }
         val series = ICalEventMapper.toEntity(seriesParsed, ics, calendarId, resourceUrl, etag)
         seriesId = database.eventsDao().insert(series.event)
+        EventIcsStore(database).write(seriesId, series.ics)
         database.attendeesDao().replaceForEvent(seriesId, series.attendees.map { it.copy(eventId = seriesId) })
         occurrenceGenerator.regenerateOccurrences(database.eventsDao().getById(seriesId)!!)
 
@@ -232,10 +240,12 @@ class PushStrategyRecurringInviteReplyTest {
         body = changesOnly
         val parsed = ICalParser().parseAllEvents(changesOnly).getOrNull()!!
         assertEquals(2, parsed.size)
-        // Pull keeps a placeholder series row for such a file, with no body, URL or etag.
+        // Pull keeps a placeholder series row for such a file, with no URL or etag; it holds
+        // the file's body for its occurrences.
         seriesId = database.eventsDao().insert(
             synthesizeMasterForOrphanException(uid, calendarId, movedInstance, "Planning")
         )
+        EventIcsStore(database).write(seriesId, changesOnly)
         for (change in parsed) {
             val mapped = ICalEventMapper.toEntity(change, changesOnly, calendarId, resourceUrl, etag)
             val id = database.eventsDao().insert(mapped.event.copy(originalEventId = seriesId))
@@ -369,7 +379,7 @@ class PushStrategyRecurringInviteReplyTest {
         for (id in listOf(seriesId, movedId, retitledId)) {
             val row = database.eventsDao().getById(id)!!
             assertEquals("row $id etag", etag, row.etag)
-            assertEquals("row $id body", body, row.rawIcal)
+            assertEquals("row $id body", body, EventIcsStore(database).read(row))
         }
     }
 
@@ -515,7 +525,10 @@ class PushStrategyRecurringInviteReplyTest {
         assertEquals("ACCEPTED", selfPartstat(block(body, "20261203T100000Z")))
         assertEquals("NEEDS-ACTION", selfPartstat(block(body, "20261202T100000Z")))
         val placeholder = database.eventsDao().getById(seriesId)!!
-        assertNull("placeholder keeps no body", placeholder.rawIcal)
+        assertEquals("placeholder holds the body sent", body, EventIcsStore(database).readOwn(seriesId))
+        assertNull("placeholder reads no body for itself", EventIcsStore(database).read(placeholder))
+        assertEquals("the replied occurrence reads the body sent", body,
+            EventIcsStore(database).read(database.eventsDao().getById(retitledId)!!))
         assertNull("placeholder keeps no etag", placeholder.etag)
         assertNull("placeholder keeps no URL", placeholder.caldavUrl)
     }

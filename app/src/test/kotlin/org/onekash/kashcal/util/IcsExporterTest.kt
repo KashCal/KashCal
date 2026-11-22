@@ -6,12 +6,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.domain.model.EventExport
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 
 /**
- * Tests [IcsExporter]'s file names and calendar ICS building (both private, called by
- * reflection), plus single-event serialization through [IcsPatcher].
+ * Tests [IcsExporter]'s file names (private, called by reflection) and calendar ICS building
+ * ([IcsExporter.buildCalendarText]), plus single-event serialization through [IcsPatcher].
  *
  * Android file operations (FileProvider) are not tested here.
  */
@@ -82,11 +83,11 @@ class IcsExporterTest {
     // ========== Calendar ICS Building Tests ==========
 
     @Test
-    fun `buildCalendarIcs creates valid structure`() {
+    fun `buildCalendarText creates valid structure`() {
         val event = createBasicEvent()
         val events = listOf(Pair(event, emptyList<Event>()))
 
-        val ics = invokeBuildCalendarIcs(events, "Test Calendar")
+        val ics = buildCalendarText(events, "Test Calendar")
 
         assertTrue("Should start with BEGIN:VCALENDAR", ics.trimStart().startsWith("BEGIN:VCALENDAR"))
         assertTrue("Should end with END:VCALENDAR", ics.trimEnd().endsWith("END:VCALENDAR"))
@@ -95,7 +96,7 @@ class IcsExporterTest {
     }
 
     @Test
-    fun `buildCalendarIcs includes all events`() {
+    fun `buildCalendarText includes all events`() {
         val event1 = createBasicEvent(title = "Event 1", uid = "uid-1")
         val event2 = createBasicEvent(title = "Event 2", uid = "uid-2")
         val events: List<Pair<Event, List<Event>>> = listOf(
@@ -103,7 +104,7 @@ class IcsExporterTest {
             Pair(event2, emptyList())
         )
 
-        val ics = invokeBuildCalendarIcs(events, "My Calendar")
+        val ics = buildCalendarText(events, "My Calendar")
 
         assertTrue("Should contain Event 1", ics.contains("SUMMARY:Event 1"))
         assertTrue("Should contain Event 2", ics.contains("SUMMARY:Event 2"))
@@ -112,10 +113,10 @@ class IcsExporterTest {
     }
 
     @Test
-    fun `buildCalendarIcs escapes calendar name`() {
+    fun `buildCalendarText escapes calendar name`() {
         val events = listOf(Pair(createBasicEvent(), emptyList<Event>()))
 
-        val ics = invokeBuildCalendarIcs(events, "Calendar; With, Special\\Chars\nNewline")
+        val ics = buildCalendarText(events, "Calendar; With, Special\\Chars\nNewline")
 
         assertTrue("Should escape semicolon", ics.contains("\\;"))
         assertTrue("Should escape comma", ics.contains("\\,"))
@@ -124,7 +125,7 @@ class IcsExporterTest {
     }
 
     @Test
-    fun `buildCalendarIcs emits VTIMEZONE blocks for event timezones deduplicated`() {
+    fun `buildCalendarText emits VTIMEZONE blocks for event timezones deduplicated`() {
         // Two events share America/New_York, one uses Asia/Tokyo, so one VTIMEZONE per distinct
         // TZID gives 2 blocks. Only the block count is asserted.
         val nyStart = 1735099200000L
@@ -137,7 +138,7 @@ class IcsExporterTest {
             Pair(event3, emptyList())
         )
 
-        val ics = invokeBuildCalendarIcs(events, "Multi-TZ Calendar")
+        val ics = buildCalendarText(events, "Multi-TZ Calendar")
 
         // Matches the VTIMEZONE TZID line, not the parameter
         val nyCount = ics.split("TZID:America/New_York\n").size - 1
@@ -156,7 +157,7 @@ class IcsExporterTest {
             description = "Test Description"
         )
 
-        val ics = IcsPatcher.serialize(event)
+        val ics = IcsPatcher.serialize(event, null)
 
         // Checks the serialized fields only; nothing is parsed back.
         assertTrue("Should contain VCALENDAR", ics.contains("BEGIN:VCALENDAR"))
@@ -164,6 +165,26 @@ class IcsExporterTest {
         assertTrue("Should contain title", ics.contains("SUMMARY:Round Trip Test"))
         assertTrue("Should contain location", ics.contains("LOCATION:Conference Room"))
         assertTrue("Should contain description", ics.contains("DESCRIPTION:Test Description"))
+    }
+
+    @Test
+    fun `an all-day series exports a timed changed occurrence with a date RECURRENCE-ID`() {
+        // RFC 5545 section 3.8.4.4: RECURRENCE-ID has the series DTSTART's value type.
+        val day = 86_400_000L
+        val start = java.time.LocalDate.parse("2024-03-05").atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
+        val master = createBasicEvent(title = "Holiday", uid = "allday-export@example.test").copy(
+            startTs = start, endTs = start + day - 1, isAllDay = true, rrule = "FREQ=WEEKLY;COUNT=4",
+        )
+        val nineAm = java.time.ZonedDateTime.parse("2024-03-12T09:00:00-04:00[America/New_York]").toInstant().toEpochMilli()
+        val exception = master.copy(
+            id = 2L, rrule = null, originalEventId = 1L, originalInstanceTime = start + 7 * day,
+            startTs = nineAm, endTs = nineAm + 3_600_000L, isAllDay = false, timezone = "America/New_York",
+        )
+
+        val ics = buildCalendarText(listOf(master to listOf(exception)), "Cal").replace(Regex("\r?\n[ \t]"), "")
+
+        assertTrue(ics, ics.contains("RECURRENCE-ID;VALUE=DATE:20240312"))
+        assertTrue(ics, ics.contains("DTSTART;TZID=America/New_York:20240312T090000"))
     }
 
     // ========== Helper Methods ==========
@@ -174,17 +195,12 @@ class IcsExporterTest {
         return method.invoke(exporter, baseName) as String
     }
 
-    private fun invokeBuildCalendarIcs(
+    private fun buildCalendarText(
         events: List<Pair<Event, List<Event>>>,
         calendarName: String
     ): String {
-        val method = IcsExporter::class.java.getDeclaredMethod(
-            "buildCalendarIcs",
-            List::class.java,
-            String::class.java
-        )
-        method.isAccessible = true
-        return method.invoke(exporter, events, calendarName) as String
+        val exports = events.map { (event, exceptions) -> EventExport(event, exceptions, emptyMap()) }
+        return exporter.buildCalendarText(exports, calendarName)
     }
 
     private fun createBasicEvent(

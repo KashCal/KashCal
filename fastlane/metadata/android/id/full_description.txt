@@ -1,36 +1,9 @@
-Kalendermu ada di mana-mana. Keluarga di iCloud. Hari libur dari suatu situs web. Ulang tahun terkubur di kontak. Pekerjaan di kalender ponsel. KashCal menyatukan semuanya dalam satu aplikasi di Android.
+Kalender keluarga ada di iCloud, urusan kantor di Google, dan Nextcloud-mu berdengung di lemari sebelah router. KashCal menampilkan semuanya dalam satu aplikasi.
 
-Pelajari lebih lanjut: https://kashcal.onekash.org
+Tanpa iklan, tanpa akun, dan tidak tahu apa yang kamu lakukan musim panas lalu!
 
-• iCloud: pindah ke Android tapi keluargamu masih di Apple? Sinkronkan kalender iCloud secara langsung. Tanpa jembatan, tanpa akal-akalan.
+Rencanakan minggu ini di satu halaman, cetak untuk ditempel di kulkas, dan kirim jadwal kosongmu daripada main ping-pong lewat email. Berlangganan sekali kalender libur sekolah dan jadwal angkut sampah, lalu berhenti bertanya di grup.
 
-• CalDAV: Nextcloud, Fastmail, Radicale, Baikal, Zoho, Mailbox, Stalwart, SOGo, dan lainnya. Sinkronisasi dua arah asli, tanpa lapisan perantara. Kalender Google dan Outlook di ponselmu juga muncul.
+Open source, dalam 63 bahasa, dari orang-orang yang juga suka lupa ulang tahun. Sekarang aplikasinya yang ingat, kamu tinggal beli kado.
 
-• Tujuh tampilan: bulan, bulan tinggi penuh, agenda, hari, 3 hari, minggu, dan tahun. Cubit untuk memperbesar linimasa, seret acara untuk memindahkannya.
-
-• Penjadwalan: undang orang, kirim undangan rapat, dan balas undangan dari orang lain.
-
-• Wawasan: lihat ke mana waktumu pergi. Hari tersibuk, rentetan tanpa jeda, blok kosong. Semua dihitung di perangkat.
-
-• Widget: pantau harimu di layar utama tanpa membuka aplikasi. Agenda, tanggal, minggu, bulan, dan mendatang.
-
-• Langganan ICS: ikuti umpan kalender apa pun. Hari libur, kalender sekolah, musim olahraga.
-
-• Ulang tahun dan hari jadi: diambil dari kontakmu secara otomatis.
-
-• Warna per acara: dari palet pilihan atau roda warna penuh, agar minggumu terbaca sekilas.
-
-• Buat jadi milikmu: tema terang, gelap, atau sistem, plus palet KashCal Teal. Pendukung bisa beralih ke ikon aplikasi khusus.
-
-• Aksesibilitas: dukungan pembaca layar (TalkBack) penuh, dan atur bahasa aplikasi langsung dari pengaturan Android, dalam 67 bahasa.
-
-• Bekerja sepenuhnya offline sejak awal.
-
-Privat secara bawaan
-
-Tanpa analitik. Tanpa telemetri. Tanpa akun KashCal. Kami tidak punya server, jadi tidak ada yang bisa dikumpulkan.
-
-• Kredensial dienkripsi dengan Android Keystore
-• Kunci aplikasi: sembunyikan acaramu di balik sidik jari, wajah, atau kunci layar
-
-Bebas seperti kebebasan. Dan gratis juga.
+https://kashcal.onekash.org

@@ -43,6 +43,8 @@
     <string name="channel_event_invitations">Pozivi na događaje</string>
     <string name="channel_event_invitations_desc">Obavijesti kada primite novi poziv u kalendar</string>
     <string name="channel_calendar_updates">Promjene u kalendaru</string>
+    <string name="channel_calendar_backup">Automatska sigurnosna kopija kalendara</string>
+    <string name="channel_calendar_backup_description">Obavještava te kad sigurnosna kopija kalendara ne uspije</string>
     <string name="invite_notification_body">Od %1$s · Dodirnite za odgovor</string>
 
     <!-- ==================== App Shortcuts ==================== -->
@@ -88,7 +90,6 @@
     <string name="action_discard">Odbaci</string>
     <string name="action_discard_confirm">Odbaciti?</string>
     <string name="action_dismiss">Odbaci</string>
-    <string name="action_show_all">Prikaži sve</string>
     <string name="action_connect">Poveži</string>
     <string name="action_duplicate">Dupliciraj</string>
     <string name="action_share">Podijeli</string>
@@ -119,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d više</string>
     <string name="tags_autocomplete_create_new">Stvori \"%1$s\"</string>
     <string name="cd_tag">Oznaka: %1$s</string>
+    <string name="tags_show_events_click_label">Prikaži događaje s ovom oznakom</string>
+    <string name="tags_show_events">Prikaži događaje</string>
     <string name="cd_tags_move_menu">Premjesti oznake</string>
     <string name="tags_move_above_notes">Premjesti iznad bilješki</string>
     <string name="tags_move_below_notes">Premjesti ispod bilješki</string>
@@ -148,7 +151,6 @@
     <string name="label_enter_hex">Unesite 6 hex znakova (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Sve</string>
     <string name="view_week">Tjedan</string>
     <string name="view_month">Mjesec</string>
     <string name="label_all_day">Cijeli dan</string>
@@ -190,17 +192,38 @@
     <string name="settings_event_emojis_info">Dodaje emoji događajima na temelju naslova, primjerice 🎂 za \"Rođendan\".</string>
     <string name="settings_force_sync">Prisilna potpuna sinkronizacija</string>
     <string name="settings_force_sync_subtitle">Ponovno preuzmi sve podatke kalendara</string>
+    <string name="settings_force_sync_no_account">Nije postavljen račun za sinkronizaciju</string>
+    <string name="force_sync_confirm">Ponovno preuzmi %1$s s %2$s. Promjene koje još nisu sinkronizirane zadržavaju se.</string>
+    <string name="action_start">Pokreni</string>
     <string name="settings_sync_history">Povijest sinkronizacije</string>
     <string name="settings_sync_history_subtitle">Prikaži sesije sinkronizacije (zadnjih 48 sati)</string>
     <string name="settings_import_subtitle">Dodaj događaje iz ICS datoteke u bilo koji kalendar</string>
-    <string name="settings_export_subtitle">Spremi događaje u ICS datoteku</string>
     <string name="settings_birthday_reminder">Podsjetnik za rođendan</string>
-    <string name="settings_use_device_timezone">Koristi vremensku zonu uređaja</string>
     <string name="settings_section_calendars">Kalendari i računi</string>
     <string name="settings_section_appearance">Izgled</string>
     <string name="settings_section_creating_events">Postavke događaja</string>
     <string name="settings_section_sync">Sinkronizacija</string>
     <string name="settings_section_data">Sigurnosna kopija i vraćanje</string>
+    <string name="settings_section_troubleshooting">Rješavanje problema</string>
+
+    <!-- ==================== Debug report (Settings > Troubleshooting) ==================== -->
+    <string name="debug_report_row_label">Izvezi dijagnostičko izvješće</string>
+    <string name="debug_report_row_subtitle">Pojedinosti o rušenjima, sinkronizaciji i konfiguraciji za prijavu pogreške</string>
+    <string name="debug_report_sheet_title">Dijagnostičko izvješće</string>
+    <string name="debug_report_sheet_body">Tekstna datoteka koju šalješ uz prijavu pogreške. Pošalji je ubrzo nakon problema: zapisnik aplikacije čuva samo nedavnu aktivnost.</string>
+    <string name="debug_report_item_exits">Zašto se aplikacija nedavno zatvorila</string>
+    <string name="debug_report_item_exits_detail">Rušenja, zamrzavanja, nedostatak memorije</string>
+    <string name="debug_report_item_log">Zapisnik aplikacije</string>
+    <string name="debug_report_item_log_detail">Vlastite poruke aplikacije KashCal, uključujući pojedinosti o rušenjima</string>
+    <string name="debug_report_item_sync_detail">Nedavne sinkronizacije, do 48 sati unatrag</string>
+    <string name="debug_report_item_pending">Promjene na čekanju</string>
+    <string name="debug_report_item_pending_detail">Izmjene koje još nisu poslane na tvoj poslužitelj</string>
+    <string name="debug_report_item_setup">Konfiguracija</string>
+    <string name="debug_report_item_setup_detail">Verzija aplikacije i Androida, dopuštenja, postavke baterije, vrste računa</string>
+    <string name="debug_report_privacy_note">Adrese e-pošte, web-adrese i tokeni su skriveni. Naslovi događaja, nazivi kalendara i imena kontakata nisu. Pošalji izvješće e-poštom, ne u javnoj objavi.</string>
+    <string name="debug_report_share">Podijeli izvješće</string>
+    <string name="debug_report_chooser_title">Podijeli dijagnostičko izvješće</string>
+    <string name="debug_report_failed">Nije moguće izraditi dijagnostičko izvješće</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Zaključavanje aplikacije</string>
@@ -236,9 +259,38 @@
     <string name="backup_error_read_failed">Datoteku nije moguće pročitati</string>
 
     <!-- ==================== Onboarding ==================== -->
-    <string name="onboarding_apple_calendar">Apple Calendar?</string>
-    <string name="onboarding_got_you">Tu smo za tebe.</string>
-    <string name="onboarding_connect_prompt">Poveži iCloud da vidiš svoje događaje</string>
+    <string name="onboarding_title">Gdje su tvoji kalendari?</string>
+    <string name="onboarding_subtitle">Odaberi jedan za povezivanje.</string>
+    <string name="onboarding_icloud_detail">Apple ID i lozinka za aplikaciju</string>
+    <string name="onboarding_caldav_title">CalDAV poslužitelj</string>
+    <string name="onboarding_caldav_detail">Nextcloud, Fastmail, Radicale i drugi</string>
+    <string name="onboarding_device_title">Na ovom uređaju</string>
+    <string name="onboarding_phone_detail">Google, Outlook i aplikacije za sinkronizaciju</string>
+    <string name="onboarding_use_offline">Koristi kalendar izvan mreže</string>
+    <string name="onboarding_trust">Otvoreni kod. Bez oglasa. Bez praćenja.</string>
+
+    <!-- ==================== Reminders are off ==================== -->
+    <string name="reminders_off_title">Podsjetnici su isključeni</string>
+    <plurals name="reminders_off_body">
+        <item quantity="one">%d događaj ovaj tjedan ima podsjetnik.</item>
+        <item quantity="few">%d događaja ovaj tjedan imaju podsjetnike.</item>
+        <item quantity="other">%d događaja ovaj tjedan ima podsjetnike.</item>
+    </plurals>
+    <string name="reminders_off_not_now">Ne sada</string>
+    <string name="reminders_off_turn_on">Uključi</string>
+    <string name="reminders_on_snackbar">Podsjetnici uključeni</string>
+
+    <!-- ==================== About ==================== -->
+    <string name="about_tagline">Svi kalendari u jednoj privatnoj aplikaciji.</string>
+    <string name="about_help_title">Pomoć i vodiči</string>
+    <string name="about_help_detail">Postavljanje, sinkronizacija i pitanja</string>
+    <string name="about_source_title">Izvorni kod</string>
+    <string name="about_source_detail">Apache 2.0, na GitHubu</string>
+    <string name="about_support_title">Podrži KashCal</string>
+    <string name="about_support_detail">Hvala svima koji to već čine</string>
+    <string name="about_link_failed">Nijedna aplikacija ne može otvoriti ovu poveznicu.</string>
+    <string name="about_built_in_austin">Napravljeno s ❤️ u Austinu</string>
+    <string name="about_version">Verzija %1$s</string>
 
     <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Preskoči</string>
@@ -257,22 +309,32 @@
     <string name="whats_new_v772_changes_title">Pogledajte što se promijenilo</string>
     <string name="whats_new_v772_changes_body">Novi, uređeni i uklonjeni događaji iz vaših iCloud i CalDAV kalendara skupljaju se 7 dana na popisu \"Nedavne promjene\". Dodirnite događaj da biste ga otvorili.</string>
     <string name="whats_new_v772_notifications_body">Primajte obavijest kada sinkronizacija u pozadini pronađe promjene u vašim iCloud ili CalDAV događajima. Opcija ostaje isključena dok je ne uključite.</string>
+    <string name="whats_new_v803_offline_title">Kalendari koji ne napuštaju vaš telefon</string>
+    <string name="whats_new_v803_offline_body">Neki planovi nisu za server. Dajte im vlastite kalendare izvan mreže, koliko god želite.</string>
+    <string name="whats_new_v803_backup_title">Sigurnosne kopije na koje možete zaboraviti</string>
+    <string name="whats_new_v803_backup_body">Jednom odaberite mapu i KashCal će u njoj čuvati svježu kopiju vaših kalendara izvan mreže.</string>
+    <string name="whats_new_v803_print_title">Vaš tjedan na papiru</string>
+    <string name="whats_new_v803_print_body">Ispišite tjedan koji gledate. Na kojem će hladnjaku završiti, vaša je odluka.</string>
     <string name="whats_new_hero_sample_lunch">Ručak s timom</string>
     <string name="whats_new_hero_sample_review">Pregled dizajna</string>
     <string name="whats_new_hero_sample_book_club">Klub čitatelja</string>
+    <string name="whats_new_hero_sample_dentist">Zubar</string>
+    <string name="whats_new_hero_sample_yoga">Joga</string>
     <string name="whats_new_hero_sample_calendar">Posao</string>
+    <string name="whats_new_hero_sample_family">Obitelj</string>
+    <string name="whats_new_hero_sample_garden">Vrt</string>
+    <string name="whats_new_hero_sample_folder">Sigurnosne kopije kalendara</string>
     <string name="whats_new_hero_now">sad</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Poveži iCloud</string>
     <string name="signin_caldav_title">Dodaj CalDAV račun</string>
+    <string name="signin_caldav_sign_in_again_title">Ponovno se prijavi</string>
     <string name="signin_connected_to">Povezano s %1$s</string>
 
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Novi događaj</string>
     <string name="dialog_edit_event_title">Uredi događaj</string>
-    <string name="dialog_force_sync_title">Prisilna potpuna sinkronizacija?</string>
-    <string name="dialog_force_sync_message">Ovo će ponovno preuzeti sve podatke kalendara s poslužitelja. Lokalne promjene bit će sačuvane.</string>
     <string name="dialog_enable_notifications">Omogućiti obavijesti?</string>
     <string name="dialog_action_required">Ova radnja je potrebna za nastavak.</string>
     <string name="dialog_add_to_calendar">Dodaj u kalendar</string>
@@ -285,6 +347,7 @@
     <string name="status_no_events_week">Nema događaja ovaj tjedan</string>
     <string name="status_more_events">+%1$d više</string>
     <string name="status_no_sync_sessions">Nema sesija sinkronizacije.\n\nPokreni sinkronizaciju povlačenjem prema dolje na prikazu kalendara.</string>
+    <string name="status_no_sync_account">Nije postavljen račun za sinkronizaciju. Kalendari izvan mreže ostaju na ovom uređaju; kalendari uređaja sinkroniziraju se kroz vlastiti račun.</string>
     <string name="status_no_writable_calendars">Nema kalendara za pisanje</string>
     <string name="status_events_count">%1$d događaja</string>
     <string name="status_sync_history">Povijest sinkronizacije</string>
@@ -333,6 +396,7 @@
     <string name="caldav_error_unexpected">Neočekivana pogreška. Pokušajte ponovno.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nAko je ovo poslužitelj na tvojoj lokalnoj mreži, dopusti pristup lokalnoj mreži za povezivanje.</string>
     <string name="caldav_error_connection_refused_insecure">Poslužitelj je preusmjerio vezu na mjesto na koje KashCal ne ide (nešifriranu adresu ili petlju preusmjeravanja), pa je KashCal stao prije slanja tvoje lozinke. Provjeri adresu poslužitelja.</string>
+    <string name="caldav_error_sign_in_again_mismatch">Ovo je drugi račun. Prijavi se korisničkim imenom i poslužiteljem koje ovaj račun koristi.</string>
     <string name="local_network_banner_title">Potreban pristup lokalnoj mreži</string>
     <string name="local_network_banner_body">Ovaj poslužitelj izgleda kao da je na tvojoj lokalnoj mreži. Dopusti pristup lokalnoj mreži kako bi se KashCal mogao povezati s njim.</string>
     <string name="local_network_banner_allow">Dopusti pristup</string>
@@ -374,7 +438,6 @@
     <string name="error_device_calendar_title">Greška kalendara</string>
     <string name="error_device_calendar_write_failed">Spremanje u kalendar uređaja neuspješno. Pokušaj ponovno.</string>
     <string name="error_device_calendar_permission">Potrebna dozvola za pisanje u kalendar. Dodijeli dozvolu u Postavkama.</string>
-    <string name="error_device_calendar_permission_denied">Isključite i ponovno uključite dozvolu za Kalendar u Postavkama kako biste dodijelili pristup za pisanje</string>
     <string name="error_device_calendar_not_found">Kalendar nije pronađen. Možda je uklonjen.</string>
     <string name="error_device_event_not_found">Događaj nije pronađen. Možda je obrisan.</string>
     <string name="error_device_calendar_read_only">Ovaj kalendar je samo za čitanje.</string>
@@ -401,12 +464,11 @@
     <string name="cd_recurring">Ponavljajući</string>
     <string name="cd_enabled">Omogućeno</string>
     <string name="cd_sync_error">Greška sinkronizacije</string>
-    <string name="cd_select_label">Odaberi %1$s</string>
     <string name="cd_wheel_picker">Kotačić za odabir s %1$d opcija</string>
     <string name="cd_time_entry_keyboard">Unesite točno vrijeme</string>
     <string name="time_entry_dialog_title">Unesite vrijeme</string>
     <string name="time_entry_tap_to_edit">Dodirnite za uređivanje</string>
-    <string name="cd_version_info">KashCal verzija %1$s. Dugi pritisak za opcije za otklanjanje grešaka.</string>
+    <string name="cd_version_info">KashCal verzija %1$s</string>
     <string name="cd_about_setting">O: %1$s</string>
     <string name="cd_color_slider">Klizač boja, trenutno %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d stupnjeva</string>
@@ -435,7 +497,6 @@
     <string name="label_recurrence_on_date">Na datum</string>
 
     <!-- ==================== Settings (Additional) ==================== -->
-    <string name="settings_visible_calendars">Vidljivi kalendari</string>
     <string name="settings_default_calendar">Zadani kalendar</string>
     <string name="settings_default_event_length">Zadano trajanje događaja</string>
     <string name="settings_default_event_length_hint">Zadana duljina novih događaja</string>
@@ -455,7 +516,6 @@
     <string name="option_saturday">Subota</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Nema pronađenih događaja</string>
     <string name="empty_no_upcoming_events">Nema nadolazećih događaja</string>
     <string name="empty_no_calendars">Nema dostupnih kalendara</string>
 
@@ -466,7 +526,15 @@
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Dohvati kalendar</string>
     <string name="action_import_from_file">Uvezi događaje iz datoteke</string>
-    <string name="action_export_local_calendar">Izvezi kalendar Lokalni</string>
+    <string name="settings_export_calendars">Izvezi kalendare</string>
+    <string name="settings_export_calendars_subtitle">Spremi kalendar kao ICS datoteku</string>
+    <string name="export_calendar_no_events">Nema događaja</string>
+    <string name="export_calendar_preparing">Priprema…</string>
+    <string name="cd_export_calendar">Izvezi %1$s</string>
+    <string name="cd_export_calendar_preparing">Priprema %1$s</string>
+    <string name="export_calendar_chooser_title">Izvezi kalendar</string>
+    <string name="export_event_chooser_title">Izvezi događaj</string>
+    <string name="export_file_failed">Nije moguće stvoriti datoteku.</string>
 
     <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
@@ -504,12 +572,14 @@
     <string name="accounts_cd_back">Natrag</string>
     <string name="accounts_sync_issue">Problem sa sinkronizacijom</string>
     <string name="accounts_cd_sync_warning">Upozorenje sinkronizacije</string>
+    <string name="accounts_cd_sync_off">sinkronizacija isključena</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">Feedovi kalendara</string>
     <string name="subscriptions_section_add">Dodaj</string>
     <string name="subscriptions_empty_ics">Nema ICS pretplata</string>
     <string name="subscriptions_empty_ics_hint">Dodaj feed kalendara da vidiš događaje</string>
+    <string name="subscriptions_swipe_hint">Povuci feed da ga obrišeš.</string>
     <string name="subscriptions_add_ics">Dodaj ICS kalendar</string>
     <string name="qs_tile_label">Dodaj</string>
     <string name="holiday_catalog_add">Dodaj kalendar praznika</string>
@@ -519,6 +589,11 @@
     <string name="holiday_catalog_empty_hint">Pokušajte s drugim nazivom</string>
     <string name="holiday_catalog_validate_error">Nije moguće dohvatiti ovaj kalendar. Provjerite vezu i pokušajte ponovno.</string>
     <string name="holiday_catalog_attribution">Kalendari praznika iz Mozilla Thunderbird, licencirano pod %1$s.</string>
+    <string name="account_feeds_add">Dodaj s računa</string>
+    <string name="account_feeds_note">Prikazuje feedove kalendara spremljene na vašim iCloud i CalDAV računima. Uključite feed da biste ga dodali na zaslon Feedovi kalendara.</string>
+    <string name="account_feeds_checking">Provjeravanje…</string>
+    <string name="account_feeds_none">Nije pronađen nijedan feed kalendara</string>
+    <string name="account_feeds_failed">Učitavanje feedova kalendara nije uspjelo</string>
     <string name="subscriptions_row_label">Feedovi kalendara (ICS)</string>
     <string name="subscriptions_row_hint">npr. praznici, sport, škola</string>
 
@@ -564,6 +639,8 @@
     <string name="account_detail_discovering">Otkrivanje…</string>
     <string name="account_detail_discover_calendars">Otkrij nove kalendare</string>
     <string name="account_detail_change_password">Promijeni lozinku</string>
+    <string name="account_detail_sign_in_again">Ponovno se prijavi</string>
+    <string name="account_detail_sign_in_again_subtitle">KashCal više nema lozinku za ovaj račun. Prijavi se za ponovnu sinkronizaciju. Tvoji kalendari i događaji ostaju.</string>
     <string name="account_detail_sign_out">Odjavi se</string>
     <string name="account_detail_never_synced">Nikad sinkronizirano</string>
     <string name="account_detail_last_success">Zadnji uspjeh: %1$s</string>
@@ -587,6 +664,116 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Kalendari uređaja</string>
     <string name="settings_device_calendars_hint">Kalendari iz drugih aplikacija</string>
+    <string name="offline_calendars_row_label">Kalendari izvan mreže</string>
+    <string name="offline_calendars_row_hint">Kalendari koji ostaju na ovom uređaju</string>
+    <string name="offline_calendars_manage_note">Povuci kalendar da ga obrišeš.</string>
+    <string name="offline_calendars_info">Čuvaju se na ovom uređaju i nikad se ne sinkroniziraju.</string>
+    <string name="offline_calendars_info_cd">O kalendarima izvan mreže</string>
+    <string name="offline_calendar_default_state">Zadani</string>
+    <string name="offline_calendar_new">Novi kalendar</string>
+    <string name="offline_calendar_new_in_picker">Novi kalendar izvan mreže</string>
+    <string name="action_create">Stvori</string>
+    <string name="offline_calendar_rename">Preimenuj</string>
+    <string name="offline_calendar_color">Boja</string>
+    <string name="offline_calendar_export">Izvezi kalendar</string>
+    <string name="offline_calendar_builtin_info">Ugrađeni kalendar ne može se preimenovati ni obrisati. Novi događaji idu ovdje kad nije odabran kalendar.</string>
+    <string name="offline_calendar_builtin_info_cd">O ugrađenom kalendaru</string>
+    <string name="offline_calendar_rename_cancel_cd">Odustani od preimenovanja</string>
+    <string name="offline_calendar_rename_save_cd">Spremi naziv</string>
+    <string name="offline_calendar_delete_cd">Obriši %1$s</string>
+    <plurals name="offline_calendar_delete_confirm">
+        <item quantity="one">Trajno obrisati \"%2$s\" i %1$d događaj? Ne može se poništiti.</item>
+        <item quantity="few">Trajno obrisati \"%2$s\" i %1$d događaja? Ne može se poništiti.</item>
+        <item quantity="other">Trajno obrisati \"%2$s\" i %1$d događaja? Ne može se poništiti.</item>
+    </plurals>
+    <string name="offline_calendar_delete_empty">Trajno obrisati \"%1$s\"? Nema događaja.</string>
+    <plurals name="offline_calendar_delete_also">
+        <item quantity="one">Obriši i %1$d događaj</item>
+        <item quantity="few">Obriši i %1$d događaja</item>
+        <item quantity="other">Obriši i %1$d događaja</item>
+    </plurals>
+    <string name="offline_calendar_deleted">Obrisano: %1$s</string>
+    <string name="offline_calendar_duplicate_name">Kalendar izvan mreže naziva \"%1$s\" već postoji</string>
+    <string name="offline_calendar_similar_name">Previše slično nazivu „%1$s”. Odaberi drugi naziv.</string>
+    <string name="calendar_backup_title">Automatska sigurnosna kopija kalendara</string>
+    <string name="calendar_backup_row_off">Isključeno</string>
+    <string name="calendar_backup_row_on">%1$s · %2$s</string>
+    <string name="calendar_backup_row_problem">Mapa sigurnosnih kopija je nedostupna</string>
+    <string name="calendar_backup_intro">Sprema svaki kalendar izvan mreže kao ICS datoteku u mapu koju odabereš.</string>
+    <string name="calendar_backup_choose_folder">Odaberi mapu</string>
+    <string name="calendar_backup_choose_folder_hint">Odaberi ili izradi mapu, na primjer u mapi Documents. Android ne dopušta vrh pohrane ni samu mapu Download.</string>
+    <string name="calendar_backup_folder">Mapa</string>
+    <string name="calendar_backup_change">Promijeni</string>
+    <string name="calendar_backup_frequency">Učestalost</string>
+    <string name="calendar_backup_frequency_info">Kopije mogu kasniti: Android zadržava rad u pozadini kad telefon miruje ili KashCal neko vrijeme nije otvaran.</string>
+    <string name="calendar_backup_copies">Broj kopija</string>
+    <string name="calendar_backup_copies_explained">Svaka kopija čuva prethodnu datoteku kao kopiju s datumom. Kad ih je više od ovog broja, najstarije se brišu. Najnovija datoteka uvijek ima naziv kalendara.</string>
+    <string name="calendar_backup_copies_fewer">Zadrži manje kopija</string>
+    <string name="calendar_backup_copies_more">Zadrži više kopija</string>
+    <plurals name="calendar_backup_copies_state">
+        <item quantity="one">%d kopija</item>
+        <item quantity="few">%d kopije</item>
+        <item quantity="other">%d kopija</item>
+    </plurals>
+    <plurals name="calendar_backup_deletes">
+        <item quantity="one">Briše %d stariju kopiju. To se ne može poništiti.</item>
+        <item quantity="few">Briše %d starije kopije. To se ne može poništiti.</item>
+        <item quantity="other">Briše %d starijih kopija. To se ne može poništiti.</item>
+    </plurals>
+    <string name="calendar_backup_deletes_unknown">Briše starije kopije iznad ovog broja. To se ne može poništiti.</string>
+    <string name="calendar_backup_calendars">Kalendari izvan mreže</string>
+    <string name="calendar_backup_calendar_nothing_saved">%1$s · Nema događaja, ništa nije spremljeno</string>
+    <string name="calendar_backup_calendar_save_failed">%1$s · Spremanje nije uspjelo. Pokušat će se ponovno pri sljedećoj kopiji.</string>
+    <string name="calendar_backup_status">Zadnja kopija %1$s</string>
+    <plurals name="calendar_backup_status_failed">
+        <item quantity="one">Zadnja kopija %1$s · %2$d kalendar nije uspio</item>
+        <item quantity="few">Zadnja kopija %1$s · %2$d kalendara nisu uspjela</item>
+        <item quantity="other">Zadnja kopija %1$s · %2$d kalendara nije uspjelo</item>
+    </plurals>
+    <string name="calendar_backup_now">Napravi kopiju sada</string>
+    <string name="calendar_backup_running">Izrada kopije…</string>
+    <string name="calendar_backup_footer_overwrites">KashCal prepisuje ove datoteke pri svakoj kopiji, pa promjene napravljene u drugim aplikacijama ne ostaju. Za vraćanje kalendara koristi Uvezi događaje iz datoteke.</string>
+    <string name="calendar_backup_off_files_stay">Postojeće datoteke ostaju u mapi %1$s.</string>
+    <string name="calendar_backup_folder_unreachable">Mapa %1$s nije dostupna. Možda je premještena, izbrisana ili odspojena.</string>
+    <string name="calendar_backup_error_unsupported">Ovdje se ne mogu spremati datoteke: %1$s. Odaberi drugu mapu.</string>
+    <string name="calendar_backup_choose_again">Odaberi ponovno</string>
+    <string name="calendar_backup_pick_refused">KashCal ne može koristiti tu mapu. Odaberi drugu.</string>
+    <string name="calendar_backup_pick_cannot_create">KashCal ne može stvarati datoteke u toj mapi. Odaberi drugu.</string>
+    <string name="calendar_backup_failed_title">Sigurnosna kopija kalendara nije uspjela</string>
+    <string name="calendar_backup_folder_unnamed">mapa sigurnosnih kopija</string>
+    <string name="calendar_backup_alert_unreachable">Nedostupno: %1$s. Dodirni da odabereš ponovno.</string>
+    <string name="calendar_backup_alert_unsupported">Ovdje se ne mogu spremati datoteke: %1$s. Dodirni da odabereš drugu mapu.</string>
+    <string name="calendar_backup_alert_file_retry">Nije uspjelo spremanje datoteke %1$s. KashCal će pokušati ponovno pri sljedećoj kopiji.</string>
+    <string name="calendar_backup_every_hour">Svaki sat</string>
+    <string name="calendar_backup_every_day">Svaki dan</string>
+    <plurals name="calendar_backup_every_hours">
+        <item quantity="one">Svaki %d sat</item>
+        <item quantity="few">Svaka %d sata</item>
+        <item quantity="other">Svakih %d sati</item>
+    </plurals>
+    <plurals name="calendar_backup_every_days">
+        <item quantity="one">Svaki %d dan</item>
+        <item quantity="few">Svaka %d dana</item>
+        <item quantity="other">Svakih %d dana</item>
+    </plurals>
+    <string name="calendar_backup_every_day_hours">Svaki dan i %1$s</string>
+    <string name="calendar_backup_every_days_hours">Interval: %1$s i %2$s</string>
+    <string name="calendar_backup_interval_too_short">Odaberi barem 1 sat.</string>
+    <string name="calendar_backup_interval_too_long">Odaberi najviše 30 dana.</string>
+    <plurals name="calendar_backup_alert_files_retry">
+        <item quantity="one">Nije uspjelo spremanje %d kalendara. KashCal će pokušati ponovno pri sljedećoj kopiji.</item>
+        <item quantity="few">Nije uspjelo spremanje %d kalendara. KashCal će pokušati ponovno pri sljedećoj kopiji.</item>
+        <item quantity="other">Nije uspjelo spremanje %d kalendara. KashCal će pokušati ponovno pri sljedećoj kopiji.</item>
+    </plurals>
+    <string name="calendar_backup_notifications_app_off">Obavijesti za KashCal su isključene, pa vas ne može obavijestiti ako kopija ne uspije.</string>
+    <string name="calendar_backup_notifications_channel_off">Obavijesti o sigurnosnim kopijama su isključene, pa vas KashCal ne može obavijestiti ako kopija ne uspije.</string>
+    <string name="calendar_backup_open_settings">Otvori postavke</string>
+    <string name="calendar_backup_not_now">Ne sada</string>
+    <plurals name="calendar_backup_row_calendars_failed">
+        <item quantity="one">%d kalendar nije uspio</item>
+        <item quantity="few">%d kalendara nisu uspjela</item>
+        <item quantity="other">%d kalendara nije uspjelo</item>
+    </plurals>
     <string name="settings_quick_event_add">Pametno dodavanje događaja</string>
     <string name="settings_quick_event_add_info">Stvarajte događaje prirodnim pisanjem. \"Ručak sa Sam u petak 13:00\" umjesto vas ispunjava naslov, datum i vrijeme.</string>
     <string name="settings_suggest_titles">Predloži naslove događaja</string>
@@ -647,6 +834,8 @@
     <string name="cd_pick_month_year">Odaberi mjesec i godinu</string>
     <string name="cd_previous_month">Prethodni mjesec</string>
     <string name="cd_next_month">Sljedeći mjesec</string>
+    <string name="cd_previous_day">Prethodni dan</string>
+    <string name="cd_next_day">Sljedeći dan</string>
     <string name="cd_month_year_picker">Odabir mjeseca i godine</string>
     <string name="cd_remove_alert">Ukloni podsjetnik</string>
     <string name="cd_warning">Upozorenje</string>
@@ -656,7 +845,25 @@
     <string name="label_on_days">U dane</string>
     <string name="label_pattern">Obrazac</string>
     <string name="label_ends">Završava</string>
+    <string name="sheet_hint_change_end">Dodirni dan za promjenu kraja</string>
     <string name="label_timezone">Vremenska zona</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Traži grad, državu ili zonu</string>
+    <string name="timezone_section_this_event">Ovaj događaj</string>
+    <string name="timezone_section_device">Vremenska zona uređaja</string>
+    <string name="timezone_section_recent">Nedavno</string>
+    <string name="timezone_section_all">Sve vremenske zone</string>
+    <string name="timezone_offsets_on">Pomaci na dan %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Iz kalendara: %1$s</string>
+    <string name="timezone_shown_in_device_time">Prikazano u vremenu uređaja</string>
+    <string name="timezone_loading">Učitavanje vremenskih zona…</string>
+    <string name="timezone_no_match">Nijedna vremenska zona ne odgovara</string>
+    <string name="timezone_no_match_hint">Pokušajte s gradom, državom ili pomakom, npr. +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Podsjetnici</string>
     <string name="label_add_alert">Dodaj podsjetnik</string>
     <string name="label_recurrence_never">Nikad</string>
@@ -664,11 +871,8 @@
     <string name="label_yesterday">Jučer</string>
     <string name="label_device_calendars">Kalendari uređaja</string>
     <string name="label_default_calendar_hint">Novi događaji će se stvarati u ovom kalendaru</string>
-    <string name="label_visible_count">%1$d / %2$d vidljivih</string>
     <string name="label_reminders_truncated">%1$d neprikazanih (%2$d ukupno, maks %3$d ureditljivih)</string>
     <string name="label_found_events">Pronađeno: %1$d događaja</string>
-    <string name="label_open_debug_menu">Otvori izbornik za otklanjanje grešaka</string>
-    <string name="placeholder_search">Traži…</string>
     <string name="settings_search_placeholder">Pretraži postavke…</string>
     <string name="settings_search_no_results">Nema postavki za \"%1$s\"</string>
     <string name="cd_search_settings">Pretraži postavke</string>
@@ -679,16 +883,13 @@
     <string name="status_hours_ago">prije %1$d h</string>
 
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
-    <string name="device_calendars_description">Prikaži događaje iz drugih kalendarskih aplikacija na uređaju (adapteri za sinkronizaciju, lokalni kalendari).</string>
-    <string name="device_calendars_permission_required">Potrebna dozvola za kalendar. Dodirni Omogući za pristup.</string>
-    <string name="device_calendars_read_only_access">Pristup samo za čitanje</string>
-    <string name="device_calendars_grant_write">Dodijeli dozvolu za pisanje radi uređivanja događaja kalendara uređaja</string>
-    <string name="device_calendars_grant">Dodijeli</string>
-    <string name="device_calendars_none_found">Nema pronađenih kalendara uređaja.</string>
+    <string name="device_calendars_intro">Prikaži kalendare na ovom uređaju: Google, Outlook i aplikacije za sinkronizaciju.</string>
+    <string name="device_calendars_show_switch">Prikaži kalendare uređaja</string>
+    <string name="device_calendars_access_off">Pristup kalendaru za KashCal je isključen.</string>
+    <string name="device_calendars_pick_hint">Odaberi kalendare za prikaz.</string>
+    <string name="device_calendars_empty">Nije pronađen nijedan kalendar.</string>
     <string name="device_calendars_local">Lokalni</string>
-    <string name="device_calendars_read_only_no_write">Samo za čitanje (nema dozvole za pisanje)</string>
     <string name="device_calendars_read_only_calendar">Samo za čitanje (kalendar je samo za čitanje)</string>
-    <string name="settings_developer_options">Razvojne opcije</string>
     <string name="settings_sync_frequency">Učestalost sinkronizacije</string>
     <string name="settings_sync_frequency_hint">Koliko često sinkronizirati u pozadini</string>
 
@@ -837,6 +1038,9 @@
     <string name="ics_import_reason_this_and_future">promjene ovog i kasnijih pojavljivanja nisu podržane</string>
     <string name="ics_import_reason_own_cancel">ti organiziraš ovaj sastanak, pa ga otkaži iz događaja</string>
     <string name="ics_import_reason_on_another_calendar">već je u drugom kalendaru ovog računa</string>
+    <string name="ics_import_reason_calendar_keeps_copy">ovaj kalendar čuva vlastitu kopiju događaja</string>
+    <string name="ics_import_reason_own_update">ti organiziraš ovaj sastanak, pa ga promijeni iz događaja</string>
+    <string name="ics_import_reason_change_waiting">događaj ima promjenu koja čeka sinkronizaciju; uvezi ponovno nakon sinkronizacije</string>
     <string name="ics_import_notice_unverified">Pošiljatelja datoteke s pozivnicom nije moguće provjeriti. Provjeri dolazi li od organizatora.</string>
     <string name="ics_import_notice_answer_notifies">Odgovor na ovu pozivnicu može obavijestiti organizatora.</string>
     <string name="ics_import_notice_guests_again">Ti si organizator, pa gosti mogu ponovno primiti ovu pozivnicu.</string>
@@ -873,15 +1077,20 @@
     </plurals>
     <string name="ics_import_summary_separator">", "</string>
     <string name="ics_import_summary_nothing">Nema ničega za uvoz</string>
-    <plurals name="exported_events">
-        <item quantity="one">Izvezen %1$d događaj</item>
-        <item quantity="few">Izvezeno %1$d događaja</item>
-        <item quantity="other">Izvezeno %1$d događaja</item>
-    </plurals>
     <plurals name="event_count">
         <item quantity="one">%1$d događaj</item>
         <item quantity="few">%1$d događaja</item>
         <item quantity="other">%1$d događaja</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d kalendar</item>
+        <item quantity="few">%1$d kalendara</item>
+        <item quantity="other">%1$d kalendara</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d računa</item>
+        <item quantity="few">%1$d računa</item>
+        <item quantity="other">%1$d računa</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d kalendar</item>
@@ -923,11 +1132,6 @@
         <item quantity="few">%1$d godine</item>
         <item quantity="other">%1$d godina</item>
     </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d sek</item>
-        <item quantity="few">%1$d sek</item>
-        <item quantity="other">%1$d sek</item>
-    </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d minuta prije</item>
         <item quantity="few">%1$d minute prije</item>
@@ -955,8 +1159,13 @@
     <string name="dialog_move_recurring_title">Premjesti</string>
     <string name="snackbar_event_rescheduled">Događaj premješten</string>
     <string name="snackbar_reschedule_failed">Premještanje događaja nije uspjelo</string>
+    <string name="snackbar_move_failed">Premještanje događaja \"%1$s\" nije uspjelo</string>
+    <string name="snackbar_move_changed_elsewhere">Događaj \"%1$s\" promijenjen je negdje drugdje pa nije premješten</string>
+    <string name="event_untitled">Događaj bez naslova</string>
     <string name="recurring_this_event">Ovaj događaj</string>
     <string name="recurring_all_events">Sve događaje</string>
+    <string name="recurring_scope_move_not_expressible">Pravilo ponavljanja ne može pratiti ovu promjenu</string>
+    <string name="event_form_move_not_expressible">Pravilo ponavljanja ne može pratiti ovu promjenu. Ništa nije spremljeno.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Sudionici</string>
@@ -1026,8 +1235,75 @@
     <string name="empty_no_events_day_3">Poklon: prazan dan.</string>
     <string name="empty_no_events_day_4">Stanje kalendara: predivno prazno.</string>
     <string name="empty_no_events_day_5">Ništa u planu. Uživaj u miru.</string>
-    <string name="cd_empty_no_events_day">Miran dan, ništa na rasporedu</string>
     <string name="filter_date">Datum</string>
+    <string name="search_tab_upcoming">Budući</string>
+    <string name="search_tab_past">Prošli</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d događaj</item>
+        <item quantity="few">%1$s, %2$d događaja</item>
+        <item quantity="other">%1$s, %2$d događaja</item>
+    </plurals>
+    <string name="search_date_this_week">Ovaj tjedan</string>
+    <string name="search_date_this_month">Ovaj mjesec</string>
+    <string name="search_date_pick">Odaberi datume…</string>
+    <string name="search_next">Sljedeće: %1$s</string>
+    <string name="search_last">Zadnje: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Lokacija:</string>
+    <string name="search_reason_notes">Bilješke:</string>
+    <string name="search_reason_guest">Gost:</string>
+    <string name="search_keep_typing">Nastavite tipkati za pretragu</string>
+    <string name="search_no_matches">Nema događaja za „%1$s“</string>
+    <string name="search_no_events_tagged">Nema događaja označenih „%1$s“</string>
+    <string name="search_lookback_line">Raspon sinkronizacije unatrag: %1$s</string>
+    <string name="search_sync_settings">Postavke sinkronizacije</string>
+    <string name="cd_search_sync_settings">Otvori raspon sinkronizacije unatrag</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Prikaži %d prošli događaj</item>
+        <item quantity="few">Prikaži %d prošla događaja</item>
+        <item quantity="other">Prikaži %d prošlih događaja</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">Još %d u skrivenom kalendaru</item>
+        <item quantity="few">Još %d u skrivenim kalendarima</item>
+        <item quantity="other">Još %d u skrivenim kalendarima</item>
+    </plurals>
+    <string name="search_show">Prikaži</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Prikaži %d rezultat u skrivenom kalendaru</item>
+        <item quantity="few">Prikaži %d rezultata u skrivenim kalendarima</item>
+        <item quantity="other">Prikaži %d rezultata u skrivenim kalendarima</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Prikaži %d u skrivenom kalendaru</item>
+        <item quantity="few">Prikaži %d u skrivenim kalendarima</item>
+        <item quantity="other">Prikaži %d u skrivenim kalendarima</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Uključujući %d skriveni kalendar</item>
+        <item quantity="few">Uključujući %d skrivena kalendara</item>
+        <item quantity="other">Uključujući %d skrivenih kalendara</item>
+    </plurals>
+    <string name="search_leave_out">Izostavi</string>
+    <string name="cd_search_leave_out">Izostavi skrivene kalendare</string>
+    <string name="search_hidden_calendar">%1$s · skriven</string>
+    <string name="cd_search_date_this_week">Prikaži rezultate ovog tjedna</string>
+    <string name="cd_search_date_this_month">Prikaži rezultate ovog mjeseca</string>
+    <string name="cd_search_date_pick">Odaberi datume za pretragu</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d budući</item>
+        <item quantity="few">%d buduća</item>
+        <item quantity="other">%d budućih</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d prošli</item>
+        <item quantity="few">%d prošla</item>
+        <item quantity="other">%d prošlih</item>
+    </plurals>
+    <string name="search_no_past_events">Nema prošlih događaja</string>
+    <string name="search_no_events_in_dates">Nema događaja na ove datume</string>
     <string name="label_select_date">Odaberi datum</string>
     <string name="hint_tap_date_range">Dodirni isti datum za jedan dan ili drugi za raspon</string>
     <string name="cd_clear">Obriši</string>
@@ -1120,7 +1396,6 @@
     <string name="reminder_none">Bez podsjetnika</string>
     <string name="reminder_at_time_of_event">U vrijeme događaja</string>
     <string name="reminder_time_before">%1$s prije</string>
-    <string name="reminder_time_after">%1$s nakon</string>
     <string name="reminder_day_of_event_12h">9:00 na dan događaja</string>
     <string name="reminder_day_of_event_24h">09:00 na dan događaja</string>
     <string name="reminder_day_of_event">Na dan događaja</string>
@@ -1262,6 +1537,7 @@
     <!-- ==================== i18n: Round 2 audit gaps ==================== -->
     <string name="action_save_event">Spremi događaj</string>
     <string name="badge_beta">Beta</string>
+    <string name="badge_sync_off">Sinkr. isklj.</string>
     <string name="badge_new">Novo</string>
     <string name="color_red">Crvena</string>
     <string name="color_orange">Narančasta</string>
@@ -1290,6 +1566,21 @@
     <string name="ics_fetch_error_http">Poslužitelj je vratio pogrešku (%1$d). Provjerite URL.</string>
     <string name="ics_fetch_error_empty">Feed kalendara je prazan.</string>
     <string name="ics_fetch_error_not_calendar">Taj URL ne izgleda kao feed kalendara.</string>
+    <string name="ics_feed_error_empty_response">Poslužitelj nije poslao valjan feed.</string>
+    <string name="ics_feed_error_access_denied">Poslužitelj ovog feeda odbio je pristup.</string>
+    <string name="ics_feed_error_too_large">Ovaj feed kalendara prevelik je za preuzimanje.</string>
+    <string name="ics_feed_error_unreadable">Događaje iz ovog feeda nije moguće prikazati.</string>
+    <string name="ics_feed_error_event_not_saved">Događaj „%1$s“ nije spremljen.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">%1$d događaj nije spremljen.</item>
+        <item quantity="few">%1$d događaja nisu spremljena.</item>
+        <item quantity="other">%1$d događaja nije spremljeno.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">%1$d događaj nije spremljen, uključujući „%2$s“.</item>
+        <item quantity="few">%1$d događaja nisu spremljena, uključujući „%2$s“.</item>
+        <item quantity="other">%1$d događaja nije spremljeno, uključujući „%2$s“.</item>
+    </plurals>
     <string name="insights_title">Uvidi</string>
     <string name="insights_period_this_week">Tjedan</string>
     <string name="insights_period_last_week">Prošli tj.</string>
@@ -1421,7 +1712,7 @@
         <item quantity="other">Slobodno sljedećih %1$d dana (%2$s – %3$s):</item>
     </plurals>
     <string name="share_availability_day_line">%1$s: %2$s</string>
-    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_block_separator">", "</string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">Nema slobodnih blokova od najmanje sat vremena u odabranom rasponu.</string>
     <string name="share_from_kashcal_footer">Podijeljeno iz KashCal</string>
@@ -1444,5 +1735,33 @@
     <string name="share_as_card_all_day">Cijeli dan</string>
     <string name="share_as_card_chooser_title">Podijeli događaj</string>
     <string name="share_as_card_share_failed">Karticu nije moguće podijeliti</string>
+    <string name="print_your_week">Ispiši svoj tjedan</string>
+    <string name="print_options_title">Odaberi opcije ispisa</string>
+    <string name="print_pages_header">Stranice</string>
+    <string name="print_page_week">Tjedni kalendar</string>
+    <string name="print_page_week_detail">Tjedan kao mreža</string>
+    <string name="print_page_details">Pojedinosti</string>
+    <string name="print_page_details_detail">Svaki događaj u cijelosti</string>
+    <string name="print_action">Ispiši</string>
+    <string name="cd_print_previous_week">Prethodni tjedan</string>
+    <string name="cd_print_next_week">Sljedeći tjedan</string>
+    <plurals name="print_summary_pages">
+        <item quantity="one">%d stranica</item>
+        <item quantity="few">%d stranice</item>
+        <item quantity="other">%d stranica</item>
+    </plurals>
+    <plurals name="print_summary_calendars">
+        <item quantity="one">%1$d od %2$d kalendara</item>
+        <item quantity="few">%1$d od %2$d kalendara</item>
+        <item quantity="other">%1$d od %2$d kalendara</item>
+    </plurals>
+    <string name="print_summary">%1$s · %2$s</string>
+    <string name="print_job_name">%1$s – Tjedan od %2$s</string>
+    <string name="print_failed">Ispis nije uspio. Pokušajte ponovno.</string>
+    <string name="print_doc_week">Tjedan</string>
+    <string name="print_doc_printed">Ispisano %1$s</string>
+    <string name="print_doc_page_of">Stranica %1$s od %2$s</string>
+    <string name="print_doc_numbers_note">Brojevi odgovaraju pojedinostima, gdje je svaki događaj naveden u cijelosti.</string>
+    <string name="print_doc_times_in">Vremena prikazana u zoni %1$s</string>
 
 </resources>

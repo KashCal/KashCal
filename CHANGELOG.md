@@ -1,3 +1,246 @@
+## [2026.11.20]
+
+Kash comes from a small planet with one long season and no calendars. So when it landed in KashCal, it fell for calendars at once. It waves at everyone who opens the app for the first time, holds an armful of calendars on the About page, and sits with you on empty days. On its home planet, every day was an empty day.
+
+Earth suited Kash, apart from two things.
+
+The first was birthdays. Kash has a large family back home, and fluffballs take birthdays seriously. Within a month on Earth it had missed three. Kash added the whole family to its contacts and took the problem to [OneKash Labs](https://onekash.org). The answer was [KashCake](https://kashcake.onekash.org), which sends a reminder before every birthday and anniversary in your contacts.
+
+The second was its ship. Kash had written the ship's password on a sticky note and left the note inside the ship. The answer to that was [KashPass](https://kashpass.onekash.org), which keeps your KeePass vault on your phone. You can find a login, copy the password, and edit entries in the same file KeePass 2 opens on your computer.
+
+Calling home will have to wait: neither app has internet access, so neither sends your contacts or passwords anywhere.
+
+Both apps are free and open source. Get them on Google Play: [KashCake](https://kashcake.onekash.org/beta/) and [KashPass](https://kashpass.onekash.org/beta/).
+
+Kash's mother got her birthday message on time this year. KashCake sent the reminder, and the messaging app did the rest.
+
+### Everything in this release
+
+- Fixed moving a repeating event (new time, date or time zone, in the form or by dragging): changed and deleted occurrences now move with it, and the series keeps its last day
+- Fixed dragging an occurrence you had already changed; it showed twice and didn't sync
+- Fixed an alert staying at the old time after moving a changed occurrence
+- Changed: when a repeat rule can't follow a move, `All events` and `This and future` are greyed out with the reason
+- Added time zone search in the event form, by city, country, abbreviation or offset
+- Changed a time zone change to keep the time shown: 10:00 New York becomes 10:00 Tokyo
+- Fixed `Device time zone` not changing an existing event's time zone
+- Added search by tag, such as `#doctor`; tap a tag on an event to search it (#348)
+- Fixed Microsoft 365 and Exchange calendar feeds showing no events, or events at the wrong time (#441)
+- Fixed a feed of only cancelled events showing an error
+- Fixed the app not opening when one event was too large; events with large attachments now open and sync
+- Fixed Quick Add tags in Hindi, Thai, Tamil and similar scripts being cut short
+- Fixed a repeating all-day event over several days in a device calendar losing its last day (#444)
+
+## [2026.11.12]
+
+How long since your last haircut? Search said "No events found" and left the mirror to answer. The appointment was there all along; search only looked ahead.
+
+Now it looks back too. Upcoming and Past sit side by side, each with its count, and Past starts with the most recent, so the date is the first row. The mirror can retire.
+
+### Everything in this release
+
+- Added Upcoming and Past to search, each with its count; a repeating event shows once on each side with its next or last date, #420
+- Changed search to match a word anywhere in the title, location, notes or a guest's name or email, in any case, in every calendar; each result says where it matched and how far away it is
+- Changed the `All`, `Week` and `Month` search chips into one `Date` chip with `This week`, `This month` and `Pick dates…`
+- Added hints to empty searches, including matches in hidden calendars and a link to `Sync lookback`
+- Added arrows and a sideways swipe to move the day sheet one day, #433
+- Fixed repeating events that ended over a year ago missing on some past dates, and a weekday listed twice in a repeat rule adding a duplicate occurrence
+- Fixed the date pickers' month swipe in right-to-left languages
+
+## [2026.11.10]
+
+- Fixed repeating events missing on far-off dates; views and date pickers now reach 150 years either side of today
+- Fixed the wrong day being selected in some years after 2038 (#435)
+
+## [2026.11.09]
+
+- Fixed a rescheduled invitation file not updating the event in an iCloud or CalDAV calendar; it now moves the event and syncs, and says why when it skips one
+- Fixed the import sheet hiding its `Add`/`Import` button; it now opens at full height with the buttons always in view
+- Changed alert times to read in days, hours and minutes, such as `5d 1h 10m`, and the event form lists each alert once (#378)
+- Fixed duplicating a device calendar event losing its alerts and colour
+- Changed the device calendar quick view to show the same details as other events
+- Fixed the year view not fitting the screen, and month names breaking at large font sizes; at a larger font the day numbers grow with it and the page scrolls
+- Fixed pull to refresh on an empty day in the month view and swipe-down closing on the color sheets
+
+## [2026.11.04]
+
+- Fixed calendars that stopped syncing over one event; events with large attachments or HTML descriptions, up to about 2 MB, now sync and keep their attachment after an edit, and one bad event or failed upload no longer blocks the rest
+- Fixed reminders lost after an event changed; snoozed and showing reminders keep working, and today's all-day reminder is set even when the event arrives after midnight UTC (#425)
+- Changed past, declined and cancelled events to fade less so their text stays readable, in search results too (#426)
+- Fixed an open search and the day sheet keeping the old time zone after a zone change (#422)
+- Added a `Kash` app icon, and the date icon is now labelled `Calendar`
+
+## [2026.11.03]
+
+### Time zones (#422)
+- Fixed timed events showing on the wrong day, or not at all, after the phone's time zone changed; events made before this update are fixed too
+- Fixed the week view drawing such an event from its start to midnight in the old day's column
+- Changed open screens to update when the time zone changes, without a restart
+
+### Sync (#417, #421)
+- Fixed `Sync History` filling with failures when only offline and phone calendars are set up; nothing is recorded when there is nothing to sync
+- Changed `Force full sync` to be greyed out with "No sync account set up" when no iCloud or CalDAV account syncs
+- Changed `Force full sync` to confirm in place, naming what it re-downloads and keeping changes not yet synced, instead of a dialog
+- Changed an empty `Sync History` with no sync account to say why nothing syncs
+- Fixed a CalDAV events calendar whose path ends in `/Tasks/` not being listed, for example on Radicale (#421)
+
+### Readability (#419)
+- Changed text on mid-tone calendar colors such as blue and red to white once white reaches 3:1 contrast, on event chips, the month widget, the event form's `Save` button, guest avatars and the color check mark
+
+## [2026.11.01]
+
+Meet Kash.
+
+Back in 2024 and 2025, while we were building KashCal, we noticed a little teal dot on an empty day. We didn't think much of it. A week later it was back. Then it came back again, and soon we were clearing our schedules just to see it.
+
+It loved free weekends. It loved cancelled meetings even more. Each one made it a little rounder, and by 2026 it had ear tufts, a belly shaped like a calendar card, and strong opinions about naps.
+
+It landed on Halloween night, which was good timing. Everyone thought it was a costume.
+
+Today it moved onto your device, and hopefully into your heart too.
+
+<img src="https://kashcal.onekash.org/img/kash/kash-wave.png" alt="Kash waving" width="160">
+
+| | |
+|---|---|
+| Name | Kash |
+| Species | Fluffball, the first of its kind |
+| Arrived | Halloween night, 2026 |
+| Weight | 230 KB, all fluff |
+| Height | 120 dp, 160 dp on special occasions |
+| Diet | Free days |
+| Data collected | None |
+
+You've asked why a calendar app is called KashCal. Some say the app is named after Kash. Others say it's the other way around. Kash isn't saying.
+
+Kash keeps to itself, like the rest of KashCal: no account, no followers, and your plans stay between the two of you. It shows up on the days you don't have to.
+
+Confirmed sightings:
+- Month view: tap a free day. Five lines, five poses.
+- First launch: Kash waves hello.
+- Your avatar > About: Kash with an armful of calendars.
+
+Free up a day. Kash will find it.
+
+### Everything in this release
+
+- Added Kash to empty days in the Month view, the first-run sheet, and `About`
+- Fixed phone-calendar reminders not ringing for events added while KashCal wasn't running (#417)
+- Fixed a phone-calendar reminder being missed after turning `Device calendars` back on
+- Added a note with `Allow` in `Settings > Device calendars` when calendar access is off
+- Fixed `Edit` and `Delete` falling off the quick view for long titles (#418)
+- Fixed repeating `.ics` events with a UTC start showing an hour off in device calendars (#410)
+- Changed the `Offline calendars` note to "Kept on this device and never synced."
+
+## [2026.10.30]
+
+Pick a time without a fight, keep calendars that never leave your phone, and put your week on the fridge.
+
+### New date and time sheet (#330, #88)
+- Start and end share one sheet. Flip between them with Starts | Ends.
+- Chips set the length in one tap: 30m, 1h, 2h, or 2, 5, 7 days.
+- Spin the wheel all you like; the sheet stays where it is.
+
+### Offline calendars (#257)
+- Make as many as you like in Settings > Offline calendars. Rename, recolor, swipe to delete.
+
+### Automatic backup (#99)
+- Offline calendars copy themselves to a folder you pick, on a schedule you set.
+
+### Print your week
+- Account hub > Print your week, ready for the fridge. Your notes stay off the paper.
+
+### Export and import
+- Any calendar exports as .ics, guests included.
+- Imported files keep the details KashCal doesn't show, so they export back whole.
+
+### First launch
+- New users get one question: where are your calendars?
+- If KashCal was never allowed to ring your reminders, a banner tells you, with Turn on right there.
+
+### Quick Add
+- Reads "party tomorrow evening at 9", "Aug 23-28", "an hour and a half" and "every 1st".
+- "Become a morning person" stays a person, not "1 morning person".
+
+### About
+- Help, the source code, your version, and a thank-you to everyone who chips in.
+
+### Smaller changes
+- Colors are picked in place, so sheets hold still.
+- Emptied feeds now clear, and feed errors come in your language (#408).
+- Birthdays without a year survive CardDAV sync.
+- Shared availability gets back the space after its comma.
+- The Device calendars switch opens Android settings when Android stops asking.
+- Odia and Tamil fixes.
+
+### Privacy policy
+- Updated for automatic calendar backup: it is off by default, and files you back up or export stay in the folder you chose.
+
+## [2026.10.26]
+
+- Fixed repeating events written in UTC showing an hour off after a daylight-saving change; events already on your phone are corrected when you update
+
+## [2026.10.23]
+
+Somewhere on your server sits a small shelf of calendar feeds: the public holidays you subscribed to on a laptop years ago, a team's fixtures, the school terms. The server has kept every one of them safe. KashCal just never asked.
+
+Now it asks. Calendar Feeds has `Add from account`, which goes round your iCloud and CalDAV accounts and politely enquires what they have been holding on to. Each account answers in its own section. Flip a feed on and it moves in as an ordinary subscription that refreshes itself from then on; flip it off and it packs up and leaves.
+
+The quickest way to find something, it turns out, is to ask whoever has been holding it.
+
+### Everything in this release
+
+- Added `Add from account` to Calendar Feeds, listing the calendar feeds saved on your iCloud and CalDAV accounts; turning one on adds it as a Calendar Feeds subscription with the server's name and color, turning it off removes it, #68
+- Changed swiping a Calendar Feeds row to reveal a `Delete` button instead of deleting at once; tapping it deletes the feed with `Undo`, and scrolling or tapping elsewhere closes it
+- Fixed contact birthdays and anniversaries saved without a year under a placeholder year such as 1604 not appearing; they now show every year without an age, #395
+
+## [2026.10.22]
+
+- Added a `Troubleshooting` section to Settings with `Export debug report`, a text file of recent crashes, syncs, waiting changes, setup and the app's own log to send with a bug report; email addresses, web addresses and tokens are masked, #183
+- Moved `Sync history` and `Force full sync` into `Troubleshooting`, replacing the hidden menu behind a long press on the version number
+- Fixed Quick Add not opening from a widget `+`, the `New Event` shortcut or the Quick Settings tile when the app wasn't running; the full event form opened instead, #403
+- Fixed changes to deleted events staying queued for sync and ending in a "couldn't be synced after 30 days" notice; updating clears any already stuck on the phone
+- Fixed deleting an event right after moving it to another calendar, before it synced, leaving the original on the server
+
+## [2026.10.21]
+
+- Added `Sign In Again` for a CalDAV account whose saved password KashCal can no longer read, prefilled with its server, username and name, keeping its calendars and events, #371
+- Fixed signing in again to an existing CalDAV or iCloud account deleting it, with its calendars and events, when the password couldn't be stored, #370
+- Fixed saved passwords staying unreadable after the phone's encryption key changed; KashCal now clears the unreadable store so you can sign in again, #370
+- Changed a saved password that can't be decrypted to count as missing, so sync and the account screens keep working instead of failing
+- Changed `Add iCloud` to fill in the Apple ID of an iCloud account that needs signing in again
+- Added a `Sync off` badge in Settings → Calendar accounts on accounts whose sync is turned off
+- Added `Undo` to a drag-to-reschedule in Week, 3-day and Day: the event moves at once with an `Event rescheduled` snackbar and is saved when the snackbar ends; a change made elsewhere in the meantime is not overwritten
+
+## [2026.10.16]
+
+Calendars have a habit of telling you that something called "Quarterly plann…" is happening at some point on Thursday. This release is about reading the whole name.
+
+In Week, 3-day and Day, an event's title now wraps over as many lines as its block has room for, with the place underneath, and nothing ends in three dots. When two events overlap, the later one is drawn on top of the first, a little to the right, so the earlier one keeps its name in view instead of being squeezed into half a column. The full-height month view fits as many rows into each day as the day has room for, and a small count in the corner says how many more there are. Pinch it to zoom.
+
+Moving between those views got easier too. Pinch sideways on the week and it opens three days around your fingers, then the day itself; pinch the other way to step back. Events that have already ended fade as the clock passes them.
+
+Thursday's meeting is still at ten. Now you can read what it's about.
+
+### Everything in this release
+
+- Changed event titles in Week, 3-day and Day to wrap over the lines their block fits, cut at the last line with no ellipsis; the location follows, and the time when it fits on one line, #361
+- Added cascading overlaps in Week, 3-day and Day: a later event is drawn on top of the one it overlaps, indented a quarter of the column, when the earlier one still shows its first line; otherwise they sit side by side as before, #277
+- Changed the 7-day view to a more compact title style, so more of each title fits a narrow column
+- Changed the hour column to the width of its widest label, which gives the days more room
+- Added sideways pinch in Week, 3-day and Day: spread to show fewer days around your fingers, pinch in to show more; the view you land on is the one the app opens in next time
+- Fixed a slow pinch in Week, 3-day and Day not zooming the hours
+- Added fading of past events in Week, 3-day and Day, the minute each one ends, including all-day events and the list behind a `+N` count
+- Added faint dashed half-hour lines in Week, 3-day and Day at the default zoom and closer
+- Changed the Week header, the Day view's week strip and the Agenda's week strip to one date style: a small weekday letter above the number in a round circle that grows with large text; the Day view's dates now sit where the Week view's do
+- Changed the all-day strip to drop its caption and toggle from any blank space, with the chevron centred
+- Fixed dragging an indented or right-hand event sideways changing day a quarter or half a column late
+- Improved screen-reader support in Week, 3-day and Day: each day column reads its date and can create an event there, and each Week header reads its full date
+- Changed the full-height month view to fit as many rows into each day as it has room for, cut titles at the edge with no ellipsis, show a `+N` count in the corner for the rest, and open the day from anywhere in its cell, #361
+- Added pinch zoom to the full-height month view, saved per device
+- Changed the full-height month view to fade past events and past dates, and to read each day as one item to screen readers
+- Fixed the themed (Material You) Today's date icon showing a blank calendar instead of the day's number
+- Fixed a very long event title, such as a pasted note, crashing the Planner, the full-height month view and the all-day strip
+
 ## [2026.10.15]
 
 If you're the parent who knows when swimming is, that the dentist is on Tuesday, that Friday is a school holiday and that Saturday's birthday party still needs a present, this release is for you. You've been carrying the family's week around in your head. KashCal now has somewhere to put it down.

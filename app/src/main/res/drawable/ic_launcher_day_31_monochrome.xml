@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated themed layer for day 31: outlined calendar card with binding tabs and the day number. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="88"
+    android:viewportHeight="88">
+    <group android:translateX="44" android:translateY="44" android:scaleX="0.9" android:scaleY="0.9" android:rotation="-2">
+        <path android:strokeColor="#FFFFFF" android:strokeWidth="3.5" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M-12,-17H12A6,6 0 0 1 18,-11V15A6,6 0 0 1 12,21H-12A6,6 0 0 1 -18,15V-11A6,6 0 0 1 -12,-17Z" />
+        <path android:strokeColor="#FFFFFF" android:strokeWidth="3.5" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M-9,-23V-12" />
+        <path android:strokeColor="#FFFFFF" android:strokeWidth="3.5" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M9,-23V-12" />
+        <path android:fillColor="#FFFFFF" android:pathData="M-1.342 0.166Q-1.342 1.244 -1.793 2.036Q-2.244 2.828 -3.003 3.334Q-3.762 3.84 -4.73 4.082V4.148Q-2.838 4.368 -1.859 5.292Q-0.88 6.216 -0.88 7.778Q-0.88 9.142 -1.551 10.231Q-2.222 11.32 -3.619 11.947Q-5.016 12.574 -7.216 12.574Q-8.514 12.574 -9.636 12.354Q-10.758 12.134 -11.748 11.716V8.9Q-10.736 9.406 -9.625 9.67Q-8.514 9.934 -7.568 9.934Q-5.786 9.934 -5.071 9.318Q-4.356 8.702 -4.356 7.58Q-4.356 6.92 -4.686 6.469Q-5.016 6.018 -5.841 5.787Q-6.666 5.556 -8.14 5.556H-9.328V3.004H-8.118Q-6.666 3.004 -5.907 2.729Q-5.148 2.454 -4.873 1.981Q-4.598 1.508 -4.598 0.892Q-4.598 0.056 -5.115 -0.417Q-5.632 -0.89 -6.842 -0.89Q-7.59 -0.89 -8.206 -0.703Q-8.822 -0.516 -9.317 -0.252Q-9.812 0.012 -10.186 0.254L-11.726 -2.034Q-10.802 -2.694 -9.559 -3.134Q-8.316 -3.574 -6.6 -3.574Q-4.18 -3.574 -2.761 -2.595Q-1.342 -1.616 -1.342 0.166ZM9.086 12.354H5.764V3.268Q5.764 2.894 5.775 2.344Q5.786 1.794 5.808 1.2Q5.83 0.606 5.852 0.144Q5.742 0.276 5.379 0.617Q5.016 0.958 4.708 1.222L2.904 2.674L1.298 0.672L6.358 -3.354H9.086Z" />
+    </group>
+</vector>

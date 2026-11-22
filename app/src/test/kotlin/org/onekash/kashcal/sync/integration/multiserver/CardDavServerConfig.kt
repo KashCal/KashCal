@@ -11,7 +11,8 @@ import org.onekash.kashcal.sync.carddav.ICloudCardDavQuirks
  * A separate type from [CalDavServerConfig], not an extension of it: the protocols can share
  * local.properties credential keys but not endpoint shapes, discovery quirks or quirks
  * factories. Most entries reuse the CalDAV keys (BAIKAL_*, RADICALE_* and so on), so there is
- * one set of secrets; iCloud uses its own ICLOUD_* keys.
+ * one set of secrets; iCloud uses its own ICLOUD_* keys, and BaikalContactsOnly, which has no
+ * CalDAV entry, its own BAIKAL_CARDDAV_* keys.
  */
 data class CardDavServerConfig(
     val name: String,
@@ -38,6 +39,20 @@ data class CardDavServerConfig(
      * instead of failing as a lost field. Set for Open-Xchange (mailbox.org).
      */
     val dropsKind: Boolean = false,
+    /**
+     * True when the server stores a date in an early year one day earlier than sent: Zoho serves
+     * `1604-03-15` and `1700-03-15` as the 14th, while 1899 and later come back unchanged
+     * (live, 2026-10-29). So a vCard 3.0 birthday without a year, sent in the 1604 form, reads
+     * back without a year but a day early. This is server behavior, asserted as observed in
+     * [MultiServerCardDavYearlessDateRoundTripTest].
+     */
+    val shiftsEarlyYearDates: Boolean = false,
+    /**
+     * True when the server accepts a vCard 3.0 Apple `itemN.X-ABDATE` anniversary on write but
+     * doesn't store it, dated or not (Zoho, live 2026-10-29). Anniversary read-back checks are
+     * skipped for such a server.
+     */
+    val dropsAppleAnniversary: Boolean = false,
     /**
      * The host a real account of this provider stores from CalDAV setup, when it differs from
      * the CardDAV [defaultServerUrl]. Only split-host providers set it (Zoho: contacts on
@@ -101,6 +116,35 @@ data class CardDavServerConfig(
             usesWellKnownDiscovery = false,
         )
 
+        // Baikal with CalDAV switched off (cal_enabled: false): a contacts-only server. Live,
+        // 2026-11-09: the principal answers addressbook-home-set and a 404 propstat for
+        // calendar-home-set and calendar-user-address-set, and /dav.php/calendars/ is 404.
+        // `ContactsOnlyServerDiscoveryTest` covers its CalDAV side; it is not a CalDAV server.
+        val BAIKAL_CARDDAV = CardDavServerConfig(
+            name = "BaikalContactsOnly",
+            serverKey = "BAIKAL_CARDDAV_SERVER",
+            usernameKey = "BAIKAL_CARDDAV_USERNAME",
+            passwordKey = "BAIKAL_CARDDAV_PASSWORD",
+            defaultServerUrl = "http://localhost:8085",
+            davEndpointSuffix = "/dav.php/",
+            quirksFactory = { url -> DefaultCardDavQuirks(url) },
+            usesWellKnownDiscovery = false,
+        )
+
+        // DAViCal serves CardDAV from the same /caldav.php/ entry point and home as its CalDAV
+        // ([CalDavServerConfig.DAVICAL]). Live, 2026-11-09: a vCard PUT answers 201 without an
+        // ETag header (an ICS PUT sends one). The test account's /addresses/ book is fixture setup.
+        val DAVICAL = CardDavServerConfig(
+            name = "DAViCal",
+            serverKey = "DAVICAL_SERVER",
+            usernameKey = "DAVICAL_USERNAME",
+            passwordKey = "DAVICAL_PASSWORD",
+            defaultServerUrl = "http://localhost:8086",
+            davEndpointSuffix = "/caldav.php/",
+            quirksFactory = { url -> DefaultCardDavQuirks(url) },
+            usesWellKnownDiscovery = true,
+        )
+
         // Nextcloud serves CardDAV under /remote.php/dav/; RFC 6764 well-known redirects there.
         val NEXTCLOUD = CardDavServerConfig(
             name = "Nextcloud",
@@ -152,6 +196,8 @@ data class CardDavServerConfig(
             caldavHostUrl = "https://calendar.zoho.com",
             quirksFactory = { ZohoCardDavQuirks() },
             usesWellKnownDiscovery = true,
+            shiftsEarlyYearDates = true,
+            dropsAppleAnniversary = true,
         )
 
         // Fastmail serves CardDAV from carddav.fastmail.com, a different host from its
@@ -195,7 +241,8 @@ data class CardDavServerConfig(
         ) else emptyList()
 
         fun allServers(): List<CardDavServerConfig> = listOf(
-            ICLOUD, RADICALE, XANDIKOS, BAIKAL, NEXTCLOUD, SOGO, CYRUS, MAILBOX
+            ICLOUD, RADICALE, XANDIKOS, BAIKAL, BAIKAL_CARDDAV, NEXTCLOUD, SOGO, CYRUS, MAILBOX,
+            DAVICAL,
         ) + PROXIES
 
         /**

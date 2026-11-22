@@ -6,6 +6,10 @@ import org.onekash.kashcal.data.db.entity.Event
 enum class ImportMethod {
     PUBLISH, REQUEST, REPLY, ADD, CANCEL, REFRESH, COUNTER, DECLINECOUNTER;
 
+    /** True for an iTIP REQUEST or CANCEL, the methods that carry an invitation. */
+    val isInvitation: Boolean
+        get() = this == REQUEST || this == CANCEL
+
     companion object {
         /** Returns the method named by a METHOD value, or null for none or an unknown one. */
         fun fromValue(value: String?): ImportMethod? =
@@ -39,11 +43,15 @@ data class ImportedAttendee(
  *
  * @param thisAndFuture true when its RECURRENCE-ID carries RANGE=THISANDFUTURE, which import
  *   doesn't apply.
+ * @param ics the group's text from the file, the stored ICS an import keeps
+ *   ([org.onekash.kashcal.data.ics.ImportedCopy]); the same for every component of a group, null
+ *   when the group's text couldn't be verified.
  */
 data class ImportedComponent(
     val event: Event,
     val attendees: List<ImportedAttendee>,
     val thisAndFuture: Boolean = false,
+    val ics: String? = null,
 ) {
     val isCancelled: Boolean get() = event.status == STATUS_CANCELLED
     val isInstance: Boolean get() = event.originalInstanceTime != null
@@ -70,9 +78,9 @@ data class IcsImportFile(
     val method: ImportMethod?,
     val groups: List<ImportGroup>,
 ) {
-    /** True for an iTIP REQUEST or CANCEL, the methods that carry an invitation. */
+    /** True when the file's METHOD carries an invitation ([ImportMethod.isInvitation]). */
     val isInvitation: Boolean
-        get() = method == ImportMethod.REQUEST || method == ImportMethod.CANCEL
+        get() = method?.isInvitation == true
 
     /** Every component's event, in file order. */
     val events: List<Event> get() = groups.flatMap { group -> group.components.map { it.event } }

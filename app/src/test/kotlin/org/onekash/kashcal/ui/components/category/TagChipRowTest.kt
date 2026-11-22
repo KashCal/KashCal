@@ -1,7 +1,13 @@
 package org.onekash.kashcal.ui.components.category
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -227,6 +233,51 @@ class TagChipRowTest {
         }
         composeTestRule.onNodeWithText("Work").assertIsDisplayed()
         assertTrue(composeTestRule.countNodesWithText("New tag") == 0)
+    }
+
+    private fun readOnlyRow(tags: Set<String>, onTagClick: ((String) -> Unit)?) {
+        composeTestRule.setContent {
+            MaterialTheme {
+                TagChipRow(selected = tags, suggestions = emptyList(), onToggle = {}, onAdd = {}, readOnly = true, onTagClick = onTagClick)
+            }
+        }
+    }
+
+    private fun chip(name: String) = composeTestRule.onNode(hasContentDescription("Tag: $name"))
+
+    @Test
+    fun readOnly_chip_with_a_handler_is_a_button_that_passes_its_name() {
+        val clicked = mutableListOf<String>()
+        readOnlyRow(setOf("Work", "Team meeting"), onTagClick = { clicked += it })
+
+        chip("Team meeting").assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+        val label = chip("Team meeting").fetchSemanticsNode().config[SemanticsActions.OnClick].label
+        assertEquals("Show events with this tag", label)
+        chip("Team meeting").assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Selected))
+        chip("Team meeting").assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.ToggleableState))
+        chip("Team meeting").performClick()
+        chip("Work").performClick()
+
+        assertEquals(listOf("Team meeting", "Work"), clicked)
+    }
+
+    @Test
+    fun readOnly_chip_without_a_handler_is_not_clickable() {
+        readOnlyRow(setOf("Work"), onTagClick = null)
+
+        chip("Work").assertIsDisplayed()
+        chip("Work").assert(SemanticsMatcher.keyNotDefined(SemanticsActions.OnClick))
+        chip("Work").assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Selected))
+    }
+
+    @Test
+    fun readOnly_chip_no_search_text_can_hold_is_not_clickable() {
+        val clicked = mutableListOf<String>()
+        readOnlyRow(setOf("x\"b"), onTagClick = { clicked += it })
+
+        chip("x\"b").assert(SemanticsMatcher.keyNotDefined(SemanticsActions.OnClick))
+        chip("x\"b").performClick()
+        assertEquals(emptyList<String>(), clicked)
     }
 }
 

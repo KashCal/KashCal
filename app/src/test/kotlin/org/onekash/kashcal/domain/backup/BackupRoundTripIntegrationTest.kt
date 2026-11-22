@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.WorkManager
 import io.mockk.mockk
@@ -33,6 +32,7 @@ import org.onekash.kashcal.data.repository.AccountRepositoryImpl
 import org.onekash.kashcal.data.repository.CalendarRepositoryImpl
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.io.File
@@ -113,7 +113,7 @@ class BackupRoundTripIntegrationTest {
     }
 
     private fun buildDatabase(): KashCalDatabase =
-        Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
 

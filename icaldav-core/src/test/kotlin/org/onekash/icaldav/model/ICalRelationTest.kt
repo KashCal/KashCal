@@ -150,7 +150,7 @@ class ICalRelationTest {
             val link = ICalLink(uri = "https://example.com/event")
             val ical = link.toICalString()
 
-            // RFC 9253 §8.2 requires VALUE; the parser's ical4j 4.3.0 drops a LINK without it.
+            // RFC 9253 §8.2 requires VALUE; ical4j drops a LINK without it.
             assertEquals("LINK;VALUE=URI:https://example.com/event", ical)
         }
 

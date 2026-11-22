@@ -9,12 +9,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Backup
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EventBusy
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Link
@@ -27,22 +30,26 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SentimentSatisfied
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.ViewWeek
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
@@ -62,6 +69,8 @@ import org.onekash.kashcal.ui.model.localizedDisplayName
 import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
 import org.onekash.kashcal.ui.screens.settings.CalendarNotificationSource
 import org.onekash.kashcal.ui.screens.settings.CalendarNotificationsSheet
+import org.onekash.kashcal.ui.screens.settings.DebugReportSheet
+import org.onekash.kashcal.ui.screens.settings.ForceFullSyncConfirm
 import org.onekash.kashcal.ui.screens.settings.buildCalendarNotificationSections
 import org.onekash.kashcal.ui.screens.settings.mutedCalendarCount
 import org.onekash.kashcal.ui.screens.settings.ContactSyncConfirmation
@@ -73,7 +82,6 @@ import org.onekash.kashcal.ui.screens.settings.AddSubscriptionDialog
 import org.onekash.kashcal.ui.screens.settings.AlertPickerSheet
 import org.onekash.kashcal.ui.screens.settings.CalDavAccountUiModel
 import org.onekash.kashcal.ui.screens.settings.CalDavConnectionState
-import org.onekash.kashcal.ui.screens.settings.DebugMenuSheet
 import org.onekash.kashcal.ui.screens.settings.DefaultCalendarSheet
 import org.onekash.kashcal.ui.screens.settings.EventDurationSheet
 import org.onekash.kashcal.ui.screens.settings.FirstDayOfWeekSheet
@@ -86,6 +94,7 @@ import org.onekash.kashcal.ui.screens.settings.SettingsRow
 import org.onekash.kashcal.ui.screens.settings.SettingsRowInfo
 import org.onekash.kashcal.ui.screens.settings.SettingsToggleRow
 import org.onekash.kashcal.ui.screens.settings.SyncFrequencySheet
+import org.onekash.kashcal.ui.screens.settings.syncScopeOf
 import org.onekash.kashcal.ui.screens.settings.SyncLookbackSheet
 import org.onekash.kashcal.ui.screens.settings.TimeFormatSheet
 import org.onekash.kashcal.ui.screens.settings.VersionFooter
@@ -107,6 +116,8 @@ data class AccountSettingsUiState(
     /** Sign-in state for generic CalDAV servers. */
     val calDavState: CalDavConnectionState = CalDavConnectionState.NotConnected(),
     val showCalDavSignInSheet: Boolean = false,
+    /** The account the CalDAV sign-in sheet is signing in again, or null for a new account. */
+    val calDavSignInAgainAccountId: Long? = null,
     /** Number of connected CalDAV accounts. */
     val calDavAccountCount: Int = 0,
     /** Connected CalDAV accounts, for display. */
@@ -129,8 +140,8 @@ data class AccountSettingsUiState(
      */
     val pendingSubscriptionDeletionId: Long? = null,
     /**
-     * Asks the host to finish the Activity: after iCloud sign-in during initial setup, or on
-     * Done in the connected sheet.
+     * Asks the host to finish the Activity: closing a sign-in sheet on an onboarding route, a
+     * successful iCloud sign-in there, or Done in the connected sheet.
      */
     val pendingFinishActivity: Boolean = false,
     /** Shows the success sheet after an account connects. */
@@ -165,6 +176,8 @@ data class AccountSettingsUiState(
 @Composable
 fun AccountSettingsScreen(
     uiState: AccountSettingsUiState,
+    openSyncLookback: Boolean = false,
+    onSyncLookbackOpened: () -> Unit = {},
     onShowICloudSignIn: () -> Unit = {},
     onHideICloudSignIn: () -> Unit = {},
     onAppleIdChange: (String) -> Unit = {},
@@ -183,13 +196,9 @@ fun AccountSettingsScreen(
     onCalDavDiscover: () -> Unit = {},
     onCalDavSignOut: (Long) -> Unit = {},
     onNavigateBack: () -> Unit = {},
-    // Calendar settings (visibility derived from Calendar.isVisible)
+    // Calendars
     calendars: List<Calendar> = emptyList(),
     calendarGroups: List<CalendarGroup> = emptyList(),
-    onToggleCalendar: (Long, Boolean) -> Unit = { _, _ -> },
-    // Not shown in the UI; kept for future use.
-    onShowAllCalendars: () -> Unit = {},
-    onHideAllCalendars: () -> Unit = {},
     // Sync settings
     syncIntervalMs: Long = 24 * 60 * 60 * 1000L,
     onSyncIntervalChange: (Long) -> Unit = {},
@@ -215,8 +224,9 @@ fun AccountSettingsScreen(
         LocalNetworkPermissionState.NotRequired,
     onRequestLocalNetwork: () -> Unit = {},
     onSubscriptionDialogOpened: () -> Unit = {},
-    // Sync Logs
+    // Troubleshooting
     onShowSyncLogs: () -> Unit = {},
+    onExportDebugReport: () -> Unit = {},
     // Default reminder preferences
     defaultReminderTimed: Int = 15,
     defaultReminderAllDay: Int = 900, // 9 AM the day before (-PT15H)
@@ -226,7 +236,10 @@ fun AccountSettingsScreen(
     onDefaultEventDurationChange: (Int) -> Unit = {},
     // ICS Import/Export
     onImportCalendarFile: () -> Unit = {},
-    onExportCalendar: (Long) -> Unit = {},
+    onOpenExportCalendars: () -> Unit = {},
+    onOpenCalendarBackup: () -> Unit = {},
+    calendarBackupSubtitle: String? = null,
+    calendarBackupProblem: Boolean = false,
     // Settings backup/restore
     onBackupSettings: () -> Unit = {},
     onRestoreSettings: () -> Unit = {},
@@ -235,18 +248,17 @@ fun AccountSettingsScreen(
     onNavigateToSubscriptions: () -> Unit = {},
     onNavigateToBirthdaysAnniversaries: () -> Unit = {},
     onNavigateToDeviceCalendars: () -> Unit = {},
+    onNavigateToOfflineCalendars: () -> Unit = {},
+    // Offline calendars, the built-in included; the row shows its hint until there is more than
+    // one.
+    offlineCalendarCount: Int = 0,
     // Contact event counts (for B&A row subtitle)
     birthdayCount: Int = 0,
     anniversaryCount: Int = 0,
     // Device calendars
     deviceCalendarsEnabled: Boolean = false,
-    hasReadCalendarPermission: Boolean = false,
-    hasWriteCalendarPermission: Boolean = false,
     deviceCalendars: List<DeviceCalendar> = emptyList(),
     enabledDeviceCalendarIds: Set<Long> = emptySet(),
-    onToggleDeviceCalendars: (Boolean) -> Unit = {},
-    onToggleDeviceCalendar: (Long, Boolean) -> Unit = { _, _ -> },
-    onRequestWriteCalendarPermission: () -> Unit = {},
     showDeclinedEvents: Boolean = false,
     onToggleShowDeclinedEvents: (Boolean) -> Unit = {},
     deviceCalendarRemindersEnabled: Boolean = true,
@@ -341,10 +353,19 @@ fun AccountSettingsScreen(
                 var showFirstDayOfWeekSheet by remember { mutableStateOf(false) }
                 var showEventDurationSheet by remember { mutableStateOf(false) }
                 var showWidgetEventLimitSheet by remember { mutableStateOf(false) }
-                var showDebugMenu by remember { mutableStateOf(false) }
+                var forceFullSyncConfirmOpen by remember { mutableStateOf(false) }
+                var showDebugReportSheet by remember { mutableStateOf(false) }
                 var showAppInfoSheet by remember { mutableStateOf(false) }
                 var showAddSubscriptionDialog by remember { mutableStateOf(false) }
                 var showSyncLookbackSheet by remember { mutableStateOf(false) }
+                // A request (search's Sync settings link) opens the sheet once the screen has
+                // loaded; clearing it keeps a later return to this screen from opening it again.
+                LaunchedEffect(openSyncLookback) {
+                    if (openSyncLookback) {
+                        showSyncLookbackSheet = true
+                        onSyncLookbackOpened()
+                    }
+                }
                 var showSyncFrequencySheet by remember { mutableStateOf(false) }
                 var showCalendarNotificationsSheet by remember { mutableStateOf(false) }
 
@@ -359,7 +380,7 @@ fun AccountSettingsScreen(
                 val widgetEventLimitSheetState = rememberModalBottomSheetState()
                 val syncLookbackSheetState = rememberModalBottomSheetState()
                 val syncFrequencySheetState = rememberModalBottomSheetState()
-                val debugSheetState = rememberModalBottomSheetState()
+                val debugReportSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
                 // Derived values
                 val isConnected = uiState.iCloudState is ICloudConnectionState.Connected
@@ -398,11 +419,6 @@ fun AccountSettingsScreen(
                             deviceCalendars.find { it.id == defaultCalendar.calendarId }?.displayName
                         null -> null
                     }
-                }
-
-                // Local calendar, for export
-                val localCalendar = remember(calendars) {
-                    calendars.find { it.caldavUrl == org.onekash.kashcal.domain.initializer.LocalCalendarInitializer.LOCAL_CALENDAR_URL }
                 }
 
                 // Add-subscription dialog: opened from this screen or by a webcal:// link
@@ -491,6 +507,19 @@ fun AccountSettingsScreen(
                                 label = stringResource(R.string.settings_device_calendars),
                                 subtitle = deviceCalendarsSubtitle,
                                 onClick = onNavigateToDeviceCalendars,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+
+                        val offlineCalendarsSubtitle = if (offlineCalendarCount <= 1) stringResource(R.string.offline_calendars_row_hint)
+                            else pluralStringResource(R.plurals.calendar_count, offlineCalendarCount, offlineCalendarCount)
+                        row(label = stringResource(R.string.offline_calendars_row_label), subtitle = offlineCalendarsSubtitle, id = "offline-calendars") {
+                            SettingsRow(
+                                icon = Icons.Default.CloudOff,
+                                label = stringResource(R.string.offline_calendars_row_label),
+                                subtitle = offlineCalendarsSubtitle,
+                                onClick = onNavigateToOfflineCalendars,
                                 showDivider = false,
                                 searchQuery = searchQuery
                             )
@@ -790,18 +819,29 @@ fun AccountSettingsScreen(
                         header = stringResource(R.string.settings_section_data),
                         tracker = emittedTracker,
                     ) {
-                        localCalendar?.let { local ->
-                            row(label = stringResource(R.string.action_export_local_calendar), subtitle = stringResource(R.string.settings_export_subtitle), id = "export") {
-                                SettingsRow(
-                                    icon = Icons.Default.FileUpload,
-                                    label = stringResource(R.string.action_export_local_calendar),
-                                    subtitle = stringResource(R.string.settings_export_subtitle),
-                                    onClick = { onExportCalendar(local.id) },
-                                    showChevron = false,
-                                    showDivider = false,
-                                    searchQuery = searchQuery
-                                )
-                            }
+                        row(label = stringResource(R.string.settings_export_calendars), subtitle = stringResource(R.string.settings_export_calendars_subtitle), id = "export") {
+                            SettingsRow(
+                                icon = Icons.Default.FileUpload,
+                                label = stringResource(R.string.settings_export_calendars),
+                                subtitle = stringResource(R.string.settings_export_calendars_subtitle),
+                                onClick = onOpenExportCalendars,
+                                showChevron = false,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+                        val backupSubtitle = calendarBackupSubtitle ?: stringResource(R.string.calendar_backup_row_off)
+                        row(label = stringResource(R.string.calendar_backup_title), subtitle = backupSubtitle, id = "calendar_backup") {
+                            SettingsRow(
+                                icon = Icons.Default.CloudSync,
+                                label = stringResource(R.string.calendar_backup_title),
+                                subtitle = backupSubtitle,
+                                subtitleColor = if (calendarBackupProblem) MaterialTheme.colorScheme.error else Color.Unspecified,
+                                onClick = onOpenCalendarBackup,
+                                showChevron = false,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
                         }
                         row(label = stringResource(R.string.backup_settings_label), subtitle = stringResource(R.string.backup_settings_subtitle), id = "backup") {
                             SettingsRow(
@@ -838,6 +878,67 @@ fun AccountSettingsScreen(
                         }
                     }
 
+                    // ==================== Troubleshooting Section ====================
+                    SearchableSection(
+                        query = searchQuery,
+                        header = stringResource(R.string.settings_section_troubleshooting),
+                        tracker = emittedTracker,
+                    ) {
+                        row(label = stringResource(R.string.settings_sync_history), subtitle = stringResource(R.string.settings_sync_history_subtitle), id = "sync-history") {
+                            SettingsRow(
+                                icon = Icons.Default.History,
+                                label = stringResource(R.string.settings_sync_history),
+                                subtitle = stringResource(R.string.settings_sync_history_subtitle),
+                                onClick = onShowSyncLogs,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+                        val syncScope = syncScopeOf(uiState.iCloudState, uiState.calDavAccounts)
+                        val canForceSync = syncScope.hasSyncAccount
+                        // Closes the confirm when the last sync account goes away, so it can't
+                        // reopen by itself when one comes back.
+                        LaunchedEffect(canForceSync) {
+                            if (!canForceSync) forceFullSyncConfirmOpen = false
+                        }
+                        val forceSyncSubtitle = stringResource(
+                            if (canForceSync) R.string.settings_force_sync_subtitle else R.string.settings_force_sync_no_account
+                        )
+                        row(label = stringResource(R.string.settings_force_sync), subtitle = forceSyncSubtitle, id = "force-full-sync") {
+                            if (forceFullSyncConfirmOpen && canForceSync) {
+                                ForceFullSyncConfirm(
+                                    scope = syncScope,
+                                    onCancel = { forceFullSyncConfirmOpen = false },
+                                    onStart = {
+                                        forceFullSyncConfirmOpen = false
+                                        onForceFullSync()
+                                    },
+                                )
+                            } else {
+                                SettingsRow(
+                                    icon = Icons.Default.Sync,
+                                    label = stringResource(R.string.settings_force_sync),
+                                    subtitle = forceSyncSubtitle,
+                                    onClick = { forceFullSyncConfirmOpen = true },
+                                    enabled = canForceSync,
+                                    showChevron = false,
+                                    showDivider = false,
+                                    searchQuery = searchQuery
+                                )
+                            }
+                        }
+                        row(label = stringResource(R.string.debug_report_row_label), subtitle = stringResource(R.string.debug_report_row_subtitle), id = "debug-report") {
+                            SettingsRow(
+                                icon = Icons.Default.BugReport,
+                                label = stringResource(R.string.debug_report_row_label),
+                                subtitle = stringResource(R.string.debug_report_row_subtitle),
+                                onClick = { showDebugReportSheet = true },
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+                    }
+
                     // Empty-state when search is active and no section matched.
                     if (searchQuery.isNotBlank() && !emittedTracker.anyEmitted) {
                         SearchEmptyState(query = searchQuery)
@@ -848,8 +949,7 @@ fun AccountSettingsScreen(
                     if (versionName.isNotEmpty() && searchQuery.isBlank()) {
                         VersionFooter(
                             versionName = versionName,
-                            onClick = { showAppInfoSheet = true },
-                            onLongPress = { showDebugMenu = true }
+                            onClick = { showAppInfoSheet = true }
                         )
                     }
                 }
@@ -987,13 +1087,14 @@ fun AccountSettingsScreen(
                     AppInfoSheet(onDismiss = { showAppInfoSheet = false })
                 }
 
-                // Debug Menu Sheet
-                if (showDebugMenu) {
-                    DebugMenuSheet(
-                        sheetState = debugSheetState,
-                        onForceFullSync = onForceFullSync,
-                        onShowSyncLogs = onShowSyncLogs,
-                        onDismiss = { showDebugMenu = false }
+                if (showDebugReportSheet) {
+                    DebugReportSheet(
+                        sheetState = debugReportSheetState,
+                        onShare = {
+                            showDebugReportSheet = false
+                            onExportDebugReport()
+                        },
+                        onDismiss = { showDebugReportSheet = false }
                     )
                 }
             }

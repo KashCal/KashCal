@@ -14,7 +14,7 @@ object CalAddress {
 
     /**
      * Matches a bare mailbox (`local@domain.tld`), rejecting principal hrefs
-     * (`/646691839/principal/`), HTTP and HTTPS principal URIs, `urn:uuid:` forms and shapes
+     * (`/123456789/principal/`), HTTP and HTTPS principal URIs, `urn:uuid:` forms and shapes
      * like `@example.com` or `foo@`.
      *
      * One pattern serves the parser's `EMAIL=` fallback (is the primary value a usable mailto),

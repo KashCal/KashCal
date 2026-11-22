@@ -120,9 +120,9 @@ class DeviceGuestsTagsRoundTripTest {
 
     // ---- the user's own response ----
 
-    private suspend fun invitedEvent(ownerEmailOnRow: String = OWNER): Long {
+    private suspend fun invitedEvent(ownerEmailOnRow: String = OWNER, rrule: String? = null): Long {
         // An invitation someone else organizes, as a sync adapter writes it.
-        val id = create(f.draft(title = "Offsite"))
+        val id = create(f.draft(title = "Offsite", rrule = rrule))
         f.provider.insertRow(
             SqliteCalendarProvider.ATTENDEES, Attendees.EVENT_ID to id, Attendees.ATTENDEE_EMAIL to "boss@example.test",
             Attendees.ATTENDEE_RELATIONSHIP to Attendees.RELATIONSHIP_ORGANIZER, Attendees.ATTENDEE_STATUS to Attendees.ATTENDEE_STATUS_ACCEPTED,
@@ -145,6 +145,22 @@ class DeviceGuestsTagsRoundTripTest {
         assertEquals(before.getValue("boss@example.test"), after.getValue("boss@example.test"))
         assertEquals(Attendees.ATTENDEE_STATUS_TENTATIVE.toString(), after.getValue(OWNER)[Attendees.ATTENDEE_STATUS])
         assertEquals(Attendees.ATTENDEE_STATUS_TENTATIVE, f.occurrences(DAY_CODE).single().selfAttendeeStatus)
+    }
+
+    @Test
+    fun `replying from one occurrence of a series answers for every occurrence`() = runTest {
+        // The quick view says a reply applies to the whole series; it sends the tapped
+        // occurrence's event id, which for an unchanged occurrence is the series row.
+        val id = invitedEvent(rrule = "FREQ=WEEKLY;COUNT=4")
+        val occurrences = f.inMarch()
+        assertEquals(4, occurrences.size)
+        assertTrue(occurrences.all { it.selfAttendeeStatus == Attendees.ATTENDEE_STATUS_INVITED })
+        val tapped = occurrences[2]
+        assertEquals(id, tapped.eventId)
+
+        assertEquals(true, f.writer.replyRsvp(tapped.eventId, SYNCED_CAL, Attendees.ATTENDEE_STATUS_TENTATIVE).getOrThrow())
+
+        assertTrue(f.inMarch().all { it.selfAttendeeStatus == Attendees.ATTENDEE_STATUS_TENTATIVE })
     }
 
     @Test

@@ -180,8 +180,10 @@ data class Photo(
 
 /**
  * A `BDAY` or `ANNIVERSARY` value: [date] when it is a full calendar date, and [text] for a
- * partial date or free text. An Apple `X-ABDATE` anniversary keeps its raw string in [text]
- * alongside a parsed [date].
+ * partial date or free text. The parser gives a date without a year, including one served in
+ * the 1604 form ([org.onekash.vcard.OMIT_YEAR]), as `--MM-DD` text with no [date]; a phone row
+ * can still hold a 1604 [date], which the writer treats the same. An Apple `X-ABDATE` anniversary
+ * with a year keeps its raw string in [text] alongside a parsed [date].
  */
 data class ContactDate(
     val date: LocalDate? = null,

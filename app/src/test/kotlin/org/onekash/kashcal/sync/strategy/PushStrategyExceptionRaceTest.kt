@@ -9,6 +9,8 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.db.dao.EventsDao
@@ -20,6 +22,7 @@ import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavResult
+import org.onekash.kashcal.testutil.FakeEventIcsSource
 
 /**
  * Tests that a push marks synced only the exceptions that were in the body it sent.
@@ -37,6 +40,7 @@ class PushStrategyExceptionRaceTest {
     private lateinit var eventsDao: EventsDao
     private lateinit var pendingOperationsDao: PendingOperationsDao
     private lateinit var pushStrategy: PushStrategy
+    private lateinit var ics: FakeEventIcsSource
 
     private val testCalendar = Calendar(
         id = 1L,
@@ -110,6 +114,7 @@ class PushStrategyExceptionRaceTest {
         calendarRepository = mockk()
         eventsDao = mockk()
         pendingOperationsDao = mockk()
+        ics = FakeEventIcsSource()
 
         // Default batch query mocks
         coEvery { eventsDao.getByIds(any()) } returns emptyList()
@@ -121,7 +126,8 @@ class PushStrategyExceptionRaceTest {
             pendingOperationsDao = pendingOperationsDao,
             accountRepository = mockk(relaxed = true),
             attendeesDao = mockk(relaxed = true),
-            pendingCancelsDao = mockk { coEvery { getForEvent(any()) } returns emptyList() }
+            pendingCancelsDao = mockk { coEvery { getForEvent(any()) } returns emptyList() },
+            icsSource = ics
         )
     }
 
@@ -158,13 +164,10 @@ class PushStrategyExceptionRaceTest {
                 coEvery { client.createEvent(testCalendar.caldavUrl, masterEvent.uid, any()) } returns
             CalDavResult.success(Pair(serverUrl, serverEtag))
         coEvery { eventsDao.markCreatedOnServer(masterEvent.id, serverUrl, serverEtag, any()) } just Runs
-        coEvery { eventsDao.markCreatedOnServerWithCopy(masterEvent.id, serverUrl, serverEtag, any(), any()) } just Runs
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
-        coEvery { eventsDao.markSyncedWithCopy(any(), any(), any(), any()) } just Runs
         // A bundled exception shares the master's resource, so it takes the master's URL and
         // etag together.
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
-        coEvery { eventsDao.markCreatedOnServerWithCopy(any(), any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         // Execute
@@ -176,14 +179,16 @@ class PushStrategyExceptionRaceTest {
         assertEquals(1, success.eventsCreated)
 
         // One call each for exceptionA and exceptionB.
-        coVerify(exactly = 1) { eventsDao.markCreatedOnServerWithCopy(exceptionA.id, serverUrl, serverEtag, any(), any()) }
-        coVerify(exactly = 1) { eventsDao.markCreatedOnServerWithCopy(exceptionB.id, serverUrl, serverEtag, any(), any()) }
+        coVerify(exactly = 1) { eventsDao.markCreatedOnServer(exceptionA.id, serverUrl, serverEtag, any()) }
+        coVerify(exactly = 1) { eventsDao.markCreatedOnServer(exceptionB.id, serverUrl, serverEtag, any()) }
 
         // exceptionC wasn't serialized, so it isn't marked synced.
         coVerify(exactly = 0) { eventsDao.markCreatedOnServer(exceptionC.id, any(), any(), any()) }
-        coVerify(exactly = 0) { eventsDao.markCreatedOnServerWithCopy(exceptionC.id, any(), any(), any(), any()) }
         coVerify(exactly = 0) { eventsDao.markSynced(exceptionC.id, any(), any()) }
-        coVerify(exactly = 0) { eventsDao.markSyncedWithCopy(exceptionC.id, any(), any(), any()) }
+
+        // The sent body is stored once, on the series row; no exception keeps a copy of its own.
+        assertNotNull(ics.stored(masterEvent.id))
+        listOf(exceptionA, exceptionB, exceptionC).forEach { assertNull(ics.stored(it.id)) }
     }
 
     /** Runs the same race through an UPDATE: only A and B take the new etag. */
@@ -216,9 +221,7 @@ class PushStrategyExceptionRaceTest {
                 coEvery { client.updateEvent(masterEventWithUrl.caldavUrl!!, any(), "existing-etag") } returns
             CalDavResult.success(newEtag)
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
-        coEvery { eventsDao.markSyncedWithCopy(any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
-        coEvery { eventsDao.markCreatedOnServerWithCopy(any(), any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         // Execute
@@ -229,17 +232,17 @@ class PushStrategyExceptionRaceTest {
         val success = result as PushResult.Success
         assertEquals(1, success.eventsUpdated)
 
-        // The master takes the new etag.
-        coVerify(exactly = 1) { eventsDao.markSyncedWithCopy(masterEventWithUrl.id, newEtag, any(), any()) }
+        // The master takes the new etag, and the sent body is stored on it.
+        coVerify(exactly = 1) { eventsDao.markSynced(masterEventWithUrl.id, newEtag, any()) }
+        assertNotNull(ics.stored(masterEventWithUrl.id))
 
         // Only exceptionA and exceptionB are marked synced, at the master's URL (also theirs).
         val masterUrl = masterEventWithUrl.caldavUrl!!
-        coVerify(exactly = 1) { eventsDao.markCreatedOnServerWithCopy(exceptionA.id, masterUrl, newEtag, any(), any()) }
-        coVerify(exactly = 1) { eventsDao.markCreatedOnServerWithCopy(exceptionB.id, masterUrl, newEtag, any(), any()) }
+        coVerify(exactly = 1) { eventsDao.markCreatedOnServer(exceptionA.id, masterUrl, newEtag, any()) }
+        coVerify(exactly = 1) { eventsDao.markCreatedOnServer(exceptionB.id, masterUrl, newEtag, any()) }
 
         // exceptionC isn't marked synced.
         coVerify(exactly = 0) { eventsDao.markCreatedOnServer(exceptionC.id, any(), any(), any()) }
-        coVerify(exactly = 0) { eventsDao.markCreatedOnServerWithCopy(exceptionC.id, any(), any(), any(), any()) }
     }
 
     /** Creates a recurring master with no exceptions: no exception row is updated. */
@@ -264,19 +267,19 @@ class PushStrategyExceptionRaceTest {
                 coEvery { client.createEvent(testCalendar.caldavUrl, masterEvent.uid, any()) } returns
             CalDavResult.success(Pair(serverUrl, serverEtag))
         coEvery { eventsDao.markCreatedOnServer(masterEvent.id, serverUrl, serverEtag, any()) } just Runs
-        coEvery { eventsDao.markCreatedOnServerWithCopy(masterEvent.id, serverUrl, serverEtag, any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         val result = pushStrategy.pushAll(client)
 
         assert(result is PushResult.Success)
 
-        // Master uses markCreatedOnServerWithCopy, not markSynced
-        coVerify(exactly = 1) { eventsDao.markCreatedOnServerWithCopy(masterEvent.id, serverUrl, serverEtag, any(), any()) }
+        // The master uses markCreatedOnServer, not markSynced, and holds the sent body.
+        coVerify(exactly = 1) { eventsDao.markCreatedOnServer(masterEvent.id, serverUrl, serverEtag, any()) }
+        coVerify(exactly = 1) { eventsDao.markCreatedOnServer(any(), any(), any(), any()) }
+        assertNotNull(ics.stored(masterEvent.id))
 
-        // No exceptions means no markSynced or markSyncedWithCopy calls
+        // No exceptions means no markSynced calls
         coVerify(exactly = 0) { eventsDao.markSynced(any(), any(), any()) }
-        coVerify(exactly = 0) { eventsDao.markSyncedWithCopy(any(), any(), any(), any()) }
     }
 
     /**
@@ -318,9 +321,7 @@ class PushStrategyExceptionRaceTest {
                 coEvery { client.updateEvent(masterEventWithUrl.caldavUrl!!, any(), "existing-etag") } returns
             CalDavResult.success("new-etag")
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
-        coEvery { eventsDao.markSyncedWithCopy(any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
-        coEvery { eventsDao.markCreatedOnServerWithCopy(any(), any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         // Execute
@@ -334,11 +335,11 @@ class PushStrategyExceptionRaceTest {
 
         // Only exceptionA (captured at serialization) gets the etag
         coVerify(exactly = 1) {
-            eventsDao.markCreatedOnServerWithCopy(exceptionA.id, masterEventWithUrl.caldavUrl!!, "new-etag", any(), any())
+            eventsDao.markCreatedOnServer(exceptionA.id, masterEventWithUrl.caldavUrl!!, "new-etag", any())
         }
 
-        // The master is the only row going through markSyncedWithCopy
-        coVerify(exactly = 1) { eventsDao.markSyncedWithCopy(masterEventWithUrl.id, "new-etag", any(), any()) }
-        coVerify(exactly = 1) { eventsDao.markSyncedWithCopy(any(), any(), any(), any()) }
+        // The master is the only row going through markSynced
+        coVerify(exactly = 1) { eventsDao.markSynced(masterEventWithUrl.id, "new-etag", any()) }
+        coVerify(exactly = 1) { eventsDao.markSynced(any(), any(), any()) }
     }
 }

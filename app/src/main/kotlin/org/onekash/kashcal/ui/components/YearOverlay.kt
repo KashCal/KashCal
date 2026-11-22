@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.components.pickers.MonthYearWheelPicker
+import org.onekash.kashcal.ui.util.CalendarSpan
 
 /**
  * Shows a month and year wheel picker sheet for jumping to a month. The wheels only move the
@@ -44,7 +45,9 @@ fun YearOverlay(
 ) {
     if (!visible) return
 
-    var pickedYear by remember(currentYear) { mutableIntStateOf(currentYear) }
+    // The Month view can stand on a spare month past the CalendarSpan; the wheel shows that
+    // month in the span's nearest year, and Done goes where the wheel shows.
+    var pickedYear by remember(currentYear) { mutableIntStateOf(currentYear.coerceIn(CalendarSpan.yearRange())) }
     var pickedMonth by remember(currentMonth) { mutableIntStateOf(currentMonth) }
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)

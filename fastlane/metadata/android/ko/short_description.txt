@@ -1,1 +1,1 @@
-모든 캘린더를 하나의 앱에서. iCloud, CalDAV, 기기, ICS. 비공개.
+가족은 iCloud, 회사는 Google, 나는 CalDAV? KashCal은 모두의 편이에요.

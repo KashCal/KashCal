@@ -34,6 +34,20 @@ class DeviceEventReaderTest {
         repo.deviceAttendees[MASTER_ID] = listOf(attendee(1L, OWNER), attendee(2L, "guest@example.test"))
     }
 
+    // ---- reminder count ----
+
+    @Test
+    fun `counting reminders over no calendars reads nothing and is zero`() = runTest {
+        assertEquals(0, reader.countInstancesWithReminders(emptySet(), 0L, Long.MAX_VALUE))
+    }
+
+    @Test
+    fun `counting reminders without calendar access is zero`() = runTest {
+        repo.shouldThrowSecurityException = true
+
+        assertEquals(0, reader.countInstancesWithReminders(setOf(CAL_ID), 0L, Long.MAX_VALUE))
+    }
+
     // ---- single event + calendars ----
 
     @Test

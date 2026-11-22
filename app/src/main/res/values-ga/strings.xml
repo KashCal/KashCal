@@ -43,6 +43,8 @@
     <string name="channel_event_invitations">Cuirí imeachtaí</string>
     <string name="channel_event_invitations_desc">Fógraí nuair a fhaigheann tú cuireadh féilire nua</string>
     <string name="channel_calendar_updates">Athruithe féilire</string>
+    <string name="channel_calendar_backup">Cúltaca uathoibríoch féilirí</string>
+    <string name="channel_calendar_backup_description">Cuireann sé in iúl duit nuair a theipeann ar chúltaca féilirí</string>
     <string name="invite_notification_body">Ó %1$s · Tapáil chun freagra a thabhairt</string>
 
     <!-- ==================== App Shortcuts ==================== -->
@@ -88,7 +90,6 @@
     <string name="action_discard">Caith Amach</string>
     <string name="action_discard_confirm">Caith amach na hathruithe?</string>
     <string name="action_dismiss">Díláithrigh</string>
-    <string name="action_show_all">Taispeáin Uile</string>
     <string name="action_connect">Ceangail</string>
     <string name="action_duplicate">Dúbligh</string>
     <string name="action_share">Comhroinn</string>
@@ -119,6 +120,8 @@
     <string name="tags_hint_n_more">+%1$d eile</string>
     <string name="tags_autocomplete_create_new">Cruthaigh «%1$s»</string>
     <string name="cd_tag">Clib: %1$s</string>
+    <string name="tags_show_events_click_label">Taispeáin imeachtaí leis an gclib seo</string>
+    <string name="tags_show_events">Taispeáin imeachtaí</string>
     <string name="cd_tags_move_menu">Bog clibeanna</string>
     <string name="tags_move_above_notes">Bog os cionn na nótaí</string>
     <string name="tags_move_below_notes">Bog faoi bhun na nótaí</string>
@@ -148,7 +151,6 @@
     <string name="label_enter_hex">Cuir isteach 6 charachtar hex (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
-    <string name="view_all">Uile</string>
     <string name="view_week">Seachtain</string>
     <string name="view_month">Mí</string>
     <string name="label_all_day">An lá ar fad</string>
@@ -188,19 +190,40 @@
     <string name="settings_start_week_on">Tosaigh an tSeachtain Ar</string>
     <string name="settings_event_emojis">Emojis Imeachtaí</string>
     <string name="settings_event_emojis_info">Cuireann sé emoji le himeachtaí de réir an teidil, cosúil le 🎂 do \"Breithlá\".</string>
-    <string name="settings_force_sync">Sioncronú Iomláin Éigeantach</string>
+    <string name="settings_force_sync">Sioncronú iomláin éigeantach</string>
     <string name="settings_force_sync_subtitle">Ath-íoslódáil gach sonraí féilire</string>
-    <string name="settings_sync_history">Stair Sioncronúithe</string>
+    <string name="settings_force_sync_no_account">Níl cuntas sioncronúithe socraithe</string>
+    <string name="force_sync_confirm">Ath-íoslódáil %1$s ó %2$s. Coinníonn sé athruithe nach bhfuil sioncronaithe fós.</string>
+    <string name="action_start">Tosaigh</string>
+    <string name="settings_sync_history">Stair sioncronúithe</string>
     <string name="settings_sync_history_subtitle">Féach ar sheisiúin sioncronúithe (48 uair an chloig siar)</string>
     <string name="settings_import_subtitle">Cuir imeachtaí ó chomhad ICS le haon fhéilire</string>
-    <string name="settings_export_subtitle">Sábháil imeachtaí chuig comhad ICS</string>
     <string name="settings_birthday_reminder">Meabhrúchán Lá Breithe</string>
-    <string name="settings_use_device_timezone">Úsáid crios ama na gléine</string>
     <string name="settings_section_calendars">Féilirí agus cuntais</string>
     <string name="settings_section_appearance">Cuma</string>
     <string name="settings_section_creating_events">Roghanna imeachtaí</string>
     <string name="settings_section_sync">Sioncronú</string>
     <string name="settings_section_data">Cúltaca agus athchóiriú</string>
+    <string name="settings_section_troubleshooting">Fabhtcheartú</string>
+
+    <!-- ==================== Debug report (Settings > Troubleshooting) ==================== -->
+    <string name="debug_report_row_label">Eas-phortáil tuairisc dífhabhtaithe</string>
+    <string name="debug_report_row_subtitle">Sonraí tuairteála, sioncronaithe agus socraithe le seoladh le tuairisc ar fhabht</string>
+    <string name="debug_report_sheet_title">Tuairisc dífhabhtaithe</string>
+    <string name="debug_report_sheet_body">Comhad téacs le seoladh le tuairisc ar fhabht. Seol go luath é tar éis na faidhbe: ní choinníonn loga na haipe ach gníomhaíocht le déanaí.</string>
+    <string name="debug_report_item_exits">Cén fáth ar dhún an aip le déanaí</string>
+    <string name="debug_report_item_exits_detail">Tuairteanna, stopadh freagartha, cuimhne íseal</string>
+    <string name="debug_report_item_log">Loga na haipe</string>
+    <string name="debug_report_item_log_detail">Teachtaireachtaí KashCal féin, sonraí tuairteála san áireamh</string>
+    <string name="debug_report_item_sync_detail">Sioncronúithe le déanaí, suas le 48 uair an chloig siar</string>
+    <string name="debug_report_item_pending">Athruithe ar feitheamh</string>
+    <string name="debug_report_item_pending_detail">Eagarthóireachtaí nach bhfuil seolta chuig d\'fhreastalaí fós</string>
+    <string name="debug_report_item_setup">Socrú</string>
+    <string name="debug_report_item_setup_detail">Leagan na haipe agus Android, ceadanna, socruithe ceallraí, cineálacha cuntais</string>
+    <string name="debug_report_privacy_note">Tá seoltaí ríomhphoist, seoltaí gréasáin agus comharthaí ceilte. Níl teidil imeachtaí, ainmneacha féilirí ná ainmneacha teagmhálaithe ceilte. Seol é trí ríomhphost, ní i bpostáil phoiblí.</string>
+    <string name="debug_report_share">Comhroinn tuairisc</string>
+    <string name="debug_report_chooser_title">Comhroinn tuairisc dífhabhtaithe</string>
+    <string name="debug_report_failed">Níorbh fhéidir an tuairisc dífhabhtaithe a chruthú</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Glas aip</string>
@@ -236,9 +259,40 @@
     <string name="backup_error_read_failed">Níorbh fhéidir an comhad a léamh</string>
 
     <!-- ==================== Onboarding ==================== -->
-    <string name="onboarding_apple_calendar">Féilire Apple?</string>
-    <string name="onboarding_got_you">Táimid ann duit.</string>
-    <string name="onboarding_connect_prompt">Ceangail iCloud le d\'imeachtaí a fheiceáil anseo</string>
+    <string name="onboarding_title">Cá bhfuil do chuid féilirí?</string>
+    <string name="onboarding_subtitle">Roghnaigh ceann le nascadh.</string>
+    <string name="onboarding_icloud_detail">Apple ID agus pasfhocal aipe</string>
+    <string name="onboarding_caldav_title">Freastalaí CalDAV</string>
+    <string name="onboarding_caldav_detail">Nextcloud, Fastmail, Radicale agus eile</string>
+    <string name="onboarding_device_title">Ar an ngléas seo</string>
+    <string name="onboarding_phone_detail">Google, Outlook agus aipeanna sioncronaithe</string>
+    <string name="onboarding_use_offline">Úsáid féilire as líne</string>
+    <string name="onboarding_trust">Foinse oscailte. Gan fógraí. Gan rianú.</string>
+
+    <!-- ==================== Reminders are off ==================== -->
+    <string name="reminders_off_title">Tá meabhrúcháin as</string>
+    <plurals name="reminders_off_body">
+        <item quantity="one">Tá meabhrúchán ag %d imeacht an tseachtain seo.</item>
+        <item quantity="two">Tá meabhrúcháin ag %d imeacht an tseachtain seo.</item>
+        <item quantity="few">Tá meabhrúcháin ag %d imeacht an tseachtain seo.</item>
+        <item quantity="many">Tá meabhrúcháin ag %d imeacht an tseachtain seo.</item>
+        <item quantity="other">Tá meabhrúcháin ag %d imeacht an tseachtain seo.</item>
+    </plurals>
+    <string name="reminders_off_not_now">Ní anois</string>
+    <string name="reminders_off_turn_on">Cuir ar siúl</string>
+    <string name="reminders_on_snackbar">Meabhrúcháin ar siúl</string>
+
+    <!-- ==================== About ==================== -->
+    <string name="about_tagline">D\'fhéilirí go léir in aon aip phríobháideach amháin.</string>
+    <string name="about_help_title">Cabhair agus treoracha</string>
+    <string name="about_help_detail">Socrú, sioncronú agus ceisteanna</string>
+    <string name="about_source_title">Cód foinseach</string>
+    <string name="about_source_detail">Apache 2.0, ar GitHub</string>
+    <string name="about_support_title">Tacaigh le KashCal</string>
+    <string name="about_support_detail">Buíochas le gach duine a thacaíonn cheana féin</string>
+    <string name="about_link_failed">Ní féidir le haon aip an nasc seo a oscailt.</string>
+    <string name="about_built_in_austin">Tógtha le ❤️ in Austin</string>
+    <string name="about_version">Leagan %1$s</string>
 
     <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Scipeáil</string>
@@ -257,22 +311,32 @@
     <string name="whats_new_v772_changes_title">Féach cad a d\'athraigh</string>
     <string name="whats_new_v772_changes_body">Bailítear imeachtaí nua, imeachtaí curtha in eagar agus imeachtaí bainte ó d\'fhéilirí iCloud agus CalDAV in Athruithe le déanaí ar feadh 7 lá. Tapáil ceann acu chun é a oscailt.</string>
     <string name="whats_new_v772_notifications_body">Faigh fógra nuair a aimsíonn sioncronú cúlra athruithe ar d\'imeachtaí iCloud nó CalDAV. Fanann sé múchta go dtí go gcasann tú air é.</string>
+    <string name="whats_new_v803_offline_title">Féilirí a fhanann ar d\'fhón</string>
+    <string name="whats_new_v803_offline_body">Níl áit ag roinnt pleananna ar fhreastalaí. Tabhair a bhféilirí as líne féin dóibh, an oiread agus is mian leat.</string>
+    <string name="whats_new_v803_backup_title">Cúltacaí nach gá duit smaoineamh orthu</string>
+    <string name="whats_new_v803_backup_body">Roghnaigh fillteán uair amháin, agus coinneoidh KashCal cóip úr de d\'fhéilirí as líne ann.</string>
+    <string name="whats_new_v803_print_title">Do sheachtain, ar pháipéar</string>
+    <string name="whats_new_v803_print_body">Priontáil an tseachtain atá os do chomhair. Fútsa atá sé cén cuisneoir a mbeidh sí air.</string>
     <string name="whats_new_hero_sample_lunch">Lón foirne</string>
     <string name="whats_new_hero_sample_review">Athbhreithniú dearaidh</string>
     <string name="whats_new_hero_sample_book_club">Club leabhar</string>
+    <string name="whats_new_hero_sample_dentist">Fiaclóir</string>
+    <string name="whats_new_hero_sample_yoga">Ióga</string>
     <string name="whats_new_hero_sample_calendar">Obair</string>
+    <string name="whats_new_hero_sample_family">Teaghlach</string>
+    <string name="whats_new_hero_sample_garden">Gairdín</string>
+    <string name="whats_new_hero_sample_folder">Cúltacaí féilire</string>
     <string name="whats_new_hero_now">anois</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Ceangail iCloud</string>
     <string name="signin_caldav_title">Cuir Cuntas CalDAV Leis</string>
+    <string name="signin_caldav_sign_in_again_title">Sínigh Isteach Arís</string>
     <string name="signin_connected_to">Ceangailte le %1$s</string>
 
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Imeacht Nua</string>
     <string name="dialog_edit_event_title">Cuir Imeacht in Eagar</string>
-    <string name="dialog_force_sync_title">Sioncronú Iomláin Éigeantach?</string>
-    <string name="dialog_force_sync_message">Ath-íoslódálfaidh sé seo gach sonraí féilire ón bhfreastalaí. Coinneofar athruithe áitiúla.</string>
     <string name="dialog_enable_notifications">Cumasaigh Fógraí?</string>
     <string name="dialog_action_required">Tá an gníomh seo riachtanach chun leanúint ar aghaidh.</string>
     <string name="dialog_add_to_calendar">Cuir le féilire</string>
@@ -285,6 +349,7 @@
     <string name="status_no_events_week">Gan imeachtaí an tseachtain seo</string>
     <string name="status_more_events">+%1$d eile</string>
     <string name="status_no_sync_sessions">Gan seisiúin sioncronúithe fós.\n\nTarraing anuas chun athnuachan a dhéanamh ar an amharc féilire.</string>
+    <string name="status_no_sync_account">Níl cuntas sioncronúithe socraithe. Fanann féilirí as líne ar an ngléas seo; sioncronaíonn féilirí na gléine trína gcuntas féin.</string>
     <string name="status_no_writable_calendars">Níl aon fhéilire inscríofa ar fáil</string>
     <string name="status_events_count">%1$d Imeacht</string>
     <string name="status_sync_history">Stair Sioncronúithe</string>
@@ -333,6 +398,7 @@
     <string name="caldav_error_unexpected">Earráid gan choinne. Bain triail eile as.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nMás freastalaí ar do líonra áitiúil é seo, ceadaigh rochtain ar an líonra áitiúil chun ceangal.</string>
     <string name="caldav_error_connection_refused_insecure">D\'atreoraigh an freastalaí an ceangal chuig áit nach leanann KashCal (seoladh neamhchriptithe, nó lúb atreoraithe), mar sin stop KashCal sular seoladh do phasfhocal. Seiceáil seoladh an fhreastalaí.</string>
+    <string name="caldav_error_sign_in_again_mismatch">Is cuntas difriúil é seo. Sínigh isteach leis an ainm úsáideora agus leis an bhfreastalaí a úsáideann an cuntas seo.</string>
     <string name="local_network_banner_title">Rochtain ar an líonra áitiúil de dhíth</string>
     <string name="local_network_banner_body">Is cosúil go bhfuil an freastalaí seo ar do líonra áitiúil. Ceadaigh rochtain ar an líonra áitiúil ionas gur féidir le KashCal ceangal leis.</string>
     <string name="local_network_banner_allow">Ceadaigh rochtain</string>
@@ -374,7 +440,6 @@
     <string name="error_device_calendar_title">Earráid Féilire</string>
     <string name="error_device_calendar_write_failed">Theip ar shábháil chuig féilire na gléine. Bain triail as arís.</string>
     <string name="error_device_calendar_permission">Tá cead scríofa féilire ag teastáil. Tabhair cead sna Socruithe.</string>
-    <string name="error_device_calendar_permission_denied">Múch agus las an cead Féilire sna Socruithe chun rochtain scríofa a thabhairt</string>
     <string name="error_device_calendar_not_found">Féilire gan aimsiú. B\'fhéidir gur baineadh é.</string>
     <string name="error_device_event_not_found">Imeacht gan aimsiú. B\'fhéidir gur scriosadh é.</string>
     <string name="error_device_calendar_read_only">Is féilire léitheoireachta amháin é seo.</string>
@@ -401,12 +466,11 @@
     <string name="cd_recurring">Athfhillteach</string>
     <string name="cd_enabled">Cumasaithe</string>
     <string name="cd_sync_error">Earráid sioncronúithe</string>
-    <string name="cd_select_label">Roghnaigh %1$s</string>
     <string name="cd_wheel_picker">Roghnóir rotha le %1$d rogha</string>
     <string name="cd_time_entry_keyboard">Cuir isteach an t-am beacht</string>
     <string name="time_entry_dialog_title">Cuir isteach an t-am</string>
     <string name="time_entry_tap_to_edit">Tapáil le heagrú</string>
-    <string name="cd_version_info">KashCal leagan %1$s. Brúigh go fada le haghaidh roghanna dífhabhtaithe.</string>
+    <string name="cd_version_info">KashCal leagan %1$s</string>
     <string name="cd_about_setting">Maidir le %1$s</string>
     <string name="cd_color_slider">Sleamhnán datha, %1$s faoi láthair</string>
     <string name="cd_color_slider_state">%1$s, %2$d céim</string>
@@ -435,7 +499,6 @@
     <string name="label_recurrence_on_date">Ar dháta</string>
 
     <!-- ==================== Settings (Additional) ==================== -->
-    <string name="settings_visible_calendars">Féilirí Infheicthe</string>
     <string name="settings_default_calendar">Féilire Réamhshocrú</string>
     <string name="settings_default_event_length">Fad Réamhshocrú Imeachta</string>
     <string name="settings_default_event_length_hint">Fad réamhshocraithe d\'imeachtaí nua</string>
@@ -455,7 +518,6 @@
     <string name="option_saturday">Dé Sathairn</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">Ní bhfuarthas imeachtaí</string>
     <string name="empty_no_upcoming_events">Gan imeachtaí ag teacht</string>
     <string name="empty_no_calendars">Gan féilirí ar fáil</string>
 
@@ -466,7 +528,15 @@
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Fáil Féilire</string>
     <string name="action_import_from_file">Iompórtáil imeachtaí ó chomhad</string>
-    <string name="action_export_local_calendar">Easpórtáil féilire áitiúil</string>
+    <string name="settings_export_calendars">Easpórtáil féilirí</string>
+    <string name="settings_export_calendars_subtitle">Sábháil féilire mar chomhad ICS</string>
+    <string name="export_calendar_no_events">Gan imeachtaí</string>
+    <string name="export_calendar_preparing">Ag ullmhú…</string>
+    <string name="cd_export_calendar">Easpórtáil %1$s</string>
+    <string name="cd_export_calendar_preparing">Ag ullmhú %1$s</string>
+    <string name="export_calendar_chooser_title">Easpórtáil féilire</string>
+    <string name="export_event_chooser_title">Easpórtáil imeacht</string>
+    <string name="export_file_failed">Níorbh fhéidir an comhad a chruthú.</string>
 
     <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
@@ -504,12 +574,14 @@
     <string name="accounts_cd_back">Stiúir ar ais</string>
     <string name="accounts_sync_issue">Fadhb sioncronúithe</string>
     <string name="accounts_cd_sync_warning">Rabhadh sioncronúithe</string>
+    <string name="accounts_cd_sync_off">sioncronú as</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">Fothaí Féilire</string>
     <string name="subscriptions_section_add">Cuir Leis</string>
     <string name="subscriptions_empty_ics">Gan síntiúis ICS</string>
     <string name="subscriptions_empty_ics_hint">Cuir fotha féilire leis chun imeachtaí a fheiceáil</string>
+    <string name="subscriptions_swipe_hint">Svaidhpeáil fotha chun é a scriosadh.</string>
     <string name="subscriptions_add_ics">Cuir Féilire ICS Leis</string>
     <string name="qs_tile_label">Cuir leis</string>
     <string name="holiday_catalog_add">Cuir féilire saoire leis</string>
@@ -519,6 +591,11 @@
     <string name="holiday_catalog_empty_hint">Bain triail as ainm eile</string>
     <string name="holiday_catalog_validate_error">Níorbh fhéidir an féilire seo a rochtain. Seiceáil do cheangal agus bain triail eile as.</string>
     <string name="holiday_catalog_attribution">Féilirí saoire ó Mozilla Thunderbird, ceadúnaithe faoi %1$s.</string>
+    <string name="account_feeds_add">Cuir leis ó chuntas</string>
+    <string name="account_feeds_note">Liostaítear na fothaí féilire atá sábháilte ar do chuntais iCloud agus CalDAV. Cas air chun é a chur le Fothaí Féilire.</string>
+    <string name="account_feeds_checking">Ag seiceáil…</string>
+    <string name="account_feeds_none">Níor aimsíodh aon fhothaí féilire</string>
+    <string name="account_feeds_failed">Níorbh fhéidir fothaí féilire a lódáil</string>
     <string name="subscriptions_row_label">Fothaí Féilire (ICS)</string>
     <string name="subscriptions_row_hint">m.s. laethanta saoire, spóirt, scoil</string>
 
@@ -564,6 +641,8 @@
     <string name="account_detail_discovering">Ag aimsiú…</string>
     <string name="account_detail_discover_calendars">Aimsigh Féilirí Nua</string>
     <string name="account_detail_change_password">Athraigh Focal Faire</string>
+    <string name="account_detail_sign_in_again">Sínigh Isteach Arís</string>
+    <string name="account_detail_sign_in_again_subtitle">Níl focal faire an chuntais seo ag KashCal a thuilleadh. Sínigh isteach chun sioncronú arís. Fanfaidh do chuid féilirí agus imeachtaí slán.</string>
     <string name="account_detail_sign_out">Sínigh Amach</string>
     <string name="account_detail_never_synced">Nár sioncronúíodh riamh</string>
     <string name="account_detail_last_success">Éiriú deireanach: %1$s</string>
@@ -587,6 +666,134 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Féilirí na Gléine</string>
     <string name="settings_device_calendars_hint">Féilirí ó aipeanna eile</string>
+    <string name="offline_calendars_row_label">Féilirí as líne</string>
+    <string name="offline_calendars_row_hint">Féilirí a fhanann ar an ngléas seo</string>
+    <string name="offline_calendars_manage_note">Svaidhpeáil féilire chun é a scriosadh.</string>
+    <string name="offline_calendars_info">Coinnítear iad ar an ngléas seo agus ní shioncronaítear riamh iad.</string>
+    <string name="offline_calendars_info_cd">Faoi fhéilirí as líne</string>
+    <string name="offline_calendar_default_state">Réamhshocrú</string>
+    <string name="offline_calendar_new">Féilire nua</string>
+    <string name="offline_calendar_new_in_picker">Féilire nua as líne</string>
+    <string name="action_create">Cruthaigh</string>
+    <string name="offline_calendar_rename">Athainmnigh</string>
+    <string name="offline_calendar_color">Dath</string>
+    <string name="offline_calendar_export">Easpórtáil féilire</string>
+    <string name="offline_calendar_builtin_info">Ní féidir an féilire ionsuite a athainmniú ná a scriosadh. Téann imeachtaí nua anseo nuair nach roghnaítear féilire.</string>
+    <string name="offline_calendar_builtin_info_cd">Faoin bhféilire ionsuite</string>
+    <string name="offline_calendar_rename_cancel_cd">Cealaigh athainmniú</string>
+    <string name="offline_calendar_rename_save_cd">Sábháil ainm</string>
+    <string name="offline_calendar_delete_cd">Scrios %1$s</string>
+    <plurals name="offline_calendar_delete_confirm">
+        <item quantity="one">An scriosfar \"%2$s\" agus a %1$d imeacht go deo? Ní féidir é a chealú.</item>
+        <item quantity="two">An scriosfar \"%2$s\" agus a %1$d imeacht go deo? Ní féidir é a chealú.</item>
+        <item quantity="few">An scriosfar \"%2$s\" agus a %1$d imeacht go deo? Ní féidir é a chealú.</item>
+        <item quantity="many">An scriosfar \"%2$s\" agus a %1$d n-imeacht go deo? Ní féidir é a chealú.</item>
+        <item quantity="other">An scriosfar \"%2$s\" agus a %1$d imeacht go deo? Ní féidir é a chealú.</item>
+    </plurals>
+    <string name="offline_calendar_delete_empty">An scriosfar \"%1$s\" go deo? Níl aon imeachtaí ann.</string>
+    <plurals name="offline_calendar_delete_also">
+        <item quantity="one">Scrios %1$d imeacht freisin</item>
+        <item quantity="two">Scrios %1$d imeacht freisin</item>
+        <item quantity="few">Scrios %1$d imeacht freisin</item>
+        <item quantity="many">Scrios %1$d n-imeacht freisin</item>
+        <item quantity="other">Scrios %1$d imeacht freisin</item>
+    </plurals>
+    <string name="offline_calendar_deleted">Scriosadh %1$s</string>
+    <string name="offline_calendar_duplicate_name">Tá féilire as líne darb ainm \"%1$s\" ann cheana</string>
+    <string name="offline_calendar_similar_name">Ró-chosúil le \"%1$s\". Roghnaigh ainm eile.</string>
+    <string name="calendar_backup_title">Cúltaca uathoibríoch féilirí</string>
+    <string name="calendar_backup_row_off">As</string>
+    <string name="calendar_backup_row_on">%1$s · %2$s</string>
+    <string name="calendar_backup_row_problem">Ní féidir an fillteán cúltaca a bhaint amach</string>
+    <string name="calendar_backup_intro">Sábhálann sé gach féilire as líne mar chomhad ICS i bhfillteán a roghnaíonn tú.</string>
+    <string name="calendar_backup_choose_folder">Roghnaigh fillteán</string>
+    <string name="calendar_backup_choose_folder_hint">Roghnaigh nó cruthaigh fillteán, mar shampla in Documents. Ní cheadaíonn Android barr an stórais ná an fillteán Download féin.</string>
+    <string name="calendar_backup_folder">Fillteán</string>
+    <string name="calendar_backup_change">Athraigh</string>
+    <string name="calendar_backup_frequency">Minicíocht</string>
+    <string name="calendar_backup_frequency_info">D\'fhéadfadh cúltacaí a bheith déanach: coinníonn Android obair chúlra siar nuair a bhíonn an fón díomhaoin nó nuair nár osclaíodh KashCal le tamall.</string>
+    <string name="calendar_backup_copies">Cóipeanna le coinneáil</string>
+    <string name="calendar_backup_copies_explained">Coinníonn gach cúltaca an comhad roimhe mar chóip dhátaithe. Nuair a bhíonn níos mó ná an líon seo ann, scriostar na cinn is sine. Bíonn ainm an fhéilire ar an gcomhad is nuaí i gcónaí.</string>
+    <string name="calendar_backup_copies_fewer">Coinnigh níos lú cóipeanna</string>
+    <string name="calendar_backup_copies_more">Coinnigh níos mó cóipeanna</string>
+    <plurals name="calendar_backup_copies_state">
+        <item quantity="one">%d chóip</item>
+        <item quantity="two">%d chóip</item>
+        <item quantity="few">%d chóip</item>
+        <item quantity="many">%d gcóip</item>
+        <item quantity="other">%d cóip</item>
+    </plurals>
+    <plurals name="calendar_backup_deletes">
+        <item quantity="one">Scriosann sé %d chóip níos sine. Ní féidir é seo a chealú.</item>
+        <item quantity="two">Scriosann sé %d chóip níos sine. Ní féidir é seo a chealú.</item>
+        <item quantity="few">Scriosann sé %d chóip níos sine. Ní féidir é seo a chealú.</item>
+        <item quantity="many">Scriosann sé %d gcóip níos sine. Ní féidir é seo a chealú.</item>
+        <item quantity="other">Scriosann sé %d cóip níos sine. Ní féidir é seo a chealú.</item>
+    </plurals>
+    <string name="calendar_backup_deletes_unknown">Scriosann sé na cóipeanna is sine thar an líon seo. Ní féidir é seo a chealú.</string>
+    <string name="calendar_backup_calendars">Féilirí as líne</string>
+    <string name="calendar_backup_calendar_nothing_saved">%1$s · Gan imeachtaí, níor sábháladh aon rud</string>
+    <string name="calendar_backup_calendar_save_failed">%1$s · Níorbh fhéidir é a shábháil. Déanfar iarracht arís ag an gcéad chúltaca eile.</string>
+    <string name="calendar_backup_status">An cúltaca deireanach %1$s</string>
+    <plurals name="calendar_backup_status_failed">
+        <item quantity="one">An cúltaca deireanach %1$s · theip ar %2$d féilire</item>
+        <item quantity="two">An cúltaca deireanach %1$s · theip ar %2$d fhéilire</item>
+        <item quantity="few">An cúltaca deireanach %1$s · theip ar %2$d fhéilire</item>
+        <item quantity="many">An cúltaca deireanach %1$s · theip ar %2$d bhféilire</item>
+        <item quantity="other">An cúltaca deireanach %1$s · theip ar %2$d féilire</item>
+    </plurals>
+    <string name="calendar_backup_now">Déan cúltaca anois</string>
+    <string name="calendar_backup_running">Cúltaca á dhéanamh…</string>
+    <string name="calendar_backup_footer_overwrites">Scríobhann KashCal thar na comhaid seo ag gach cúltaca, mar sin ní mhaireann athruithe a dhéantar orthu in aipeanna eile. Chun féilire a athchóiriú, úsáid Iompórtáil imeachtaí ó chomhad.</string>
+    <string name="calendar_backup_off_files_stay">Fanann na comhaid atá ann cheana in %1$s.</string>
+    <string name="calendar_backup_folder_unreachable">Ní féidir %1$s a bhaint amach. B\'fhéidir gur bogadh, gur scriosadh nó gur dícheanglaíodh é.</string>
+    <string name="calendar_backup_error_unsupported">Ní féidir comhaid a shábháil anseo: %1$s. Roghnaigh fillteán eile.</string>
+    <string name="calendar_backup_choose_again">Roghnaigh arís</string>
+    <string name="calendar_backup_pick_refused">Ní féidir le KashCal an fillteán sin a úsáid. Roghnaigh ceann eile.</string>
+    <string name="calendar_backup_pick_cannot_create">Ní féidir le KashCal comhaid a chruthú san fhillteán sin. Roghnaigh ceann eile.</string>
+    <string name="calendar_backup_failed_title">Theip ar chúltaca na bhféilirí</string>
+    <string name="calendar_backup_folder_unnamed">an fillteán cúltaca</string>
+    <string name="calendar_backup_alert_unreachable">Ní féidir %1$s a bhaint amach. Tapáil chun é a roghnú arís.</string>
+    <string name="calendar_backup_alert_unsupported">Ní féidir comhaid a shábháil anseo: %1$s. Tapáil chun fillteán eile a roghnú.</string>
+    <string name="calendar_backup_alert_file_retry">Níorbh fhéidir %1$s a shábháil. Déanfaidh KashCal iarracht arís ag an gcéad chúltaca eile.</string>
+    <string name="calendar_backup_every_hour">Gach uair an chloig</string>
+    <string name="calendar_backup_every_day">Gach lá</string>
+    <plurals name="calendar_backup_every_hours">
+        <item quantity="one">Gach %d uair</item>
+        <item quantity="two">Gach %d uair</item>
+        <item quantity="few">Gach %d huaire</item>
+        <item quantity="many">Gach %d n-uaire</item>
+        <item quantity="other">Gach %d uair</item>
+    </plurals>
+    <plurals name="calendar_backup_every_days">
+        <item quantity="one">Gach %d lá</item>
+        <item quantity="two">Gach %d lá</item>
+        <item quantity="few">Gach %d lá</item>
+        <item quantity="many">Gach %d lá</item>
+        <item quantity="other">Gach %d lá</item>
+    </plurals>
+    <string name="calendar_backup_every_day_hours">Gach 1 lá agus %1$s</string>
+    <string name="calendar_backup_every_days_hours">Gach %1$s agus %2$s</string>
+    <string name="calendar_backup_interval_too_short">Roghnaigh 1 uair an chloig ar a laghad.</string>
+    <string name="calendar_backup_interval_too_long">Roghnaigh 30 lá nó níos lú.</string>
+    <plurals name="calendar_backup_alert_files_retry">
+        <item quantity="one">Níorbh fhéidir %d fhéilire a shábháil. Déanfaidh KashCal iarracht arís ag an gcéad chúltaca eile.</item>
+        <item quantity="two">Níorbh fhéidir %d fhéilire a shábháil. Déanfaidh KashCal iarracht arís ag an gcéad chúltaca eile.</item>
+        <item quantity="few">Níorbh fhéidir %d fhéilire a shábháil. Déanfaidh KashCal iarracht arís ag an gcéad chúltaca eile.</item>
+        <item quantity="many">Níorbh fhéidir %d bhféilire a shábháil. Déanfaidh KashCal iarracht arís ag an gcéad chúltaca eile.</item>
+        <item quantity="other">Níorbh fhéidir %d féilire a shábháil. Déanfaidh KashCal iarracht arís ag an gcéad chúltaca eile.</item>
+    </plurals>
+    <string name="calendar_backup_notifications_app_off">Tá fógraí múchta do KashCal, mar sin ní féidir leis fógra a thabhairt duit má theipeann ar chúltaca.</string>
+    <string name="calendar_backup_notifications_channel_off">Tá fógraí cúltaca múchta, mar sin ní féidir le KashCal fógra a thabhairt duit má theipeann ar chúltaca.</string>
+    <string name="calendar_backup_open_settings">Oscail socruithe</string>
+    <string name="calendar_backup_not_now">Ní anois</string>
+    <plurals name="calendar_backup_row_calendars_failed">
+        <item quantity="one">Theip ar %d fhéilire</item>
+        <item quantity="two">Theip ar %d fhéilire</item>
+        <item quantity="few">Theip ar %d fhéilire</item>
+        <item quantity="many">Theip ar %d bhféilire</item>
+        <item quantity="other">Theip ar %d féilire</item>
+    </plurals>
     <string name="settings_quick_event_add">Imeachtaí a chur leis go cliste</string>
     <string name="settings_quick_event_add_info">Cruthaigh imeachtaí trí chlóscríobh go nádúrtha. Líonann \"Lón le Sam Dé hAoine 1in\" an teideal, an dáta agus an t-am duit.</string>
     <string name="settings_suggest_titles">Mol teidil imeachtaí</string>
@@ -649,6 +856,8 @@
     <string name="cd_pick_month_year">Roghnaigh mí agus bliain</string>
     <string name="cd_previous_month">An mhí roimhe</string>
     <string name="cd_next_month">An mhí seo chugainn</string>
+    <string name="cd_previous_day">An lá roimhe</string>
+    <string name="cd_next_day">An lá dár gcionn</string>
     <string name="cd_month_year_picker">Roghnóir míosa agus bliana</string>
     <string name="cd_remove_alert">Bain foláireamh</string>
     <string name="cd_warning">Rabhadh</string>
@@ -658,7 +867,25 @@
     <string name="label_on_days">Ar laethanta</string>
     <string name="label_pattern">Patrún</string>
     <string name="label_ends">Críochnaíonn</string>
+    <string name="sheet_hint_change_end">Tapáil lá chun an deireadh a athrú</string>
     <string name="label_timezone">Crios ama</string>
+    <string name="timezone_row_city_zone">%1$s (%2$s)</string>
+    <string name="cd_timezone_city_name_offset">%1$s, %2$s, %3$s</string>
+    <string name="cd_timezone_city_offset">%1$s, %2$s</string>
+    <string name="timezone_search_hint">Cuardaigh cathair, tír nó crios</string>
+    <string name="timezone_section_this_event">An t-imeacht seo</string>
+    <string name="timezone_section_device">Crios ama an ghléis</string>
+    <string name="timezone_section_recent">Le déanaí</string>
+    <string name="timezone_section_all">Gach crios ama</string>
+    <string name="timezone_offsets_on">Fritháirimh ar %1$s</string>
+    <string name="timezone_sheet_country_zone">%1$s · %2$s</string>
+    <string name="timezone_sheet_abbr_offset">%1$s · %2$s</string>
+    <string name="timezone_from_calendar">Ón bhféilire: %1$s</string>
+    <string name="timezone_shown_in_device_time">Taispeántar in am an ghléis</string>
+    <string name="timezone_loading">Criosanna ama á lódáil…</string>
+    <string name="timezone_no_match">Níl aon chrios ama ag teacht leis</string>
+    <string name="timezone_no_match_hint">Bain triail as cathair, tír nó fritháireamh mar +5:30</string>
+    <string name="cd_timezone_join">%1$s, %2$s</string>
     <string name="label_alerts">Foláirimh</string>
     <string name="label_add_alert">Cuir Foláireamh Leis</string>
     <string name="label_recurrence_never">Go brách</string>
@@ -666,11 +893,8 @@
     <string name="label_yesterday">Inné</string>
     <string name="label_device_calendars">Féilirí na Gléine</string>
     <string name="label_default_calendar_hint">Cruthófar imeachtaí nua san fhéilire seo</string>
-    <string name="label_visible_count">%1$d / %2$d infheicthe</string>
     <string name="label_reminders_truncated">%1$d gan taispeáint (%2$d san iomlán, uasmhéid %3$d ineagarthóireachta)</string>
     <string name="label_found_events">Aimsíodh: %1$d imeacht</string>
-    <string name="label_open_debug_menu">Oscail roghchlár dífhabhtaithe</string>
-    <string name="placeholder_search">Cuardaigh…</string>
     <string name="settings_search_placeholder">Cuardaigh socruithe…</string>
     <string name="settings_search_no_results">Níor aimsíodh socruithe le haghaidh \"%1$s\"</string>
     <string name="cd_search_settings">Cuardaigh socruithe</string>
@@ -681,16 +905,13 @@
     <string name="status_hours_ago">%1$d uair ó shin</string>
 
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
-    <string name="device_calendars_description">Taispeáin imeachtaí ó aipeanna féilire eile ar do ghléas (oiriúnóirí sioncronúithe, féilirí áitiúla).</string>
-    <string name="device_calendars_permission_required">Tá cead féilire ag teastáil. Tapáil Cumasaigh chun rochtain a thabhairt.</string>
-    <string name="device_calendars_read_only_access">Rochtain léitheoireachta amháin</string>
-    <string name="device_calendars_grant_write">Tabhair cead scríofa chun imeachtaí féilire na gléine a chur in eagar</string>
-    <string name="device_calendars_grant">Tabhair</string>
-    <string name="device_calendars_none_found">Ní bhfuarthas aon fhéilire gléine.</string>
+    <string name="device_calendars_intro">Taispeáin féilirí ó Google, Outlook agus aipeanna sioncronaithe ar an ngléas seo.</string>
+    <string name="device_calendars_show_switch">Taispeáin féilirí na gléine</string>
+    <string name="device_calendars_access_off">Tá rochtain ar an bhféilire as do KashCal.</string>
+    <string name="device_calendars_pick_hint">Roghnaigh féilirí le taispeáint.</string>
+    <string name="device_calendars_empty">Níor aimsíodh aon fhéilire.</string>
     <string name="device_calendars_local">Áitiúil</string>
-    <string name="device_calendars_read_only_no_write">Léitheoireacht amháin (gan cead scríofa)</string>
     <string name="device_calendars_read_only_calendar">Léitheoireacht amháin (féilire léitheoireachta amháin)</string>
-    <string name="settings_developer_options">Roghanna Forbróra</string>
     <string name="settings_sync_frequency">Minicíocht Sioncronúithe</string>
     <string name="settings_sync_frequency_hint">Cé chomh minic is a shioncronaítear sa chúlra</string>
 
@@ -877,6 +1098,9 @@
     <string name="ics_import_reason_this_and_future">ní thacaítear le hathruithe ar an tarlú seo agus ar tharluithe níos déanaí</string>
     <string name="ics_import_reason_own_cancel">is tusa eagraí an chruinnithe seo, mar sin cealaigh é ón imeacht</string>
     <string name="ics_import_reason_on_another_calendar">tá sé i bhféilire eile den chuntas seo cheana</string>
+    <string name="ics_import_reason_calendar_keeps_copy">coinníonn an féilire seo a chóip féin den imeacht</string>
+    <string name="ics_import_reason_own_update">is tusa eagraí an chruinnithe seo, mar sin athraigh é ón imeacht</string>
+    <string name="ics_import_reason_change_waiting">tá athrú ar an imeacht ag fanacht le sioncronú; iompórtáil arís nuair a bheidh sé sioncronaithe</string>
     <string name="ics_import_notice_unverified">Ní féidir seoltóir comhaid chuiridh a fhíorú. Seiceáil gur ón eagraí a tháinig sé.</string>
     <string name="ics_import_notice_answer_notifies">D\'fhéadfadh fógra dul chuig an eagraí má fhreagraíonn tú an cuireadh seo.</string>
     <string name="ics_import_notice_guests_again">Is tusa an t-eagraí, mar sin d\'fhéadfadh na freastalaithe an cuireadh seo a fháil arís.</string>
@@ -925,19 +1149,26 @@
     </plurals>
     <string name="ics_import_summary_separator">", "</string>
     <string name="ics_import_summary_nothing">Níl aon rud le hiompórtáil</string>
-    <plurals name="exported_events">
-        <item quantity="one">%1$d imeacht eas-phortáilte</item>
-        <item quantity="two">%1$d imeacht eas-phortáilte</item>
-        <item quantity="few">%1$d imeacht eas-phortáilte</item>
-        <item quantity="many">%1$d n-imeacht eas-phortáilte</item>
-        <item quantity="other">%1$d imeacht eas-phortáilte</item>
-    </plurals>
     <plurals name="event_count">
         <item quantity="one">%1$d imeacht</item>
         <item quantity="two">%1$d imeacht</item>
         <item quantity="few">%1$d imeacht</item>
         <item quantity="many">%1$d n-imeacht</item>
         <item quantity="other">%1$d imeacht</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d fhéilire</item>
+        <item quantity="two">%1$d fhéilire</item>
+        <item quantity="few">%1$d fhéilire</item>
+        <item quantity="many">%1$d bhféilire</item>
+        <item quantity="other">%1$d féilire</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d chuntas</item>
+        <item quantity="two">%1$d chuntas</item>
+        <item quantity="few">%1$d chuntas</item>
+        <item quantity="many">%1$d gcuntas</item>
+        <item quantity="other">%1$d cuntas</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d fhéilire</item>
@@ -995,13 +1226,6 @@
         <item quantity="many">%1$d mbliana</item>
         <item quantity="other">%1$d bliain</item>
     </plurals>
-    <plurals name="time_seconds">
-        <item quantity="one">%1$d soic</item>
-        <item quantity="two">%1$d shoic</item>
-        <item quantity="few">%1$d shoic</item>
-        <item quantity="many">%1$d soic</item>
-        <item quantity="other">%1$d soic</item>
-    </plurals>
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d nóiméad roimhe</item>
         <item quantity="two">%1$d nóiméad roimhe</item>
@@ -1037,8 +1261,13 @@
     <string name="dialog_move_recurring_title">Bog</string>
     <string name="snackbar_event_rescheduled">Athsceidealaíodh an t-imeacht</string>
     <string name="snackbar_reschedule_failed">Níorbh fhéidir an t-imeacht a athsceidealú</string>
+    <string name="snackbar_move_failed">Níorbh fhéidir \"%1$s\" a bhogadh</string>
+    <string name="snackbar_move_changed_elsewhere">Athraíodh \"%1$s\" in áit eile, mar sin níor bogadh é</string>
+    <string name="event_untitled">Imeacht gan teideal</string>
     <string name="recurring_this_event">An t-imeacht seo</string>
     <string name="recurring_all_events">Gach imeacht</string>
+    <string name="recurring_scope_move_not_expressible">Ní féidir leis an riail athfhillteachta an t-athrú seo a leanúint</string>
+    <string name="event_form_move_not_expressible">Ní féidir leis an riail athfhillteachta an t-athrú seo a leanúint. Níor sábháladh aon rud.</string>
 
     <!-- ==================== i18n: Invitees + RSVP ==================== -->
     <string name="attendee_sheet_title">Freastalaithe</string>
@@ -1120,8 +1349,91 @@
     <string name="empty_no_events_day_3">Bronntanas: lá folamh.</string>
     <string name="empty_no_events_day_4">Stádas an fhéilire: folamh go hálainn.</string>
     <string name="empty_no_events_day_5">Faic beartaithe. Bain sult as an suaimhneas.</string>
-    <string name="cd_empty_no_events_day">Lá ciúin, faic sceidealta</string>
     <string name="filter_date">Dáta</string>
+    <string name="search_tab_upcoming">Le teacht</string>
+    <string name="search_tab_past">Caite</string>
+    <string name="search_count_max">%1$s+</string>
+    <plurals name="search_chip_events">
+        <item quantity="one">%1$s, %2$d imeacht</item>
+        <item quantity="two">%1$s, %2$d imeacht</item>
+        <item quantity="few">%1$s, %2$d imeacht</item>
+        <item quantity="many">%1$s, %2$d n-imeacht</item>
+        <item quantity="other">%1$s, %2$d imeacht</item>
+    </plurals>
+    <string name="search_date_this_week">An tseachtain seo</string>
+    <string name="search_date_this_month">An mhí seo</string>
+    <string name="search_date_pick">Roghnaigh dátaí…</string>
+    <string name="search_next">An chéad cheann eile: %1$s</string>
+    <string name="search_last">An ceann is déanaí: %1$s</string>
+    <string name="search_date_relative">%1$s · %2$s</string>
+    <string name="search_reason_location">Suíomh:</string>
+    <string name="search_reason_notes">Nótaí:</string>
+    <string name="search_reason_guest">Aoi:</string>
+    <string name="search_keep_typing">Lean ort ag clóscríobh le cuardach</string>
+    <string name="search_no_matches">Níl aon imeacht ag teacht le “%1$s”</string>
+    <string name="search_no_events_tagged">Níl aon imeacht clibáilte le “%1$s”</string>
+    <string name="search_lookback_line">Féachaint Siar Sioncronúithe: %1$s</string>
+    <string name="search_sync_settings">Socruithe sioncronaithe</string>
+    <string name="cd_search_sync_settings">Oscail an socrú féachaint siar sioncronaithe</string>
+    <plurals name="search_show_past">
+        <item quantity="one">Taispeáin %d imeacht roimhe seo</item>
+        <item quantity="two">Taispeáin %d imeacht roimhe seo</item>
+        <item quantity="few">Taispeáin %d imeacht roimhe seo</item>
+        <item quantity="many">Taispeáin %d n-imeacht roimhe seo</item>
+        <item quantity="other">Taispeáin %d imeacht roimhe seo</item>
+    </plurals>
+    <plurals name="search_more_hidden">
+        <item quantity="one">%d eile i bhféilire i bhfolach</item>
+        <item quantity="two">%d eile i bhféilirí i bhfolach</item>
+        <item quantity="few">%d eile i bhféilirí i bhfolach</item>
+        <item quantity="many">%d eile i bhféilirí i bhfolach</item>
+        <item quantity="other">%d eile i bhféilirí i bhfolach</item>
+    </plurals>
+    <string name="search_show">Taispeáin</string>
+    <plurals name="cd_search_show_hidden">
+        <item quantity="one">Taispeáin %d toradh i bhféilire i bhfolach</item>
+        <item quantity="two">Taispeáin %d thoradh i bhféilirí i bhfolach</item>
+        <item quantity="few">Taispeáin %d thoradh i bhféilirí i bhfolach</item>
+        <item quantity="many">Taispeáin %d dtoradh i bhféilirí i bhfolach</item>
+        <item quantity="other">Taispeáin %d toradh i bhféilirí i bhfolach</item>
+    </plurals>
+    <plurals name="search_show_in_hidden">
+        <item quantity="one">Taispeáin %d i bhféilire i bhfolach</item>
+        <item quantity="two">Taispeáin %d i bhféilirí i bhfolach</item>
+        <item quantity="few">Taispeáin %d i bhféilirí i bhfolach</item>
+        <item quantity="many">Taispeáin %d i bhféilirí i bhfolach</item>
+        <item quantity="other">Taispeáin %d i bhféilirí i bhfolach</item>
+    </plurals>
+    <plurals name="search_including_hidden">
+        <item quantity="one">Lena n-áirítear %d fhéilire i bhfolach</item>
+        <item quantity="two">Lena n-áirítear %d fhéilire i bhfolach</item>
+        <item quantity="few">Lena n-áirítear %d fhéilire i bhfolach</item>
+        <item quantity="many">Lena n-áirítear %d bhféilire i bhfolach</item>
+        <item quantity="other">Lena n-áirítear %d féilire i bhfolach</item>
+    </plurals>
+    <string name="search_leave_out">Fág amach</string>
+    <string name="cd_search_leave_out">Fág amach féilirí i bhfolach</string>
+    <string name="search_hidden_calendar">%1$s · i bhfolach</string>
+    <string name="cd_search_date_this_week">Taispeáin torthaí na seachtaine seo</string>
+    <string name="cd_search_date_this_month">Taispeáin torthaí na míosa seo</string>
+    <string name="cd_search_date_pick">Roghnaigh dátaí le cuardach</string>
+    <string name="search_announce">%1$s, %2$s</string>
+    <plurals name="search_announce_upcoming">
+        <item quantity="one">%d le teacht</item>
+        <item quantity="two">%d le teacht</item>
+        <item quantity="few">%d le teacht</item>
+        <item quantity="many">%d le teacht</item>
+        <item quantity="other">%d le teacht</item>
+    </plurals>
+    <plurals name="search_announce_past">
+        <item quantity="one">%d caite</item>
+        <item quantity="two">%d caite</item>
+        <item quantity="few">%d caite</item>
+        <item quantity="many">%d caite</item>
+        <item quantity="other">%d caite</item>
+    </plurals>
+    <string name="search_no_past_events">Níl aon imeacht caite</string>
+    <string name="search_no_events_in_dates">Níl aon imeacht ar na dátaí seo</string>
     <string name="label_select_date">Roghnaigh dáta</string>
     <string name="hint_tap_date_range">Tapáil an dáta céanna le haghaidh lá amháin, nó dáta eile le haghaidh raon</string>
     <string name="cd_clear">Glan</string>
@@ -1216,7 +1528,6 @@
     <string name="reminder_none">Gan meabhrúchán</string>
     <string name="reminder_at_time_of_event">Ag am an imeachta</string>
     <string name="reminder_time_before">%1$s roimhe</string>
-    <string name="reminder_time_after">%1$s i ndiaidh</string>
     <string name="reminder_day_of_event_12h">9 AM lá an imeachta</string>
     <string name="reminder_day_of_event_24h">09:00 lá an imeachta</string>
     <string name="reminder_day_of_event">Lá an imeachta</string>
@@ -1378,6 +1689,7 @@
     <!-- ==================== i18n: Round 2 audit gaps ==================== -->
     <string name="action_save_event">Sábháil imeacht</string>
     <string name="badge_beta">Béata</string>
+    <string name="badge_sync_off">Sioncronú as</string>
     <string name="badge_new">Nua</string>
     <string name="color_red">Dearg</string>
     <string name="color_orange">Oráiste</string>
@@ -1406,6 +1718,25 @@
     <string name="ics_fetch_error_http">Sheol an freastalaí earráid ar ais (%1$d). Seiceáil an URL le do thoil.</string>
     <string name="ics_fetch_error_empty">Tá fotha an fhéilire folamh.</string>
     <string name="ics_fetch_error_not_calendar">Ní cosúil gur fotha féilire é an URL sin.</string>
+    <string name="ics_feed_error_empty_response">Níor sheol an freastalaí fotha bailí.</string>
+    <string name="ics_feed_error_access_denied">Dhiúltaigh freastalaí an fhotha seo rochtain.</string>
+    <string name="ics_feed_error_too_large">Tá an fotha féilire seo rómhór le híoslódáil.</string>
+    <string name="ics_feed_error_unreadable">Níorbh fhéidir imeachtaí an fhotha seo a thaispeáint.</string>
+    <string name="ics_feed_error_event_not_saved">Níor sábháladh “%1$s”.</string>
+    <plurals name="ics_feed_error_events_not_saved">
+        <item quantity="one">Níor sábháladh %1$d imeacht.</item>
+        <item quantity="two">Níor sábháladh %1$d imeacht.</item>
+        <item quantity="few">Níor sábháladh %1$d imeacht.</item>
+        <item quantity="many">Níor sábháladh %1$d n-imeacht.</item>
+        <item quantity="other">Níor sábháladh %1$d imeacht.</item>
+    </plurals>
+    <plurals name="ics_feed_error_events_not_saved_including">
+        <item quantity="one">Níor sábháladh %1$d imeacht, “%2$s” san áireamh.</item>
+        <item quantity="two">Níor sábháladh %1$d imeacht, “%2$s” san áireamh.</item>
+        <item quantity="few">Níor sábháladh %1$d imeacht, “%2$s” san áireamh.</item>
+        <item quantity="many">Níor sábháladh %1$d n-imeacht, “%2$s” san áireamh.</item>
+        <item quantity="other">Níor sábháladh %1$d imeacht, “%2$s” san áireamh.</item>
+    </plurals>
     <string name="insights_title">Léargais</string>
     <string name="insights_period_this_week">Seachtain</string>
     <string name="insights_period_last_week">Seachtain seo caite</string>
@@ -1545,7 +1876,7 @@
         <item quantity="other">Saor an chéad %1$d lá eile (%2$s – %3$s):</item>
     </plurals>
     <string name="share_availability_day_line">%1$s: %2$s</string>
-    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_block_separator">", "</string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">Níl aon bhloic shaora ar feadh uair an chloig ar a laghad sa raon roghnaithe.</string>
     <string name="share_from_kashcal_footer">Roinnte ó KashCal</string>
@@ -1570,5 +1901,37 @@
     <string name="share_as_card_all_day">Lá iomlán</string>
     <string name="share_as_card_chooser_title">Roinn imeacht</string>
     <string name="share_as_card_share_failed">Níorbh fhéidir an cárta a roinnt</string>
+    <string name="print_your_week">Priontáil do sheachtain</string>
+    <string name="print_options_title">Roghnaigh na socruithe priontála</string>
+    <string name="print_pages_header">Leathanaigh</string>
+    <string name="print_page_week">Féilire na seachtaine</string>
+    <string name="print_page_week_detail">An tseachtain mar ghreille</string>
+    <string name="print_page_details">Sonraí</string>
+    <string name="print_page_details_detail">Gach imeacht ina iomláine</string>
+    <string name="print_action">Priontáil</string>
+    <string name="cd_print_previous_week">An tseachtain roimhe</string>
+    <string name="cd_print_next_week">An tseachtain seo chugainn</string>
+    <plurals name="print_summary_pages">
+        <item quantity="one">%d leathanach</item>
+        <item quantity="two">%d leathanach</item>
+        <item quantity="few">%d leathanach</item>
+        <item quantity="many">%d leathanach</item>
+        <item quantity="other">%d leathanach</item>
+    </plurals>
+    <plurals name="print_summary_calendars">
+        <item quantity="one">%1$d as %2$d fhéilire</item>
+        <item quantity="two">%1$d as %2$d fhéilire</item>
+        <item quantity="few">%1$d as %2$d fhéilire</item>
+        <item quantity="many">%1$d as %2$d bhféilire</item>
+        <item quantity="other">%1$d as %2$d féilire</item>
+    </plurals>
+    <string name="print_summary">%1$s · %2$s</string>
+    <string name="print_job_name">%1$s – Seachtain dar tús %2$s</string>
+    <string name="print_failed">Níorbh fhéidir priontáil. Bain triail eile as.</string>
+    <string name="print_doc_week">Seachtain</string>
+    <string name="print_doc_printed">Priontáilte %1$s</string>
+    <string name="print_doc_page_of">Leathanach %1$s de %2$s</string>
+    <string name="print_doc_numbers_note">Meaitseálann na huimhreacha na sonraí, ina liostaítear gach imeacht ina iomláine.</string>
+    <string name="print_doc_times_in">Amanna de réir %1$s</string>
 
 </resources>

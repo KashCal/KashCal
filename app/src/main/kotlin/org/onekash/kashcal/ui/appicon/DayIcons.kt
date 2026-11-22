@@ -7,8 +7,8 @@ import org.onekash.kashcal.R
  * Maps a day of the month to its launcher icon and foreground layer.
  *
  * Each icon is the default card artwork with the day's number on the front card, generated as
- * vector paths so no font is needed at runtime. Every icon's themed layer is the undated
- * [R.drawable.ic_launcher_monochrome] glyph.
+ * vector paths so no font is needed at runtime. Its themed layer shows the same number on an
+ * outlined calendar card; the static icons keep the undated [R.drawable.ic_launcher_monochrome].
  */
 object DayIcons {
 
@@ -84,7 +84,10 @@ object DayIcons {
     @DrawableRes
     fun mipmapFor(day: Int): Int = MIPMAPS[index(day)]
 
-    /** Returns the icon's foreground layer for [day], for previews; throws outside 1..31. */
+    /**
+     * Returns the icon's foreground layer for [day], for drawing it in the app (the icon picker
+     * and What's New); throws outside 1..31.
+     */
     @DrawableRes
     fun foregroundFor(day: Int): Int = FOREGROUNDS[index(day)]
 

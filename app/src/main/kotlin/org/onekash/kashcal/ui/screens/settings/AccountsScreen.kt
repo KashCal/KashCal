@@ -74,7 +74,8 @@ internal object SyncWarningConstants {
  * Shows the connected iCloud and CalDAV accounts and the buttons to add more.
  *
  * - Each account row shows its calendar count and sync warning; tapping it opens
- *   [AccountDetailSheet], which leads to the rename, change password and sign out sheets
+ *   [AccountDetailSheet], which leads to the rename, change password and sign out sheets, or
+ *   closes for [onSignInAgain] when the account needs its credentials again
  * - Add iCloud (hidden unless [showAddICloud]) and Add CalDAV buttons
  * - An empty state with both buttons, Add iCloud always shown, when no account is connected
  *
@@ -105,7 +106,8 @@ fun AccountsScreen(
     onGrantContactsPermission: () -> Unit = {},
     onRenameAccount: (Long, String) -> Unit = { _, _ -> },
     onChangeAccountPassword: (Long, String, (Result<Unit>) -> Unit) -> Unit = { _, _, _ -> },
-    onDiscoverCalendars: (Long) -> Unit = {}
+    onDiscoverCalendars: (Long) -> Unit = {},
+    onSignInAgain: (Long) -> Unit = {}
 ) {
     // rememberSaveable so the open sheet survives a configuration change.
     var selectedAccountId by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -154,6 +156,7 @@ fun AccountsScreen(
                             calendarCount = account.calendarCount,
                             consecutiveSyncFailures = account.consecutiveSyncFailures,
                             lastSuccessfulSyncAt = account.lastSuccessfulSyncAt,
+                            syncOff = !account.isEnabled,
                             onClick = {
                                 selectedAccountId = account.accountId
                                 onObserveAccountDetail(account.accountId)
@@ -180,6 +183,7 @@ fun AccountsScreen(
                             calendarCount = account.calendarCount,
                             consecutiveSyncFailures = account.consecutiveSyncFailures,
                             lastSuccessfulSyncAt = account.lastSuccessfulSyncAt,
+                            syncOff = !account.isEnabled,
                             onClick = {
                                 selectedAccountId = account.id
                                 onObserveAccountDetail(account.id)
@@ -235,6 +239,13 @@ fun AccountsScreen(
             onChangePassword = {
                 passwordError = null
                 activeSubSheet = SubSheet.CHANGE_PASSWORD
+            },
+            onSignInAgain = {
+                // Closes this sheet first so it never stacks under the sign-in sheet.
+                val accountId = accountDetail.accountId
+                selectedAccountId = null
+                onClearAccountDetail()
+                onSignInAgain(accountId)
             },
             onSignOut = { activeSubSheet = SubSheet.SIGN_OUT },
             onDismiss = {
@@ -314,7 +325,8 @@ fun AccountsScreen(
 
 /**
  * Shows one connected account: icon, name, and a subtitle of email and calendar count, or
- * "Sync issue" or a syncing hint. Thresholds are in [SyncWarningConstants].
+ * "Sync issue" or a syncing hint, with a [SyncOffBadge] at the end of the name line when [syncOff]
+ * (the account's "Sync calendar" toggle is off). Thresholds are in [SyncWarningConstants].
  */
 @Composable
 private fun AccountRow(
@@ -325,6 +337,7 @@ private fun AccountRow(
     calendarCount: Int,
     consecutiveSyncFailures: Int = 0,
     lastSuccessfulSyncAt: Long? = null,
+    syncOff: Boolean = false,
     onClick: () -> Unit
 ) {
     val hasSyncWarning = consecutiveSyncFailures >= SyncWarningConstants.SYNC_FAILURE_THRESHOLD
@@ -346,7 +359,8 @@ private fun AccountRow(
     val syncWarningDesc = if (hasSyncWarning) {
         ", " + stringResource(R.string.accounts_cd_sync_warning)
     } else ""
-    val semanticsDescription = "$providerName account, $email, $calendarCount calendars$syncWarningDesc"
+    val syncOffDesc = if (syncOff) ", " + stringResource(R.string.accounts_cd_sync_off) else ""
+    val semanticsDescription = "$providerName account, $email, $calendarCount calendars$syncOffDesc$syncWarningDesc"
 
     Row(
         modifier = Modifier
@@ -369,11 +383,23 @@ private fun AccountRow(
                 tint = MaterialTheme.colorScheme.primary
             )
 
-            Column {
-                Text(
-                    providerName,
-                    style = MaterialTheme.typography.bodyLarge
-                )
+            Column(modifier = if (syncOff) Modifier.weight(1f) else Modifier) {
+                if (syncOff) {
+                    // The badge shares the name line, at its end before the chevron.
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            providerName,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.weight(1f)
+                        )
+                        SyncOffBadge(modifier = Modifier.padding(start = 8.dp))
+                    }
+                } else {
+                    Text(
+                        providerName,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -567,6 +593,35 @@ private fun EmptyState(
 }
 
 // ==================== Previews ====================
+
+@Preview(showBackground = true)
+@Composable
+private fun AccountsScreenSyncOffPreview() {
+    KashCalTheme {
+        AccountsScreen(
+            iCloudAccount = ICloudAccountUiModel(
+                accountId = 1L,
+                email = "john@icloud.com",
+                calendarCount = 5,
+                isEnabled = false
+            ),
+            showAddICloud = false,
+            calDavAccounts = listOf(
+                CalDavAccountUiModel(
+                    id = 2,
+                    email = "user@nextcloud.example.com",
+                    displayName = "Nextcloud",
+                    calendarCount = 3
+                )
+            ),
+            onNavigateBack = {},
+            onAddICloud = {},
+            onICloudSignOut = {},
+            onAddCalDav = {},
+            onCalDavSignOut = {}
+        )
+    }
+}
 
 @Preview(showBackground = true)
 @Composable

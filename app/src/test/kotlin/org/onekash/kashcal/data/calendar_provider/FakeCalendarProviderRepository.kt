@@ -1,5 +1,6 @@
 package org.onekash.kashcal.data.calendar_provider
 
+import org.onekash.kashcal.domain.search.SearchFold
 import org.onekash.kashcal.error.CalendarError
 
 /**
@@ -255,6 +256,22 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         return instances.filter { it.calendarId in enabledCalendarIds }
     }
 
+    /** One [searchInstances] call, recorded for tests to count and inspect. */
+    data class SearchCall(
+        val query: String,
+        val startDayCode: Int,
+        val endDayCode: Int,
+        val calendarIds: Set<Long>,
+        val hideDeclined: Boolean = false,
+    )
+
+    val searchCalls = mutableListOf<SearchCall>()
+
+    /**
+     * Splits [query] into words as the platform does (quoted phrases whole) and keeps instances
+     * in [enabledCalendarIds] and the day range where every word is in the title, description
+     * or location or a guest's name or email ([deviceAttendees]), ignoring case.
+     */
     override suspend fun searchInstances(
         query: String,
         startDayCode: Int,
@@ -262,15 +279,68 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         enabledCalendarIds: Set<Long>,
         hideDeclined: Boolean
     ): List<DeviceCalendarInstance> {
+        searchCalls += SearchCall(query, startDayCode, endDayCode, enabledCalendarIds, hideDeclined)
         if (shouldThrowSecurityException) throw SecurityException("Calendar permission revoked")
-        if (query.isBlank()) return emptyList()
-        val lowerQuery = query.lowercase()
+        return wordMatches(query, startDayCode, endDayCode, enabledCalendarIds)
+    }
+
+    private fun wordMatches(
+        query: String,
+        startDayCode: Int,
+        endDayCode: Int,
+        enabledCalendarIds: Set<Long>,
+    ): List<DeviceCalendarInstance> {
+        val words = SqliteCalendarProvider.tokenizeSearchQuery(query).map { it.lowercase() }
+        if (words.isEmpty()) return emptyList()
         return instances.filter { instance ->
             instance.calendarId in enabledCalendarIds &&
-                (instance.title.lowercase().contains(lowerQuery) ||
-                    instance.description.lowercase().contains(lowerQuery) ||
-                    instance.location.lowercase().contains(lowerQuery))
+                instance.endDay >= startDayCode && instance.startDay <= endDayCode &&
+                words.all { word ->
+                    instance.title.lowercase().contains(word) ||
+                        instance.description.lowercase().contains(word) ||
+                        instance.location.lowercase().contains(word) ||
+                        deviceAttendees[instance.eventId].orEmpty().any { guest ->
+                            guest.name.orEmpty().lowercase().contains(word) || guest.email.orEmpty().lowercase().contains(word)
+                        }
+                }
         }
+    }
+
+    /** One [searchTaggedInstances] call, recorded so tests can assert what the search sent. */
+    data class TaggedSearchCall(
+        val tags: List<String>,
+        val query: String,
+        val startDayCode: Int,
+        val endDayCode: Int,
+        val enabledCalendarIds: Set<Long>,
+        val hideDeclined: Boolean,
+    )
+
+    val taggedSearchCalls = mutableListOf<TaggedSearchCall>()
+
+    /**
+     * Mirrors the real rule: every tag held under [SearchFold.hasAllTags], on the
+     * [searchInstances] word matches when [query] has words; no tags is [searchInstances].
+     */
+    override suspend fun searchTaggedInstances(
+        tags: List<String>,
+        query: String,
+        startDayCode: Int,
+        endDayCode: Int,
+        enabledCalendarIds: Set<Long>,
+        hideDeclined: Boolean
+    ): List<DeviceCalendarInstance> {
+        if (tags.isEmpty()) return searchInstances(query, startDayCode, endDayCode, enabledCalendarIds, hideDeclined)
+        taggedSearchCalls += TaggedSearchCall(tags, query, startDayCode, endDayCode, enabledCalendarIds, hideDeclined)
+        if (shouldThrowSecurityException) throw SecurityException("Calendar permission revoked")
+        val pool = if (query.isNotBlank()) {
+            wordMatches(query, startDayCode, endDayCode, enabledCalendarIds)
+        } else {
+            instances.filter {
+                it.calendarId in enabledCalendarIds && it.endDay >= startDayCode && it.startDay <= endDayCode
+            }
+        }
+        return pool.filter { SearchFold.hasAllTags(it.categories, tags) }
     }
 
     /**
@@ -752,6 +822,11 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         return deviceAttendees[eventId] ?: emptyList()
     }
 
+    override suspend fun getAttendeesForEvents(eventIds: Collection<Long>): Map<Long, List<DeviceAttendee>> {
+        if (shouldThrowSecurityException) return emptyMap()
+        return eventIds.mapNotNull { id -> deviceAttendees[id]?.takeIf { it.isNotEmpty() }?.let { id to it } }.toMap()
+    }
+
     /** Records each updateSelfAttendeeStatus call for assertions. */
     data class SelfRsvpUpdate(val eventId: Long, val attendeeId: Long, val status: Int)
     val selfRsvpUpdates = mutableListOf<SelfRsvpUpdate>()
@@ -880,6 +955,14 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
             next = due.getOrNull(limit) ?: enabled.filter { it.triggerTime > nowMs }.minByOrNull { it.cursor },
             overflowed = due.size > limit,
         )
+    }
+
+    override suspend fun countReminderOccurrences(enabledCalendarIds: Set<Long>, fromMs: Long, toMs: Long): Int {
+        if (shouldThrowSecurityException) return 0
+        return upcomingReminders
+            .filter { it.calendarId in enabledCalendarIds && it.triggerTime in fromMs..toMs }
+            .distinctBy { it.eventId to it.occurrenceStartTs }
+            .size
     }
 
     /**

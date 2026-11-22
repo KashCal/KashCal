@@ -1,8 +1,8 @@
 package org.onekash.kashcal.sync.engine.integration
 
 import android.content.Context
+import org.onekash.kashcal.data.db.EventIcsStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.clearAllMocks
 import io.mockk.mockk
@@ -42,6 +42,7 @@ import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.sync.strategy.ConflictResolver
 import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.sync.strategy.PushStrategy
+import org.onekash.kashcal.testutil.TestDatabases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.io.File
@@ -95,7 +96,7 @@ class RealICloudSyncEngineTest {
         val context: Context = ApplicationProvider.getApplicationContext()
 
         // In-memory Room database
-        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+        database = TestDatabases.inMemory(context)
             .allowMainThreadQueries()
             .build()
 
@@ -144,7 +145,8 @@ class RealICloudSyncEngineTest {
             dataStore = dataStore,
             inviteNotifier = mockk(relaxed = true),
             accountRepository = mockk(relaxed = true),
-            reminderScheduler = mockk(relaxed = true)
+            reminderScheduler = mockk(relaxed = true),
+            icsSource = EventIcsStore(database),
         )
 
         val pushStrategy = PushStrategy(
@@ -153,7 +155,8 @@ class RealICloudSyncEngineTest {
             pendingOperationsDao = pendingOperationsDao,
             accountRepository = accountRepository,
             attendeesDao = database.attendeesDao(),
-            pendingCancelsDao = database.pendingCancelsDao()
+            pendingCancelsDao = database.pendingCancelsDao(),
+            icsSource = EventIcsStore(database),
         )
 
         val conflictResolver = ConflictResolver(
@@ -162,7 +165,8 @@ class RealICloudSyncEngineTest {
             attendeesDao = database.attendeesDao(),
             pendingOperationsDao = pendingOperationsDao,
             occurrenceGenerator = occurrenceGenerator,
-            database = database
+            database = database,
+            icsSource = EventIcsStore(database),
         )
 
         // SyncNotificationManager needs the Android notification system, so it's mocked.
