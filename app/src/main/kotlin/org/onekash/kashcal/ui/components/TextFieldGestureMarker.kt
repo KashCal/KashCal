@@ -11,8 +11,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 /**
  * Carries the event form's [textFieldGestureMarker] to text fields drawn by shared components.
  *
- * The form provides it so the tag-name field and the repeat count, which live in other
- * composables, mark their gestures like the form's own fields do; everywhere else it is a
+ * The form provides it so the tag-name field and the repeat interval and count, which live in
+ * other composables, mark their gestures like the form's own fields do; everywhere else it is a
  * no-op [Modifier]. A field applies it only while editable.
  */
 internal val LocalTextFieldGestureMarker = staticCompositionLocalOf<Modifier> { Modifier }

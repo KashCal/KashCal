@@ -1320,6 +1320,7 @@
     <string name="rrule_unit_year">Unyaka</string>
     <string name="cd_decrease_interval">Nciphisa isikhala</string>
     <string name="cd_increase_interval">Khulisa isikhala</string>
+    <string name="error_recurrence_interval_range">Faka inombolo esuka ku-%1$d kuya ku-%2$d</string>
     <string name="rrule_starting">%1$s kuqala ngo-%2$s%3$s</string>
     <string name="rrule_since">%1$s · kusukela ngo-%2$s</string>
 

@@ -16,14 +16,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.selectAll
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
@@ -37,20 +40,30 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
@@ -396,8 +409,8 @@ fun FrequencyChipRow(
 }
 
 /**
- * Shows a 40dp circular stepper button. When disabled, background and border drop to 50% alpha
- * so it reads as inert at a glance, not only slightly faded.
+ * Shows a circular stepper button [STEPPER_SIZE] across. When disabled, background and border
+ * drop to 50% alpha so it reads as inert at a glance, not only slightly faded.
  */
 @Composable
 private fun StepperButton(
@@ -410,7 +423,7 @@ private fun StepperButton(
     val iconAlpha = if (enabled) 1f else 0.38f
     Box(
         modifier = Modifier
-            .size(40.dp)
+            .size(STEPPER_SIZE)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = backgroundAlpha))
             .border(
@@ -429,12 +442,125 @@ private fun StepperButton(
     }
 }
 
+/** Size of a [StepperButton]. */
+private val STEPPER_SIZE = 40.dp
+
+/** Gap between the interval steppers and the field. */
+private val STEPPER_GAP = 8.dp
+
+/** Horizontal padding between a number field's border and its text. */
+private val NUMBER_FIELD_PADDING = 6.dp
+
+/** Count the After option starts with when the rule has none. */
+private const val DEFAULT_END_COUNT = 10
+
 /**
- * Shows the Custom builder: an interval stepper and a Day/Week/Month/Year chip row.
+ * Shows a number field shared by the Custom interval and the end count.
  *
- * The stepper shows the real interval, unclamped. '+' is disabled at 99 and above, which bounds
- * in-app authoring, but '-' stays enabled above 99 so a synced `INTERVAL=200` can be walked
- * down without losing the saved value.
+ * Typing is limited by [acceptsNumberEdit]: an edit it refuses is undone whole, never cut
+ * short. Focusing the field selects its text, so the first digit typed replaces the value.
+ * [onValidValue] gets each value [positiveNumberOrNull] reads from the text that differs from
+ * [lastValid]; the field's first composition therefore sends nothing. On leaving the field, or
+ * on Done, text that reads as no value goes back to [lastValid] and leading zeros are dropped.
+ * The caller owns [state] and writes outside changes into it with [numberText]. A non-null
+ * [errorMessage] marks the field invalid: red border and the message in its semantics; the
+ * caller draws any visible message.
+ */
+@Composable
+private fun RecurrenceNumberField(
+    state: TextFieldState,
+    lastValid: Int,
+    onValidValue: (Int) -> Unit,
+    textStyle: androidx.compose.ui.text.TextStyle,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    errorMessage: String? = null,
+    accessibilityLabel: String? = null,
+) {
+    val isError = errorMessage != null
+    val focusManager = LocalFocusManager.current
+    val currentLastValid by rememberUpdatedState(lastValid)
+    val currentOnValidValue by rememberUpdatedState(onValidValue)
+    var isFocused by remember { mutableStateOf(false) }
+
+    LaunchedEffect(state) {
+        snapshotFlow { state.text.toString() }.collect { text ->
+            val value = positiveNumberOrNull(text)
+            if (value != null && value != currentLastValid) currentOnValidValue(value)
+        }
+    }
+
+    // A focusing tap requests focus and then places the cursor at the touch point in the same
+    // handler, which would collapse a selection made in onFocusChanged. The effect runs after
+    // that handler returns, so the selection holds.
+    LaunchedEffect(isFocused) {
+        if (isFocused) state.edit { selectAll() }
+    }
+
+    val gestureMarker = if (enabled) LocalTextFieldGestureMarker.current else Modifier
+    val borderColor = when {
+        isError -> MaterialTheme.colorScheme.error
+        !enabled -> MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+        isFocused -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.outline
+    }
+    val borderWidth = if (isError || isFocused) 2.dp else 1.dp
+    BasicTextField(
+        state = state,
+        modifier = gestureMarker
+            .then(modifier)
+            .border(borderWidth, borderColor, RoundedCornerShape(4.dp))
+            .padding(horizontal = NUMBER_FIELD_PADDING)
+            .semantics {
+                if (accessibilityLabel != null) contentDescription = accessibilityLabel
+                if (errorMessage != null) error(errorMessage)
+            }
+            .onFocusChanged { focusState ->
+                if (!focusState.isFocused && isFocused) {
+                    val text = state.text.toString()
+                    val settled = if (positiveNumberOrNull(text) == null) {
+                        numberText(currentLastValid)
+                    } else {
+                        stripLeadingZeros(text)
+                    }
+                    if (settled != text) state.setTextAndPlaceCursorAtEnd(settled)
+                }
+                isFocused = focusState.isFocused
+            },
+        enabled = enabled,
+        lineLimits = TextFieldLineLimits.SingleLine,
+        textStyle = textStyle.copy(
+            textAlign = TextAlign.Center,
+            color = if (enabled) MaterialTheme.colorScheme.onSurface
+            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+        ),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+        onKeyboardAction = { focusManager.clearFocus() },
+        inputTransformation = InputTransformation {
+            if (!acceptsNumberEdit(originalText, asCharSequence())) revertAllChanges()
+        },
+        cursorBrush = SolidColor(
+            if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+        ),
+        decorator = { innerTextField ->
+            Box(contentAlignment = Alignment.Center) { innerTextField() }
+        },
+    )
+}
+
+/**
+ * Shows the Custom builder: a typed interval between '-' and '+', and a Day/Week/Month/Year
+ * chip row.
+ *
+ * New values, typed or stepped, stop at [RECURRENCE_INTERVAL_MAX]. A synced larger interval is
+ * shown as is with '+' off and '-' on, so it can be walked or typed down without losing the
+ * saved value. While the field reads as no value (empty or 0) it shows an error, both steppers
+ * are off and [onIntervalChange] is not called, so the rule keeps the last valid interval.
+ *
+ * The field is seeded from [interval] once; the steppers write their result into it and it
+ * reports through [onIntervalChange], so a typed value is never written back over the user's
+ * cursor. The builder is composed only while Custom is selected, so choosing Custom again
+ * seeds a fresh field.
  *
  * The unit row is hand-built like [FrequencyChipRow], not a Material3
  * `SingleChoiceSegmentedButtonRow`, so the two rows read as one visual group.
@@ -447,37 +573,61 @@ fun CustomRecurrenceBuilder(
     onUnitChange: (CustomRecurrenceUnit) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val intervalState = rememberTextFieldState(numberText(interval))
+    val typedValue = positiveNumberOrNull(intervalState.text)
+    val isError = typedValue == null
+    val errorMessage = stringResource(R.string.error_recurrence_interval_range, 1, RECURRENCE_INTERVAL_MAX)
+    val label = stringResource(R.string.label_repeat_every)
+    fun step(delta: Int) {
+        val base = positiveNumberOrNull(intervalState.text) ?: interval
+        intervalState.setTextAndPlaceCursorAtEnd(numberText(base + delta))
+    }
+    val fieldStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Medium)
+    // Wide enough for four digits ("1200") at any font scale.
+    val fieldWidth = with(LocalDensity.current) { (fieldStyle.fontSize * 4.5f).toDp() } +
+        NUMBER_FIELD_PADDING * 2
     Column(modifier = modifier) {
         Text(
-            stringResource(R.string.label_repeat_every),
+            label,
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 8.dp),
         )
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(STEPPER_GAP),
         ) {
-            val canDecrement = interval > 1
-            val canIncrement = interval < 99
             StepperButton(
                 icon = Icons.Default.Remove,
                 contentDescription = stringResource(R.string.cd_decrease_interval),
-                enabled = canDecrement,
-                onClick = { onIntervalChange(interval - 1) },
+                enabled = typedValue != null && typedValue > 1,
+                onClick = { step(-1) },
             )
-            Text(
-                text = interval.toString(),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.width(40.dp),
-                textAlign = TextAlign.Center,
+            RecurrenceNumberField(
+                state = intervalState,
+                lastValid = interval,
+                onValidValue = onIntervalChange,
+                textStyle = fieldStyle,
+                modifier = Modifier
+                    .width(fieldWidth)
+                    .heightIn(min = 48.dp),
+                errorMessage = errorMessage.takeIf { isError },
+                accessibilityLabel = label,
             )
             StepperButton(
                 icon = Icons.Default.Add,
                 contentDescription = stringResource(R.string.cd_increase_interval),
-                enabled = canIncrement,
-                onClick = { onIntervalChange(interval + 1) },
+                enabled = typedValue != null && typedValue < RECURRENCE_INTERVAL_MAX,
+                onClick = { step(1) },
+            )
+        }
+        if (isError) {
+            Text(
+                errorMessage,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                // Starts under the field.
+                modifier = Modifier.padding(start = STEPPER_SIZE + STEPPER_GAP, top = 4.dp),
             )
         }
         Spacer(modifier = Modifier.height(12.dp))
@@ -793,41 +943,29 @@ fun EndConditionSelector(
     isAllDay: Boolean = false,
     timezone: String? = null,
 ) {
-    // TextFieldState supports select-all on focus.
-    val initialCountText = if (endCondition is EndCondition.Count) endCondition.count.toString() else "10"
-    val countTextFieldState = rememberTextFieldState(initialCountText)
-
-    // The long-running LaunchedEffect below reads these current values.
-    val currentEndCondition by androidx.compose.runtime.rememberUpdatedState(endCondition)
-    val currentOnEndConditionChange by androidx.compose.runtime.rememberUpdatedState(onEndConditionChange)
+    // The count the field returns to and the After radio picks. Kept across Never and Until,
+    // where endCondition carries no count.
+    var lastValidCount by remember {
+        mutableIntStateOf((endCondition as? EndCondition.Count)?.count ?: DEFAULT_END_COUNT)
+    }
+    val countTextFieldState = rememberTextFieldState(numberText(lastValidCount))
+    val isCountMode = endCondition is EndCondition.Count
 
     // Detects a switch into Count mode, as opposed to a new count value.
-    var wasCountMode by remember { mutableStateOf(endCondition is EndCondition.Count) }
+    var wasCountMode by remember { mutableStateOf(isCountMode) }
 
-    // Sync the text field only on a switch into Count mode.
-    androidx.compose.runtime.LaunchedEffect(endCondition) {
-        val isCountMode = endCondition is EndCondition.Count
-        if (isCountMode && !wasCountMode) {
-            // Switched into Count mode.
-            val newText = (endCondition as EndCondition.Count).count.toString()
-            if (countTextFieldState.text.toString() != newText) {
-                countTextFieldState.setTextAndPlaceCursorAtEnd(newText)
+    // Tracks the count and reseeds the field only on a switch into Count mode, so a typed
+    // count is never written back over the cursor.
+    LaunchedEffect(endCondition) {
+        if (endCondition is EndCondition.Count) {
+            lastValidCount = endCondition.count
+            if (!wasCountMode &&
+                positiveNumberOrNull(countTextFieldState.text) != endCondition.count
+            ) {
+                countTextFieldState.setTextAndPlaceCursorAtEnd(numberText(endCondition.count))
             }
         }
         wasCountMode = isCountMode
-    }
-
-    // Propagate typed counts while in Count mode.
-    androidx.compose.runtime.LaunchedEffect(countTextFieldState) {
-        androidx.compose.runtime.snapshotFlow { countTextFieldState.text.toString() }
-            .collect { text ->
-                // Only a positive number propagates; empty or partial input waits.
-                val count = text.toIntOrNull()?.takeIf { it > 0 }
-                if (count != null && currentEndCondition is EndCondition.Count &&
-                    (currentEndCondition as EndCondition.Count).count != count) {
-                    currentOnEndConditionChange(EndCondition.Count(count))
-                }
-            }
     }
 
     var untilMillis by remember(endCondition, isAllDay, timezone, startDateMillis) {
@@ -878,7 +1016,7 @@ fun EndConditionSelector(
                         else Modifier
                     )
                     .clickable {
-                        val count = countTextFieldState.text.toString().toIntOrNull() ?: 10
+                        val count = positiveNumberOrNull(countTextFieldState.text) ?: lastValidCount
                         onEndConditionChange(EndCondition.Count(count))
                         showDatePicker = false
                     },
@@ -894,41 +1032,20 @@ fun EndConditionSelector(
                 }
             }
             Text(stringResource(R.string.label_recurrence_after), style = MaterialTheme.typography.bodyMedium)
-            val countEditable = endCondition is EndCondition.Count
-            val countGestureMarker = if (countEditable) LocalTextFieldGestureMarker.current else Modifier
-            BasicTextField(
+            RecurrenceNumberField(
                 state = countTextFieldState,
-                modifier = countGestureMarker
+                lastValid = lastValidCount,
+                // A count is sent only in Count mode, so opening a Never or Until rule with the
+                // default text in the field changes nothing.
+                onValidValue = { count ->
+                    if (isCountMode) onEndConditionChange(EndCondition.Count(count))
+                },
+                textStyle = MaterialTheme.typography.bodyMedium,
+                // 44dp keeps the row as tall as before this field was shared.
+                modifier = Modifier
                     .width(60.dp)
-                    .border(
-                        width = 1.dp,
-                        color = if (endCondition is EndCondition.Count)
-                            MaterialTheme.colorScheme.outline
-                        else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                        shape = RoundedCornerShape(4.dp)
-                    )
-                    .padding(horizontal = 8.dp, vertical = 12.dp)
-                    .onFocusChanged { focusState ->
-                        if (focusState.isFocused) {
-                            // Select all text on focus.
-                            countTextFieldState.edit { selectAll() }
-                        }
-                    },
-                lineLimits = TextFieldLineLimits.SingleLine,
-                textStyle = MaterialTheme.typography.bodyMedium.copy(
-                    textAlign = TextAlign.Center,
-                    color = if (endCondition is EndCondition.Count)
-                        MaterialTheme.colorScheme.onSurface
-                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                ),
-                enabled = endCondition is EndCondition.Count,
-                inputTransformation = InputTransformation {
-                    // Digits only, at most 3.
-                    val filtered = asCharSequence().filter { it.isDigit() }.take(3)
-                    if (filtered.toString() != asCharSequence().toString()) {
-                        replace(0, length, filtered)
-                    }
-                }
+                    .heightIn(min = 44.dp),
+                enabled = isCountMode,
             )
             Text(stringResource(R.string.label_recurrence_occurrences), style = MaterialTheme.typography.bodyMedium)
         }

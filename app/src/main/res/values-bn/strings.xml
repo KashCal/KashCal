@@ -1320,6 +1320,7 @@
     <string name="rrule_unit_year">বছর</string>
     <string name="cd_decrease_interval">ব্যবধান কমান</string>
     <string name="cd_increase_interval">ব্যবধান বাড়ান</string>
+    <string name="error_recurrence_interval_range">%1$d থেকে %2$d এর মধ্যে একটি সংখ্যা লিখুন</string>
     <string name="rrule_starting">%1$s %2$s থেকে শুরু%3$s</string>
     <string name="rrule_since">%1$s · %2$s থেকে</string>
 

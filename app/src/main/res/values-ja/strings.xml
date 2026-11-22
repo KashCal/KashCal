@@ -1254,6 +1254,7 @@
     <string name="rrule_unit_year">年</string>
     <string name="cd_decrease_interval">間隔を減らす</string>
     <string name="cd_increase_interval">間隔を増やす</string>
+    <string name="error_recurrence_interval_range">%1$d〜%2$dの数字を入力してください</string>
     <string name="rrule_starting">%1$s %2$s開始%3$s</string>
     <string name="rrule_since">%1$s · %2$s以降</string>
 

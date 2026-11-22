@@ -1319,6 +1319,7 @@
     <string name="rrule_unit_year">Jahr</string>
     <string name="cd_decrease_interval">Intervall verringern</string>
     <string name="cd_increase_interval">Intervall erhöhen</string>
+    <string name="error_recurrence_interval_range">Gib eine Zahl von %1$d bis %2$d ein</string>
     <string name="rrule_starting">%1$s ab %2$s%3$s</string>
     <string name="rrule_since">%1$s · seit %2$s</string>
 

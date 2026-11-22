@@ -38,8 +38,9 @@ import org.robolectric.annotation.Config
  * imported copy is compared with the original through the same reads the app uses.
  *
  * Runs with the app's merged manifest and a plain Application. The share URI the exporter hands
- * out isn't covered: under Robolectric the file provider can't map the temporary cache directory,
- * so the test reads the file the exporter wrote.
+ * out isn't covered: whether the file provider maps this test's cache directory depends on test
+ * order, so the test reads the file the exporter wrote (see
+ * [org.onekash.kashcal.testutil.resetFileProviderCache]).
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
@@ -64,7 +65,7 @@ class DeviceIcsRoundTripTest {
         sharedDir.deleteRecursively()
         val result = IcsExporter().exportDeviceEvent(f.context, master, exceptions)
         // The exporter writes the file, then asks the file provider for a share URI, which
-        // fails here (see the class doc); the written file is what a share would send.
+        // can fail here (see the class doc); the written file is what a share would send.
         result.exceptionOrNull()?.let { e ->
             assertTrue("unexpected export failure: $e", e.message.orEmpty().contains("Failed to find configured root"))
         }

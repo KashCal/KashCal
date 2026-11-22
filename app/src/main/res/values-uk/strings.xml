@@ -1452,6 +1452,7 @@
     <string name="rrule_unit_year">Рік</string>
     <string name="cd_decrease_interval">Зменшити інтервал</string>
     <string name="cd_increase_interval">Збільшити інтервал</string>
+    <string name="error_recurrence_interval_range">Введи число від %1$d до %2$d</string>
     <string name="rrule_starting">%1$s починаючи з %2$s%3$s</string>
     <string name="rrule_since">%1$s · з %2$s</string>
 

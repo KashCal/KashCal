@@ -1320,6 +1320,7 @@
     <string name="rrule_unit_year">Година</string>
     <string name="cd_decrease_interval">Намали интервал</string>
     <string name="cd_increase_interval">Зголеми интервал</string>
+    <string name="error_recurrence_interval_range">Внесете број од %1$d до %2$d</string>
     <string name="rrule_starting">%1$s почнувајќи од %2$s%3$s</string>
     <string name="rrule_since">%1$s · од %2$s</string>
 

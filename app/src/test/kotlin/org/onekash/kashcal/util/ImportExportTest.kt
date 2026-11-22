@@ -21,8 +21,10 @@ import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 import org.onekash.kashcal.testutil.TestDataStoreFactory
 import org.onekash.kashcal.testutil.TestDatabases
+import org.onekash.kashcal.testutil.resetFileProviderCache
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.io.File
 
 /**
  * Tests ICS export of events saved through [EventWriter] into an in-memory Room database.
@@ -32,7 +34,10 @@ import org.robolectric.annotation.Config
  *   optional fields.
  * - A master with an exception ([IcsPatcher.serializeWithExceptions]): two VEVENTs, a
  *   RECURRENCE-ID and one shared UID.
- * - Calendar export ([IcsExporter.exportCalendar]): succeeds for three events, fails for none.
+ * - Calendar export: [IcsExporter.buildCalendarText] writes one VCALENDAR named after the
+ *   calendar with a VEVENT per event; [IcsExporter.exportCalendar] fails for no events, and for
+ *   one event writes the file under the cache's shared directory and returns its content URI
+ *   (after [resetFileProviderCache]).
  * - The escaping and VALARM tests assert neither (see their inline comments).
  * - The "import" tests save events with [EventWriter.createEvent] and parse no ICS; the
  *   "round-trip" tests check only the exported text and import nothing.
@@ -79,6 +84,8 @@ class ImportExportTest {
     fun teardown() {
         database.close()
     }
+
+    private fun unfold(text: String) = text.replace(Regex("\r?\n[ \t]"), "")
 
     private fun createTestEvent(
         title: String = "Test Event",
@@ -248,12 +255,38 @@ class ImportExportTest {
 
         val events = listOf(event1, event2, event3).map { EventExport(it, emptyList(), emptyMap()) }
 
+        val lines = unfold(exporter.buildCalendarText(events, "My Calendar")).lines()
+
+        assertEquals("One VCALENDAR", 1, lines.count { it == "BEGIN:VCALENDAR" })
+        assertTrue("Calendar name is written", "X-WR-CALNAME:My Calendar" in lines)
+        assertEquals("One VEVENT per event", 3, lines.count { it == "BEGIN:VEVENT" })
+        assertEquals(
+            "Each event's title",
+            listOf("SUMMARY:Event 1", "SUMMARY:Event 2", "SUMMARY:Event 3"),
+            lines.filter { it.startsWith("SUMMARY:") }
+        )
+    }
+
+    @Test
+    fun `export calendar writes the shared file and returns its content URI`() = runTest {
+        val event = eventWriter.createEvent(createTestEvent(title = "Shared Event"), isLocal = true)
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val result = exporter.exportCalendar(context, events, "My Calendar")
+        val shared = File(context.cacheDir, "shared").apply { deleteRecursively() }
+        resetFileProviderCache()
 
-        assertTrue("Export should succeed: ${result.exceptionOrNull()}", result.isSuccess)
+        val result = exporter.exportCalendar(
+            context, listOf(EventExport(event, emptyList(), emptyMap())), "My Calendar"
+        )
 
-        // Asserts only that the export succeeds; the written file isn't read.
+        val uri = result.getOrElse { throw AssertionError("Export should succeed", it) }
+        assertEquals("content", uri.scheme)
+        assertEquals("${context.packageName}.fileprovider", uri.authority)
+        val path = uri.path!!
+        assertTrue("Path under the shared_ics root: $path", path.startsWith("/shared_ics/"))
+        assertTrue("An .ics file: $path", path.endsWith(".ics"))
+        val written = shared.listFiles()!!.single()
+        assertEquals("ics", written.extension)
+        assertTrue("SUMMARY:Shared Event" in unfold(written.readText()).lines())
     }
 
     @Test

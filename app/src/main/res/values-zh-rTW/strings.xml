@@ -1254,6 +1254,7 @@
     <string name="rrule_unit_year">年</string>
     <string name="cd_decrease_interval">減少間隔</string>
     <string name="cd_increase_interval">增加間隔</string>
+    <string name="error_recurrence_interval_range">請輸入 %1$d 到 %2$d 之間的數字</string>
     <string name="rrule_starting">%1$s從%2$s開始%3$s</string>
     <string name="rrule_since">%1$s · 自%2$s起</string>
 

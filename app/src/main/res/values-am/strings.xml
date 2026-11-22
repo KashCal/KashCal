@@ -1320,6 +1320,7 @@
     <string name="rrule_unit_year">ዓመት</string>
     <string name="cd_decrease_interval">ክፍተቱን ቀንስ</string>
     <string name="cd_increase_interval">ክፍተቱን ጨምር</string>
+    <string name="error_recurrence_interval_range">ከ%1$d እስከ %2$d ያለ ቁጥር ያስገቡ</string>
     <string name="rrule_starting">%1$s %2$s%3$s ጀምሮ</string>
     <string name="rrule_since">%1$s · ከ%2$s ጀምሮ</string>
 

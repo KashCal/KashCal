@@ -1,3 +1,12 @@
+## [2026.11.22]
+
+- Added typing the `Repeat every` number in a custom repeat: tap it, type on the number keyboard, and go up to 999 for any unit, such as every 354 days (#440)
+- Changed the `After N occurrences` count to open the number keyboard with `Done`; tapping it selects the number, and leaving it empty or at 0 brings back the last count
+- Fixed a repeat rule being saved with a count of 0
+- Changed pull-to-refresh to also refresh calendar feeds that aren't paused (#443)
+- Fixed contact edits made while a CardDAV upload was running being lost after a later server change (#434)
+- Localized KashCal into South Azerbaijani, in Perso-Arabic script; thanks to the contributor of #398
+
 ## [2026.11.20]
 
 Kash comes from a small planet with one long season and no calendars. So when it landed in KashCal, it fell for calendars at once. It waves at everyone who opens the app for the first time, holds an armful of calendars on the About page, and sits with you on empty days. On its home planet, every day was an empty day.

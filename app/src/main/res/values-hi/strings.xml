@@ -1320,6 +1320,7 @@
     <string name="rrule_unit_year">वर्ष</string>
     <string name="cd_decrease_interval">अंतराल घटाएँ</string>
     <string name="cd_increase_interval">अंतराल बढ़ाएँ</string>
+    <string name="error_recurrence_interval_range">%1$d से %2$d तक कोई संख्या दर्ज करें</string>
     <string name="rrule_starting">%1$s %2$s से शुरू%3$s</string>
     <string name="rrule_since">%1$s · %2$s से</string>
 

@@ -53,9 +53,9 @@ fun mapFrequencyToCustomUnit(freq: RecurrenceFrequency): CustomRecurrenceUnit = 
  * Holds the recurrence picker's editable state; the source of truth for what it emits. Kept
  * outside the composable so it can be unit-tested without Robolectric.
  *
- * [interval] is the parsed INTERVAL, floored at 1 and never capped. The stepper caps new
- * input at 99 by disabling '+', so an inbound `INTERVAL=200` round-trips a no-op save and
- * survives a Custom, preset, Custom chip detour.
+ * [interval] is the parsed INTERVAL, floored at 1 and never capped here; [CustomRecurrenceBuilder]
+ * caps only new input, so an inbound `INTERVAL=1200` round-trips a no-op save and survives a
+ * Custom, preset, Custom chip detour.
  *
  * [startDayOfMonth] is the day [toRrule] uses for a monthly rule when [monthlyPattern] is null.
  */

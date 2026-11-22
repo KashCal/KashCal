@@ -1320,6 +1320,7 @@
     <string name="rrule_unit_year">ஆண்டு</string>
     <string name="cd_decrease_interval">இடைவெளியைக் குறை</string>
     <string name="cd_increase_interval">இடைவெளியை அதிகரி</string>
+    <string name="error_recurrence_interval_range">%1$d முதல் %2$d வரையிலான எண்ணை உள்ளிடவும்</string>
     <string name="rrule_starting">%1$s %2$s இலிருந்து தொடங்குகிறது%3$s</string>
     <string name="rrule_since">%1$s · %2$s முதல்</string>
 

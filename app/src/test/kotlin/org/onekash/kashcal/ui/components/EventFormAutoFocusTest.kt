@@ -216,18 +216,33 @@ class EventFormAutoFocusTest {
     @Test
     @Config(qualifiers = "w360dp-h640dp-mdpi", shadows = [NoopMagnifier::class])
     fun `a drag that starts inside any form text field keeps that field focused`() {
-        // Edit mode with a counted series, so the Repeat picker's "After N occurrences"
-        // field is enabled once the picker is expanded; the tag field opens from its
-        // "New tag" affordance. Fields are discovered by their SetText action, so an
-        // unmarked text field shown in this form state fails here. Tapping a field that
-        // holds text shows the magnifier, hence [NoopMagnifier].
+        // A counted series, so the Repeat picker's "After N occurrences" field is enabled
+        // once the picker is expanded.
+        assertEveryFieldKeepsFocusOnDrag(rrule = "FREQ=DAILY;COUNT=5", minFields = 5)
+    }
+
+    @Test
+    @Config(qualifiers = "w360dp-h640dp-mdpi", shadows = [NoopMagnifier::class])
+    fun `a drag that starts inside the Custom interval field keeps it focused`() {
+        // An interval over 1 opens the picker on Custom, which adds the "Repeat every" field.
+        assertEveryFieldKeepsFocusOnDrag(rrule = "FREQ=DAILY;INTERVAL=2;COUNT=5", minFields = 6)
+    }
+
+    /**
+     * Opens an event with [rrule] in edit mode, expands Repeat and opens the tag field, then
+     * checks that a drag starting on each text field scrolls the form and keeps that field
+     * focused. Fields are discovered by their SetText action, so an unmarked text field shown in
+     * this form state fails here. Tapping a field that holds text shows the magnifier, hence
+     * [NoopMagnifier] on the callers.
+     */
+    private fun assertEveryFieldKeepsFocusOnDrag(rrule: String, minFields: Int) {
         render(
             eventId = 1L,
             onLoadEvent = {
                 eventWithTitle("Standup").copy(
                     startTs = START_TS,
                     endTs = START_TS + 3_600_000L,
-                    rrule = "FREQ=DAILY;COUNT=5",
+                    rrule = rrule,
                 )
             },
         )
@@ -237,7 +252,7 @@ class EventFormAutoFocusTest {
 
         val fields = composeTestRule.onAllNodes(hasSetTextAction(), useUnmergedTree = true)
         val count = fields.fetchSemanticsNodes().size
-        assertTrue("expected at least 5 form text fields, found $count", count >= 5)
+        assertTrue("expected at least $minFields form text fields, found $count", count >= minFields)
 
         for (i in 0 until count) {
             val field = fields[i]

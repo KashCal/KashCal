@@ -1452,6 +1452,7 @@
     <string name="rrule_unit_year">Rok</string>
     <string name="cd_decrease_interval">Snížit interval</string>
     <string name="cd_increase_interval">Zvýšit interval</string>
+    <string name="error_recurrence_interval_range">Zadejte číslo od %1$d do %2$d</string>
     <string name="rrule_starting">%1$s počínaje %2$s%3$s</string>
     <string name="rrule_since">%1$s · od %2$s</string>
 

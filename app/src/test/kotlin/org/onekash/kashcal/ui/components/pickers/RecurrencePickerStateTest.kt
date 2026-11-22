@@ -686,6 +686,45 @@ class RecurrencePickerStateTest {
         )
     }
 
+    // ==================== Intervals above the builder's cap ====================
+
+    @Test
+    fun `synced INTERVAL 1200 survives a no-op save`() {
+        val selections = RecurrencePickerSelections.from(
+            parsed = RruleBuilder.parseRrule("FREQ=DAILY;INTERVAL=1200", DayOfWeek.MONDAY, 15, 3),
+            startDayOfWeek = DayOfWeek.MONDAY,
+            startDayOfMonth = 15,
+        )
+        val rrule = selections.toRrule(deviceWkst = null)!!
+        assertTrue("expected INTERVAL=1200, got $rrule", rrule.contains("INTERVAL=1200"))
+    }
+
+    @Test
+    fun `typed interval 354 days emits FREQ DAILY INTERVAL 354`() {
+        val selections = RecurrencePickerSelections.from(
+            parsed = ParsedRecurrence(),
+            startDayOfWeek = DayOfWeek.MONDAY,
+            startDayOfMonth = 15,
+        ).copy(frequencyOption = FrequencyOption.CUSTOM, customUnit = CustomRecurrenceUnit.DAY, interval = 354)
+        val rrule = selections.toRrule(deviceWkst = null)!!
+        assertTrue("got $rrule", rrule.startsWith("FREQ=DAILY") && rrule.contains("INTERVAL=354"))
+    }
+
+    @Test
+    fun `interval at the cap emits FREQ YEARLY INTERVAL 999`() {
+        val selections = RecurrencePickerSelections.from(
+            parsed = ParsedRecurrence(),
+            startDayOfWeek = DayOfWeek.MONDAY,
+            startDayOfMonth = 15,
+        ).copy(
+            frequencyOption = FrequencyOption.CUSTOM,
+            customUnit = CustomRecurrenceUnit.YEAR,
+            interval = RECURRENCE_INTERVAL_MAX,
+        )
+        val rrule = selections.toRrule(deviceWkst = null)!!
+        assertTrue("got $rrule", rrule.startsWith("FREQ=YEARLY") && rrule.contains("INTERVAL=999"))
+    }
+
     // ==================== Interval edits from 200 ====================
 
     @Test

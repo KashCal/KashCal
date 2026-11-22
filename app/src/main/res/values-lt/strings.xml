@@ -1452,6 +1452,7 @@
     <string name="rrule_unit_year">Metai</string>
     <string name="cd_decrease_interval">Sumažinti intervalą</string>
     <string name="cd_increase_interval">Padidinti intervalą</string>
+    <string name="error_recurrence_interval_range">Įveskite skaičių nuo %1$d iki %2$d</string>
     <string name="rrule_starting">%1$s pradedant %2$s%3$s</string>
     <string name="rrule_since">%1$s · nuo %2$s</string>
 

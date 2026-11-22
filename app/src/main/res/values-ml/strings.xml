@@ -1320,6 +1320,7 @@
     <string name="rrule_unit_year">വർഷം</string>
     <string name="cd_decrease_interval">ഇടവേള കുറയ്ക്കുക</string>
     <string name="cd_increase_interval">ഇടവേള വർദ്ധിപ്പിക്കുക</string>
+    <string name="error_recurrence_interval_range">%1$d മുതൽ %2$d വരെയുള്ള ഒരു സംഖ്യ നൽകുക</string>
     <string name="rrule_starting">%1$s %2$s മുതൽ ആരംഭിക്കുന്നു%3$s</string>
     <string name="rrule_since">%1$s · %2$s മുതൽ</string>
 

@@ -108,6 +108,8 @@ class TestDatabasesGuardTest {
         val SUPPORT_SQLITE_ALLOWED = mapOf(
             "data/calendar_provider/SqliteCalendarProvider.kt" to
                 "its .query( calls are on a framework SQLiteDatabase in the CalendarProvider test double",
+            "sync/contacts/SqliteContactsProvider.kt" to
+                "its .query( calls are on a framework SQLiteDatabase in the ContactsProvider test double",
         )
     }
 }

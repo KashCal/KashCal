@@ -1319,6 +1319,7 @@
     <string name="rrule_unit_year">År</string>
     <string name="cd_decrease_interval">Minska intervall</string>
     <string name="cd_increase_interval">Öka intervall</string>
+    <string name="error_recurrence_interval_range">Ange ett tal från %1$d till %2$d</string>
     <string name="rrule_starting">%1$s från %2$s%3$s</string>
     <string name="rrule_since">%1$s · sedan %2$s</string>
 

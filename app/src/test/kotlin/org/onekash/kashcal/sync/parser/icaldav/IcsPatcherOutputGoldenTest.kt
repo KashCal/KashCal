@@ -110,7 +110,8 @@ class IcsPatcherOutputGoldenTest {
             icsByEventId = mapOf(1L to serverSeries),
         )
         File(context.cacheDir, "shared").deleteRecursively()
-        // The file is written before the FileProvider lookup, which has no provider here.
+        // The URI lookup can fail depending on test order, so its result is ignored and the
+        // written file read (see [org.onekash.kashcal.testutil.resetFileProviderCache]).
         IcsExporter().exportEvent(context, export)
         val written = File(context.cacheDir, "shared").listFiles()!!.single().readText()
         check("synced-series-export-rows", written)
@@ -182,15 +183,10 @@ class IcsPatcherOutputGoldenTest {
             id = 2, originalEventId = 1, originalInstanceTime = first.startTs + DAY, title = "Long run",
         )
         val second = local("Call Tokyo", "local-call@kashcal").copy(id = 3, timezone = "Asia/Tokyo")
-        File(context.cacheDir, "shared").deleteRecursively()
-        // The file is written before the FileProvider lookup, which has no provider under
-        // Robolectric, so the result is ignored and the file read directly.
-        IcsExporter().exportCalendar(
-            context,
+        val written = IcsExporter().buildCalendarText(
             listOf(EventExport(first, listOf(firstException), emptyMap()), EventExport(second, emptyList(), emptyMap())),
             "Golden calendar",
         )
-        val written = File(context.cacheDir, "shared").listFiles()!!.single().readText()
         check("whole-calendar-local", written)
     }
 

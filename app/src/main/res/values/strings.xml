@@ -1916,6 +1916,7 @@
     <!-- Content descriptions for the Custom recurrence stepper buttons -->
     <string name="cd_decrease_interval">Decrease interval</string>
     <string name="cd_increase_interval">Increase interval</string>
+    <string name="error_recurrence_interval_range">Enter a number from %1$d to %2$d</string>
     <!-- Series start date composites for quick view — %1$s = freq, %2$s = date, %3$s = end suffix -->
     <string name="rrule_starting">%1$s starting %2$s%3$s</string>
     <!-- "since" variant (no end suffix) — %1$s = freq, %2$s = date -->

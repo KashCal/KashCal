@@ -95,8 +95,8 @@ class DebugReportExporterTest {
             ioDispatcher = Dispatchers.IO,
             zone = { ZoneOffset.UTC },
             clock = { now },
-            // FileProvider caches its roots in a static map that outlives each Robolectric
-            // sandbox, so these tests use file URIs; the emulator check covers the authority.
+            // File URIs: a FileProvider lookup depends on test order (see
+            // [org.onekash.kashcal.testutil.resetFileProviderCache]).
             contentUri = { Uri.fromFile(it) },
         )
     }

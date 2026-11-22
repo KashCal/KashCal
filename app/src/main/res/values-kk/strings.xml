@@ -1320,6 +1320,7 @@
     <string name="rrule_unit_year">Жыл</string>
     <string name="cd_decrease_interval">Аралықты азайту</string>
     <string name="cd_increase_interval">Аралықты арттыру</string>
+    <string name="error_recurrence_interval_range">%1$d мен %2$d аралығындағы санды енгізіңіз</string>
     <string name="rrule_starting">%1$s %2$s%3$s бастап</string>
     <string name="rrule_since">%1$s · %2$s бастап</string>
 

@@ -27,7 +27,7 @@ import org.onekash.kashcal.domain.rrule.EndCondition
  * - A replaced count reaches onEndConditionChange
  * - A tap then a replacement yields the new count; select-all on focus isn't exercised, since
  *   performTextReplacement ignores the selection
- * - The count field keeps digits only, at most 3
+ * - The count field refuses a non-digit or fourth-digit edit whole, leaving the count as it was
  * - Tapping Never and On date emits Never and Until
  */
 @RunWith(AndroidJUnit4::class)
@@ -181,7 +181,7 @@ class EndConditionSelectorComposeTest {
     }
 
     @Test
-    fun endConditionSelector_filters_non_digit_input() {
+    fun endConditionSelector_rejects_non_digit_input() {
         var capturedCount = 0
 
         composeTestRule.setContent {
@@ -201,16 +201,16 @@ class EndConditionSelectorComposeTest {
             }
         }
 
-        // The input filter strips non-digits.
+        // An edit with any non-digit is undone whole, not stripped down to its digits.
         composeTestRule.onNode(hasSetTextAction()).performTextReplacement("abc123xyz")
         composeTestRule.waitForIdle()
 
-        // Only the digits "123" remain.
-        assertEquals(123, capturedCount)
+        composeTestRule.onNode(hasSetTextAction()).assertTextEquals("10")
+        assertEquals(0, capturedCount)
     }
 
     @Test
-    fun endConditionSelector_limits_to_3_digits() {
+    fun endConditionSelector_rejects_more_than_3_digits() {
         var capturedCount = 0
 
         composeTestRule.setContent {
@@ -230,11 +230,11 @@ class EndConditionSelectorComposeTest {
             }
         }
 
-        // More than 3 digits.
+        // More than 3 digits is undone whole, never cut to "123".
         composeTestRule.onNode(hasSetTextAction()).performTextReplacement("12345")
         composeTestRule.waitForIdle()
 
-        // Truncated to the first 3: "123".
-        assertEquals(123, capturedCount)
+        composeTestRule.onNode(hasSetTextAction()).assertTextEquals("10")
+        assertEquals(0, capturedCount)
     }
 }

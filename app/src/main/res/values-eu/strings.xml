@@ -1320,6 +1320,7 @@
     <string name="rrule_unit_year">Urte</string>
     <string name="cd_decrease_interval">Murriztu tartea</string>
     <string name="cd_increase_interval">Handitu tartea</string>
+    <string name="error_recurrence_interval_range">Idatzi %1$d eta %2$d arteko zenbaki bat</string>
     <string name="rrule_starting">%1$s %2$s-(e)tik%3$s</string>
     <string name="rrule_since">%1$s · %2$s-(e)tik</string>
 

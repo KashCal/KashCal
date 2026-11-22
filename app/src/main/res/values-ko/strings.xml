@@ -1254,6 +1254,7 @@
     <string name="rrule_unit_year">년</string>
     <string name="cd_decrease_interval">간격 줄이기</string>
     <string name="cd_increase_interval">간격 늘리기</string>
+    <string name="error_recurrence_interval_range">%1$d~%2$d 사이의 숫자를 입력해 주세요</string>
     <string name="rrule_starting">%1$s %2$s부터 시작%3$s</string>
     <string name="rrule_since">%1$s · %2$s부터</string>
 

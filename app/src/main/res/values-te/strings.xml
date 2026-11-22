@@ -1320,6 +1320,7 @@
     <string name="rrule_unit_year">సంవత్సరం</string>
     <string name="cd_decrease_interval">విరామాన్ని తగ్గించండి</string>
     <string name="cd_increase_interval">విరామాన్ని పెంచండి</string>
+    <string name="error_recurrence_interval_range">%1$d నుండి %2$d వరకు ఒక సంఖ్యను నమోదు చేయండి</string>
     <string name="rrule_starting">%1$s %2$s నుండి ప్రారంభమవుతోంది%3$s</string>
     <string name="rrule_since">%1$s · %2$s నుండి</string>
 

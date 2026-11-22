@@ -1518,6 +1518,7 @@
     <string name="rrule_unit_year">Bliain</string>
     <string name="cd_decrease_interval">Laghdaigh an t-eatramh</string>
     <string name="cd_increase_interval">Méadaigh an t-eatramh</string>
+    <string name="error_recurrence_interval_range">Cuir isteach uimhir ó %1$d go %2$d</string>
     <string name="rrule_starting">%1$s ag tosú %2$s%3$s</string>
     <string name="rrule_since">%1$s · ó %2$s</string>
 

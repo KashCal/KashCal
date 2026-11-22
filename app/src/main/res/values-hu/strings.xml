@@ -1320,6 +1320,7 @@
     <string name="rrule_unit_year">Év</string>
     <string name="cd_decrease_interval">Időköz csökkentése</string>
     <string name="cd_increase_interval">Időköz növelése</string>
+    <string name="error_recurrence_interval_range">Adj meg egy számot %1$d és %2$d között</string>
     <string name="rrule_starting">%1$s kezdve: %2$s%3$s</string>
     <string name="rrule_since">%1$s · óta: %2$s</string>
 

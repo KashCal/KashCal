@@ -679,7 +679,8 @@ class ImportedUnknownPropertiesExportTest {
 
     private fun exportEvent(export: EventExport): String {
         val shared = File(context.cacheDir, "shared").apply { deleteRecursively() }
-        // The file is written before the FileProvider lookup, which has no provider here.
+        // The URI lookup can fail depending on test order, so its result is ignored and the
+        // written file read (see [org.onekash.kashcal.testutil.resetFileProviderCache]).
         IcsExporter().exportEvent(context, export)
         return shared.listFiles()!!.single().readText()
     }

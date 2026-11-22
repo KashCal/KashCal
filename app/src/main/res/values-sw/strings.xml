@@ -1320,6 +1320,7 @@
     <string name="rrule_unit_year">Mwaka</string>
     <string name="cd_decrease_interval">Punguza muda</string>
     <string name="cd_increase_interval">Ongeza muda</string>
+    <string name="error_recurrence_interval_range">Ingiza nambari kuanzia %1$d hadi %2$d</string>
     <string name="rrule_starting">%1$s kuanzia %2$s%3$s</string>
     <string name="rrule_since">%1$s · tangu %2$s</string>
 

@@ -1319,6 +1319,7 @@
     <string name="rrule_unit_year">Jaar</string>
     <string name="cd_decrease_interval">Interval verlagen</string>
     <string name="cd_increase_interval">Interval verhogen</string>
+    <string name="error_recurrence_interval_range">Voer een getal van %1$d tot %2$d in</string>
     <string name="rrule_starting">%1$s vanaf %2$s%3$s</string>
     <string name="rrule_since">%1$s · sinds %2$s</string>
 

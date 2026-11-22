@@ -1,0 +1,4 @@
+• Custom repeat: type the interval, up to 999 for any unit (#440)
+• Pull-to-refresh also refreshes calendar feeds (#443)
+• Contacts: edits made during an upload are no longer lost (#434)
+• New language: South Azerbaijani

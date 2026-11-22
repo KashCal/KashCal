@@ -1386,6 +1386,7 @@
     <string name="rrule_unit_year">Godina</string>
     <string name="cd_decrease_interval">Smanji interval</string>
     <string name="cd_increase_interval">Povećaj interval</string>
+    <string name="error_recurrence_interval_range">Unesite broj od %1$d do %2$d</string>
     <string name="rrule_starting">%1$s počevši od %2$s%3$s</string>
     <string name="rrule_since">%1$s · od %2$s</string>
 

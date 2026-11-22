@@ -1320,6 +1320,7 @@
     <string name="rrule_unit_year">ବର୍ଷ</string>
     <string name="cd_decrease_interval">ବ୍ୟବଧାନ କମାନ୍ତୁ</string>
     <string name="cd_increase_interval">ବ୍ୟବଧାନ ବଢ଼ାନ୍ତୁ</string>
+    <string name="error_recurrence_interval_range">%1$d ରୁ %2$d ମଧ୍ୟରେ ଏକ ସଂଖ୍ୟା ଲେଖନ୍ତୁ</string>
     <string name="rrule_starting">%1$s %2$s ରୁ ଆରମ୍ଭ%3$s</string>
     <string name="rrule_since">%1$s · %2$s ରୁ</string>
 

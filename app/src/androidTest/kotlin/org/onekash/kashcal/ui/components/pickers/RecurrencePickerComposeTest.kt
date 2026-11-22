@@ -24,9 +24,9 @@ import org.junit.runner.RunWith
  * They drive the picker's public composable, so the composition lifecycle is the event form's.
  * Most tests echo each emission back as selectedRrule, as the form does, and check that a rule
  * opened with INTERVAL > 1 or an explicit WKST keeps it through stepper nudges and chip
- * detours. Others cover the chip a rule opens on (Custom or Weekly), the stepper's 99 ceiling
- * and a '-' step from 200, the string-equality self-echo contract, and when the device's week
- * start is written as WKST.
+ * detours. Others cover the chip a rule opens on (Custom or Weekly), the stepper's cap at
+ * [RECURRENCE_INTERVAL_MAX] and a '-' step from 200, the string-equality self-echo contract,
+ * and when the device's week start is written as WKST.
  */
 @RunWith(AndroidJUnit4::class)
 class RecurrencePickerComposeTest {
@@ -118,7 +118,7 @@ class RecurrencePickerComposeTest {
     }
 
     @Test
-    fun stepperPlusButton_isDisabled_whenIntervalAt200() {
+    fun stepperPlusButton_isEnabled_whenIntervalAt200() {
         composeTestRule.setContent {
             MaterialTheme {
                 var rrule by remember { mutableStateOf<String?>("FREQ=WEEKLY;INTERVAL=200;BYDAY=MO") }
@@ -132,8 +132,27 @@ class RecurrencePickerComposeTest {
             }
         }
 
-        // At interval=200, above the 99 ceiling, '+' is disabled while '-' stays enabled so
-        // the user can step back down.
+        composeTestRule.onNodeWithContentDescription("Increase interval").assertIsEnabled()
+        composeTestRule.onNodeWithContentDescription("Decrease interval").assertIsEnabled()
+    }
+
+    @Test
+    fun stepperPlusButton_isDisabled_whenIntervalAt1200() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                var rrule by remember { mutableStateOf<String?>("FREQ=WEEKLY;INTERVAL=1200;BYDAY=MO") }
+                RecurrencePickerRow(
+                    selectedRrule = rrule,
+                    startDateMillis = mondayJanFifth2026Millis,
+                    isExpanded = true,
+                    onToggle = {},
+                    onSelect = { rrule = it },
+                )
+            }
+        }
+
+        // At interval=1200, above the cap, '+' is disabled while '-' stays enabled so the user
+        // can step back down.
         composeTestRule.onNodeWithContentDescription("Increase interval").assertIsNotEnabled()
         composeTestRule.onNodeWithContentDescription("Decrease interval").assertIsEnabled()
     }
