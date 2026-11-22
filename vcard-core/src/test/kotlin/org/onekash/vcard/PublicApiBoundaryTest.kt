@@ -12,7 +12,8 @@ import kotlin.test.fail
  *
  * Fails on any `ezvcard.*` return or parameter type among the public methods declared by
  * [VCardParser], [VCardWriter], [ImageFormat] and its companion, and on any such type among the
- * declared fields and public methods of the model classes in [modelClasses]. A last test checks
+ * declared fields and public methods of the model classes in [modelClasses], and on any such type
+ * in [changedFields] or [ContactField]. A last test checks
  * the matcher flags a real ez-vcard type.
  */
 class PublicApiBoundaryTest {
@@ -56,6 +57,16 @@ class PublicApiBoundaryTest {
             .flatMap { leaksIn(it) } +
             ImageFormat.Companion::class.java.methods
                 .filter { it.declaringClass == ImageFormat.Companion::class.java }
+                .flatMap { leaksIn(it) }
+        assertNoLeaks(leaks)
+    }
+
+    @Test
+    fun `contact field comparison references no ez-vcard type`() {
+        val diff = Class.forName("org.onekash.vcard.ContactFieldDiffKt")
+        val leaks = diff.methods.filter { it.declaringClass == diff }.flatMap { leaksIn(it) } +
+            ContactField::class.java.methods
+                .filter { it.declaringClass == ContactField::class.java }
                 .flatMap { leaksIn(it) }
         assertNoLeaks(leaks)
     }

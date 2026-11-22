@@ -395,7 +395,7 @@ class MultiServerContactPushReconcileTest(
         val contact = field.decorate(baseContact(book.vcardVersion, uid))
         provider.pendingChanges = LocalContactChanges(
             edited = listOf(
-                LocalContactEdit(href = "", uid = uid, storedEtag = null, contact = contact, localId = LOCAL_ID),
+                LocalContactEdit(href = "", uid = uid, storedEtag = null, contact = contact, localId = LOCAL_ID, rawContactVersion = 7L),
             ),
             deleted = emptyList(),
         )
@@ -471,7 +471,7 @@ class MultiServerContactPushReconcileTest(
         )
         provider.pendingChanges = LocalContactChanges(
             edited = listOf(
-                LocalContactEdit(href = "", uid = INSPECTION_UID, storedEtag = null, contact = contact, localId = LOCAL_ID + 1),
+                LocalContactEdit(href = "", uid = INSPECTION_UID, storedEtag = null, contact = contact, localId = LOCAL_ID + 1, rawContactVersion = 7L),
             ),
             deleted = emptyList(),
         )

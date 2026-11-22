@@ -1,7 +1,6 @@
 package org.onekash.kashcal.sync.contacts
 
 import android.util.Log
-import org.onekash.kashcal.data.contacts.VCardContactMapper
 import org.onekash.kashcal.data.db.dao.AddressBookDao
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.AddressBook
@@ -200,14 +199,7 @@ class ContactPullStrategy @Inject constructor(
                     // would keep only the last.
                     val writesByHref = read.data.contacts.groupBy(
                         keySelector = { it.href },
-                        valueTransform = { rc ->
-                            MappedContactWrite(
-                                href = rc.href,
-                                etag = rc.etag,
-                                mapped = VCardContactMapper.toEntity(rc.contact),
-                                isReadOnly = isReadOnly,
-                            )
-                        },
+                        valueTransform = { rc -> rc.toWrite(isReadOnly) },
                     )
                     val insertWrites = toInsert.flatMap { writesByHref[it].orEmpty() }
                     val replaceWrites = toReplace.flatMap { writesByHref[it].orEmpty() }

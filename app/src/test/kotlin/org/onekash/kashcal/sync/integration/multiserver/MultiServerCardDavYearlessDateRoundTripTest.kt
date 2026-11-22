@@ -153,7 +153,7 @@ class MultiServerCardDavYearlessDateRoundTripTest(
             rawVCard = "",
         )
         provider.pendingChanges = LocalContactChanges(
-            edited = listOf(LocalContactEdit(href = "", uid = uid, storedEtag = null, contact = contact, localId = LOCAL_ID)),
+            edited = listOf(LocalContactEdit(href = "", uid = uid, storedEtag = null, contact = contact, localId = LOCAL_ID, rawContactVersion = 7L)),
             deleted = emptyList(),
         )
         provider.markNewUploadedCalls.clear()

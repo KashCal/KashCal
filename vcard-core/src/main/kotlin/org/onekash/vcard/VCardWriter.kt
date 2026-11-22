@@ -55,8 +55,7 @@ import ezvcard.property.StructuredName as EzStructuredName
  * Patch mode diffs the passed contact against `VCardParser.parse(rawVCard)`, so the parser's
  * representation sits on both sides. Any other producer of the passed contact, such as the app's
  * device-row mapper, must yield facets equal to the parser's for unedited fields, or the diff
- * rewrites facets the user never touched. Birthday and anniversary compare through
- * [normalizedYearless], so spellings of one date without a year count as equal.
+ * rewrites facets the user never touched. Which fields count as changed is [changedFields].
  *
  * ## Version handling
  *
@@ -100,31 +99,28 @@ class VCardWriter {
     private fun patch(base: VCard, contact: Contact, target: VCardVersion): VCard {
         val original = VCardParser().parse(contact.rawVCard).single()
         val groups = collectGroups(base)
+        val changed = changedFields(contact, original)
 
-        if (contact.displayName != original.displayName) applyFormattedName(base, contact)
-        if (contact.structuredName != original.structuredName) applyStructuredName(base, contact)
-        if (contact.nickname != original.nickname) applyNickname(base, contact)
-        if (contact.organization != original.organization) applyOrganization(base, contact)
-        if (contact.title != original.title) applyTitle(base, contact)
-        if (contact.role != original.role) applyRole(base, contact)
-        if (contact.emails != original.emails) applyEmails(base, contact, groups, target)
-        if (contact.phones != original.phones) applyPhones(base, contact, groups, target)
-        if (contact.addresses != original.addresses) applyAddresses(base, contact, groups)
-        if (contact.urls != original.urls) applyUrls(base, contact, groups)
-        if (contact.notes != original.notes) applyNotes(base, contact)
-        if (contact.categories != original.categories) applyCategories(base, contact)
-        if (contact.uid != original.uid) applyUid(base, contact)
-        if (photoContentChanged(contact.photo, original.photo)) applyPhoto(base, contact)
-        if (normalizedYearless(contact.birthday) != normalizedYearless(original.birthday)) {
-            applyBirthday(base, contact, target)
-        }
+        if (ContactField.FORMATTED_NAME in changed) applyFormattedName(base, contact)
+        if (ContactField.STRUCTURED_NAME in changed) applyStructuredName(base, contact)
+        if (ContactField.NICKNAME in changed) applyNickname(base, contact)
+        if (ContactField.ORGANIZATION in changed) applyOrganization(base, contact)
+        if (ContactField.TITLE in changed) applyTitle(base, contact)
+        if (ContactField.ROLE in changed) applyRole(base, contact)
+        if (ContactField.EMAILS in changed) applyEmails(base, contact, groups, target)
+        if (ContactField.PHONES in changed) applyPhones(base, contact, groups, target)
+        if (ContactField.ADDRESSES in changed) applyAddresses(base, contact, groups)
+        if (ContactField.URLS in changed) applyUrls(base, contact, groups)
+        if (ContactField.NOTES in changed) applyNotes(base, contact)
+        if (ContactField.CATEGORIES in changed) applyCategories(base, contact)
+        if (ContactField.UID in changed) applyUid(base, contact)
+        if (ContactField.PHOTO in changed) applyPhoto(base, contact)
+        if (ContactField.BIRTHDAY in changed) applyBirthday(base, contact, target)
         // The four dual-spelling facets (see the class doc).
-        if (normalizedYearless(contact.anniversary) != normalizedYearless(original.anniversary)) {
-            applyAnniversary(base, contact, target, groups)
-        }
-        if (contact.relations != original.relations) applyRelations(base, contact, target, groups)
-        if (contact.imHandles != original.imHandles) applyImHandles(base, contact)
-        if (contact.kind != original.kind) applyKind(base, contact, target)
+        if (ContactField.ANNIVERSARY in changed) applyAnniversary(base, contact, target, groups)
+        if (ContactField.RELATIONS in changed) applyRelations(base, contact, target, groups)
+        if (ContactField.IM_HANDLES in changed) applyImHandles(base, contact)
+        if (ContactField.KIND in changed) applyKind(base, contact, target)
         return base
     }
 
@@ -354,15 +350,6 @@ class VCardWriter {
         ImageFormat.HEIF -> ImageType.get("heic", "image/heic", "heic")
         ImageFormat.UNKNOWN -> null
     }
-
-    /**
-     * Returns whether the photo's bytes or URL changed, ignoring [Photo.contentType]. A device
-     * Contacts Photo row has no MIME column, so a photo read back from the device loses only its
-     * contentType; counting that as a change would rewrite and relabel the PHOTO on every sync
-     * without converging. A bytes or URL edit, or adding or removing the photo, still counts.
-     */
-    private fun photoContentChanged(new: Photo?, old: Photo?): Boolean =
-        new?.copy(contentType = null) != old?.copy(contentType = null)
 
     /** Writes the birthday; one without a year as [OMIT_YEAR] at 3.0 and [partialDate] at 4.0. */
     private fun applyBirthday(card: VCard, contact: Contact, target: VCardVersion) {

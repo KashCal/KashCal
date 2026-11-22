@@ -20,12 +20,14 @@ import org.onekash.kashcal.data.db.entity.AddressBook
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.carddav.FakeAddressBook
 import org.onekash.kashcal.sync.carddav.FakeCardDavClient
+import org.onekash.kashcal.sync.carddav.CardDavClient
 import org.onekash.kashcal.sync.carddav.model.CardDavAddressBook
 import org.onekash.kashcal.sync.carddav.model.CardDavContactData
 import org.onekash.kashcal.sync.carddav.model.ContactDeleteResult
 import org.onekash.kashcal.sync.carddav.model.ContactSyncItem
 import org.onekash.kashcal.sync.carddav.model.ContactSyncReport
 import org.onekash.kashcal.sync.carddav.model.ContactUploadResult
+import org.onekash.kashcal.sync.carddav.model.ContactPrecondition
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.testutil.TestDatabases
 import org.onekash.vcard.VCardParser
@@ -714,6 +716,129 @@ class ContactPullStrategyTest {
     // ---------- push (local edits and deletes) runs before the per-book pull ----------
 
     @Test
+    fun `the pull skips the acknowledged etag while a re-edit remains dirty`() = runTest {
+        val href = "$BOOK_PATH/edit.vcf"
+        val body = vcard("edit-uid", "Person")
+        val first = LocalContactEdit(
+            href = href, uid = "edit-uid", storedEtag = "v1",
+            contact = VCardParser().parse(body).single().copy(notes = listOf("first")),
+            localId = 100L, rawContactVersion = 7L,
+        )
+        provider.seed(ACCOUNT_NAME, href, "v1")
+        provider.pendingChanges = LocalContactChanges(listOf(first), emptyList())
+        val bk = book(
+            isReadOnly = false,
+            contacts = mutableListOf(CardDavContactData(href, "$BOOK_URL$href", "v1", body)),
+        )
+        val server = clientWith(bk, syncToken = null)
+        val client = object : CardDavClient by server {
+            override suspend fun putContact(resourceUrl: String, vcardBody: String, precondition: ContactPrecondition): ContactUploadResult {
+                provider.pendingChanges = LocalContactChanges(
+                    listOf(first.copy(contact = first.contact.copy(notes = listOf("second")), rawContactVersion = 8L)),
+                    emptyList(),
+                )
+                bk.contacts[0] = CardDavContactData(href, resourceUrl, "v2", vcardBody)
+                return ContactUploadResult.Success(etag = "v2")
+            }
+        }
+
+        val result = strategy.sync(account, SERVER_URL, client) as ContactPullResult.Success
+
+        assertEquals(0, result.replaced)
+        assertEquals(0, result.inserted)
+        assertEquals(1, result.skipped)
+        assertTrue(provider.replaceCalls.isEmpty())
+        assertEquals(listOf("second"), provider.pendingChanges.edited.single().contact.notes)
+        assertEquals("v2", provider.pendingChanges.edited.single().storedEtag)
+    }
+
+    @Test
+    fun `the same run's pull skips a contact a clean adopt just marked synced`() = runTest {
+        // The create's reply was lost on an earlier run; this run's create gets 412, the adopt
+        // finds the server copy equal to the device's and stamps its etag, so the pull that
+        // follows must neither insert a duplicate nor replace the row.
+        val href = "$BOOK_PATH/adopt-uid.vcf"
+        val body = vcard("adopt-uid", "Person")
+        provider.pendingChanges = LocalContactChanges(
+            listOf(
+                LocalContactEdit(
+                    href = "", uid = "adopt-uid", storedEtag = null,
+                    contact = VCardParser().parse(body).single().copy(rawVCard = ""),
+                    rawContactVersion = 7L, localId = 100L,
+                ),
+            ),
+            emptyList(),
+        )
+        val bk = book(isReadOnly = false, contacts = mutableListOf(CardDavContactData(href, "$BOOK_URL$href", "srv", body)))
+        val client = clientWith(bk, syncToken = null).apply { putContactResult = ContactUploadResult.PreconditionFailed }
+
+        val result = strategy.sync(account, SERVER_URL, client) as ContactPullResult.Success
+
+        assertTrue(provider.pendingChanges.edited.isEmpty())
+        assertTrue("no duplicate inserted", provider.insertCalls.flatten().none { it.href == href })
+        assertTrue("no replace of the adopted row", provider.replaceCalls.flatten().none { it.href == href })
+        assertEquals(1, result.skipped)
+    }
+
+    @Test
+    fun `a row left without an etag by a failed adopt replace is restored from the held delta`() = runTest {
+        // An adopt stamped the href with no etag and its replace failed, so the push held the
+        // token. The held token predates the create, so the delta lists the resource; a null
+        // device etag can't prove the row unchanged, so the pull replaces it from the server.
+        val href = "$BOOK_PATH/adopted.vcf"
+        provider.seed(ACCOUNT_NAME, href, "")
+        seedStoredToken(BOOK_URL, "token-1")
+        val bk = book(
+            isReadOnly = false,
+            contacts = mutableListOf(CardDavContactData(href, "$BOOK_URL$href", "srv", vcard("adopted-uid", "Server Copy"))),
+        )
+        bk.syncReports += CalDavResult.success(
+            ContactSyncReport(syncToken = "token-2", changed = listOf(ContactSyncItem(href, "srv")), deleted = emptyList()),
+        )
+
+        strategy.sync(account, SERVER_URL, clientWith(bk))
+
+        val replaced = provider.replaceCalls.flatten().single { it.href == href }
+        assertEquals("srv", replaced.etag)
+        assertEquals("Server Copy", replaced.mapped.contact.displayName)
+        assertEquals("srv", provider.existingEtagsByHref(ACCOUNT_NAME)[href])
+    }
+
+    @Test
+    fun `a later phone edit on a row with no etag gets a 412 and then loses to the server copy`() = runTest {
+        val href = "$BOOK_PATH/adopted.vcf"
+        val body = vcard("adopted-uid", "Server Copy")
+        provider.seed(ACCOUNT_NAME, href, "")
+        provider.pendingChanges = LocalContactChanges(
+            listOf(
+                LocalContactEdit(
+                    href = href, uid = "adopted-uid", storedEtag = null,
+                    contact = VCardParser().parse(body).single().copy(rawVCard = "", notes = listOf("later")),
+                    localId = 100L, rawContactVersion = 9L,
+                ),
+            ),
+            emptyList(),
+        )
+        seedStoredToken(BOOK_URL, "token-1")
+        val bk = book(isReadOnly = false, contacts = mutableListOf(CardDavContactData(href, "$BOOK_URL$href", "srv", body)))
+        bk.syncReports += CalDavResult.success(
+            ContactSyncReport(syncToken = "token-2", changed = listOf(ContactSyncItem(href, "srv")), deleted = emptyList()),
+        )
+        val client = clientWith(bk).apply { putContactResult = ContactUploadResult.PreconditionFailed }
+
+        strategy.sync(account, SERVER_URL, client)
+
+        assertEquals(
+            "with no etag the edit can only create, never overwrite",
+            listOf(ContactPrecondition.IfAbsent),
+            client.putContactCalls.map { it.third },
+        )
+        val replaced = provider.replaceCalls.flatten().single { it.href == href }
+        assertEquals("srv", replaced.etag)
+        assertTrue("the server copy replaced the phone edit", provider.pendingChanges.edited.single().contact.notes.isEmpty())
+    }
+
+    @Test
     fun `push uploads the local edit before the per-book pull fetches new server contacts`() = runTest {
         // A local edit at /ab/default/edit.vcf (stored etag v1, unchanged on the server, so
         // the pull would skip it) and a net-new server contact /ab/default/new.vcf the pull
@@ -739,6 +864,7 @@ class ContactPullStrategyTest {
                 LocalContactEdit(
                     href = editHref, uid = "edit-uid", storedEtag = "v1",
                     contact = VCardParser().parse(editBody).single().copy(displayName = "Edited", rawVCard = ""),
+                    rawContactVersion = 7L,
                 ),
             ),
             deleted = emptyList(),
@@ -831,6 +957,7 @@ class ContactPullStrategyTest {
                 LocalContactEdit(
                     href = "", uid = "uid-new", storedEtag = null, localId = 100L,
                     contact = VCardParser().parse(vcard("uid-new", "New Person")).single().copy(rawVCard = ""),
+                    rawContactVersion = 7L,
                 ),
             ),
             deleted = emptyList(),
@@ -871,6 +998,7 @@ class ContactPullStrategyTest {
                 LocalContactEdit(
                     href = "", uid = "uid-new", storedEtag = null, localId = 100L,
                     contact = VCardParser().parse(vcard("uid-new", "New Person")).single().copy(rawVCard = ""),
+                    rawContactVersion = 7L,
                 ),
             ),
             deleted = emptyList(),

@@ -8,9 +8,10 @@ package org.onekash.kashcal.sync.contacts
  * is registered), so the real [AndroidContactsProviderRepository] can't give
  * [existingEtagsByHref] a non-empty read-back, the signal a pull needs to tell changed from
  * unchanged. This fake keeps a per-account href to etag store: inserts add, replaces update
- * the etag in place (as the real in-place replace keeps the row), and deletes remove. Reads
- * reflect the current store, so a strategy's insert, replace, skip and orphan-delete routing
- * is observable end to end.
+ * the etag in place (as the real in-place replace keeps the row) and overwrite a pending edit at
+ * that href, and deletes remove. A blank etag reads back as null. Reads reflect the current
+ * store, so a strategy's insert, replace, skip and orphan-delete routing is observable end
+ * to end.
  *
  * Seed the store with [seed] for hrefs already on the device before a run; assert on
  * [insertCalls], [replaceCalls] and [deleteCalls] (each in call order) and the resulting
@@ -93,8 +94,9 @@ class FakeContactsProviderRepository : ContactsProviderRepository {
     override suspend fun existingSourceIds(accountName: String): Set<String> =
         store[accountName]?.keys?.toSet() ?: emptySet()
 
+    // A blank stored etag reads as null, as AndroidContactsProviderRepository maps a blank SYNC2.
     override suspend fun existingEtagsByHref(accountName: String): Map<String, String?> =
-        store[accountName]?.toMap() ?: emptyMap()
+        store[accountName]?.mapValues { (_, etag) -> etag.etagOrNull() } ?: emptyMap()
 
     override suspend fun deleteByHrefs(
         accountName: String,
@@ -114,6 +116,12 @@ class FakeContactsProviderRepository : ContactsProviderRepository {
         if (replaceResult.isFailure) return replaceResult
         val m = store.getOrPut(accountName) { HashMap() }
         contacts.forEach { m[it.href] = it.etag } // in place: new etag, same href
+        // The real replace overwrites the Data rows and SYNC2 of a row whose DIRTY stayed set,
+        // so a pending edit at the href now reads back the server copy.
+        val byHref = contacts.associateBy { it.href }
+        pendingChanges = pendingChanges.copy(edited = pendingChanges.edited.map { edit ->
+            byHref[edit.href]?.let { edit.copy(contact = it.mapped.contact, storedEtag = it.etag) } ?: edit
+        })
         return Result.success(Unit)
     }
 
@@ -182,15 +190,20 @@ class FakeContactsProviderRepository : ContactsProviderRepository {
     }
 
     /**
-     * The device's pending set a run sees, seeded by the test (empty by default).
-     * [markContactUploaded], [markNewContactUploaded], [hardDeleteTombstone] and
-     * [restoreTombstone] prune the matching entry so a later read reflects the write, as the
-     * real provider clears `DIRTY`, hard-deletes the tombstone or clears `DELETED`.
+     * Models the pending set across runs. Upload acknowledgements retain newer versions;
+     * successful deletes and restores remove their tombstones.
      */
     var pendingChanges = LocalContactChanges(edited = emptyList(), deleted = emptyList())
 
     /** Every [markContactUploaded] call as (accountName, href, newEtag), in order. */
     val markUploadedCalls = mutableListOf<Triple<String, String, String>>()
+
+    /**
+     * The uploadedVersion of every [markContactUploaded] and [markNewContactUploaded] call, in
+     * call order across both. Kept apart from the call records so existing equality assertions
+     * on them stay valid.
+     */
+    val uploadedVersions = mutableListOf<Long>()
 
     /** Every [markContactUploaded] that moved a contact to a new href, as (old href, new href). */
     val movedHrefs = mutableListOf<Pair<String, String>>()
@@ -230,15 +243,23 @@ class FakeContactsProviderRepository : ContactsProviderRepository {
         accountName: String,
         href: String,
         newEtag: String,
+        uploadedVersion: Long,
         newHref: String?,
     ): Result<Unit> {
         markUploadedCalls += Triple(accountName, href, newEtag)
+        uploadedVersions += uploadedVersion
         if (newHref != null) movedHrefs += Pair(href, newHref)
         if (markUploadedResult.isFailure) return markUploadedResult
         val book = store.getOrPut(accountName) { HashMap() }
         if (newHref != null) book.remove(href)
         book[newHref ?: href] = newEtag
-        pendingChanges = pendingChanges.copy(edited = pendingChanges.edited.filterNot { it.href == href })
+        pendingChanges = pendingChanges.copy(edited = pendingChanges.edited.mapNotNull {
+            when {
+                it.href != href -> it
+                it.rawContactVersion == uploadedVersion -> null
+                else -> it.copy(href = newHref ?: href, storedEtag = newEtag.etagOrNull())
+            }
+        })
         return Result.success(Unit)
     }
 
@@ -265,14 +286,19 @@ class FakeContactsProviderRepository : ContactsProviderRepository {
         localId: Long,
         href: String,
         newEtag: String,
+        uploadedVersion: Long,
     ): Result<Unit> {
         markNewUploadedCalls += MarkNewUploaded(accountName, localId, href, newEtag)
+        uploadedVersions += uploadedVersion
         if (markNewUploadedResult.isFailure) return markNewUploadedResult
-        // The originating row is now synced under its new server href, and its net-new pending
-        // edit (keyed by provider _ID, since its href was blank) is pruned, as the real
-        // provider stamps SOURCE_ID and clears DIRTY.
         store.getOrPut(accountName) { HashMap() }[href] = newEtag
-        pendingChanges = pendingChanges.copy(edited = pendingChanges.edited.filterNot { it.localId == localId })
+        pendingChanges = pendingChanges.copy(edited = pendingChanges.edited.mapNotNull {
+            when {
+                it.localId != localId -> it
+                it.rawContactVersion == uploadedVersion -> null
+                else -> it.copy(href = href, storedEtag = newEtag.etagOrNull())
+            }
+        })
         return Result.success(Unit)
     }
 
@@ -300,3 +326,6 @@ class FakeContactsProviderRepository : ContactsProviderRepository {
         return Result.success(Unit)
     }
 }
+
+/** A blank etag means no validator, as the real repository reads a blank SYNC2. */
+private fun String?.etagOrNull(): String? = this?.takeIf { it.isNotEmpty() }
