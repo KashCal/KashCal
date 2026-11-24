@@ -4,9 +4,8 @@ on:
   push:
     tags:
       - 'v*'
-  # Manual trigger builds the APK and uploads it as a run artifact only — it does
-  # NOT create a release (that happens on tag push). Use it to obtain a build
-  # without releasing. Re-push the tag to (re)create a release with the APK.
+  # A manual run builds the APK and uploads it as a run artifact without creating a
+  # release. A tag push creates the release; re-push the tag to recreate one.
   workflow_dispatch:
 
 permissions:
@@ -14,12 +13,10 @@ permissions:
 
 jobs:
   build-release:
-    # Public repo only. The private repo attaches its own locally-built APK when
-    # the release is created, so it neither needs nor wants a CI rebuild (a
-    # private tag push triggers this workflow but the job is skipped here). The
-    # public APK must be built by CI from the public commit hash (reproducibility).
-    # NOTE: if the public repo is ever renamed, update this string or the public
-    # build silently stops (job skipped on every tag, no error).
+    # Public repo only. The private repo attaches its own locally built APK, so a private
+    # tag push skips this job. The public APK is built by CI from the public commit hash
+    # so the build is reproducible. If the public repo is renamed, update this string, or
+    # every public tag skips the job without an error.
     if: github.repository == 'KashCal/KashCal'
     runs-on: ubuntu-latest
 
@@ -33,9 +30,6 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
         cache: gradle
-
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
 
     - name: Decode Keystore
       env:
@@ -54,13 +48,14 @@ jobs:
     - name: Get version from properties
       id: version
       run: |
-        VERSION_NAME=$(grep VERSION_NAME version.properties | cut -d'=' -f2)
+        VERSION_NAME=$(grep '^VERSION_NAME=' version.properties | cut -d'=' -f2)
         echo "version=$VERSION_NAME" >> $GITHUB_OUTPUT
 
     - name: Verify APK signature
       run: |
-        $ANDROID_HOME/build-tools/35.0.0/apksigner verify -v \
-          app/build/outputs/apk/release/app-release.apk
+        # Newest build-tools on the runner image, so a removed version doesn't break this.
+        BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+        "$BUILD_TOOLS/apksigner" verify -v app/build/outputs/apk/release/app-release.apk
 
     - name: Rename APK
       run: |
@@ -91,9 +86,8 @@ jobs:
       if: github.event_name == 'push'
       uses: softprops/action-gh-release@v2
       with:
-        # Create the release WITH the asset in one call so there is no
-        # empty-release window for immutable-releases to seal before the
-        # APK is attached.
+        # Create the release and attach the APK in one call: immutable releases seal a
+        # release created empty before the APK can be attached.
         tag_name: ${{ github.ref_name }}
         name: ${{ github.ref_name }}
         body_path: ${{ steps.notes.outputs.found == 'true' && 'release_notes.md' || '' }}

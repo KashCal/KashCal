@@ -40,7 +40,7 @@ body:
         - Calendar views (month, agenda, 3-day)
         - Event creation / editing
         - Sync (iCloud, CalDAV, ICS subscriptions)
-        - Widgets (agenda, date, week)
+        - Widgets
         - Reminders / notifications
         - Settings / preferences
         - Device calendar integration

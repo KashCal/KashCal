@@ -50,7 +50,7 @@ body:
     attributes:
       label: KashCal version
       description: Settings, scroll to bottom
-      placeholder: "e.g., v23.3.6"
+      placeholder: "e.g., 2026.11.22"
     validations:
       required: true
 
@@ -91,8 +91,11 @@ body:
         - Baikal
         - Stalwart
         - Zoho
-        - FastMail
-        - SoGo
+        - Fastmail
+        - SOGo
+        - mailbox.org
+        - Cyrus
+        - Xandikos
         - Other CalDAV
         - ICS Subscription
     validations:

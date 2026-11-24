@@ -8,6 +8,8 @@ on:
 jobs:
   analyze:
     name: Analyze
+    # Public repo only: scheduled runs on the private repo spend metered minutes.
+    if: github.repository == 'KashCal/KashCal'
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -28,6 +30,7 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
+        cache: gradle
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3

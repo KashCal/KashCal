@@ -9,5 +9,5 @@
 /build.gradle.kts        @one-kash
 /settings.gradle.kts     @one-kash
 
-# Signing configuration
+# App version
 /version.properties      @one-kash

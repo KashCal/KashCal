@@ -1,0 +1,93 @@
+name: Require linked issue
+
+# Closes pull requests that don't link an issue. Runs on pull_request_target so it can
+# comment on and close PRs from forks; it never checks out or runs the PR's code, only
+# reads its metadata through the API.
+on:
+  pull_request_target:
+    types: [opened, edited, reopened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+# Runs for one PR one at a time, so an "opened" run can't close a PR that a later
+# "edited" run found linked.
+concurrency:
+  group: require-linked-issue-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.user.type != 'Bot'
+    steps:
+      - uses: actions/github-script@v9
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const number = context.payload.pull_request.number;
+            const marker = '<!-- require-linked-issue -->';
+
+            // author_association can read CONTRIBUTOR for a private org member, so ask for the
+            // permission level instead.
+            const canWrite = async (username) => {
+              try {
+                const { data } = await github.rest.repos.getCollaboratorPermissionLevel({ owner, repo, username });
+                return ['admin', 'maintain', 'write'].includes(data.role_name);
+              } catch (e) {
+                return false;
+              }
+            };
+
+            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: number });
+            if (await canWrite(pr.user.login)) return;
+            // A maintainer who reopens a PR keeps it open.
+            if (context.payload.action === 'reopened' && await canWrite(context.payload.sender.login)) return;
+
+            // closingIssuesReferences covers sidebar links but is filled only for PRs into the
+            // default branch, so closing keywords in the body count too.
+            const result = await github.graphql(`
+              query($owner: String!, $repo: String!, $number: Int!) {
+                repository(owner: $owner, name: $repo) {
+                  pullRequest(number: $number) {
+                    closingIssuesReferences(first: 1) { totalCount }
+                  }
+                }
+              }`, { owner, repo, number });
+            const keyword = /\b(close[sd]?|fix(e[sd])?|resolve[sd]?)\s*:?\s+(\S+\/\S+)?#\d+/i;
+            const linked = result.repository.pullRequest.closingIssuesReferences.totalCount > 0
+              || keyword.test(pr.body || '');
+
+            if (linked) {
+              // Reopen only if this workflow closed it.
+              if (pr.state === 'closed') {
+                const { data: issue } = await github.rest.issues.get({ owner, repo, issue_number: number });
+                if (issue.closed_by && issue.closed_by.login === 'github-actions[bot]') {
+                  await github.rest.pulls.update({ owner, repo, pull_number: number, state: 'open' });
+                }
+              }
+              return;
+            }
+
+            if (pr.state === 'closed') return;
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number: number,
+            });
+            if (!comments.some(c => c.body && c.body.includes(marker))) {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: number,
+                body: [
+                  marker,
+                  'This pull request is closed because it links no issue. Changes are discussed in an issue before review.',
+                  '',
+                  `1. Find or [open an issue](https://github.com/${owner}/${repo}/issues/new/choose).`,
+                  '2. Edit this PR\'s description to include `Fixes #<issue number>`.',
+                  '',
+                  'The pull request reopens when its description links an issue. Push a commit after it reopens to run the checks.',
+                ].join('\n'),
+              });
+            }
+            await github.rest.pulls.update({ owner, repo, pull_number: number, state: 'closed' });
+            core.setFailed('No linked issue.');
