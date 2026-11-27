@@ -143,6 +143,7 @@ class AccountSettingsScreenViewModelWiringTest {
         every { vm.timeFormat } returns MutableStateFlow(KashCalDataStore.TIME_FORMAT_SYSTEM)
         every { vm.firstDayOfWeek } returns MutableStateFlow(java.util.Calendar.SUNDAY)
         every { vm.showWeekNumbers } returns MutableStateFlow(weekNumbers)
+        every { vm.showMonthGridLines } returns MutableStateFlow(false)
         every { vm.showMultiDayTimedInAllDayStrip } returns MutableStateFlow(true)
         every { vm.widgetMaxEventsPerDay } returns MutableStateFlow(widget)
         every { vm.widgetDetailedRows } returns MutableStateFlow(false)
@@ -348,6 +349,21 @@ class AccountSettingsScreenViewModelWiringTest {
         verify(exactly = 0) { vm.setQuickAddEnabled(any()) }
         verify(exactly = 0) { vm.setTitleSuggestionsEnabled(any()) }
         verify(exactly = 0) { vm.onToggleShowDeclinedEvents(any()) }
+    }
+
+    @Test
+    fun `month-grid-lines row drives exactly its VM setter and no sibling`() {
+        val vm = mockVm(widget = 8, weekNumbers = false)
+        setRoute(vm)
+
+        composeTestRule.onNodeWithText("Grid lines in full month view").performClick()
+        composeTestRule.waitForIdle()
+
+        verify(exactly = 1) { vm.setShowMonthGridLines(true) }
+        verify(exactly = 0) { vm.setShowWeekNumbers(any()) }
+        verify(exactly = 0) { vm.setWidgetMaxEventsPerDay(any()) }
+        verify(exactly = 0) { vm.setShowEventEmojis(any()) }
+        verify(exactly = 0) { vm.setWidgetDetailedRows(any()) }
     }
 
     @Test

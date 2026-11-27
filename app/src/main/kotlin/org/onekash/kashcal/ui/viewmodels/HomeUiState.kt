@@ -303,6 +303,8 @@ data class HomeUiState(
     val firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
     /** Whether the month grid shows week numbers. */
     val showWeekNumbers: Boolean = false,
+    /** Whether the full-height month view draws lines between its day cells. */
+    val showMonthGridLines: Boolean = false,
     /** Puts the event form's tag row above the notes; false puts it between notes and guests. */
     val tagsAboveNotes: Boolean = false,
     /** Whether the Agenda view's top week bar is expanded (shown), the default. */

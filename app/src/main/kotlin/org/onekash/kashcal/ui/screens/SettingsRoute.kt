@@ -182,6 +182,7 @@ fun SettingsRoute(
         val timeFormat by viewModel.timeFormat.collectAsStateWithLifecycle()
         val firstDayOfWeek by viewModel.firstDayOfWeek.collectAsStateWithLifecycle()
         val showWeekNumbers by viewModel.showWeekNumbers.collectAsStateWithLifecycle()
+        val showMonthGridLines by viewModel.showMonthGridLines.collectAsStateWithLifecycle()
         val showMultiDayTimedInAllDayStrip by viewModel.showMultiDayTimedInAllDayStrip.collectAsStateWithLifecycle()
         val widgetMaxEventsPerDay by viewModel.widgetMaxEventsPerDay.collectAsStateWithLifecycle()
         val widgetDetailedRows by viewModel.widgetDetailedRows.collectAsStateWithLifecycle()
@@ -899,6 +900,8 @@ fun SettingsRoute(
                             onFirstDayOfWeekChange = viewModel::setFirstDayOfWeek,
                             showWeekNumbers = showWeekNumbers,
                             onShowWeekNumbersChange = viewModel::setShowWeekNumbers,
+                            showMonthGridLines = showMonthGridLines,
+                            onShowMonthGridLinesChange = viewModel::setShowMonthGridLines,
                             showMultiDayTimedInAllDayStrip = showMultiDayTimedInAllDayStrip,
                             onShowMultiDayTimedInAllDayStripChange = viewModel::setShowMultiDayTimedInAllDayStrip,
                             widgetMaxEventsPerDay = widgetMaxEventsPerDay,

@@ -974,6 +974,7 @@ fun HomeScreen(
                                     },
                                     firstDayOfWeek = uiState.firstDayOfWeek,
                                     showWeekNumbers = uiState.showWeekNumbers,
+                                    showGridLines = uiState.showMonthGridLines,
                                     showEventEmojis = uiState.showEventEmojis,
                                     nowMs = nowMs,
                                     todayDayCode = todayDayCode,

@@ -1123,6 +1123,7 @@
     <!-- Tooltip explaining the Suggest event titles toggle -->
     <string name="settings_suggest_titles_info">As you name a new event, suggest titles you\'ve used before, so repeat events are one tap. Ranked by how often and how recently you\'ve used them.</string>
     <string name="settings_week_numbers">Show week numbers</string>
+    <string name="settings_month_grid_lines">Grid lines in full month view</string>
     <!-- Settings row: toggles whether multi-day timed events appear in the all-day strip -->
     <string name="settings_multiday_in_allday_strip">Multi-day events in all-day strip</string>
     <!-- Tooltip explaining the Multi-day events in all-day strip toggle -->
