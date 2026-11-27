@@ -291,6 +291,12 @@ object PreferencesKeys {
      */
     val MUTED_DEVICE_CALENDAR_IDS = stringSetPreferencesKey("muted_device_calendar_ids")
 
+    /**
+     * Rules that hide events of ICS subscriptions and device calendars, one string per rule
+     * (`HiddenSubscriptionEvents` defines the format).
+     */
+    val HIDDEN_SUBSCRIPTION_EVENTS = stringSetPreferencesKey("hidden_subscription_events")
+
     /** KashCal fires reminders for device calendar events. */
     val DEVICE_CALENDAR_REMINDERS_ENABLED = booleanPreferencesKey("device_calendar_reminders_enabled")
 

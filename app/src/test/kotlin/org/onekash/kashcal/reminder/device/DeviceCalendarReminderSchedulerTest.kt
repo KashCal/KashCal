@@ -558,6 +558,22 @@ class DeviceCalendarReminderSchedulerTest {
     }
 
     @Test
+    fun `shouldFireReminder returns false for an event the user hid`() = runTest {
+        primeHealthyEvent()
+        dataStore.setHiddenSubscriptionEvents(setOf("d|$HEALTHY_CALENDAR_ID|E|$HEALTHY_EVENT_ID"))
+        assertFalse(scheduler.shouldFireReminder(HEALTHY_EVENT_ID, HEALTHY_CALENDAR_ID))
+    }
+
+    @Test
+    fun `shouldFireReminder returns false for a hidden title only when the title is given`() = runTest {
+        primeHealthyEvent()
+        dataStore.setHiddenSubscriptionEvents(setOf("d|$HEALTHY_CALENDAR_ID|T|holy day"))
+        assertTrue(scheduler.shouldFireReminder(HEALTHY_EVENT_ID, HEALTHY_CALENDAR_ID))
+        assertFalse(scheduler.shouldFireReminder(HEALTHY_EVENT_ID, HEALTHY_CALENDAR_ID, " Holy Day "))
+        assertTrue(scheduler.shouldFireReminder(HEALTHY_EVENT_ID, HEALTHY_CALENDAR_ID, "Other"))
+    }
+
+    @Test
     fun `shouldFireReminder returns false for a muted calendar and true for another`() = runTest {
         primeHealthyEvent()
         // Both enabled, so only the mute tells them apart.

@@ -4860,6 +4860,11 @@ class HomeViewModel(
         }
     }
 
+    /** Reloads the visible range after events of a subscription were hidden. */
+    fun onSubscribedEventsHidden() {
+        reloadCurrentView()
+    }
+
     /**
      * Deletes a Room event without waiting, so the quick view can close at once; also the
      * ALL_EVENTS branch of [confirmDelete]. A failure shows a snackbar.

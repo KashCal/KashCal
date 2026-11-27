@@ -84,6 +84,7 @@ class DisplayEventRepositoryCoverageTest {
             Calendar(accountId = accountId, caldavUrl = "local://cal", displayName = "Local", color = 1, isVisible = true)
         )
         val dataStore: KashCalDataStore = mockk {
+            every { hiddenSubscriptionEvents } returns kotlinx.coroutines.flow.MutableStateFlow(emptySet<String>())
             every { showDeclinedEvents } returns MutableStateFlow(true)
             every { hiddenDeviceCalendarIds } returns MutableStateFlow(emptySet())
             every { syncPastDays } returns MutableStateFlow(KashCalDataStore.DEFAULT_SYNC_PAST_DAYS)

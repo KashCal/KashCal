@@ -135,6 +135,21 @@
     <string name="action_connect">Connect</string>
     <string name="action_duplicate">Duplicate</string>
     <string name="action_share">Share</string>
+    <string name="action_hide_event">Hide</string>
+    <string name="settings_hidden_events">Hidden events</string>
+    <string name="settings_hidden_events_none">Nothing hidden</string>
+    <plurals name="settings_hidden_events_count">
+        <item quantity="one">%1$d hide rule</item>
+        <item quantity="other">%1$d hide rules</item>
+    </plurals>
+    <string name="settings_hidden_events_restore">Restore all</string>
+    <string name="settings_hidden_events_kind_title">Every event with this title</string>
+    <string name="settings_hidden_events_kind_one">This event only</string>
+    <string name="hide_event_title">Hide from KashCal</string>
+    <string name="hide_event_message">The event stays in its calendar and is only hidden here. It stays hidden when the calendar refreshes.</string>
+    <string name="hide_event_this">Hide this event</string>
+    <string name="hide_event_all_titled">Hide all events titled \"%1$s\"</string>
+    <string name="hide_event_failed">This event can\'t be hidden</string>
     <string name="action_share_as_text">Share as text</string>
     <string name="action_export_ics">Export as .ics</string>
     <string name="action_confirm_delete">Confirm Delete</string>

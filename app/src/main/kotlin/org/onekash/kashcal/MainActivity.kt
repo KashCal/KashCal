@@ -9,7 +9,11 @@ import android.os.Bundle
 import android.provider.Settings
 import android.os.SystemClock
 import android.view.WindowManager
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.core.app.ActivityCompat
 import android.text.format.DateFormat
 import android.util.Log
@@ -35,10 +39,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
@@ -149,6 +156,12 @@ class MainActivity : FragmentActivity() {
 
     @Inject
     lateinit var icsExporter: IcsExporter
+
+    @Inject
+    lateinit var icsSubscriptionRepository: org.onekash.kashcal.data.ics.IcsSubscriptionRepository
+
+    @Inject
+    lateinit var hiddenSubscriptionEvents: org.onekash.kashcal.data.ics.HiddenSubscriptionEvents
 
     @Inject
     lateinit var deviceEventReader: DeviceEventReader
@@ -292,6 +305,10 @@ class MainActivity : FragmentActivity() {
 
                 // Event quick view sheet state
                 var showQuickViewSheet by remember { mutableStateOf(false) }
+                var hideEventCandidate by remember { mutableStateOf<org.onekash.kashcal.data.db.entity.Event?>(null) }
+                var hideDeviceCandidate by remember {
+                    mutableStateOf<org.onekash.kashcal.data.calendar_provider.DeviceCalendarInstance?>(null)
+                }
                 var quickViewEvent by remember { mutableStateOf<Event?>(null) }
                 var quickViewOccurrenceTs by remember { mutableStateOf<Long?>(null) }
 
@@ -846,6 +863,87 @@ class MainActivity : FragmentActivity() {
                     onRsvpFromInbox = { eventId, status -> homeViewModel.replyRsvp(eventId, status) }
                 )
 
+                hideEventCandidate?.let { candidate ->
+                    val hideScope = { byTitle: Boolean ->
+                        hideEventCandidate = null
+                        coroutineScope.launch {
+                            if (icsSubscriptionRepository.hideEvent(candidate, byTitle)) {
+                                homeViewModel.onSubscribedEventsHidden()
+                            } else {
+                                homeViewModel.showSnackbar(getString(R.string.hide_event_failed))
+                            }
+                        }
+                        Unit
+                    }
+                    AlertDialog(
+                        onDismissRequest = { hideEventCandidate = null },
+                        title = { Text(stringResource(R.string.hide_event_title)) },
+                        text = { Text(stringResource(R.string.hide_event_message)) },
+                        confirmButton = {
+                            // One stacked column, so the long "all titled" label wraps without
+                            // running into Cancel (a separate dismissButton shares its row).
+                            androidx.compose.foundation.layout.Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.End,
+                            ) {
+                                TextButton(onClick = { hideScope(false) }) {
+                                    Text(stringResource(R.string.hide_event_this))
+                                }
+                                TextButton(onClick = { hideScope(true) }) {
+                                    Text(
+                                        stringResource(R.string.hide_event_all_titled, candidate.title),
+                                        textAlign = TextAlign.End,
+                                    )
+                                }
+                                TextButton(onClick = { hideEventCandidate = null }) {
+                                    Text(stringResource(R.string.action_cancel))
+                                }
+                            }
+                        },
+                    )
+                }
+
+                hideDeviceCandidate?.let { candidate ->
+                    val hideDeviceScope = { byTitle: Boolean ->
+                        hideDeviceCandidate = null
+                        coroutineScope.launch {
+                            if (byTitle) {
+                                hiddenSubscriptionEvents.hideDeviceTitle(candidate.calendarId, candidate.title)
+                            } else {
+                                hiddenSubscriptionEvents.hideDeviceEvent(candidate.calendarId, candidate.eventId, candidate.title)
+                            }
+                            homeViewModel.onSubscribedEventsHidden()
+                        }
+                        Unit
+                    }
+                    AlertDialog(
+                        onDismissRequest = { hideDeviceCandidate = null },
+                        title = { Text(stringResource(R.string.hide_event_title)) },
+                        text = { Text(stringResource(R.string.hide_event_message)) },
+                        confirmButton = {
+                            // One stacked column, so the long "all titled" label wraps without
+                            // running into Cancel (a separate dismissButton shares its row).
+                            androidx.compose.foundation.layout.Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.End,
+                            ) {
+                                TextButton(onClick = { hideDeviceScope(false) }) {
+                                    Text(stringResource(R.string.hide_event_this))
+                                }
+                                TextButton(onClick = { hideDeviceScope(true) }) {
+                                    Text(
+                                        stringResource(R.string.hide_event_all_titled, candidate.title),
+                                        textAlign = TextAlign.End,
+                                    )
+                                }
+                                TextButton(onClick = { hideDeviceCandidate = null }) {
+                                    Text(stringResource(R.string.action_cancel))
+                                }
+                            }
+                        },
+                    )
+                }
+
                 // Event Quick View Sheet
                 if (showQuickViewSheet && quickViewEvent != null) {
                     val snapshot = quickViewEvent!!
@@ -865,6 +963,16 @@ class MainActivity : FragmentActivity() {
                         occurrenceTs = quickViewOccurrenceTs,
                         showEventEmojis = uiState.showEventEmojis,
                         isReadOnlyCalendar = calendar?.isReadOnly ?: false,
+                        onHide = if (calendar?.isReadOnly == true) {
+                            {
+                                hideEventCandidate = event
+                                showQuickViewSheet = false
+                                quickViewEvent = null
+                                quickViewOccurrenceTs = null
+                            }
+                        } else {
+                            null
+                        },
                         attendees = quickViewAttendees?.models ?: emptyList(),
                         isCurrentUserOnList = quickViewAttendees?.isCurrentUserOnList ?: false,
                         onDismiss = {
@@ -1242,6 +1350,11 @@ class MainActivity : FragmentActivity() {
                         showEventEmojis = uiState.showEventEmojis,
                         hasWritePermission = hasWriteCalendarPermission,
                         isWritableCalendar = !deviceDisplayEvent.isReadOnly,
+                        onHide = {
+                            hideDeviceCandidate = deviceDisplayEvent.instance
+                            showDeviceQuickViewSheet = false
+                            deviceQuickViewEvent = null
+                        },
                         attendees = deviceQuickViewAttendees?.models ?: emptyList(),
                         isCurrentUserOnList = deviceQuickViewAttendees?.isCurrentUserOnList ?: false,
                         onRsvp = { status ->

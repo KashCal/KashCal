@@ -110,6 +110,7 @@ fun DeviceEventQuickViewSheet(
     onDelete: () -> Unit = {},
     onDuplicate: () -> Unit = {},
     onShare: () -> Unit = {},
+    onHide: (() -> Unit)? = null,
     onExportIcs: () -> Unit = {},
     onShareAsCard: () -> Unit = {},
     showShareCardTooltip: Boolean = false,
@@ -359,6 +360,7 @@ fun DeviceEventQuickViewSheet(
                 onDelete = onDelete,
                 onDuplicate = onDuplicate,
                 onShare = onShare,
+                onHide = onHide,
                 onExportIcs = onExportIcs
             )
         }
@@ -382,6 +384,7 @@ private fun DeviceEventActionButtons(
     onDelete: () -> Unit,
     onDuplicate: () -> Unit,
     onShare: () -> Unit,
+    onHide: (() -> Unit)?,
     onExportIcs: () -> Unit
 ) {
     var showMoreMenu by remember { mutableStateOf(false) }
@@ -405,6 +408,14 @@ private fun DeviceEventActionButtons(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(stringResource(R.string.action_share))
+            }
+            if (onHide != null) {
+                FilledTonalButton(
+                    onClick = onHide,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(stringResource(R.string.action_hide_event))
+                }
             }
         } else {
             // A one-off event takes an inline two-tap confirmation because the

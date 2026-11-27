@@ -66,7 +66,9 @@ class IcsSubscriptionRepository @Inject constructor(
     private val icsFetcher: IcsFetcher,
     private val reminderScheduler: ReminderScheduler,
     private val eventReader: EventReader,
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    /** Null in tests that don't hide events. */
+    private val hiddenEvents: HiddenSubscriptionEvents? = null
 ) {
 
     // ========== Subscription Management ==========
@@ -153,8 +155,60 @@ class IcsSubscriptionRepository @Inject constructor(
         Log.i(TAG, "Cancelled reminders for ${events.size} events before removing subscription")
 
         calendarsDao.deleteById(subscription.calendarId)
+        hiddenEvents?.clear(subscriptionId)
 
         Log.i(TAG, "Removed subscription: ${subscription.name}")
+    }
+
+    /**
+     * Hides [event], an event of a subscription's calendar: the event or series itself, or with
+     * [byTitle] every event with its title. The matching rows are deleted now and later
+     * refreshes leave them out ([HiddenSubscriptionEvents]).
+     *
+     * @return true when a rule was stored; false when [event] isn't in a subscription's calendar.
+     */
+    suspend fun hideEvent(event: Event, byTitle: Boolean): Boolean = withContext(Dispatchers.IO) {
+        val hidden = hiddenEvents ?: return@withContext false
+        val subscription = icsSubscriptionsDao.getByCalendarId(event.calendarId)
+            ?: return@withContext false
+        if (byTitle) {
+            hidden.hideTitle(subscription.id, event.title)
+        } else {
+            hidden.hideUid(subscription.id, event.uid, event.title)
+        }
+        val rules = hidden.rulesFor(subscription.id)
+        for (master in eventsDao.getAllMasterEventsForCalendar(subscription.calendarId)) {
+            if (!rules.hides(master)) continue
+            reminderScheduler.cancelRemindersForEvent(master.id)
+            eventsDao.deleteById(master.id)
+        }
+        true
+    }
+
+    /**
+     * Forgets every hide rule, of subscriptions and of device calendars, and refreshes the
+     * subscriptions so their hidden events come back. The stored validators are cleared first,
+     * or an unchanged feed would answer 304. Device events need no work: they show again as soon
+     * as the rules are gone.
+     */
+    suspend fun restoreAllHiddenEvents() = withContext(Dispatchers.IO) {
+        hiddenEvents?.clearAll()
+        icsSubscriptionsDao.clearAllValidators()
+        forceRefreshAll()
+    }
+
+    /**
+     * Forgets one hide rule, as listed in [HiddenSubscriptionEvents.Entry.rule]. A device
+     * calendar's event shows again at once; a subscription's events come back with a refresh,
+     * after the stored validators are cleared so an unchanged feed isn't answered with 304.
+     */
+    suspend fun restoreHiddenEvent(rule: String) = withContext(Dispatchers.IO) {
+        val hidden = hiddenEvents ?: return@withContext
+        if (!hidden.remove(rule)) return@withContext
+        if (!rule.startsWith("d|")) {
+            icsSubscriptionsDao.clearAllValidators()
+            forceRefreshAll()
+        }
     }
 
     /** Updates a subscription's name, color and interval, and the calendar's name and color. */
@@ -390,7 +444,9 @@ class IcsSubscriptionRepository @Inject constructor(
         subscriptionId: Long,
         calendarColor: Int
     ): FeedWrite {
-        val feedEvents = disambiguateDuplicateUidMasters(collapseRepeatedOccurrences(events), subscriptionId)
+        val rules = hiddenEvents?.rulesFor(subscriptionId)
+        val visible = if (rules == null) events else HiddenSubscriptionEvents.apply(events, rules)
+        val feedEvents = disambiguateDuplicateUidMasters(collapseRepeatedOccurrences(visible), subscriptionId)
 
         val write = try {
             database.runInTransaction {

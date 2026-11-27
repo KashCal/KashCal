@@ -942,6 +942,15 @@ class EventCoordinator @Inject constructor(
      * @param url the feed URL; webcal:// and webcals:// are rewritten to https://.
      * @param color calendar color (ARGB).
      */
+    suspend fun restoreAllHiddenEvents() {
+        icsSubscriptionRepository.restoreAllHiddenEvents()
+    }
+
+    /** Brings back the events of one hide rule; see [IcsSubscriptionRepository.restoreHiddenEvent]. */
+    suspend fun restoreHiddenEvent(rule: String) {
+        icsSubscriptionRepository.restoreHiddenEvent(rule)
+    }
+
     suspend fun addIcsSubscription(
         url: String,
         name: String,

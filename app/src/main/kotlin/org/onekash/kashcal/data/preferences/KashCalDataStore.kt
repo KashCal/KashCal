@@ -801,6 +801,14 @@ class KashCalDataStore(
         }
     }
 
+    /** Raw rules that hide events of ICS subscriptions and device calendars; see `HiddenSubscriptionEvents`. */
+    val hiddenSubscriptionEvents: Flow<Set<String>>
+        get() = getPreference(PreferencesKeys.HIDDEN_SUBSCRIPTION_EVENTS, emptySet<String>())
+
+    suspend fun setHiddenSubscriptionEvents(rules: Set<String>) {
+        setPreference(PreferencesKeys.HIDDEN_SUBSCRIPTION_EVENTS, rules)
+    }
+
     /**
      * Whether KashCal fires reminders for device calendar events. Default true: users expect
      * reminders when they add device calendars to KashCal.

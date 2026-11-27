@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
@@ -292,6 +293,10 @@ fun AccountSettingsScreen(
     onWidgetMaxEventsPerDayChange: (Int) -> Unit = {},
     widgetDetailedRows: Boolean = false,
     onWidgetDetailedRowsChange: (Boolean) -> Unit = {},
+    hiddenEventsCount: Int = 0,
+    hiddenEvents: List<org.onekash.kashcal.data.ics.HiddenSubscriptionEvents.Entry> = emptyList(),
+    onRestoreHiddenEvent: (String) -> Unit = {},
+    onRestoreHiddenEvents: () -> Unit = {},
     // Version footer
     versionName: String = "",
     // Settings search
@@ -510,6 +515,35 @@ fun AccountSettingsScreen(
                                 showDivider = false,
                                 searchQuery = searchQuery
                             )
+                        }
+
+                        val hiddenEventsSubtitle = if (hiddenEventsCount == 0) stringResource(R.string.settings_hidden_events_none)
+                            else pluralStringResource(R.plurals.settings_hidden_events_count, hiddenEventsCount, hiddenEventsCount)
+                        row(label = stringResource(R.string.settings_hidden_events), subtitle = hiddenEventsSubtitle, id = "hidden-events") {
+                            var confirmRestore by remember { mutableStateOf(false) }
+                            SettingsRow(
+                                icon = Icons.Default.VisibilityOff,
+                                label = stringResource(R.string.settings_hidden_events),
+                                subtitle = hiddenEventsSubtitle,
+                                onClick = { if (hiddenEventsCount > 0) confirmRestore = true },
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                            // Closes the list once the last rule is restored.
+                            androidx.compose.runtime.LaunchedEffect(hiddenEventsCount) {
+                                if (hiddenEventsCount == 0) confirmRestore = false
+                            }
+                            if (confirmRestore && hiddenEvents.isNotEmpty()) {
+                                org.onekash.kashcal.ui.components.HiddenEventsDialog(
+                                    entries = hiddenEvents,
+                                    onRestore = onRestoreHiddenEvent,
+                                    onRestoreAll = {
+                                        confirmRestore = false
+                                        onRestoreHiddenEvents()
+                                    },
+                                    onDismiss = { confirmRestore = false },
+                                )
+                            }
                         }
 
                         val offlineCalendarsSubtitle = if (offlineCalendarCount <= 1) stringResource(R.string.offline_calendars_row_hint)

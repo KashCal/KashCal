@@ -75,6 +75,7 @@ class DisplayEventRepositoryZoneChangeTest {
 
         // Device calendars off, so only Room occurrences are read.
         val dataStore: KashCalDataStore = mockk {
+            every { hiddenSubscriptionEvents } returns kotlinx.coroutines.flow.MutableStateFlow(emptySet<String>())
             every { showDeclinedEvents } returns flowOf(true)
             every { hiddenDeviceCalendarIds } returns flowOf(emptySet())
             coEvery { getShowDeclinedEvents() } returns true

@@ -86,6 +86,7 @@ class DisplayEventRepositorySearchTest {
             Calendar(accountId = accountId, caldavUrl = "local://old", displayName = "Old", color = 2, isVisible = false)
         )
         val dataStore: KashCalDataStore = mockk {
+            every { hiddenSubscriptionEvents } returns kotlinx.coroutines.flow.MutableStateFlow(emptySet<String>())
             every { hiddenDeviceCalendarIds } returns hiddenDevice
             every { syncPastDays } returns this@DisplayEventRepositorySearchTest.syncPastDays
             coEvery { getShowDeclinedEvents() } answers { showDeclined }
