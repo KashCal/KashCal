@@ -30,6 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalDensity
@@ -101,6 +103,7 @@ internal fun MonthFullPage(
     zoom: Float,
     onZoomChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
+    showGridLines: Boolean = false,
 ) {
     val scrollDonor = rememberScrollableState { 0f }
     Column(
@@ -124,6 +127,7 @@ internal fun MonthFullPage(
             todayDayCode = todayDayCode,
             modifier = Modifier.weight(1f),
             zoom = zoom,
+            showGridLines = showGridLines,
         )
     }
 }
@@ -161,6 +165,7 @@ internal fun FullHeightMonthGrid(
     todayDayCode: Int,
     modifier: Modifier = Modifier,
     zoom: Float = 1f,
+    showGridLines: Boolean = false,
 ) {
     val monthGrid = remember(year, month, firstDayOfWeekPref) {
         MonthGrid.compute(year, month, firstDayOfWeekPref)
@@ -176,7 +181,7 @@ internal fun FullHeightMonthGrid(
     }
 
     Column(modifier = modifier.padding(horizontal = 8.dp)) {
-        visibleWeeks.forEach { row ->
+        visibleWeeks.forEachIndexed { rowIndex, row ->
             val weekDayCodes = remember(row, year, month) {
                 row.map { MonthGrid.computeDayCodeForCell(it, year, month) }
             }
@@ -206,6 +211,8 @@ internal fun FullHeightMonthGrid(
                     showEventEmojis = showEventEmojis,
                     zoom = zoom,
                     onDayTap = onDayTap,
+                    showGridLines = showGridLines,
+                    isLastRow = rowIndex == visibleWeeks.lastIndex,
                     modifier = Modifier.weight(1f).fillMaxHeight(),
                 )
             }
@@ -231,9 +238,29 @@ private fun WeekRow(
     zoom: Float,
     onDayTap: (dayCode: Int, tapTimeMs: Long) -> Unit,
     modifier: Modifier = Modifier,
+    showGridLines: Boolean = false,
+    isLastRow: Boolean = false,
 ) {
     val showDayLabel = stringResource(R.string.cd_planner_show_day_events)
-    BoxWithConstraints(modifier = modifier) {
+    val lineColor = MaterialTheme.colorScheme.outlineVariant
+    val lineWidthPx = with(LocalDensity.current) { GRID_LINE_WIDTH.toPx() }
+    // Drawn behind the cells and the events, in real pixels: zoom scales the content, not the lines.
+    val linesModifier = if (showGridLines) {
+        Modifier.drawBehind {
+            val columns = row.size
+            for (i in 0..columns) {
+                val x = size.width * i / columns
+                drawLine(lineColor, Offset(x, 0f), Offset(x, size.height), lineWidthPx)
+            }
+            drawLine(lineColor, Offset(0f, 0f), Offset(size.width, 0f), lineWidthPx)
+            if (isLastRow) {
+                drawLine(lineColor, Offset(0f, size.height), Offset(size.width, size.height), lineWidthPx)
+            }
+        }
+    } else {
+        Modifier
+    }
+    BoxWithConstraints(modifier = modifier.then(linesModifier)) {
         // Read before Zoomed: the row's height in real pixels, which zoom doesn't change.
         val rowPx = if (constraints.hasBoundedHeight) constraints.maxHeight else null
 
@@ -672,6 +699,9 @@ private fun tapTimeMsForCell(cell: MonthGrid.DayCell, gridYear: Int, gridMonth: 
 
 private val SPAN_CORNER = 4.dp
 private val SPAN_SHAPE = RoundedCornerShape(SPAN_CORNER)
+
+/** Thickness of the optional lines between day cells. */
+private val GRID_LINE_WIDTH = 1.dp
 private val STRIPE_SHAPE = RoundedCornerShape(1.dp)
 
 // The date strip is labelMedium's line plus this above and below; a slot is labelSmall's line

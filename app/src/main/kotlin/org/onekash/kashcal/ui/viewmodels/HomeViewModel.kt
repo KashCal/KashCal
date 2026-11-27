@@ -1476,6 +1476,11 @@ class HomeViewModel(
             }
         }
         viewModelScope.launch {
+            dataStore.showMonthGridLines.collect { show ->
+                _uiState.update { it.copy(showMonthGridLines = show) }
+            }
+        }
+        viewModelScope.launch {
             dataStore.agendaWeekBarExpanded.collect { expanded ->
                 _uiState.update { it.copy(agendaWeekBarExpanded = expanded) }
             }

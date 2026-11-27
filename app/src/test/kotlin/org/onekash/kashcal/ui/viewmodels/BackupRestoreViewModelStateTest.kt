@@ -129,6 +129,7 @@ class BackupRestoreViewModelStateTest {
         every { dataStore.timeFormat } returns MutableStateFlow(KashCalDataStore.TIME_FORMAT_SYSTEM)
         every { dataStore.firstDayOfWeek } returns MutableStateFlow(java.util.Calendar.SUNDAY)
         every { dataStore.showWeekNumbers } returns MutableStateFlow(false)
+        every { dataStore.showMonthGridLines } returns MutableStateFlow(false)
         every { dataStore.widgetMaxEventsPerDay } returns MutableStateFlow(5)
         every { dataStore.syncPastDays } returns MutableStateFlow(KashCalDataStore.DEFAULT_SYNC_PAST_DAYS)
         every { dataStore.quickAddEnabled } returns MutableStateFlow(false)

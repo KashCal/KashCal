@@ -286,6 +286,8 @@ fun AccountSettingsScreen(
     onFirstDayOfWeekChange: (Int) -> Unit = {},
     showWeekNumbers: Boolean = false,
     onShowWeekNumbersChange: (Boolean) -> Unit = {},
+    showMonthGridLines: Boolean = false,
+    onShowMonthGridLinesChange: (Boolean) -> Unit = {},
     showMultiDayTimedInAllDayStrip: Boolean = PreferencesKeys.DEFAULT_SHOW_MULTIDAY_TIMED_IN_ALLDAY_STRIP,
     onShowMultiDayTimedInAllDayStripChange: (Boolean) -> Unit = {},
     widgetMaxEventsPerDay: Int = 5,
@@ -618,6 +620,17 @@ fun AccountSettingsScreen(
                                 label = stringResource(R.string.settings_week_numbers),
                                 checked = showWeekNumbers,
                                 onCheckedChange = onShowWeekNumbersChange,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+
+                        row(label = stringResource(R.string.settings_month_grid_lines), id = "month-grid-lines") {
+                            SettingsToggleRow(
+                                icon = Icons.Default.DateRange,
+                                label = stringResource(R.string.settings_month_grid_lines),
+                                checked = showMonthGridLines,
+                                onCheckedChange = onShowMonthGridLinesChange,
                                 showDivider = false,
                                 searchQuery = searchQuery
                             )

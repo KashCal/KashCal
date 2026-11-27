@@ -120,6 +120,14 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.SHOW_WEEK_NUMBERS, show)
     }
 
+    /** Whether the full-height month view draws lines between its day cells (default off). */
+    val showMonthGridLines: Flow<Boolean>
+        get() = getPreference(PreferencesKeys.SHOW_MONTH_GRID_LINES, false)
+
+    suspend fun setShowMonthGridLines(show: Boolean) {
+        setPreference(PreferencesKeys.SHOW_MONTH_GRID_LINES, show)
+    }
+
     /** Whether the event form's tag row sits above the notes and attendees block. */
     val tagsAboveNotes: Flow<Boolean>
         get() = getPreference(PreferencesKeys.TAGS_ABOVE_NOTES, false)

@@ -487,6 +487,9 @@ class AccountSettingsViewModel @Inject constructor(
     private val _showWeekNumbers = MutableStateFlow(false)
     val showWeekNumbers: StateFlow<Boolean> = _showWeekNumbers.asStateFlow()
 
+    private val _showMonthGridLines = MutableStateFlow(false)
+    val showMonthGridLines: StateFlow<Boolean> = _showMonthGridLines.asStateFlow()
+
     private val _showMultiDayTimedInAllDayStrip =
         MutableStateFlow(PreferencesKeys.DEFAULT_SHOW_MULTIDAY_TIMED_IN_ALLDAY_STRIP)
     val showMultiDayTimedInAllDayStrip: StateFlow<Boolean> = _showMultiDayTimedInAllDayStrip.asStateFlow()
@@ -878,6 +881,11 @@ class AccountSettingsViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
+            dataStore.showMonthGridLines.collect { show ->
+                _showMonthGridLines.value = show
+            }
+        }
+        viewModelScope.launch {
             dataStore.showMultiDayTimedInAllDayStrip.collect { show ->
                 _showMultiDayTimedInAllDayStrip.value = show
             }
@@ -1097,6 +1105,12 @@ class AccountSettingsViewModel @Inject constructor(
             // The month widget lays out its columns from this preference, so refresh the widgets
             // now instead of waiting for the next periodic update.
             widgetUpdateManager.updateAllWidgets("first_day_of_week_changed")
+        }
+    }
+
+    fun setShowMonthGridLines(show: Boolean) {
+        viewModelScope.launch {
+            dataStore.setShowMonthGridLines(show)
         }
     }
 
