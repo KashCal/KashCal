@@ -208,6 +208,8 @@ fun SettingsRoute(
         val hasWriteCalendarPermission by viewModel.hasWriteCalendarPermission.collectAsStateWithLifecycle()
         val deviceCalendars by viewModel.deviceCalendars.collectAsStateWithLifecycle()
         val enabledDeviceCalendarIds by viewModel.enabledDeviceCalendarIds.collectAsStateWithLifecycle()
+        val hiddenEventsCount by viewModel.hiddenEventsCount.collectAsStateWithLifecycle()
+        val hiddenEvents by viewModel.hiddenEvents.collectAsStateWithLifecycle()
         val showDeclinedEvents by viewModel.showDeclinedEvents.collectAsStateWithLifecycle()
         val deviceCalendarRemindersEnabled by viewModel.deviceCalendarRemindersEnabled.collectAsStateWithLifecycle()
         val hiddenDeviceCalendarIds by viewModel.hiddenDeviceCalendarIds.collectAsStateWithLifecycle()
@@ -905,6 +907,10 @@ fun SettingsRoute(
                             onWidgetMaxEventsPerDayChange = viewModel::setWidgetMaxEventsPerDay,
                             widgetDetailedRows = widgetDetailedRows,
                             onWidgetDetailedRowsChange = viewModel::setWidgetDetailedRows,
+                            hiddenEventsCount = hiddenEventsCount,
+                            hiddenEvents = hiddenEvents,
+                            onRestoreHiddenEvent = viewModel::restoreHiddenEvent,
+                            onRestoreHiddenEvents = viewModel::restoreHiddenEvents,
                             // Version footer
                             versionName = BuildConfig.VERSION_NAME,
                             // Navigate to Accounts detail screen

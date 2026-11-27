@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material.icons.filled.Place
@@ -116,6 +117,7 @@ fun EventQuickViewSheet(
     onDeleteSingle: () -> Unit,
     onDuplicate: () -> Unit = {},
     onShare: () -> Unit = {},
+    onHide: (() -> Unit)? = null,
     onExportIcs: () -> Unit = {},
     onShareAsCard: () -> Unit = {},
     showShareCardTooltip: Boolean = false,
@@ -399,6 +401,17 @@ fun EventQuickViewSheet(
                             Icons.Default.Share,
                             contentDescription = stringResource(R.string.action_share)
                         )
+                    }
+                    if (onHide != null) {
+                        FilledTonalButton(
+                            onClick = onHide,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                Icons.Default.VisibilityOff,
+                                contentDescription = stringResource(R.string.action_hide_event)
+                            )
+                        }
                     }
                 } else {
                     // Editable calendar: Edit, Delete, More. Delete on a one-off

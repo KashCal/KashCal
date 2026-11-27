@@ -112,7 +112,7 @@ class DeviceCalendarAlarmReceiverTest {
     fun `handleAlarm shows notification when shouldFireReminder is true`() = runTest {
         val scheduler = mockk<DeviceCalendarReminderScheduler>()
         val notificationManager = mockk<DeviceCalendarReminderNotificationManager>()
-        coEvery { scheduler.shouldFireReminder(any(), any()) } returns true
+        coEvery { scheduler.shouldFireReminder(any(), any(), any()) } returns true
         coEvery { scheduler.takeDueAndArmNext(any(), any()) } returns emptyList()
         coEvery { notificationManager.showNotification(any(), any(), any(), any(), any(), any(), any(), any()) } returns 20001
 
@@ -149,7 +149,7 @@ class DeviceCalendarAlarmReceiverTest {
         // receiver must not show the stale notification.
         val scheduler = mockk<DeviceCalendarReminderScheduler>()
         val notificationManager = mockk<DeviceCalendarReminderNotificationManager>()
-        coEvery { scheduler.shouldFireReminder(any(), any()) } returns false
+        coEvery { scheduler.shouldFireReminder(any(), any(), any()) } returns false
         coEvery { scheduler.takeDueAndArmNext(any(), any()) } returns emptyList()
 
         receiver.handleAlarm(
@@ -179,14 +179,14 @@ class DeviceCalendarAlarmReceiverTest {
         coEvery { notificationManager.showNotification(any(), any(), any(), any(), any(), any(), any(), any()) } returns 20001
 
         // Reminder alarm, shown.
-        coEvery { scheduler.shouldFireReminder(any(), any()) } returns true
+        coEvery { scheduler.shouldFireReminder(any(), any(), any()) } returns true
         receiver.handleAlarm(
             scheduler, notificationManager, 123L, 1709251200000L, "A", null,
             false, 0, 1L, 1709250300000L,
         )
 
         // Reminder alarm, not shown.
-        coEvery { scheduler.shouldFireReminder(any(), any()) } returns false
+        coEvery { scheduler.shouldFireReminder(any(), any(), any()) } returns false
         receiver.handleAlarm(
             scheduler, notificationManager, 124L, 1709251300000L, "B", null,
             false, 0, 1L, 1709250400000L,
@@ -208,7 +208,7 @@ class DeviceCalendarAlarmReceiverTest {
         // must pass the id the alarm carries (reminder and snooze alarms both carry it).
         val scheduler = mockk<DeviceCalendarReminderScheduler>()
         val notificationManager = mockk<DeviceCalendarReminderNotificationManager>()
-        coEvery { scheduler.shouldFireReminder(123L, 7L) } returns false
+        coEvery { scheduler.shouldFireReminder(123L, 7L, any()) } returns false
         coJustRun { scheduler.rescheduleAfterFire() }
 
         receiver.handleAlarm(
@@ -216,7 +216,7 @@ class DeviceCalendarAlarmReceiverTest {
             false, 0, 7L, 1709250300000L, isSnooze = true,
         )
 
-        coVerify(exactly = 1) { scheduler.shouldFireReminder(123L, 7L) }
+        coVerify(exactly = 1) { scheduler.shouldFireReminder(123L, 7L, any()) }
         coVerify(exactly = 0) {
             notificationManager.showNotification(any(), any(), any(), any(), any(), any(), any(), any())
         }
@@ -237,9 +237,9 @@ class DeviceCalendarAlarmReceiverTest {
         val firedCursor = org.onekash.kashcal.data.calendar_provider.DeviceReminderCursor(1_000L, 10L, 3_601_000L)
         val b = due(20L, 2L, 1_000L)
         val c = due(30L, 3L, 1_500L)
-        coEvery { scheduler.shouldFireReminder(10L, 1L) } returns true
-        coEvery { scheduler.shouldFireReminder(20L, 2L) } returns true
-        coEvery { scheduler.shouldFireReminder(30L, 3L) } returns true
+        coEvery { scheduler.shouldFireReminder(10L, 1L, any()) } returns true
+        coEvery { scheduler.shouldFireReminder(20L, 2L, any()) } returns true
+        coEvery { scheduler.shouldFireReminder(30L, 3L, any()) } returns true
         coEvery { scheduler.takeDueAndArmNext(firedCursor, 2_000L) } returns listOf(b, c)
         coEvery { notificationManager.showNotification(any(), any(), any(), any(), any(), any(), any(), any()) } returns 1
 
@@ -260,7 +260,7 @@ class DeviceCalendarAlarmReceiverTest {
     fun `a snooze alarm never asks for the due batch`() = runTest {
         val scheduler = mockk<DeviceCalendarReminderScheduler>()
         val notificationManager = mockk<DeviceCalendarReminderNotificationManager>()
-        coEvery { scheduler.shouldFireReminder(10L, 1L) } returns true
+        coEvery { scheduler.shouldFireReminder(10L, 1L, any()) } returns true
         coJustRun { scheduler.rescheduleAfterFire() }
         coEvery { notificationManager.showNotification(any(), any(), any(), any(), any(), any(), any(), any()) } returns 1
 
@@ -278,8 +278,8 @@ class DeviceCalendarAlarmReceiverTest {
         val scheduler = mockk<DeviceCalendarReminderScheduler>()
         val notificationManager = mockk<DeviceCalendarReminderNotificationManager>()
         val b = due(20L, 2L, 1_000L)
-        coEvery { scheduler.shouldFireReminder(10L, 1L) } returns true
-        coEvery { scheduler.shouldFireReminder(20L, 2L) } returns false
+        coEvery { scheduler.shouldFireReminder(10L, 1L, any()) } returns true
+        coEvery { scheduler.shouldFireReminder(20L, 2L, any()) } returns false
         coEvery { scheduler.takeDueAndArmNext(any(), any()) } returns listOf(b)
         coEvery { notificationManager.showNotification(any(), any(), any(), any(), any(), any(), any(), any()) } returns 1
 
@@ -292,7 +292,7 @@ class DeviceCalendarAlarmReceiverTest {
     fun `a failed batch read falls back to the plain re-pick`() = runTest {
         val scheduler = mockk<DeviceCalendarReminderScheduler>()
         val notificationManager = mockk<DeviceCalendarReminderNotificationManager>()
-        coEvery { scheduler.shouldFireReminder(10L, 1L) } returns false
+        coEvery { scheduler.shouldFireReminder(10L, 1L, any()) } returns false
         coEvery { scheduler.takeDueAndArmNext(any(), any()) } throws IllegalStateException("provider")
         coJustRun { scheduler.rescheduleAfterFire() }
 
@@ -307,7 +307,7 @@ class DeviceCalendarAlarmReceiverTest {
         val notificationManager = mockk<DeviceCalendarReminderNotificationManager>()
         val b = due(20L, 2L, 1_000L)
         val c = due(30L, 3L, 1_000L)
-        coEvery { scheduler.shouldFireReminder(any(), any()) } returns true
+        coEvery { scheduler.shouldFireReminder(any(), any(), any()) } returns true
         coEvery { scheduler.takeDueAndArmNext(any(), any()) } returns listOf(b, c)
         coEvery { notificationManager.showNotification(any(), any(), any(), any(), any(), any(), any(), any()) } returns 1
         coEvery { notificationManager.showNotification(eq(20L), any(), any(), any(), any(), any(), any(), any()) } throws IllegalStateException("post")
@@ -321,12 +321,12 @@ class DeviceCalendarAlarmReceiverTest {
     fun `a failure showing the fired reminder still arms the next`() = runTest {
         val scheduler = mockk<DeviceCalendarReminderScheduler>()
         val notificationManager = mockk<DeviceCalendarReminderNotificationManager>()
-        coEvery { scheduler.shouldFireReminder(10L, 1L) } throws IllegalStateException("provider")
+        coEvery { scheduler.shouldFireReminder(10L, 1L, any()) } throws IllegalStateException("provider")
         coEvery { scheduler.takeDueAndArmNext(any(), any()) } returns emptyList()
 
         receiver.handleAlarm(scheduler, notificationManager, 10L, 3_601_000L, "Fired", null, false, 0, 1L, 1_000L)
 
-        coEvery { scheduler.shouldFireReminder(10L, 1L) } returns true
+        coEvery { scheduler.shouldFireReminder(10L, 1L, any()) } returns true
         coEvery { notificationManager.showNotification(any(), any(), any(), any(), any(), any(), any(), any()) } throws IllegalStateException("post")
         receiver.handleAlarm(scheduler, notificationManager, 10L, 3_601_000L, "Fired", null, false, 0, 1L, 1_000L)
 

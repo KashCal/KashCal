@@ -31,6 +31,7 @@ import org.onekash.kashcal.data.db.dao.AccountsDao
 import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.TitleSuggestion
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.data.ics.HiddenSubscriptionEvents
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.model.DisplayEvent
@@ -125,7 +126,7 @@ class DisplayEventRepository @Inject constructor(
             calendarProviderManager.changeSignal,
             dataStore.showDeclinedEvents,
             attendeesDao.attendeesChangeSignal(),
-            dataStore.hiddenDeviceCalendarIds
+            hiddenInputs()
         ) { roomOccurrences, _, showDeclined, _, _ ->
             val roomEvents = applyDeclinedPolicy(roomOccurrences, showDeclined)
             val deviceEvents = queryDeviceEvents(startDayCode, endDayCode)
@@ -150,7 +151,7 @@ class DisplayEventRepository @Inject constructor(
             calendarProviderManager.changeSignal,
             dataStore.showDeclinedEvents,
             attendeesDao.attendeesChangeSignal(),
-            dataStore.hiddenDeviceCalendarIds
+            hiddenInputs()
         ) { roomOccurrences, _, showDeclined, _, _ ->
             val roomEvents = applyDeclinedPolicy(roomOccurrences, showDeclined)
             val deviceEvents = queryDeviceEvents(startDayCode, endDayCode)
@@ -177,7 +178,7 @@ class DisplayEventRepository @Inject constructor(
             calendarProviderManager.changeSignal,
             dataStore.showDeclinedEvents,
             attendeesDao.attendeesChangeSignal(),
-            dataStore.hiddenDeviceCalendarIds
+            hiddenInputs()
         ) { roomOccurrences, _, showDeclined, _, _ ->
             val roomEvents = applyDeclinedPolicy(roomOccurrences, showDeclined)
             val deviceEvents = queryDeviceEvents(startDayCode, endDayCode)
@@ -246,7 +247,7 @@ class DisplayEventRepository @Inject constructor(
 
         val device = combine(
             calendarProviderManager.changeSignal,
-            dataStore.hiddenDeviceCalendarIds,
+            hiddenInputs(),
             dataStore.syncPastDays,
         ) { _, _, _ -> }
             .mapLatest { searchDevice(query, today, range, zone) }
@@ -377,7 +378,13 @@ class DisplayEventRepository @Inject constructor(
                     DateTimeUtils.eventTsToDayCode(it.last, isAllDay = false, localZone = zone),
                 )
             }
-            DeviceSearch(all, inRange, elapsedMs(start), pastDays)
+            val rules = hiddenDeviceRules()
+            DeviceSearch(
+                HiddenSubscriptionEvents.applyDevice(all, rules),
+                inRange?.let { HiddenSubscriptionEvents.applyDevice(it, rules) },
+                elapsedMs(start),
+                pastDays,
+            )
         } catch (e: SecurityException) {
             Log.w(TAG, "Calendar permission revoked during search, falling back to Room-only", e)
             DeviceSearch(emptyList(), emptyRange, 0, pastDays)
@@ -580,13 +587,25 @@ class DisplayEventRepository @Inject constructor(
         if (ids.isEmpty()) {
             emptyList()
         } else {
-            calendarProviderRepository.getInstancesForDayRange(startDayCode, endDayCode, ids, hideDeclined())
-                .map { DisplayEvent.Device(it) }
+            val instances = calendarProviderRepository.getInstancesForDayRange(startDayCode, endDayCode, ids, hideDeclined())
+            HiddenSubscriptionEvents.applyDevice(instances, hiddenDeviceRules()).map { DisplayEvent.Device(it) }
         }
     } catch (e: SecurityException) {
         Log.w(TAG, "Calendar permission revoked, falling back to Room-only", e)
         emptyList()
     }
+
+    /** The rules that hide device events ([HiddenSubscriptionEvents]). */
+    /**
+     * Emits when either the hidden device calendars or the hidden-event rules change, so the
+     * day, month and agenda reads re-query the provider at once after an event is hidden or
+     * restored (hiding a device event bumps no provider change signal).
+     */
+    private fun hiddenInputs(): Flow<Set<Long>> =
+        combine(dataStore.hiddenDeviceCalendarIds, dataStore.hiddenSubscriptionEvents) { ids, _ -> ids }
+
+    private suspend fun hiddenDeviceRules() =
+        HiddenSubscriptionEvents.parseDevice(dataStore.hiddenSubscriptionEvents.first())
 
     /** Returns the enabled, not hidden device calendar IDs; empty when the feature is off. */
     private suspend fun getVisibleDeviceCalendarIds(): Set<Long> {

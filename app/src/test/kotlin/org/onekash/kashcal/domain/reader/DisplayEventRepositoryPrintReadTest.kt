@@ -90,6 +90,7 @@ class DisplayEventRepositoryPrintReadTest {
         }
 
         val dataStore: KashCalDataStore = mockk {
+            every { hiddenSubscriptionEvents } returns kotlinx.coroutines.flow.MutableStateFlow(emptySet<String>())
             coEvery { getShowDeclinedEvents() } answers { showDeclined }
             coEvery { getDeviceCalendarsEnabled() } answers { deviceFeatureOn }
             coEvery { getEnabledDeviceCalendarIds() } answers { enabledDeviceIds }
@@ -282,6 +283,7 @@ class DisplayEventRepositoryPrintReadTest {
             coEvery { getInstancesForDayRange(any(), any(), any(), any()) } throws SecurityException("revoked")
         }
         val dataStore: KashCalDataStore = mockk {
+            every { hiddenSubscriptionEvents } returns kotlinx.coroutines.flow.MutableStateFlow(emptySet<String>())
             coEvery { getShowDeclinedEvents() } returns true
             coEvery { getDeviceCalendarsEnabled() } returns true
             coEvery { getEnabledDeviceCalendarIds() } returns setOf(SYNCED_CAL)

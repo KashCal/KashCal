@@ -65,6 +65,7 @@ class DisplayEventRepositoryDeviceRealProviderTest {
             every { changeSignal } returns MutableStateFlow(0)
         }
         val dataStore: KashCalDataStore = mockk {
+            every { hiddenSubscriptionEvents } returns kotlinx.coroutines.flow.MutableStateFlow(emptySet<String>())
             coEvery { getShowDeclinedEvents() } answers { showDeclined }
             coEvery { getDeviceCalendarsEnabled() } returns true
             coEvery { getEnabledDeviceCalendarIds() } answers { enabledIds }

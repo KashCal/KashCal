@@ -102,7 +102,7 @@ class DeviceCalendarAlarmReceiver : BroadcastReceiver() {
         triggerTime: Long,
     ) {
         try {
-            if (scheduler.shouldFireReminder(eventId, calendarId)) {
+            if (scheduler.shouldFireReminder(eventId, calendarId, title)) {
                 notificationManager.showNotification(
                     eventId = eventId,
                     occurrenceTs = occurrenceTs,

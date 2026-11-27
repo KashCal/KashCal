@@ -12,6 +12,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.calendar_provider.DeviceReminderCursor
 import org.onekash.kashcal.data.calendar_provider.UpcomingDeviceReminder
+import org.onekash.kashcal.data.ics.HiddenSubscriptionEvents
+import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.util.AlarmArming
 import org.onekash.kashcal.util.maskEventId
@@ -193,9 +195,11 @@ class DeviceCalendarReminderScheduler @Inject constructor(
      * extras are fixed when the alarm is armed; since then the event may have been deleted
      * (`DELETED = 1` counts), device reminders or device calendars turned off, every device
      * calendar disabled, READ_CALENDAR revoked, or [calendarId] unticked or muted. A [calendarId]
-     * of -1 (the alarm carried none) passes both calendar checks.
+     * of -1 (the alarm carried none) passes both calendar checks. An event the user hid in KashCal
+     * ([HiddenSubscriptionEvents]) doesn't notify either; a title rule needs [title], and without
+     * it only a rule for this event matches.
      */
-    suspend fun shouldFireReminder(eventId: Long, calendarId: Long): Boolean {
+    suspend fun shouldFireReminder(eventId: Long, calendarId: Long, title: String? = null): Boolean {
         if (!dataStore.getDeviceCalendarRemindersEnabled()) return false
         if (!dataStore.getDeviceCalendarsEnabled()) return false
         if (!hasReadCalendarPermission()) return false
@@ -203,6 +207,8 @@ class DeviceCalendarReminderScheduler @Inject constructor(
         if (enabledIds.isEmpty()) return false
         if (calendarId != -1L && calendarId !in enabledIds) return false
         if (calendarId in dataStore.getMutedDeviceCalendarIds()) return false
+        val hidden = HiddenSubscriptionEvents.parseDevice(dataStore.hiddenSubscriptionEvents.first())
+        if (calendarId != -1L && hidden.hides(calendarId, eventId, title.orEmpty())) return false
         return calendarProviderRepository.isEventActive(eventId)
     }
 
